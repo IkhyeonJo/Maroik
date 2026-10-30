@@ -2,7 +2,7 @@ using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Website.Extensions;
 using Maroik.Website.Models.ViewModels.Calendars;
-using Moq;
+using Maroik.Website.Tests.Fixtures;
 
 namespace Maroik.Website.Tests.Extensions;
 
@@ -14,8 +14,8 @@ namespace Maroik.Website.Tests.Extensions;
 /// </summary>
 public class CalendarEventViewModelExtensionsTests
 {
-    /// <summary>Mock <c>ICalendarService</c> injected into the system under test.</summary>
-    private readonly Mock<ICalendarService> _calendarService = new();
+    /// <summary>Fake <c>ICalendarService</c> injected into the system under test.</summary>
+    private readonly FakeCalendarService _calendarService = new();
 
     /// <summary>A calendar with id <paramref name="id"/> and the given color.</summary>
     private static CalendarResponse MakeCalendar(long id, string? htmlColorCode = "#3788d8") => new()
@@ -38,11 +38,9 @@ public class CalendarEventViewModelExtensionsTests
 
     /// <summary>Makes the calendar service return <paramref name="events"/>, grouped by calendar id.</summary>
     private void SetUpEvents(params CalendarEventResponse[] events) =>
-        _calendarService
-            .Setup(s => s.GetCalendarEventsAsync(It.IsAny<IEnumerable<long>>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(events
-                .GroupBy(e => e.CalendarId)
-                .ToDictionary(g => g.Key, g => g.ToList()));
+        _calendarService.OnGetCalendarEventsAsync = (_, _) => Task.FromResult<IReadOnlyDictionary<long, List<CalendarEventResponse>>>(events
+            .GroupBy(e => e.CalendarId)
+            .ToDictionary(g => g.Key, g => g.ToList()));
 
     // -- GetCalendarEventViewModelsAsync ---------------------------------------
 
@@ -50,7 +48,7 @@ public class CalendarEventViewModelExtensionsTests
     [Fact]
     public async Task NoCalendars_ReturnsEmptyList()
     {
-        var result = await _calendarService.Object.GetCalendarEventViewModelsAsync(
+        var result = await _calendarService.GetCalendarEventViewModelsAsync(
             [], "UTC", null, TestContext.Current.CancellationToken);
 
         Assert.Empty(result);
@@ -63,7 +61,7 @@ public class CalendarEventViewModelExtensionsTests
         var calendar = MakeCalendar(1);
         SetUpEvents(MakeEvent(100, 1, "Trip"), MakeEvent(101, 1, "Meeting"));
 
-        var result = await _calendarService.Object.GetCalendarEventViewModelsAsync(
+        var result = await _calendarService.GetCalendarEventViewModelsAsync(
             [calendar], "UTC", null, TestContext.Current.CancellationToken);
 
         Assert.Equal(2, result.Count);
@@ -79,15 +77,13 @@ public class CalendarEventViewModelExtensionsTests
         var calendar2 = MakeCalendar(2);
         SetUpEvents(MakeEvent(100, 1, "FromCal1"), MakeEvent(200, 2, "FromCal2"));
 
-        var result = await _calendarService.Object.GetCalendarEventViewModelsAsync(
+        var result = await _calendarService.GetCalendarEventViewModelsAsync(
             [calendar1, calendar2], "UTC", null, TestContext.Current.CancellationToken);
 
         Assert.Equal(2, result.Count);
         Assert.Equal("FromCal1", result[0].Title);
         Assert.Equal("FromCal2", result[1].Title);
-        _calendarService.Verify(
-            s => s.GetCalendarEventsAsync(It.IsAny<IEnumerable<long>>(), It.IsAny<CancellationToken>()),
-            Times.Once);
+        Assert.Single(_calendarService.GetCalendarEventsAsyncCalls);
     }
 
     /// <summary>Passes each calendars HTML color code to its own events.</summary>
@@ -98,7 +94,7 @@ public class CalendarEventViewModelExtensionsTests
         var calendar2 = MakeCalendar(2, "#222222");
         SetUpEvents(MakeEvent(100, 1, "FromCal1"), MakeEvent(200, 2, "FromCal2"));
 
-        var result = await _calendarService.Object.GetCalendarEventViewModelsAsync(
+        var result = await _calendarService.GetCalendarEventViewModelsAsync(
             [calendar1, calendar2], "UTC", null, TestContext.Current.CancellationToken);
 
         Assert.Equal("#111111", result[0].HtmlColorCode);
@@ -112,7 +108,7 @@ public class CalendarEventViewModelExtensionsTests
         var calendar = MakeCalendar(1);
         SetUpEvents(MakeEvent(100, 1, "Trip"));
 
-        var result = await _calendarService.Object.GetCalendarEventViewModelsAsync(
+        var result = await _calendarService.GetCalendarEventViewModelsAsync(
             [calendar], "UTC", "Other", TestContext.Current.CancellationToken);
 
         Assert.Equal("Other", result[0].CalendarType);
@@ -125,7 +121,7 @@ public class CalendarEventViewModelExtensionsTests
         var calendar = MakeCalendar(1);
         SetUpEvents(MakeEvent(100, 1, "Trip"));
 
-        var result = await _calendarService.Object.GetCalendarEventViewModelsAsync(
+        var result = await _calendarService.GetCalendarEventViewModelsAsync(
             [calendar], "Asia/Seoul", null, TestContext.Current.CancellationToken);
 
         // All-day event: DisplayStartDate is derived from StartDate converted to the viewer's time zone.
@@ -141,15 +137,9 @@ public class CalendarEventViewModelExtensionsTests
         using var cts = new CancellationTokenSource();
         var cancellationToken = cts.Token;
         
-        _calendarService
-            .Setup(s => s.GetCalendarEventsAsync(It.IsAny<IEnumerable<long>>(), cancellationToken))
-            .ReturnsAsync(new Dictionary<long, List<CalendarEventResponse>>());
+        await _calendarService.GetCalendarEventViewModelsAsync([calendar], "UTC", null, cancellationToken);
 
-        await _calendarService.Object.GetCalendarEventViewModelsAsync([calendar], "UTC", null, cancellationToken);
-
-        _calendarService.Verify(
-            s => s.GetCalendarEventsAsync(It.IsAny<IEnumerable<long>>(), cancellationToken),
-            Times.Once);
+        Assert.Equal(cancellationToken, Assert.Single(_calendarService.GetCalendarEventsAsyncCalls).Ct);
     }
 
     // -- GetCalendarEventDetailViewModelAsync ----------------------------------
@@ -157,18 +147,10 @@ public class CalendarEventViewModelExtensionsTests
     /// <summary>Makes the single-event lookup return <paramref name="evt"/> and the HTML preparation pass content through.</summary>
     private void SetUpDetailEvent(CalendarEventResponse? evt)
     {
-        _calendarService
-            .Setup(s => s.GetCalendarEventAsync(It.IsAny<long>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(evt);
-        _calendarService
-            .Setup(s => s.PrepareHtmlForDisplayAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(("<p>desc</p>", false));
-        _calendarService
-            .Setup(s => s.GetCalendarEventAttachedFileAsync(It.IsAny<long>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((CalendarEventAttachedFileDto?)null);
-        _calendarService
-            .Setup(s => s.GetCalendarEventRemindersAsync(It.IsAny<long>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync([]);
+        _calendarService.OnGetCalendarEventAsync = (_, _) => Task.FromResult(evt);
+        _calendarService.OnPrepareHtmlForDisplayAsync = (_, _) => Task.FromResult(("<p>desc</p>", false));
+        _calendarService.OnGetCalendarEventAttachedFileAsync = (_, _) => Task.FromResult<CalendarEventAttachedFileDto?>(null);
+        _calendarService.OnGetCalendarEventRemindersAsync = (_, _) => Task.FromResult<IEnumerable<CalendarEventReminderDto>>([]);
     }
 
     /// <summary>Returns null when the event doesn't exist.</summary>
@@ -177,7 +159,7 @@ public class CalendarEventViewModelExtensionsTests
     {
         SetUpDetailEvent(null);
 
-        var result = await _calendarService.Object.GetCalendarEventDetailViewModelAsync(
+        var result = await _calendarService.GetCalendarEventDetailViewModelAsync(
             [MakeCalendar(1)], "UTC", 999, true, TestContext.Current.CancellationToken);
 
         Assert.Null(result);
@@ -189,7 +171,7 @@ public class CalendarEventViewModelExtensionsTests
     {
         SetUpDetailEvent(MakeEvent(100, calendarId: 2, "Trip"));
 
-        var result = await _calendarService.Object.GetCalendarEventDetailViewModelAsync(
+        var result = await _calendarService.GetCalendarEventDetailViewModelAsync(
             [MakeCalendar(1)], "UTC", 100, true, TestContext.Current.CancellationToken);
 
         Assert.Null(result);
@@ -201,7 +183,7 @@ public class CalendarEventViewModelExtensionsTests
     {
         SetUpDetailEvent(MakeEvent(100, calendarId: 1, "Trip"));
 
-        var result = await _calendarService.Object.GetCalendarEventDetailViewModelAsync(
+        var result = await _calendarService.GetCalendarEventDetailViewModelAsync(
             [MakeCalendar(1)], "UTC", 100, true, TestContext.Current.CancellationToken);
 
         Assert.NotNull(result);
@@ -219,11 +201,9 @@ public class CalendarEventViewModelExtensionsTests
     {
         SetUpDetailEvent(MakeEvent(100, calendarId: 1, "Trip"));
         var attachment = new CalendarEventAttachedFileDto { Id = 1, CalendarEventId = 100, Name = "report", Extension = ".zip", Size = 3, Path = "attachments/report.zip" };
-        _calendarService
-            .Setup(s => s.GetCalendarEventAttachedFileAsync(100, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(attachment);
+        _calendarService.OnGetCalendarEventAttachedFileAsync = (id, _) => Task.FromResult(id == 100 ? attachment : null);
 
-        var result = await _calendarService.Object.GetCalendarEventDetailViewModelAsync(
+        var result = await _calendarService.GetCalendarEventDetailViewModelAsync(
             [MakeCalendar(1)], "UTC", 100, true, TestContext.Current.CancellationToken);
 
         Assert.NotNull(result);
@@ -241,15 +221,15 @@ public class CalendarEventViewModelExtensionsTests
     public async Task GetCalendarEventDetailViewModelAsync_CarriesTheReminders_OnlyWhenAskedTo()
     {
         SetUpDetailEvent(MakeEvent(100, calendarId: 1, "Trip"));
-        _calendarService.Setup(s => s.GetCalendarEventRemindersAsync(100, It.IsAny<CancellationToken>()))
-            .ReturnsAsync([new CalendarEventReminderDto { Id = 1, CalendarEventId = 100, MinutesBeforeEvent = 15 }]);
+        _calendarService.OnGetCalendarEventRemindersAsync = (id, _) => Task.FromResult<IEnumerable<CalendarEventReminderDto>>(
+            id == 100 ? [new CalendarEventReminderDto { Id = 1, CalendarEventId = 100, MinutesBeforeEvent = 15 }] : []);
 
-        var owners = await _calendarService.Object.GetCalendarEventDetailViewModelAsync([MakeCalendar(1)], "UTC", 100, true, TestContext.Current.CancellationToken);
-        var others = await _calendarService.Object.GetCalendarEventDetailViewModelAsync([MakeCalendar(1)], "UTC", 100, false, TestContext.Current.CancellationToken);
+        var owners = await _calendarService.GetCalendarEventDetailViewModelAsync([MakeCalendar(1)], "UTC", 100, true, TestContext.Current.CancellationToken);
+        var others = await _calendarService.GetCalendarEventDetailViewModelAsync([MakeCalendar(1)], "UTC", 100, false, TestContext.Current.CancellationToken);
 
         Assert.Contains("\"MinutesBeforeEvent\":15", owners!.SerializedCalendarReminders, StringComparison.Ordinal);
         Assert.Equal("[]", others!.SerializedCalendarReminders);
-        _calendarService.Verify(s => s.GetCalendarEventRemindersAsync(100, It.IsAny<CancellationToken>()), Times.Once);
+        Assert.Equal(100, Assert.Single(_calendarService.GetCalendarEventRemindersAsyncCalls).CalendarEventId);
     }
 
     /// <summary>Passes cancellation token through to the service.</summary>
@@ -259,21 +239,14 @@ public class CalendarEventViewModelExtensionsTests
         using var cts = new CancellationTokenSource();
         var cancellationToken = cts.Token;
         
-        _calendarService
-            .Setup(s => s.GetCalendarEventAsync(It.IsAny<long>(), cancellationToken))
-            .ReturnsAsync(MakeEvent(100, calendarId: 1, "Trip"));
-        _calendarService
-            .Setup(s => s.PrepareHtmlForDisplayAsync(It.IsAny<string>(), cancellationToken))
-            .ReturnsAsync(("", false));
-        _calendarService
-            .Setup(s => s.GetCalendarEventAttachedFileAsync(It.IsAny<long>(), cancellationToken))
-            .ReturnsAsync((CalendarEventAttachedFileDto?)null);
-        _calendarService
-            .Setup(s => s.GetCalendarEventRemindersAsync(It.IsAny<long>(), cancellationToken))
-            .ReturnsAsync([]);
+        _calendarService.OnGetCalendarEventAsync = (_, _) => Task.FromResult<CalendarEventResponse?>(MakeEvent(100, calendarId: 1, "Trip"));
+        _calendarService.OnPrepareHtmlForDisplayAsync = (_, _) => Task.FromResult(("", false));
 
-        await _calendarService.Object.GetCalendarEventDetailViewModelAsync([MakeCalendar(1)], "UTC", 100, true, cancellationToken);
+        await _calendarService.GetCalendarEventDetailViewModelAsync([MakeCalendar(1)], "UTC", 100, true, cancellationToken);
 
-        _calendarService.Verify(s => s.GetCalendarEventAsync(100, cancellationToken), Times.Once);
+        Assert.Equal((100, cancellationToken), Assert.Single(_calendarService.GetCalendarEventAsyncCalls));
+        Assert.All(_calendarService.PrepareHtmlForDisplayAsyncCalls, call => Assert.Equal(cancellationToken, call.Ct));
+        Assert.All(_calendarService.GetCalendarEventAttachedFileAsyncCalls, call => Assert.Equal(cancellationToken, call.Ct));
+        Assert.All(_calendarService.GetCalendarEventRemindersAsyncCalls, call => Assert.Equal(cancellationToken, call.Ct));
     }
 }

@@ -12,7 +12,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Testing;
-using Moq;
 // ReSharper disable UnusedAutoPropertyAccessor.Local
 
 namespace Maroik.Website.Tests.Filters;
@@ -42,7 +41,7 @@ public class ThrottleEmailSendAttributeTests
         var httpContext = new DefaultHttpContext { RequestServices = sp };
         var controller = new FakeController
         {
-            TempData = new TempDataDictionary(httpContext, Mock.Of<ITempDataProvider>()),
+            TempData = new TempDataDictionary(httpContext, new FakeTempDataProvider()),
         };
         var actionDescriptor = new ControllerActionDescriptor
         {
@@ -99,16 +98,16 @@ public class ThrottleEmailSendAttributeTests
     [Fact]
     public async Task OnActionExecutionAsync_NoEmailInArguments_RunsAction_NeverTouchesCache()
     {
-        var cache = new Mock<IDistributedCache>();
-        var (context, _) = BuildContext(boundArgument: "not-an-email", cache.Object);
+        var cache = new FakeDistributedCache();
+        var (context, _) = BuildContext(boundArgument: "not-an-email", cache);
         bool nextCalled = false;
 
         await new ThrottleEmailSendAttribute().OnActionExecutionAsync(context, NextReturning(() => nextCalled = true));
 
         Assert.True(nextCalled);
         Assert.Null(context.Result);
-        cache.Verify(c => c.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
-        cache.Verify(c => c.SetAsync(It.IsAny<string>(), It.IsAny<byte[]>(), It.IsAny<DistributedCacheEntryOptions>(), It.IsAny<CancellationToken>()), Times.Never);
+        Assert.Empty(cache.GetAsyncCalls);
+        Assert.Empty(cache.SetAsyncCalls);
     }
 
     /// <summary>No <see cref="IDistributedCache"/> registered in DI (e.g. Valkey misconfigured): the action still runs, unthrottled.</summary>
@@ -130,9 +129,9 @@ public class ThrottleEmailSendAttributeTests
     [Fact]
     public async Task OnActionExecutionAsync_AddressOnCooldown_RedirectsWithoutRunningAction()
     {
-        var cache = new Mock<IDistributedCache>();
-        cache.Setup(c => c.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([1]);
-        var (context, controller) = BuildContext(boundArgument: "user@example.com", cache.Object);
+        var cache = new FakeDistributedCache();
+        cache.OnGetAsync = (_, _) => Task.FromResult<byte[]?>([1]);
+        var (context, controller) = BuildContext(boundArgument: "user@example.com", cache);
         bool nextCalled = false;
 
         await new ThrottleEmailSendAttribute().OnActionExecutionAsync(context, NextReturning(() => nextCalled = true));
@@ -141,21 +140,22 @@ public class ThrottleEmailSendAttributeTests
         var redirect = Assert.IsType<RedirectToActionResult>(context.Result);
         Assert.Equal("ForgotPassword", redirect.ActionName);
         Assert.Equal("Please wait a moment before requesting another email.", controller.TempData["Error"]);
-        cache.Verify(c => c.SetAsync(It.IsAny<string>(), It.IsAny<byte[]>(), It.IsAny<DistributedCacheEntryOptions>(), It.IsAny<CancellationToken>()), Times.Never);
+        Assert.Empty(cache.SetAsyncCalls);
     }
 
     /// <summary>The cooldown notice goes through the request's <c>IStringLocalizer</c> when one is registered.</summary>
     [Fact]
     public async Task OnActionExecutionAsync_AddressOnCooldown_UsesTheRegisteredLocalizer()
     {
-        var cache = new Mock<IDistributedCache>();
-        cache.Setup(c => c.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([1]);
-        var localizer = new Mock<IStringLocalizer<ThrottleEmailSendAttribute>>();
-        localizer.Setup(l => l[ThrottleEmailSendAttribute.CooldownMessageKey])
-            .Returns(new LocalizedString(ThrottleEmailSendAttribute.CooldownMessageKey, "localized notice"));
+        var cache = new FakeDistributedCache();
+        cache.OnGetAsync = (_, _) => Task.FromResult<byte[]?>([1]);
+        var localizer = new FakeThrottleEmailSendStringLocalizer
+        {
+            OnItem = name => name == ThrottleEmailSendAttribute.CooldownMessageKey ? new LocalizedString(ThrottleEmailSendAttribute.CooldownMessageKey, "localized notice") : null!,
+        };
         var (context, controller) = BuildContext(
-            boundArgument: "user@example.com", cache.Object,
-            configureServices: services => services.AddSingleton(localizer.Object));
+            boundArgument: "user@example.com", cache,
+            configureServices: services => services.AddSingleton<IStringLocalizer<ThrottleEmailSendAttribute>>(localizer));
 
         await new ThrottleEmailSendAttribute().OnActionExecutionAsync(context, NextReturning(() => { }));
 
@@ -171,10 +171,10 @@ public class ThrottleEmailSendAttributeTests
     [InlineData("ko-KR", "잠시 후에 다시 이메일을 요청해 주세요.")]
     public async Task OnActionExecutionAsync_AddressOnCooldown_ResolvesNoticeFromTheRealResx(string culture, string expected)
     {
-        var cache = new Mock<IDistributedCache>();
-        cache.Setup(c => c.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([1]);
+        var cache = new FakeDistributedCache();
+        cache.OnGetAsync = (_, _) => Task.FromResult<byte[]?>([1]);
         var (context, controller) = BuildContext(
-            boundArgument: "user@example.com", cache.Object,
+            boundArgument: "user@example.com", cache,
             configureServices: services => services.AddLocalization(o => o.ResourcesPath = "Resources"));
 
         CultureInfo original = CultureInfo.CurrentUICulture;
@@ -195,14 +195,14 @@ public class ThrottleEmailSendAttributeTests
     [Fact]
     public async Task OnActionExecutionAsync_BuildsCooldownKey_LowercasedTrimmed_NamespacedByAction()
     {
-        var cache = new Mock<IDistributedCache>();
+        var cache = new FakeDistributedCache();
         string? capturedKey = null;
-        cache.Setup(c => c.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .Callback<string, CancellationToken>((key, _) => capturedKey = key)
-            .ReturnsAsync((byte[]?)null);
-        cache.Setup(c => c.SetAsync(It.IsAny<string>(), It.IsAny<byte[]>(), It.IsAny<DistributedCacheEntryOptions>(), It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
-        var (context, _) = BuildContext(boundArgument: "  User@Example.COM  ", cache.Object, action: "Register");
+        cache.OnGetAsync = (key, _) =>
+        {
+            capturedKey = key;
+            return Task.FromResult<byte[]?>(null);
+        };
+        var (context, _) = BuildContext(boundArgument: "  User@Example.COM  ", cache, action: "Register");
 
         await new ThrottleEmailSendAttribute().OnActionExecutionAsync(context, NextReturning(() => { }));
 
@@ -215,36 +215,28 @@ public class ThrottleEmailSendAttributeTests
     [Fact]
     public async Task OnActionExecutionAsync_ExtractsEmail_FromViewModelProperty()
     {
-        var cache = new Mock<IDistributedCache>();
-        cache.Setup(c => c.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync((byte[]?)null);
-        cache.Setup(c => c.SetAsync(It.IsAny<string>(), It.IsAny<byte[]>(), It.IsAny<DistributedCacheEntryOptions>(), It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
-        var (context, _) = BuildContext(boundArgument: new ModelWithEmail { Email = "model@example.com" }, cache.Object);
+        var cache = new FakeDistributedCache();
+        cache.OnGetAsync = (_, _) => Task.FromResult<byte[]?>(null);
+        var (context, _) = BuildContext(boundArgument: new ModelWithEmail { Email = "model@example.com" }, cache);
 
         await new ThrottleEmailSendAttribute().OnActionExecutionAsync(context, NextReturning(() => { }));
 
-        cache.Verify(c => c.SetAsync(
-            It.Is<string>(k => k.Contains("model@example.com", StringComparison.Ordinal)),
-            It.IsAny<byte[]>(), It.IsAny<DistributedCacheEntryOptions>(), It.IsAny<CancellationToken>()), Times.Once);
+        Assert.Contains("model@example.com", Assert.Single(cache.SetAsyncCalls).Key, StringComparison.Ordinal);
     }
 
     /// <summary>A null bound argument (an optional parameter left unbound) is skipped, and the address is found in the next one.</summary>
     [Fact]
     public async Task OnActionExecutionAsync_SkipsANullArgument_AndFindsTheAddressAfterIt()
     {
-        var cache = new Mock<IDistributedCache>();
-        cache.Setup(c => c.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync((byte[]?)null);
-        cache.Setup(c => c.SetAsync(It.IsAny<string>(), It.IsAny<byte[]>(), It.IsAny<DistributedCacheEntryOptions>(), It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
-        var (context, _) = BuildContext(boundArgument: null, cache.Object);
+        var cache = new FakeDistributedCache();
+        cache.OnGetAsync = (_, _) => Task.FromResult<byte[]?>(null);
+        var (context, _) = BuildContext(boundArgument: null, cache);
         context.ActionArguments["returnUrl"] = null;
         context.ActionArguments["email"] = "after-null@example.com";
 
         await new ThrottleEmailSendAttribute().OnActionExecutionAsync(context, NextReturning(() => { }));
 
-        cache.Verify(c => c.SetAsync(
-            It.Is<string>(k => k.Contains("after-null@example.com", StringComparison.Ordinal)),
-            It.IsAny<byte[]>(), It.IsAny<DistributedCacheEntryOptions>(), It.IsAny<CancellationToken>()), Times.Once);
+        Assert.Contains("after-null@example.com", Assert.Single(cache.SetAsyncCalls).Key, StringComparison.Ordinal);
     }
 
     // -- Fail-open on cache errors -----------------------------------------------
@@ -253,27 +245,26 @@ public class ThrottleEmailSendAttributeTests
     [Fact]
     public async Task OnActionExecutionAsync_CacheReadThrows_FailsOpen_RunsAction()
     {
-        var cache = new Mock<IDistributedCache>();
-        cache.Setup(c => c.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ThrowsAsync(new TimeoutException("cache down"));
-        var (context, _) = BuildContext(boundArgument: "user@example.com", cache.Object);
+        var cache = new FakeDistributedCache();
+        cache.OnGetAsync = (_, _) => Task.FromException<byte[]?>(new TimeoutException("cache down"));
+        var (context, _) = BuildContext(boundArgument: "user@example.com", cache);
         bool nextCalled = false;
 
         await new ThrottleEmailSendAttribute().OnActionExecutionAsync(context, NextReturning(() => nextCalled = true));
 
         Assert.True(nextCalled);
         Assert.Null(context.Result);
-        cache.Verify(c => c.SetAsync(It.IsAny<string>(), It.IsAny<byte[]>(), It.IsAny<DistributedCacheEntryOptions>(), It.IsAny<CancellationToken>()), Times.Never);
+        Assert.Empty(cache.SetAsyncCalls);
     }
 
     /// <summary>A cache write failure after a successful send is swallowed -- the response the user already saw is unaffected.</summary>
     [Fact]
     public async Task OnActionExecutionAsync_CacheWriteThrows_IsSwallowed()
     {
-        var cache = new Mock<IDistributedCache>();
-        cache.Setup(c => c.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync((byte[]?)null);
-        cache.Setup(c => c.SetAsync(It.IsAny<string>(), It.IsAny<byte[]>(), It.IsAny<DistributedCacheEntryOptions>(), It.IsAny<CancellationToken>()))
-            .ThrowsAsync(new TimeoutException("cache down"));
-        var (context, _) = BuildContext(boundArgument: "user@example.com", cache.Object);
+        var cache = new FakeDistributedCache();
+        cache.OnGetAsync = (_, _) => Task.FromResult<byte[]?>(null);
+        cache.OnSetAsync = (_, _, _, _) => Task.FromException(new TimeoutException("cache down"));
+        var (context, _) = BuildContext(boundArgument: "user@example.com", cache);
         bool nextCalled = false;
 
         var exception = await Record.ExceptionAsync(() =>
@@ -289,18 +280,20 @@ public class ThrottleEmailSendAttributeTests
     [Fact]
     public async Task OnActionExecutionAsync_SuccessfulSend_ArmsCooldown_WithConfiguredWindow()
     {
-        var cache = new Mock<IDistributedCache>();
-        cache.Setup(c => c.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync((byte[]?)null);
+        var cache = new FakeDistributedCache();
+        cache.OnGetAsync = (_, _) => Task.FromResult<byte[]?>(null);
         DistributedCacheEntryOptions? capturedOptions = null;
-        cache.Setup(c => c.SetAsync(It.IsAny<string>(), It.IsAny<byte[]>(), It.IsAny<DistributedCacheEntryOptions>(), It.IsAny<CancellationToken>()))
-            .Callback<string, byte[], DistributedCacheEntryOptions, CancellationToken>((_, _, opts, _) => capturedOptions = opts)
-            .Returns(Task.CompletedTask);
-        var (context, _) = BuildContext(boundArgument: "user@example.com", cache.Object);
+        cache.OnSetAsync = (_, _, opts, _) =>
+        {
+            capturedOptions = opts;
+            return Task.CompletedTask;
+        };
+        var (context, _) = BuildContext(boundArgument: "user@example.com", cache);
 
         var sut = new ThrottleEmailSendAttribute { WindowSeconds = 30 };
         await sut.OnActionExecutionAsync(context, NextReturning(() => { }));
 
-        cache.Verify(c => c.SetAsync(It.IsAny<string>(), It.IsAny<byte[]>(), It.IsAny<DistributedCacheEntryOptions>(), It.IsAny<CancellationToken>()), Times.Once);
+        Assert.Single(cache.SetAsyncCalls);
         Assert.Equal(TimeSpan.FromSeconds(30), capturedOptions!.AbsoluteExpirationRelativeToNow);
     }
 
@@ -313,54 +306,46 @@ public class ThrottleEmailSendAttributeTests
     [Fact]
     public async Task OnActionExecutionAsync_ModelStateInvalidAfterAction_ReleasesCooldown()
     {
-        var cache = new Mock<IDistributedCache>();
-        cache.Setup(c => c.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync((byte[]?)null);
-        cache.Setup(c => c.SetAsync(It.IsAny<string>(), It.IsAny<byte[]>(), It.IsAny<DistributedCacheEntryOptions>(), It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
-        cache.Setup(c => c.RemoveAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
-        var (context, _) = BuildContext(boundArgument: "user@example.com", cache.Object);
+        var cache = new FakeDistributedCache();
+        cache.OnGetAsync = (_, _) => Task.FromResult<byte[]?>(null);
+        var (context, _) = BuildContext(boundArgument: "user@example.com", cache);
         context.ModelState.AddModelError("Nickname", "Nickname is required.");
 
         await new ThrottleEmailSendAttribute().OnActionExecutionAsync(context, NextReturning(() => { }));
 
-        cache.Verify(c => c.SetAsync(It.IsAny<string>(), It.IsAny<byte[]>(), It.IsAny<DistributedCacheEntryOptions>(), It.IsAny<CancellationToken>()), Times.Once);
-        cache.Verify(c => c.RemoveAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
+        Assert.Single(cache.SetAsyncCalls);
+        Assert.Single(cache.RemoveAsyncCalls);
     }
 
     /// <summary>An action that threw releases the claimed cooldown window too, for the same reason.</summary>
     [Fact]
     public async Task OnActionExecutionAsync_ActionThrew_ReleasesCooldown()
     {
-        var cache = new Mock<IDistributedCache>();
-        cache.Setup(c => c.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync((byte[]?)null);
-        cache.Setup(c => c.SetAsync(It.IsAny<string>(), It.IsAny<byte[]>(), It.IsAny<DistributedCacheEntryOptions>(), It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
-        cache.Setup(c => c.RemoveAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
-        var (context, _) = BuildContext(boundArgument: "user@example.com", cache.Object);
+        var cache = new FakeDistributedCache();
+        cache.OnGetAsync = (_, _) => Task.FromResult<byte[]?>(null);
+        var (context, _) = BuildContext(boundArgument: "user@example.com", cache);
 
         await new ThrottleEmailSendAttribute().OnActionExecutionAsync(
             context, NextReturning(() => { }, exception: new InvalidOperationException("boom")));
 
-        cache.Verify(c => c.SetAsync(It.IsAny<string>(), It.IsAny<byte[]>(), It.IsAny<DistributedCacheEntryOptions>(), It.IsAny<CancellationToken>()), Times.Once);
-        cache.Verify(c => c.RemoveAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
+        Assert.Single(cache.SetAsyncCalls);
+        Assert.Single(cache.RemoveAsyncCalls);
     }
 
     /// <summary>A cache that cannot release the claim (unavailable) must not turn the response into an error — the caller only loses this window's retry.</summary>
     [Fact]
     public async Task OnActionExecutionAsync_ReleaseFails_IsSwallowed()
     {
-        var cache = new Mock<IDistributedCache>();
-        cache.Setup(c => c.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync((byte[]?)null);
-        cache.Setup(c => c.SetAsync(It.IsAny<string>(), It.IsAny<byte[]>(), It.IsAny<DistributedCacheEntryOptions>(), It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
-        cache.Setup(c => c.RemoveAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ThrowsAsync(new InvalidOperationException("cache down"));
-        var (context, _) = BuildContext(boundArgument: "user@example.com", cache.Object);
+        var cache = new FakeDistributedCache();
+        cache.OnGetAsync = (_, _) => Task.FromResult<byte[]?>(null);
+        cache.OnRemoveAsync = (_, _) => Task.FromException(new InvalidOperationException("cache down"));
+        var (context, _) = BuildContext(boundArgument: "user@example.com", cache);
 
         var ex = await Record.ExceptionAsync(() => new ThrottleEmailSendAttribute().OnActionExecutionAsync(
             context, NextReturning(() => { }, exception: new InvalidOperationException("boom"))));
 
         Assert.Null(ex);
-        cache.Verify(c => c.RemoveAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
+        Assert.Single(cache.RemoveAsyncCalls);
     }
 
     /// <summary>
@@ -372,33 +357,28 @@ public class ThrottleEmailSendAttributeTests
     [Fact]
     public async Task OnActionExecutionAsync_ActionAsksForRelease_ReleasesCooldown()
     {
-        var cache = new Mock<IDistributedCache>();
-        cache.Setup(c => c.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync((byte[]?)null);
-        cache.Setup(c => c.SetAsync(It.IsAny<string>(), It.IsAny<byte[]>(), It.IsAny<DistributedCacheEntryOptions>(), It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
-        cache.Setup(c => c.RemoveAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
-        var (context, _) = BuildContext(boundArgument: "user@example.com", cache.Object);
+        var cache = new FakeDistributedCache();
+        cache.OnGetAsync = (_, _) => Task.FromResult<byte[]?>(null);
+        var (context, _) = BuildContext(boundArgument: "user@example.com", cache);
 
         await new ThrottleEmailSendAttribute().OnActionExecutionAsync(
             context, NextReturning(() => ThrottleEmailSendAttribute.ReleaseCooldownClaim(context.HttpContext)));
 
-        cache.Verify(c => c.SetAsync(It.IsAny<string>(), It.IsAny<byte[]>(), It.IsAny<DistributedCacheEntryOptions>(), It.IsAny<CancellationToken>()), Times.Once);
-        cache.Verify(c => c.RemoveAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
+        Assert.Single(cache.SetAsyncCalls);
+        Assert.Single(cache.RemoveAsyncCalls);
     }
 
     /// <summary>An action that does not ask for a release keeps its claim (the mail was really sent / attempted).</summary>
     [Fact]
     public async Task OnActionExecutionAsync_ActionDoesNotAskForRelease_KeepsCooldown()
     {
-        var cache = new Mock<IDistributedCache>();
-        cache.Setup(c => c.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync((byte[]?)null);
-        cache.Setup(c => c.SetAsync(It.IsAny<string>(), It.IsAny<byte[]>(), It.IsAny<DistributedCacheEntryOptions>(), It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
-        var (context, _) = BuildContext(boundArgument: "user@example.com", cache.Object);
+        var cache = new FakeDistributedCache();
+        cache.OnGetAsync = (_, _) => Task.FromResult<byte[]?>(null);
+        var (context, _) = BuildContext(boundArgument: "user@example.com", cache);
 
         await new ThrottleEmailSendAttribute().OnActionExecutionAsync(context, NextReturning(() => { }));
 
-        cache.Verify(c => c.RemoveAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+        Assert.Empty(cache.RemoveAsyncCalls);
     }
 
     // -- Race fix: claim happens before the action runs -----------------------------
@@ -413,14 +393,18 @@ public class ThrottleEmailSendAttributeTests
     public async Task OnActionExecutionAsync_ClaimsCooldown_BeforeActionRuns()
     {
         var callOrder = new List<string>();
-        var cache = new Mock<IDistributedCache>();
-        cache.Setup(c => c.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .Callback(() => callOrder.Add("get"))
-            .ReturnsAsync((byte[]?)null);
-        cache.Setup(c => c.SetAsync(It.IsAny<string>(), It.IsAny<byte[]>(), It.IsAny<DistributedCacheEntryOptions>(), It.IsAny<CancellationToken>()))
-            .Callback(() => callOrder.Add("set"))
-            .Returns(Task.CompletedTask);
-        var (context, _) = BuildContext(boundArgument: "user@example.com", cache.Object);
+        var cache = new FakeDistributedCache();
+        cache.OnGetAsync = (_, _) =>
+        {
+            callOrder.Add("get");
+            return Task.FromResult<byte[]?>(null);
+        };
+        cache.OnSetAsync = (_, _, _, _) =>
+        {
+            callOrder.Add("set");
+            return Task.CompletedTask;
+        };
+        var (context, _) = BuildContext(boundArgument: "user@example.com", cache);
 
         await new ThrottleEmailSendAttribute().OnActionExecutionAsync(
             context, NextReturning(() => callOrder.Add("action")));
@@ -435,9 +419,9 @@ public class ThrottleEmailSendAttributeTests
     [Fact]
     public async Task OnActionExecutionAsync_LogsAWarning_WhenTheCacheReadFails()
     {
-        var cache = new Mock<IDistributedCache>();
-        cache.Setup(c => c.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ThrowsAsync(new TimeoutException("cache down"));
-        var (context, _) = BuildContext(boundArgument: "user@example.com", cache.Object,
+        var cache = new FakeDistributedCache();
+        cache.OnGetAsync = (_, _) => Task.FromException<byte[]?>(new TimeoutException("cache down"));
+        var (context, _) = BuildContext(boundArgument: "user@example.com", cache,
             configureServices: services => services.AddFakeLogging());
         var collector = context.HttpContext.RequestServices.GetFakeLogCollector();
 
@@ -453,12 +437,10 @@ public class ThrottleEmailSendAttributeTests
     [Fact]
     public async Task OnActionExecutionAsync_LogsAWarning_WhenReleasingTheClaimFails()
     {
-        var cache = new Mock<IDistributedCache>();
-        cache.Setup(c => c.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync((byte[]?)null);
-        cache.Setup(c => c.SetAsync(It.IsAny<string>(), It.IsAny<byte[]>(), It.IsAny<DistributedCacheEntryOptions>(), It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
-        cache.Setup(c => c.RemoveAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ThrowsAsync(new TimeoutException("cache down"));
-        var (context, _) = BuildContext(boundArgument: "user@example.com", cache.Object,
+        var cache = new FakeDistributedCache();
+        cache.OnGetAsync = (_, _) => Task.FromResult<byte[]?>(null);
+        cache.OnRemoveAsync = (_, _) => Task.FromException(new TimeoutException("cache down"));
+        var (context, _) = BuildContext(boundArgument: "user@example.com", cache,
             configureServices: services => services.AddFakeLogging());
         FakeLogCollector collector = context.HttpContext.RequestServices.GetFakeLogCollector();
         context.ModelState.AddModelError("Email", "invalid"); // bounced on validation -> claim is released

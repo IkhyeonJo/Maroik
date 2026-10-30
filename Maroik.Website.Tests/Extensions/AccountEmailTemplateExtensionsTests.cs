@@ -1,7 +1,7 @@
 using Maroik.Website.Controllers;
 using Maroik.Website.Extensions;
+using Maroik.Website.Tests.Fixtures;
 using Microsoft.AspNetCore.Mvc.Localization;
-using Moq;
 
 namespace Maroik.Website.Tests.Extensions;
 
@@ -17,9 +17,7 @@ public class AccountEmailTemplateExtensionsTests
     /// <summary>A localizer that returns each key as its own value.</summary>
     private static IHtmlLocalizer<AccountController> MakeEchoLocalizer()
     {
-        var mock = new Mock<IHtmlLocalizer<AccountController>>();
-        mock.Setup(l => l[It.IsAny<string>()]).Returns((string name) => new LocalizedHtmlString(name, name));
-        return mock.Object;
+        return new FakeAccountControllerHtmlLocalizer { OnItem = name => new LocalizedHtmlString(name, name) };
     }
 
     /// <summary>Each field of the confirmation-email template is sourced from its own, distinct resource key.</summary>

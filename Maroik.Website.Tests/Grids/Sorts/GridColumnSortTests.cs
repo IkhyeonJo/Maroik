@@ -3,7 +3,6 @@ using Maroik.Website.Grids.Columns;
 using Maroik.Website.Grids.Interfaces;
 using Maroik.Website.Grids.Sorts;
 using Maroik.Website.Tests.Grids.Fixtures;
-using Moq;
 
 namespace Maroik.Website.Tests.Grids.Sorts;
 
@@ -22,8 +21,7 @@ public class GridColumnSortTests
     [Fact]
     public void Index_NotSorted_Null()
     {
-        sort.Column.Grid.Sort = Fake.Of<IGridSort<GridModel>>();
-        Mock.Get(sort.Column.Grid.Sort).Setup(mock => mock[sort.Column]).Returns(((Int32, GridSortOrder)?)null);
+        sort.Column.Grid.Sort = new FakeGridSort<GridModel> { OnItem = column => column == sort.Column ? null : null };
 
         Assert.Null(sort.Index);
     }
@@ -31,8 +29,7 @@ public class GridColumnSortTests
     [Fact]
     public void Index_ReturnsFromGridSort()
     {
-        sort.Column.Grid.Sort = Fake.Of<IGridSort<GridModel>>();
-        Mock.Get(sort.Column.Grid.Sort).Setup(mock => mock[sort.Column]).Returns((2, GridSortOrder.Desc));
+        sort.Column.Grid.Sort = new FakeGridSort<GridModel> { OnItem = column => column == sort.Column ? (2, GridSortOrder.Desc) : null };
 
         Assert.Equal(2, sort.Index);
     }
@@ -40,8 +37,7 @@ public class GridColumnSortTests
     [Fact]
     public void Order_ReturnsFromGridSort()
     {
-        sort.Column.Grid.Sort = Fake.Of<IGridSort<GridModel>>();
-        Mock.Get(sort.Column.Grid.Sort).Setup(mock => mock[sort.Column]).Returns((0, GridSortOrder.Desc));
+        sort.Column.Grid.Sort = new FakeGridSort<GridModel> { OnItem = column => column == sort.Column ? (0, GridSortOrder.Desc) : null };
 
         Assert.Equal(GridSortOrder.Desc, sort.Order);
     }
@@ -98,8 +94,7 @@ public class GridColumnSortTests
             new GridModel { Name = "a" }
         }.AsQueryable();
 
-        sort.Column.Grid.Sort = Fake.Of<IGridSort<GridModel>>();
-        Mock.Get(sort.Column.Grid.Sort).Setup(mock => mock[sort.Column]).Returns((0, GridSortOrder.Asc));
+        sort.Column.Grid.Sort = new FakeGridSort<GridModel> { OnItem = column => column == sort.Column ? (0, GridSortOrder.Asc) : null };
 
         IQueryable<GridModel> expected = items.OrderBy(sort.Column.Expression);
         IQueryable<GridModel> actual = sort.By(items);
@@ -116,8 +111,7 @@ public class GridColumnSortTests
             new GridModel { Name = "b" }
         }.AsQueryable();
 
-        sort.Column.Grid.Sort = Fake.Of<IGridSort<GridModel>>();
-        Mock.Get(sort.Column.Grid.Sort).Setup(mock => mock[sort.Column]).Returns((0, GridSortOrder.Desc));
+        sort.Column.Grid.Sort = new FakeGridSort<GridModel> { OnItem = column => column == sort.Column ? (0, GridSortOrder.Desc) : null };
 
         IQueryable<GridModel> expected = items.OrderByDescending(sort.Column.Expression);
         IQueryable<GridModel> actual = sort.By(items);
@@ -143,8 +137,7 @@ public class GridColumnSortTests
             new GridModel { Name = "a", ShortText = "c" }
         }.AsQueryable().OrderBy(item => item.ShortText);
 
-        sort.Column.Grid.Sort = Fake.Of<IGridSort<GridModel>>();
-        Mock.Get(sort.Column.Grid.Sort).Setup(mock => mock[sort.Column]).Returns((1, GridSortOrder.Asc));
+        sort.Column.Grid.Sort = new FakeGridSort<GridModel> { OnItem = column => column == sort.Column ? (1, GridSortOrder.Asc) : null };
 
         IQueryable<GridModel> expected = items.ThenBy(item => item.Name);
         IQueryable<GridModel> actual = sort.ThenBy(items);
@@ -161,8 +154,7 @@ public class GridColumnSortTests
             new GridModel { Name = "b", ShortText = "c" }
         }.AsQueryable().OrderBy(item => item.ShortText);
 
-        sort.Column.Grid.Sort = Fake.Of<IGridSort<GridModel>>();
-        Mock.Get(sort.Column.Grid.Sort).Setup(mock => mock[sort.Column]).Returns((1, GridSortOrder.Desc));
+        sort.Column.Grid.Sort = new FakeGridSort<GridModel> { OnItem = column => column == sort.Column ? (1, GridSortOrder.Desc) : null };
 
         IQueryable<GridModel> expected = items.ThenByDescending(item => item.Name);
         IQueryable<GridModel> actual = sort.ThenBy(items);

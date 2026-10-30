@@ -3,9 +3,9 @@ using Maroik.Website.Grids.Columns;
 using Maroik.Website.Grids.Filters;
 using Maroik.Website.Grids.Interfaces;
 using Maroik.Website.Tests.Grids.Fixtures;
+using Maroik.Website.Tests.Fixtures;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using Moq;
 
 namespace Maroik.Website.Tests.Grids.Filters;
 
@@ -248,7 +248,7 @@ public class GridFiltersTests
     [Fact]
     public void OptionsFor_ForBoolean()
     {
-        SelectListItem[] actual = filters.OptionsFor(Fake.Of<IGridColumn<GridModel, Boolean>>()).ToArray();
+        SelectListItem[] actual = filters.OptionsFor(new GridColumn<GridModel, Boolean>(column.Grid, _ => default(Boolean)!)).ToArray();
 
         Assert.Equal(3, actual.Length);
         Assert.Equal("", actual[0].Value);
@@ -262,7 +262,7 @@ public class GridFiltersTests
     [Fact]
     public void OptionsFor_ForNullableBoolean()
     {
-        SelectListItem[] actual = filters.OptionsFor(Fake.Of<IGridColumn<GridModel, Boolean?>>()).ToArray();
+        SelectListItem[] actual = filters.OptionsFor(new GridColumn<GridModel, Boolean?>(column.Grid, _ => default(Boolean?)!)).ToArray();
 
         Assert.Equal(3, actual.Length);
         Assert.Equal("", actual[0].Value);
@@ -276,7 +276,7 @@ public class GridFiltersTests
     [Fact]
     public void OptionsFor_ForEnumerableBoolean()
     {
-        SelectListItem[] actual = filters.OptionsFor(Fake.Of<IGridColumn<GridModel, Boolean?[]>>()).ToArray();
+        SelectListItem[] actual = filters.OptionsFor(new GridColumn<GridModel, Boolean?[]>(column.Grid, _ => default(Boolean?[])!)).ToArray();
 
         Assert.Equal(3, actual.Length);
         Assert.Equal("", actual[0].Value);
@@ -302,11 +302,10 @@ public class GridFiltersTests
     [Fact]
     public void OptionsFor_ForEnum()
     {
-        IHtmlHelper helper = Fake.Of<IHtmlHelper>();
+        FakeHtmlHelper helper = new();
         GridColumn<GridModel, TestEnum> enumColumn = new(column.Grid, _ => TestEnum.First);
-        column.Grid.HttpContext = Fake.Of<HttpContext>();
-        Mock.Get(column.Grid.HttpContext).Setup(mock => mock.RequestServices.GetService(typeof(IHtmlHelper))).Returns(helper);
-        Mock.Get(helper).Setup(mock => mock.GetEnumSelectList(typeof(TestEnum))).Returns(new[] { new SelectListItem { Value = "0", Text = "1st" }, new SelectListItem { Value = "1", Text = "2nd" } });
+        column.Grid.HttpContext = new DefaultHttpContext { RequestServices = new FakeServiceProvider((typeof(IHtmlHelper), helper)) };
+        helper.OnGetEnumSelectListWithEnumType = type => type == typeof(TestEnum) ? new[] { new SelectListItem { Value = "0", Text = "1st" }, new SelectListItem { Value = "1", Text = "2nd" } } : [];
 
         SelectListItem[] actual = filters.OptionsFor(enumColumn).ToArray();
 
@@ -323,11 +322,10 @@ public class GridFiltersTests
     [Fact]
     public void OptionsFor_ForNullableEnum()
     {
-        IHtmlHelper helper = Fake.Of<IHtmlHelper>();
+        FakeHtmlHelper helper = new();
         GridColumn<GridModel, TestEnum?> enumColumn = new(column.Grid, _ => TestEnum.First);
-        column.Grid.HttpContext = Fake.Of<HttpContext>();
-        Mock.Get(column.Grid.HttpContext).Setup(mock => mock.RequestServices.GetService(typeof(IHtmlHelper))).Returns(helper);
-        Mock.Get(helper).Setup(mock => mock.GetEnumSelectList(typeof(TestEnum))).Returns(new[] { new SelectListItem { Value = "0", Text = "1st" }, new SelectListItem { Value = "1", Text = "2nd" } });
+        column.Grid.HttpContext = new DefaultHttpContext { RequestServices = new FakeServiceProvider((typeof(IHtmlHelper), helper)) };
+        helper.OnGetEnumSelectListWithEnumType = type => type == typeof(TestEnum) ? new[] { new SelectListItem { Value = "0", Text = "1st" }, new SelectListItem { Value = "1", Text = "2nd" } } : [];
 
         SelectListItem[] actual = filters.OptionsFor(enumColumn).ToArray();
 
@@ -344,11 +342,10 @@ public class GridFiltersTests
     [Fact]
     public void OptionsFor_ForEnumerableEnum()
     {
-        IHtmlHelper helper = Fake.Of<IHtmlHelper>();
-        column.Grid.HttpContext = Fake.Of<HttpContext>();
-        Mock.Get(column.Grid.HttpContext).Setup(mock => mock.RequestServices.GetService(typeof(IHtmlHelper))).Returns(helper);
+        FakeHtmlHelper helper = new();
+        column.Grid.HttpContext = new DefaultHttpContext { RequestServices = new FakeServiceProvider((typeof(IHtmlHelper), helper)) };
         GridColumn<GridModel, IEnumerable<TestEnum?>> enumColumn = new(column.Grid, _ => new TestEnum?[] { TestEnum.First });
-        Mock.Get(helper).Setup(mock => mock.GetEnumSelectList(typeof(TestEnum))).Returns(new[] { new SelectListItem { Value = "0", Text = "1st" }, new SelectListItem { Value = "1", Text = "2nd" } });
+        helper.OnGetEnumSelectListWithEnumType = type => type == typeof(TestEnum) ? new[] { new SelectListItem { Value = "0", Text = "1st" }, new SelectListItem { Value = "1", Text = "2nd" } } : [];
 
         SelectListItem[] actual = filters.OptionsFor(enumColumn).ToArray();
 
@@ -365,7 +362,7 @@ public class GridFiltersTests
     [Fact]
     public void OptionsFor_ForOtherTypes()
     {
-        Assert.Empty(filters.OptionsFor(Fake.Of<IGridColumn<GridModel, String>>()));
+        Assert.Empty(filters.OptionsFor(new GridColumn<GridModel, String>(column.Grid, _ => default(String)!)));
     }
 
     [Fact]

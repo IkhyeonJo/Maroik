@@ -1,6 +1,8 @@
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Domain.Accounts;
+using Maroik.Website.Constants;
 using Maroik.Website.Services;
+using Maroik.Website.Tests.Fixtures;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Session;
@@ -10,35 +12,34 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Logging.Testing;
 using Microsoft.Extensions.Options;
-using Moq;
 
 namespace Maroik.Website.Tests.Services;
 
 /// <summary>
 /// Unit tests for <see cref="SessionService"/>.
-/// <see cref="IHttpContextAccessor"/> and <see cref="ISession"/> are replaced with Moq mocks.
+/// <see cref="IHttpContextAccessor"/> is the real accessor and <see cref="ISession"/> an in-memory fake.
 /// Verifies that <c>SetAccount</c> serialises an <see cref="Maroik.Core.Contract.Dtos.AccountResponse"/>
 /// to JSON and that <c>GetAccountAsync</c> correctly deserializes it back.
 /// </summary>
 public class SessionServiceTests
 {
-    /// <summary>Mock <c>IHttpContextAccessor</c> injected into the system under test.</summary>
-    private readonly Mock<IHttpContextAccessor> _httpContextAccessor = new();
-    /// <summary>Mock <c>ISession</c> injected into the system under test.</summary>
-    private readonly Mock<ISession> _session = new();
+    /// <summary>The accessor injected into the system under test (no request until <see cref="SetupContext"/>).</summary>
+    private readonly HttpContextAccessor _httpContextAccessor = new();
+    /// <summary>In-memory <c>ISession</c> the request carries.</summary>
+    private readonly FakeSession _session = new();
 
     /// <summary>Captures the log entries the system under test writes.</summary>
     private readonly FakeLogger<SessionService> _logger = new();
 
-    /// <summary>The service under test over the mocked accessor and the capturing logger.</summary>
-    private SessionService CreateSut() => new(_httpContextAccessor.Object, _logger);
+    /// <summary>The service under test over the accessor and the capturing logger.</summary>
+    private SessionService CreateSut() => new(_httpContextAccessor, _logger);
 
-    /// <summary>Makes the accessor return an HTTP context whose session is the mocked session.</summary>
+    /// <summary>Makes the accessor return an HTTP context whose session is the fake session.</summary>
     private void SetupContext()
     {
-        var httpContext = new Mock<HttpContext>();
-        httpContext.Setup(c => c.Session).Returns(_session.Object);
-        _httpContextAccessor.Setup(a => a.HttpContext).Returns(httpContext.Object);
+        var httpContext = new DefaultHttpContext();
+        httpContext.Features.Set<ISessionFeature>(new SessionFeature { Session = _session });
+        _httpContextAccessor.HttpContext = httpContext;
     }
 
     // -- Helpers --------------------------------------------------------------
@@ -57,7 +58,6 @@ public class SessionServiceTests
     [Fact]
     public async Task GetAccount_ReturnsNull_WhenHttpContextIsNull()
     {
-        _httpContextAccessor.Setup(a => a.HttpContext).Returns(((HttpContext?)null)!);
         var sut = CreateSut();
 
         AccountResponse? result = await sut.GetAccountAsync(TestContext.Current.CancellationToken);
@@ -70,8 +70,6 @@ public class SessionServiceTests
     public async Task GetAccount_ReturnsNull_WhenSessionKeyDoesNotExist()
     {
         SetupContext();
-        byte[]? outBytes = null!;
-        _session.Setup(s => s.TryGetValue(It.IsAny<string>(), out outBytes)).Returns(false);
         var sut = CreateSut();
 
         AccountResponse? result = await sut.GetAccountAsync(TestContext.Current.CancellationToken);
@@ -85,9 +83,9 @@ public class SessionServiceTests
     {
         SetupContext();
         var account = SampleAccount();
-        byte[]? bytes = System.Text.Encoding.UTF8.GetBytes(
+        byte[] bytes = System.Text.Encoding.UTF8.GetBytes(
             System.Text.Json.JsonSerializer.Serialize(account));
-        _session.Setup(s => s.TryGetValue(It.IsAny<string>(), out bytes)).Returns(true);
+        _session.Values[SessionKeys.Account] = bytes;
         var sut = CreateSut();
 
         AccountResponse? result = await sut.GetAccountAsync(TestContext.Current.CancellationToken);
@@ -102,8 +100,8 @@ public class SessionServiceTests
     public async Task GetAccount_ReturnsNull_WhenSessionDataIsInvalidJson()
     {
         SetupContext();
-        byte[]? bytes = System.Text.Encoding.UTF8.GetBytes("not valid json {{{{");
-        _session.Setup(s => s.TryGetValue(It.IsAny<string>(), out bytes)).Returns(true);
+        byte[] bytes = System.Text.Encoding.UTF8.GetBytes("not valid json {{{{");
+        _session.Values[SessionKeys.Account] = bytes;
         var sut = CreateSut();
 
         AccountResponse? result = await sut.GetAccountAsync(TestContext.Current.CancellationToken);
@@ -116,8 +114,8 @@ public class SessionServiceTests
     public async Task GetAccount_ReturnsNull_WhenSessionBytesAreEmpty()
     {
         SetupContext();
-        byte[]? bytes = [];
-        _session.Setup(s => s.TryGetValue(It.IsAny<string>(), out bytes)).Returns(true);
+        byte[] bytes = [];
+        _session.Values[SessionKeys.Account] = bytes;
         var sut = CreateSut();
 
         AccountResponse? result = await sut.GetAccountAsync(TestContext.Current.CancellationToken);
@@ -167,9 +165,7 @@ public class SessionServiceTests
     {
         var httpContext = new DefaultHttpContext();
         httpContext.Features.Set<ISessionFeature>(new SessionFeature { Session = session });
-        var accessor = new Mock<IHttpContextAccessor>();
-        accessor.Setup(a => a.HttpContext).Returns(httpContext);
-        return new SessionService(accessor.Object, _logger);
+        return new SessionService(new HttpContextAccessor { HttpContext = httpContext }, _logger);
     }
 
     /// <summary>A real <see cref="DistributedSession"/> under <see cref="SessionKey"/> over <paramref name="store"/>.</summary>
@@ -225,19 +221,19 @@ public class SessionServiceTests
     public void SetAccount_CallsSessionSet_WithSerializedAccount()
     {
         SetupContext();
-        _session.Setup(s => s.Set(It.IsAny<string>(), It.IsAny<byte[]>()));
         var sut = CreateSut();
 
         sut.SetAccount(SampleAccount());
 
-        _session.Verify(s => s.Set(It.IsAny<string>(), It.IsAny<byte[]>()), Times.Once);
+        var set = Assert.Single(_session.SetCalls);
+        Assert.Equal(SessionKeys.Account, set.Key);
+        Assert.Equal("user@example.com", System.Text.Json.JsonSerializer.Deserialize<AccountResponse>(set.Value)?.Email);
     }
 
     /// <summary>Verifies that <c>SetAccount</c> does not throw when http context is null.</summary>
     [Fact]
     public void SetAccount_DoesNotThrow_WhenHttpContextIsNull()
     {
-        _httpContextAccessor.Setup(a => a.HttpContext).Returns(((HttpContext?)null)!);
         var sut = CreateSut();
 
         var ex = Record.Exception(() => sut.SetAccount(SampleAccount()));
@@ -251,19 +247,17 @@ public class SessionServiceTests
     public void RemoveAccount_CallsSessionRemove()
     {
         SetupContext();
-        _session.Setup(s => s.Remove(It.IsAny<string>()));
         var sut = CreateSut();
 
         sut.RemoveAccount();
 
-        _session.Verify(s => s.Remove(It.IsAny<string>()), Times.Once);
+        Assert.Equal([SessionKeys.Account], _session.RemoveCalls);
     }
 
     /// <summary>Verifies that <c>RemoveAccount</c> does not throw when http context is null.</summary>
     [Fact]
     public void RemoveAccount_DoesNotThrow_WhenHttpContextIsNull()
     {
-        _httpContextAccessor.Setup(a => a.HttpContext).Returns(((HttpContext?)null)!);
         var sut = CreateSut();
 
         var ex = Record.Exception(sut.RemoveAccount);
@@ -279,8 +273,8 @@ public class SessionServiceTests
     public async Task GetAccount_LogsAWarning_WhenTheStoredSessionIsNotValidJson()
     {
         SetupContext();
-        byte[]? bytes = System.Text.Encoding.UTF8.GetBytes("{not json secret-9f3a");
-        _session.Setup(s => s.TryGetValue(It.IsAny<string>(), out bytes)).Returns(true);
+        byte[] bytes = System.Text.Encoding.UTF8.GetBytes("{not json secret-9f3a");
+        _session.Values[SessionKeys.Account] = bytes;
 
         Assert.Null(await CreateSut().GetAccountAsync(TestContext.Current.CancellationToken));
 

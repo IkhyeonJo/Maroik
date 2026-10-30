@@ -505,7 +505,7 @@ public class GridColumnExtensionsTests
         column.Filter.DefaultMethod = "equals";
         column.Filter.Type = GridFilterType.Double;
         column.Sort.FirstOrder = GridSortOrder.Desc;
-        column.Filter.First = Fake.Of<IGridFilter>();
+        column.Filter.First = new FakeGridFilter();
 
         Assert.Empty(column.AsAttributes());
     }
@@ -545,7 +545,7 @@ public class GridColumnExtensionsTests
         column.Filter.DefaultMethod = "equals";
         column.Filter.Type = GridFilterType.Double;
         column.Sort.FirstOrder = GridSortOrder.Desc;
-        column.Filter.First = Fake.Of<IGridFilter>();
+        column.Filter.First = new FakeGridFilter();
         column.Grid.Query = HttpUtility.ParseQueryString("sort=name asc");
 
         IDictionary<String, Object?> actual = column.AsAttributes();

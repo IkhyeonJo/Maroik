@@ -1,7 +1,6 @@
 using Maroik.Website.Constants;
 using Maroik.Website.Extensions;
-using Microsoft.Extensions.Caching.Distributed;
-using Moq;
+using Maroik.Website.Tests.Fixtures;
 
 namespace Maroik.Website.Tests.Extensions;
 
@@ -16,13 +15,10 @@ public class NavigationCacheExtensionsTests
     [Fact]
     public async Task InvalidateNavigationMenuCacheAsync_RemovesAllSixNavigationCacheKeys()
     {
-        var cache = new Mock<IDistributedCache>();
-        var removedKeys = new List<string>();
-        cache.Setup(c => c.RemoveAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .Callback<string, CancellationToken>((key, _) => removedKeys.Add(key))
-            .Returns(Task.CompletedTask);
+        var cache = new FakeDistributedCache();
 
-        await cache.Object.InvalidateNavigationMenuCacheAsync();
+        await cache.InvalidateNavigationMenuCacheAsync();
+        var removedKeys = cache.RemoveAsyncCalls.Select(c => c.Key).ToList();
 
         Assert.Equal(
             new[]
@@ -41,12 +37,13 @@ public class NavigationCacheExtensionsTests
     [Fact]
     public async Task InvalidateNavigationMenuCacheAsync_PropagatesFailure_WhenAnyRemoveFails()
     {
-        var cache = new Mock<IDistributedCache>();
-        cache.Setup(c => c.RemoveAsync(NavigationCacheKeys.UserCategories, It.IsAny<CancellationToken>()))
-            .ThrowsAsync(new InvalidOperationException("cache unavailable"));
-        cache.Setup(c => c.RemoveAsync(It.IsNotIn(NavigationCacheKeys.UserCategories), It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
+        var cache = new FakeDistributedCache
+        {
+            OnRemoveAsync = (key, _) => key == NavigationCacheKeys.UserCategories
+                ? Task.FromException(new InvalidOperationException("cache unavailable"))
+                : Task.CompletedTask,
+        };
 
-        await Assert.ThrowsAsync<InvalidOperationException>(() => cache.Object.InvalidateNavigationMenuCacheAsync());
+        await Assert.ThrowsAsync<InvalidOperationException>(() => cache.InvalidateNavigationMenuCacheAsync());
     }
 }

@@ -1,10 +1,8 @@
 using Maroik.Core.Contract.Dtos;
-using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Domain.Accounts;
-using Maroik.Website.Interfaces;
 using Maroik.Website.Middlewares;
+using Maroik.Website.Tests.Fixtures;
 using Microsoft.AspNetCore.Http;
-using Moq;
 
 namespace Maroik.Website.Tests.Middlewares;
 
@@ -16,10 +14,10 @@ namespace Maroik.Website.Tests.Middlewares;
 /// </summary>
 public class RoleBasedStaticFileMiddlewareTests
 {
-    /// <summary>Mock <c>ISessionService</c> injected into the system under test.</summary>
-    private readonly Mock<ISessionService> _sessionService = new();
-    /// <summary>Mock <c>IAccountService</c>: the database's current copy of the session's account.</summary>
-    private readonly Mock<IAccountService> _accountService = new();
+    /// <summary>Fake <c>ISessionService</c> injected into the system under test.</summary>
+    private readonly FakeSessionService _sessionService = new();
+    /// <summary>Fake <c>IAccountService</c>: the database's current copy of the session's account.</summary>
+    private readonly FakeAccountService _accountService = new();
 
     /// <summary>The security stamp the session was signed in with (and, unless a test changes it, the database's).</summary>
     private const string Stamp = "stamp-at-login";
@@ -34,17 +32,13 @@ public class RoleBasedStaticFileMiddlewareTests
     /// </summary>
     private void SetupAccount(string? role)
     {
-        _sessionService
-            .Setup(s => s.GetAccountAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync(role == null ? null : new AccountResponse { Email = "test@test.com", Nickname = "Test", Role = role, SecurityStamp = Stamp });
+        _sessionService.OnGetAccountAsync = _ => Task.FromResult(role == null ? null : new AccountResponse { Email = "test@test.com", Nickname = "Test", Role = role, SecurityStamp = Stamp });
         SetupDatabaseAccount(role == null ? null : new AccountResponse { Email = "test@test.com", Nickname = "Test", Role = role, SecurityStamp = Stamp });
     }
 
     /// <summary>Makes the database return <paramref name="account"/> for the session's email.</summary>
     private void SetupDatabaseAccount(AccountResponse? account) =>
-        _accountService
-            .Setup(a => a.GetAccountByEmailAsync("test@test.com", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(account);
+        _accountService.OnGetAccountByEmailAsync = (email, _) => Task.FromResult(email == "test@test.com" ? account : null);
 
     /// <summary>Runs the middleware on <paramref name="path"/>; true when it let the request through to the next one.</summary>
     private async Task<(bool NextCalled, int StatusCode)> InvokeAsync(string path)
@@ -53,7 +47,7 @@ public class RoleBasedStaticFileMiddlewareTests
         bool nextCalled = false;
         var sut = new RoleBasedStaticFileMiddleware(_ => { nextCalled = true; return Task.CompletedTask; });
 
-        await sut.InvokeAsync(context, _sessionService.Object, _accountService.Object);
+        await sut.InvokeAsync(context, _sessionService, _accountService);
 
         return (nextCalled, context.Response.StatusCode);
     }
@@ -119,7 +113,7 @@ public class RoleBasedStaticFileMiddlewareTests
         var (nextCalled, _) = await InvokeAsync("/anonymous/dist/img/logo.png");
 
         Assert.True(nextCalled);
-        _accountService.Verify(a => a.GetAccountByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+        Assert.Empty(_accountService.GetAccountByEmailAsyncCalls);
     }
 
     /// <summary>Invoke async admin path admin session forwards.</summary>
@@ -131,7 +125,7 @@ public class RoleBasedStaticFileMiddlewareTests
         bool nextCalled = false;
         var sut = new RoleBasedStaticFileMiddleware(_ => { nextCalled = true; return Task.CompletedTask; });
 
-        await sut.InvokeAsync(context, _sessionService.Object, _accountService.Object);
+        await sut.InvokeAsync(context, _sessionService, _accountService);
 
         Assert.True(nextCalled);
         Assert.Equal(200, context.Response.StatusCode);
@@ -146,7 +140,7 @@ public class RoleBasedStaticFileMiddlewareTests
         bool nextCalled = false;
         var sut = new RoleBasedStaticFileMiddleware(_ => { nextCalled = true; return Task.CompletedTask; });
 
-        await sut.InvokeAsync(context, _sessionService.Object, _accountService.Object);
+        await sut.InvokeAsync(context, _sessionService, _accountService);
 
         Assert.False(nextCalled);
         Assert.Equal(403, context.Response.StatusCode);
@@ -161,7 +155,7 @@ public class RoleBasedStaticFileMiddlewareTests
         bool nextCalled = false;
         var sut = new RoleBasedStaticFileMiddleware(_ => { nextCalled = true; return Task.CompletedTask; });
 
-        await sut.InvokeAsync(context, _sessionService.Object, _accountService.Object);
+        await sut.InvokeAsync(context, _sessionService, _accountService);
 
         Assert.False(nextCalled);
         Assert.Equal(403, context.Response.StatusCode);
@@ -176,7 +170,7 @@ public class RoleBasedStaticFileMiddlewareTests
         bool nextCalled = false;
         var sut = new RoleBasedStaticFileMiddleware(_ => { nextCalled = true; return Task.CompletedTask; });
 
-        await sut.InvokeAsync(context, _sessionService.Object, _accountService.Object);
+        await sut.InvokeAsync(context, _sessionService, _accountService);
 
         Assert.True(nextCalled);
         Assert.Equal(200, context.Response.StatusCode);
@@ -191,7 +185,7 @@ public class RoleBasedStaticFileMiddlewareTests
         bool nextCalled = false;
         var sut = new RoleBasedStaticFileMiddleware(_ => { nextCalled = true; return Task.CompletedTask; });
 
-        await sut.InvokeAsync(context, _sessionService.Object, _accountService.Object);
+        await sut.InvokeAsync(context, _sessionService, _accountService);
 
         Assert.False(nextCalled);
         Assert.Equal(403, context.Response.StatusCode);
@@ -206,7 +200,7 @@ public class RoleBasedStaticFileMiddlewareTests
         bool nextCalled = false;
         var sut = new RoleBasedStaticFileMiddleware(_ => { nextCalled = true; return Task.CompletedTask; });
 
-        await sut.InvokeAsync(context, _sessionService.Object, _accountService.Object);
+        await sut.InvokeAsync(context, _sessionService, _accountService);
 
         Assert.False(nextCalled);
         Assert.Equal(403, context.Response.StatusCode);
@@ -228,7 +222,7 @@ public class RoleBasedStaticFileMiddlewareTests
         bool nextCalled = false;
         var sut = new RoleBasedStaticFileMiddleware(_ => { nextCalled = true; return Task.CompletedTask; });
 
-        await sut.InvokeAsync(context, _sessionService.Object, _accountService.Object);
+        await sut.InvokeAsync(context, _sessionService, _accountService);
 
         Assert.False(nextCalled);
         Assert.Equal(403, context.Response.StatusCode);
@@ -243,7 +237,7 @@ public class RoleBasedStaticFileMiddlewareTests
         bool nextCalled = false;
         var sut = new RoleBasedStaticFileMiddleware(_ => { nextCalled = true; return Task.CompletedTask; });
 
-        await sut.InvokeAsync(context, _sessionService.Object, _accountService.Object);
+        await sut.InvokeAsync(context, _sessionService, _accountService);
 
         Assert.True(nextCalled);
     }
@@ -266,7 +260,7 @@ public class RoleBasedStaticFileMiddlewareTests
         bool nextCalled = false;
         var sut = new RoleBasedStaticFileMiddleware(_ => { nextCalled = true; return Task.CompletedTask; });
 
-        await sut.InvokeAsync(context, _sessionService.Object, _accountService.Object);
+        await sut.InvokeAsync(context, _sessionService, _accountService);
 
         Assert.False(nextCalled);
         Assert.Equal(403, context.Response.StatusCode);
@@ -283,7 +277,7 @@ public class RoleBasedStaticFileMiddlewareTests
         bool nextCalled = false;
         var sut = new RoleBasedStaticFileMiddleware(_ => { nextCalled = true; return Task.CompletedTask; });
 
-        await sut.InvokeAsync(context, _sessionService.Object, _accountService.Object);
+        await sut.InvokeAsync(context, _sessionService, _accountService);
 
         Assert.True(nextCalled);
     }
@@ -297,7 +291,7 @@ public class RoleBasedStaticFileMiddlewareTests
         bool nextCalled = false;
         var sut = new RoleBasedStaticFileMiddleware(_ => { nextCalled = true; return Task.CompletedTask; });
 
-        await sut.InvokeAsync(context, _sessionService.Object, _accountService.Object);
+        await sut.InvokeAsync(context, _sessionService, _accountService);
 
         Assert.False(nextCalled);
         Assert.Equal(403, context.Response.StatusCode);
@@ -312,7 +306,7 @@ public class RoleBasedStaticFileMiddlewareTests
         bool nextCalled = false;
         var sut = new RoleBasedStaticFileMiddleware(_ => { nextCalled = true; return Task.CompletedTask; });
 
-        await sut.InvokeAsync(context, _sessionService.Object, _accountService.Object);
+        await sut.InvokeAsync(context, _sessionService, _accountService);
 
         Assert.True(nextCalled);
     }
@@ -326,7 +320,7 @@ public class RoleBasedStaticFileMiddlewareTests
         bool nextCalled = false;
         var sut = new RoleBasedStaticFileMiddleware(_ => { nextCalled = true; return Task.CompletedTask; });
 
-        await sut.InvokeAsync(context, _sessionService.Object, _accountService.Object);
+        await sut.InvokeAsync(context, _sessionService, _accountService);
 
         Assert.True(nextCalled);
         Assert.Equal(200, context.Response.StatusCode);
@@ -341,7 +335,7 @@ public class RoleBasedStaticFileMiddlewareTests
         bool nextCalled = false;
         var sut = new RoleBasedStaticFileMiddleware(_ => { nextCalled = true; return Task.CompletedTask; });
 
-        await sut.InvokeAsync(context, _sessionService.Object, _accountService.Object);
+        await sut.InvokeAsync(context, _sessionService, _accountService);
 
         Assert.True(nextCalled);
     }
