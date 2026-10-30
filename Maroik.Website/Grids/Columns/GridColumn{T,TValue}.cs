@@ -102,7 +102,7 @@ public class GridColumn<T, TValue> : IGridColumn<T, TValue> where T : class
             return ExpressionValue((T)row.Model);
         }
         // An expected condition, not a fault: a null part of the column's expression (model.Child.Name without a Child)
-        // renders an empty cell, as upstream NonFactors 8.0.0 does.
+        // renders an empty cell, as the upstream grid 8.0.0 does (Grids/LICENSE.md).
         catch (NullReferenceException)
         {
             return null;

@@ -19,7 +19,7 @@ public class HtmlGrid<T> : IHtmlGrid<T>
         Grid = grid;
     }
 
-    // Upstream (NonFactors 8.0.0) made the grid an IHtmlContent whose WriteTo rendered the partial with the synchronous
+    // Upstream (grid 8.0.0, Grids/LICENSE.md) made the grid an IHtmlContent whose WriteTo rendered the partial with the synchronous
     // Html.Partial, which blocks on the async view rendering (MVC1000, a build error here, as is every sync-over-async API).
     // The views await this instead: @(await Html.Grid(...)....RenderAsync()).
     public Task<IHtmlContent> RenderAsync()

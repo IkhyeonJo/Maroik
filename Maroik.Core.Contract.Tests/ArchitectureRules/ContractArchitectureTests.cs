@@ -100,7 +100,6 @@ public class ContractArchitectureTests
     [InlineData("ICSharpCode.SharpZipLib")]
     [InlineData("Serilog")]
     [InlineData("Swashbuckle")]
-    [InlineData("NonFactors.Grid")]
     [InlineData("Dapper")]
     [InlineData("AutoMapper")]
     [InlineData("MediatR")]

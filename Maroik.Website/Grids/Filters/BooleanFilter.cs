@@ -23,7 +23,7 @@ public class BooleanFilter : AGridFilter
             };
         }
         // An expected condition, not a fault: the filter value comes from the query string, and one the column's type cannot
-        // take means "no filter", as upstream NonFactors 8.0.0 does. Narrowed from upstream's bare catch to what the type
+        // take means "no filter", as the upstream grid 8.0.0 does (Grids/LICENSE.md). Narrowed from upstream's bare catch to what the type
         // converters throw for such a value: FormatException (bool / date / enum / guid text), ArgumentException (the number
         // converters wrap both unparsable and out-of-range text in it).
         catch (Exception ex) when (ex is FormatException or ArgumentException)
