@@ -1,5 +1,5 @@
 /*!
- * Mvc.Grid 6.2.4
+ * Mvc.Grid 8.0.0
  *
  * Copyright © NonFactors
  *
@@ -37,11 +37,13 @@ class MvcGrid {
         grid.url = options.query ? new URL(`?${options.query}`, grid.url.href) : grid.url;
         grid.sort = grid.buildSort();
         grid.filters = {
-            default: MvcGridFilter,
-            date: MvcGridDateFilter,
-            guid: MvcGridGuidFilter,
-            text: MvcGridTextFilter,
-            number: MvcGridNumberFilter
+            "default": MvcGridFilter,
+            "date": MvcGridDateFilter,
+            "date-only": MvcGridDateOnlyFilter,
+            "time-only": MvcGridTimeOnlyFilter,
+            "guid": MvcGridGuidFilter,
+            "text": MvcGridTextFilter,
+            "number": MvcGridNumberFilter
         };
 
         const headers = element.querySelector(".mvc-grid-headers");
@@ -72,15 +74,17 @@ class MvcGrid {
         if (!element.children.length) {
             grid.reload();
         }
+
+        return this;
     }
 
     set(options) {
         const grid = this;
 
-        grid.loadingDelay = typeof options.loadingDelay == "number" ? options.loadingDelay : grid.loadingDelay;
+        grid.loadingDelay = typeof options.loadingDelay === "undefined" ? grid.loadingDelay : options.loadingDelay;
         grid.url = options.url ? new URL(options.url.toString(), location.href) : grid.url;
         grid.url = options.query ? new URL(`?${options.query}`, grid.url.href) : grid.url;
-        grid.isAjax = typeof options.isAjax == "boolean" ? options.isAjax : grid.isAjax;
+        grid.isAjax = typeof options.isAjax === "boolean" ? options.isAjax : grid.isAjax;
         grid.filters = Object.assign(grid.filters, options.filters);
 
         for (const column of grid.columns) {
@@ -98,16 +102,24 @@ class MvcGrid {
     getConfiguration() {
         return {
             name: this.name,
-            columns: this.columns.map(column => ({ name: column.name, hidden: column.isHidden }))
+            columns: this.columns.map(column => ({
+                name: column.name,
+                hidden: column.isHidden,
+                width: column.header.style.width
+            }))
         };
     }
     configure(configuration) {
         configuration.columns.forEach((column, index) => {
             const rows = this.element.querySelectorAll("tr");
-            const i = this.columns.findIndex(col => col.name.toLowerCase() == column.name.toLowerCase());
+            const i = this.columns.findIndex(col => col.name.toLowerCase() === column.name.toLowerCase());
 
             if (i >= 0) {
-                this.columns[i].isHidden = column.hidden == true;
+                this.columns[i].isHidden = column.hidden;
+
+                if (column.width.trim()) {
+                    this.columns[i].header.style.width = column.width.split(";", 2)[0];
+                }
 
                 for (const tr of rows) {
                     if (column.hidden) {
@@ -116,7 +128,7 @@ class MvcGrid {
                         tr.children[i].classList.remove("mvc-grid-hidden");
                     }
 
-                    if (i != index) {
+                    if (i !== index) {
                         tr.insertBefore(tr.children[i], tr.children[index]);
                     }
                 }
@@ -140,22 +152,16 @@ class MvcGrid {
             grid.controller.abort();
             MvcGridPopup.lastActiveElement = null;
             grid.controller = new AbortController();
-            url.searchParams.set("_", String(Date.now()));
 
-            if (grid.loadingDelay != null) {
-                if (grid.loader && grid.loader.parentElement) {
-                    clearTimeout(grid.loadingTimerId);
-                } else {
-                    const loader = document.createElement("template");
+            if (grid.loadingDelay !== null) {
+                const loader = `<td colspan="${grid.columns.length}"><div class="mvc-grid-loader"><div class="mvc-grid-spinner"></div></div></td>`;
 
-                    loader.innerHTML = `<div class="mvc-grid-loader"><div><div></div><div></div><div></div></div></div>`;
-                    grid.loader = loader.content.firstElementChild;
-
-                    grid.element.appendChild(grid.loader);
-                }
+                clearTimeout(grid.loadingTimerId);
 
                 grid.loadingTimerId = setTimeout(() => {
-                    grid.loader.classList.add("mvc-grid-loading");
+                    for (const row of grid.element.querySelectorAll("tbody > tr")) {
+                        row.innerHTML = loader;
+                    }
                 }, grid.loadingDelay);
             }
 
@@ -196,12 +202,8 @@ class MvcGrid {
                     bubbles: true
                 }));
             }).catch(reason => {
-                if (reason.name == "AbortError") {
+                if (reason.name === "AbortError") {
                     return Promise.resolve();
-                }
-
-                if (grid.loader && grid.loader.parentElement) {
-                    grid.loader.parentElement.removeChild(grid.loader);
                 }
 
                 const cancelled = !grid.element.dispatchEvent(new CustomEvent("reloadfail", {
@@ -233,7 +235,7 @@ class MvcGrid {
         return map;
     }
     findGrid(element) {
-        const grid = element.closest('.mvc-grid');
+        const grid = element.closest(".mvc-grid");
 
         if (!grid) {
             throw new Error(`${_localizerNonFactors0.GCOBCFWMS}`);
@@ -248,25 +250,23 @@ class MvcGrid {
     bind() {
         const grid = this;
 
-        for (const row of grid.element.querySelectorAll("tbody > tr")) {
-            if (!row.classList.contains("mvc-grid-empty-row")) {
-                row.addEventListener("click", function (e) {
-                    const data = {};
+        for (const row of grid.element.querySelectorAll("tbody > tr:not(.mvc-grid-empty-row)")) {
+            row.addEventListener("click", function (e) {
+                const data = {};
 
-                    for (const [i, column] of grid.columns.entries()) {
-                        if (row.cells.length <= i) {
-                            return;
-                        }
-
-                        data[column.name] = row.cells[i].innerText;
+                for (const [i, column] of grid.columns.entries()) {
+                    if (row.cells.length <= i) {
+                        return;
                     }
 
-                    this.dispatchEvent(new CustomEvent("rowclick", {
-                        detail: { grid: grid, data: data, originalEvent: e },
-                        bubbles: true
-                    }));
-                });
-            }
+                    data[column.name] = row.cells[i].innerText;
+                }
+
+                this.dispatchEvent(new CustomEvent("rowclick", {
+                    detail: { grid: grid, data: data, originalEvent: e },
+                    bubbles: true
+                }));
+            });
         }
     }
 }

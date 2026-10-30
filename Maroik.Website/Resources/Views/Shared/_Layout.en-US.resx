@@ -135,6 +135,9 @@
   <data name="contains" xml:space="preserve">
     <value>Contains</value>
   </data>
+  <data name="consists-of" xml:space="preserve">
+    <value>Consists of</value>
+  </data>
   <data name="starts-with" xml:space="preserve">
     <value>Starts with</value>
   </data>

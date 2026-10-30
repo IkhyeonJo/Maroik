@@ -60,6 +60,24 @@ public class DashboardControllerTests
         Assert.Contains($"<input id=\"_localizerTemporaryError\" type=\"hidden\" value=\"{text}\" />", html, StringComparison.Ordinal);
     }
 
+    /// <summary>
+    /// The shared layout renders the label of MVC Grid 8's "consists-of" text-filter method for the grid script
+    /// (<c>nonfactors-mvc-grid-localizer1.js</c>), in the visitor's culture.
+    /// </summary>
+    [Theory]
+    [InlineData("en-US", "Consists of")]
+    [InlineData("ko-KR", "~으로 구성됨")]
+    public async Task AnonymousIndex_Get_RendersTheGridConsistsOfFilterLabel(string culture, string text)
+    {
+        using var request = new HttpRequestMessage(HttpMethod.Get, "/Dashboard/AnonymousIndex");
+        request.Headers.Add("Cookie", $".AspNetCore.Culture=c={culture}|uic={culture}");
+
+        var response = await _client.SendAsync(request, TestContext.Current.CancellationToken);
+        string html = System.Net.WebUtility.HtmlDecode(await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken));
+
+        Assert.Contains($"<input id=\"_localizerNonFactorsConsistsOf\" type=\"hidden\" value=\"{text}\" />", html, StringComparison.Ordinal);
+    }
+
     /// <summary>Verifies that <c>DefaultRoute</c> get when returns200.</summary>
     [Fact]
     public async Task DefaultRoute_Get_Returns200()

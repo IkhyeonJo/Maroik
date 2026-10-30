@@ -173,4 +173,16 @@ public class ViewRenderingTests(MaroikWebApplicationFactory factory)
         Assert.Contains("class=\"mvc-grid-options\"", html, StringComparison.Ordinal);
         Assert.Contains("<option value=\"y\">Y</option>", html, StringComparison.Ordinal);
     }
+
+    /// <summary>
+    /// The table sits in the <c>.mvc-grid-table</c> box the MVC Grid 8 stylesheet lays out (<c>.mvc-grid-table &gt; table</c>),
+    /// so the table keeps its borders, padding and sort / filter buttons.
+    /// </summary>
+    [Fact]
+    public async Task GridTemplate_WrapsTheTableInTheMvcGridTableBox()
+    {
+        string html = await RenderGridAsync(GridFilterMode.Row);
+
+        Assert.Matches(@"<div class=""mvc-grid-table"">\s*<table", html);
+    }
 }

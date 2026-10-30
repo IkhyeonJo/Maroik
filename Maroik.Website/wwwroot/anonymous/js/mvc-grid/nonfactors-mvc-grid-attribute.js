@@ -45,8 +45,8 @@ class MvcGridColumnSort {
         const map = sort.column.grid.sort;
         const query = grid.url.searchParams;
 
-        if (sort.order == sort.first) {
-            sort.order = sort.order == "asc" ? "desc" : "asc";
+        if (sort.order === sort.first) {
+            sort.order = sort.order === "asc" ? "desc" : "asc";
         } else if (sort.order) {
             sort.order = "";
         } else {
@@ -78,7 +78,7 @@ class MvcGridColumnSort {
         const column = sort.column;
 
         column.header.addEventListener("click", e => {
-            if (!column.filter || column.grid.filterMode != "header") {
+            if (!column.filter || column.grid.filterMode !== "header") {
                 if (!/mvc-grid-(sort|filter)/.test(e.target.className)) {
                     sort.toggle(e.ctrlKey || e.shiftKey);
                 }
@@ -101,7 +101,7 @@ class MvcGridColumnFilter {
         const name = `${column.grid.prefix + column.name}-`;
         let options = column.header.querySelector(".mvc-grid-options");
 
-        if (column.grid.filterMode == "row") {
+        if (column.grid.filterMode === "row") {
             options = rowFilter.querySelector("select");
         }
 
@@ -110,7 +110,7 @@ class MvcGridColumnFilter {
         }
 
         for (const parameter of query.entries()) {
-            if (parameter[0] != `${name}op` && parameter[0].startsWith(name)) {
+            if (parameter[0] !== `${name}op` && parameter[0].startsWith(name)) {
                 methods.push(parameter[0].substring(name.length));
                 values.push(parameter[1]);
             }
@@ -119,7 +119,7 @@ class MvcGridColumnFilter {
         filter.column = column;
         filter.rowFilter = rowFilter;
         filter.name = data.filter || "default";
-        filter.isApplied = data.filterApplied == "True";
+        filter.isApplied = data.filterApplied === "True";
         filter.defaultMethod = data.filterDefaultMethod || "";
         filter.type = (data.filterType || "single").toLowerCase();
         filter.options = options && options.children.length > 0 ? options : null;
@@ -128,12 +128,14 @@ class MvcGridColumnFilter {
 
         filter.first = {
             method: methods[0] || "",
-            values: filter.type == "multi" ? values : values.slice(0, 1)
+            values: filter.type === "multi" ? values : values.slice(0, 1)
         };
-        filter.operator = filter.type == "double" ? query.get(`${name}op`) || "" : "";
+
+        filter.operator = filter.type === "double" ? query.get(`${name}op`) || "" : "";
+
         filter.second = {
-            method: filter.type == "double" ? methods[1] || "" : "",
-            values: filter.type == "double" ? values.slice(1, 2) : []
+            method: filter.type === "double" ? methods[1] || "" : "",
+            values: filter.type === "double" ? values.slice(1, 2) : []
         };
 
         this.bind();
@@ -157,16 +159,16 @@ class MvcGridColumnFilter {
         query.delete(`${prefix}page`);
         query.delete(`${prefix}rows`);
 
-        for (const column of grid.columns.filter(col => col.filter && (col == this.column || col.filter.isApplied || col.filter.first.values[0]))) {
+        for (const column of grid.columns.filter(col => col.filter && (col === this.column || col.filter.isApplied || col.filter.first.values[0]))) {
             const filter = column.filter;
 
             query.set(`${prefix + column.name}-${filter.first.method}`, filter.first.values[0] || "");
 
-            for (let i = 1; filter.type == "multi" && i < filter.first.values.length; i++) {
+            for (let i = 1; filter.type === "multi" && i < filter.first.values.length; i++) {
                 query.append(`${prefix + column.name}-${filter.first.method}`, filter.first.values[i] || "");
             }
 
-            if (grid.filterMode == "excel" && filter.type == "double") {
+            if (grid.filterMode === "excel" && filter.type === "double") {
                 query.set(`${prefix + column.name}-op`, filter.operator || "");
                 query.append(`${prefix + column.name}-${filter.second.method}`, filter.second.values[0] || "");
             }
@@ -203,7 +205,7 @@ class MvcGridColumnFilter {
             filter.first.values = [];
             filter.second.values = [];
 
-            if (column.grid.filterMode != "excel") {
+            if (column.grid.filterMode !== "excel") {
                 filter.inlineInput.value = "";
             }
 
@@ -221,26 +223,26 @@ class MvcGridColumnFilter {
         });
 
         if (filter.options) {
-            if (mode == "row" && filter.type != "multi") {
+            if (mode === "row" && filter.type !== "multi") {
                 filter.inlineInput.addEventListener("change", function () {
                     filter.first.values = [this.value];
                     column.filter.apply();
                 });
-            } else if (mode == "header" || mode == "row") {
+            } else if (mode === "header" || mode === "row") {
                 filter.inlineInput.addEventListener("click", function () {
-                    if (this.selectionStart == this.selectionEnd) {
+                    if (this.selectionStart === this.selectionEnd) {
                         MvcGridPopup.show(filter);
                     }
                 });
             }
-        } else if (mode != "excel") {
+        } else if (mode !== "excel") {
             filter.inlineInput.addEventListener("input", function () {
                 filter.first.values = [this.value];
                 filter.instance.validate(this);
             });
 
             filter.inlineInput.addEventListener("keyup", function (e) {
-                if (e.which == 13 && filter.instance.isValid(this.value)) {
+                if (e.key === "Enter" && filter.instance.isValid(this.value)) {
                     column.filter.apply();
                 }
             });
@@ -256,7 +258,7 @@ class MvcGridPager {
         pager.element = element;
         pager.totalRows = parseInt(element.dataset.totalRows);
         pager.pages = grid.element.querySelectorAll("[data-page]");
-        pager.showPageSizes = element.dataset.showPageSizes == "True";
+        pager.showPageSizes = element.dataset.showPageSizes === "True";
         pager.rowsPerPage = element.querySelector(".mvc-grid-pager-rows");
         pager.currentPage = pager.pages.length ? parseInt(element.querySelector(".active").dataset.page) : 1;
 
@@ -274,7 +276,7 @@ class MvcGridPager {
         query.set(`${grid.prefix}page`, page);
 
         if (this.showPageSizes) {
-            query.set(`${grid.prefix}rows`, rows == null ? this.rowsPerPage.value : rows);
+            query.set(`${grid.prefix}rows`, typeof rows === "string" ? rows : this.rowsPerPage.value);
         }
 
         grid.reload();
@@ -298,12 +300,10 @@ class MvcGridPager {
             rowsPerPage.addEventListener("change", function () {
                 const rows = parseInt(this.value);
 
-                if (rows) {
-                    const totalPages = Math.ceil(pager.totalRows / rows);
+                if (!isNaN(rows) && rows >= 0) {
+                    const totalPages = rows === 0 ? 1 : Math.ceil(pager.totalRows / rows);
 
                     pager.apply(Math.min(pager.currentPage, totalPages).toString(), rows.toString());
-                } else {
-                    pager.apply("1", rows.toString());
                 }
             });
         });
@@ -363,7 +363,7 @@ class MvcGridPopup {
         const popup = MvcGridPopup;
         const initiator = e && e.target;
         const visible = popup.element.parentNode;
-        const outside = !(initiator && initiator.closest && initiator.closest(".mvc-grid-popup,.mvc-grid-filter"));
+        const outside = !(initiator && initiator.closest(".mvc-grid-popup,.mvc-grid-filter"));
 
         if (visible && outside) {
             document.body.removeChild(popup.element);
@@ -388,7 +388,7 @@ class MvcGridPopup {
         const input = this.element.querySelector(selector);
 
         if (input) {
-            if (input.tagName == "SELECT" && input.multiple) {
+            if (input.tagName === "SELECT" && input.multiple) {
                 for (const option of Array.from(input.options)) {
                     option.selected = values.indexOf(option.value) >= 0;
                 }
@@ -475,7 +475,7 @@ class MvcGridPopup {
             const dragged = popup.draggedElement;
             const grid = popup.draggedColumn.grid;
 
-            if (dropzone != dragged.previousElementSibling && dropzone != dragged.nextElementSibling) {
+            if (dropzone !== dragged.previousElementSibling && dropzone !== dragged.nextElementSibling) {
                 const index = Array.from(popup.element.querySelectorAll(".mvc-grid-dropzone")).indexOf(dropzone);
                 const i = grid.columns.indexOf(popup.draggedColumn);
 
@@ -505,14 +505,15 @@ class MvcGridPopup {
         const arrow = element.querySelector(".popup-arrow");
         let { top, left } = (anchor || grid.element).getBoundingClientRect();
 
-        top += window.pageYOffset - parseFloat(style.borderTopWidth);
-        left += window.pageXOffset - parseFloat(style.borderLeftWidth);
+        top += window.scrollY - parseFloat(style.borderTopWidth);
+        left += window.scrollX - parseFloat(style.borderLeftWidth);
 
         if (anchor) {
             left -= parseFloat(style.marginLeft) - anchor.offsetWidth / 2 + 26;
+
             const arrowLeft = 26 - parseFloat(getComputedStyle(arrow).borderLeftWidth);
             const width = parseFloat(style.marginLeft) + element.offsetWidth + parseFloat(style.marginRight);
-            const offset = Math.max(0, left + width - window.pageXOffset - document.documentElement.clientWidth);
+            const offset = Math.max(0, left + width - window.scrollX - document.documentElement.clientWidth);
 
             top += anchor.offsetHeight / 3 * 2 + arrow.offsetHeight - parseFloat(style.marginTop);
             arrow.style.left = `${Math.max(0, arrowLeft + offset)}px`;
@@ -549,7 +550,7 @@ class MvcGridFilter {
         const column = filter.column;
         const columnFilter = column.filter;
 
-        if (!columnFilter.options && filter.mode != "excel") {
+        if (!columnFilter.options && filter.mode !== "excel") {
             filter.validate(columnFilter.inlineInput);
         }
 
@@ -569,6 +570,15 @@ class MvcGridFilter {
             columnFilter.second.method = filter.methods[0];
         }
     }
+    lang() {
+        if (this.column.filter.name == "date-only") {
+            return MvcGrid.lang["date-only"] || MvcGrid.lang["date"] || {};
+        } else if (this.column.filter.name == "time-only") {
+            return MvcGrid.lang["time-only"] || MvcGrid.lang["date"] || {};
+        }
+
+        return MvcGrid.lang[this.column.filter.name] || {};
+    }
     isValid(value) {
         return !value || true;
     }
@@ -584,55 +594,55 @@ class MvcGridFilter {
         const filter = this;
 
         return `<div class="popup-filter">
-                                                        ${filter.renderFilter("first")}
-                                                    </div>
-                                                    ${filter.mode == "excel" && filter.type == "double"
-                ? `${filter.renderOperator()}
-                                                        <div class="popup-filter">
-                                                            ${filter.renderFilter("second")}
-                                                        </div>`
-                : ""}
-                                                    ${filter.renderActions()}`;
+                    ${filter.renderFilter("first")}
+                </div>
+                ${filter.mode === "excel" && filter.type === "double"
+                    ? `${filter.renderOperator()}
+                    <div class="popup-filter">
+                        ${filter.renderFilter("second")}
+                    </div>`
+                    : ""}
+                ${filter.renderActions()}`;
     }
     renderFilter(name) {
         const filter = this;
+        const lang = filter.lang();
         const options = filter.column.filter.options;
-        const lang = MvcGrid.lang[filter.column.filter.name] || {};
-        const multiple = filter.type == "multi" ? " multiple" : "";
+        const multiple = filter.type === "multi" ? " multiple" : "";
         const methods = filter.methods.map(method => `<option value="${method}">${lang[method] || ""}</option>`).join("");
 
         return `<div class="popup-group">
-                                                        <select class="mvc-grid-method" data-filter="${name}">
-                                                            ${methods}
-                                                        </select>
-                                                    </div>
-                                                    <div class="popup-group">${options
-                ? `<select class="mvc-grid-value" data-filter="${name}"${multiple}>
-                                                              ${options.innerHTML}
-                                                           </select>`
-                : `<input class="mvc-grid-value" data-filter="${name}">`}
-                                                    </div>`;
+                    <select class="mvc-grid-method" data-filter="${name}">
+                        ${methods}
+                    </select>
+                </div>
+                <div class="popup-group">${options
+                    ? `<select class="mvc-grid-value" data-filter="${name}"${multiple}>
+                          ${options.innerHTML}
+                       </select>`
+                    : `<input class="mvc-grid-value" data-filter="${name}">`}
+                </div>`;
     }
     renderOperator() {
         const lang = MvcGrid.lang.operator;
 
         return `<div class="popup-operator">
-                                                        <div class="popup-group">
-                                                            <select class="mvc-grid-operator">
-                                                                <option value="">${lang.select}</option>
-                                                                <option value="and">${lang.and}</option>
-                                                                <option value="or">${lang.or}</option>
-                                                            </select>
-                                                        </div>
-                                                    </div>`;
+                    <div class="popup-group">
+                        <select class="mvc-grid-operator">
+                            <option value="">${lang.select}</option>
+                            <option value="and">${lang.and}</option>
+                            <option value="or">${lang.or}</option>
+                        </select>
+                    </div>
+                </div>`;
     }
     renderActions() {
         const lang = MvcGrid.lang.filter;
 
         return `<div class="popup-actions">
-                                                        <button type="button" class="mvc-grid-apply" type="button">${lang.apply}</button>
-                                                        <button type="button" class="mvc-grid-cancel" type="button">${lang.remove}</button>
-                                                    </div>`;
+                    <button type="button" class="mvc-grid-apply" type="button">${lang.apply}</button>
+                    <button type="button" class="mvc-grid-cancel" type="button">${lang.remove}</button>
+                </div>`;
     }
     bindOperator() {
         const filter = this.column.filter;
@@ -657,16 +667,16 @@ class MvcGridFilter {
         const filter = this;
 
         for (const input of MvcGridPopup.element.querySelectorAll(".mvc-grid-value")) {
-            if (input.tagName == "SELECT") {
+            if (input.tagName === "SELECT") {
                 input.addEventListener("change", () => {
                     const options = Array.from(input.options).filter(option => option.selected);
 
                     filter.column.filter[input.dataset.filter].values = options.map(option => option.value);
 
-                    if (filter.mode != "excel") {
+                    if (filter.mode !== "excel") {
                         const inlineInput = filter.column.filter.inlineInput;
 
-                        if (filter.mode == "header" || filter.type == "multi") {
+                        if (filter.mode === "header" || filter.type === "multi") {
                             inlineInput.value = options.map(option => option.text).join(", ");
                         } else {
                             inlineInput.value = input.value;
@@ -679,7 +689,7 @@ class MvcGridFilter {
                 input.addEventListener("input", () => {
                     filter.column.filter[input.dataset.filter].values = [input.value];
 
-                    if (filter.mode != "excel") {
+                    if (filter.mode !== "excel") {
                         const inlineInput = filter.column.filter.inlineInput;
 
                         inlineInput.value = filter.column.filter[input.dataset.filter].values.join(", ");
@@ -690,7 +700,7 @@ class MvcGridFilter {
                 });
 
                 input.addEventListener("keyup", function (e) {
-                    if (e.which == 13 && filter.isValid(this.value)) {
+                    if (e.key === "Enter" && filter.isValid(this.value)) {
                         filter.column.filter.apply();
                     }
                 });
@@ -713,7 +723,7 @@ class MvcGridTextFilter extends MvcGridFilter {
         super(column);
 
         this.cssClasses = "mvc-grid-text-filter";
-        this.methods = ["contains", "equals", "not-equals", "starts-with", "ends-with"];
+        this.methods = ["contains", "consists-of", "equals", "not-equals", "starts-with", "ends-with"];
     }
 }
 
@@ -739,6 +749,22 @@ class MvcGridDateFilter extends MvcGridFilter {
     }
 }
 
+class MvcGridDateOnlyFilter extends MvcGridDateFilter {
+    constructor(column) {
+        super(column);
+
+        this.cssClasses = "mvc-grid-date-only-filter";
+    }
+}
+
+ class MvcGridTimeOnlyFilter extends MvcGridDateFilter {
+    constructor(column) {
+        super(column);
+
+        this.cssClasses = "mvc-grid-time-only-filter";
+    }
+}
+
 class MvcGridGuidFilter extends MvcGridFilter {
     constructor(column) {
         super(column);
@@ -747,6 +773,6 @@ class MvcGridGuidFilter extends MvcGridFilter {
     }
 
     isValid(value) {
-        return !value || /^[0-9A-F]{8}[-]?([0-9A-F]{4}[-]?){3}[0-9A-F]{12}$/i.test(value);
+        return !value || /^[0-9A-F]{8}-?([0-9A-F]{4}-?){3}[0-9A-F]{12}$/i.test(value);
     }
 }

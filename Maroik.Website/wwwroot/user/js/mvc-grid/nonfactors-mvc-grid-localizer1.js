@@ -2,6 +2,7 @@ const _localizerNonFactors1 = {
     Equals: $('#_localizerNonFactorsEquals').val(),
     NotEquals: $('#_localizerNonFactorsNotEquals').val(),
     Contains: $('#_localizerNonFactorsContains').val(),
+    ConsistsOf: $('#_localizerNonFactorsConsistsOf').val(),
     StartsWith: $('#_localizerNonFactorsStartsWith').val(),
     EndsWith: $('#_localizerNonFactorsEndsWith').val(),
     LessThan: $('#_localizerNonFactorsLessThan').val(),
@@ -24,6 +25,7 @@ MvcGrid.lang = {
     },
     text: {
         "contains": _localizerNonFactors1.Contains,
+        "consists-of": _localizerNonFactors1.ConsistsOf,
         "equals": _localizerNonFactors1.Equals,
         "not-equals": _localizerNonFactors1.NotEquals,
         "starts-with": _localizerNonFactors1.StartsWith,
