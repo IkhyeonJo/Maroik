@@ -17,7 +17,7 @@ namespace Maroik.FileStorage.Tests.Controllers;
 /// in a throwaway root and ClamAV mocked: the chunk / complete / abort / delete endpoints answer with the right status and refusal
 /// text (complete answers 202 while the background scan runs), and each outcome is logged at the level it deserves with the upload id or path and the caller's correlation id.
 /// </summary>
-[Collection("FileStorage host (Program builds a process-wide Serilog logger)")]
+[Collection("FileStorage host")]
 public sealed class FileManagerControllerTests(WebApplicationFactory<Program> baseFactory) : IClassFixture<WebApplicationFactory<Program>>, IDisposable
 {
     /// <summary>The throwaway parent of the storage root.</summary>

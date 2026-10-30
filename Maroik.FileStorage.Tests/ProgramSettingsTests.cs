@@ -10,7 +10,7 @@ namespace Maroik.FileStorage.Tests;
 /// storage root from <c>ServerSetting</c> or, when that is blank, <c>&lt;content root&gt;/upload</c> (where the container mounts
 /// the upload volume).
 /// </summary>
-[Collection("FileStorage host (Program builds a process-wide Serilog logger)")]
+[Collection("FileStorage host")]
 public class ProgramSettingsTests(WebApplicationFactory<Program> baseFactory) : IClassFixture<WebApplicationFactory<Program>>
 {
     /// <summary>The settings the host resolves with the given configuration values.</summary>

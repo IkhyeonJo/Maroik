@@ -7,7 +7,7 @@ namespace Maroik.FileStorage.Tests;
 
 /// <summary>
 /// The executable itself (<c>Program.cs</c>), run as a real process: it starts, serves and stops cleanly on SIGINT, and when it cannot
-/// start (its port is taken) it logs a fatal message and exits with a failure code instead of hanging or swallowing the error.
+/// start (its port is taken) it logs a critical entry and exits with a failure code instead of hanging or swallowing the error.
 /// </summary>
 public class ProgramProcessTests
 {
@@ -77,7 +77,7 @@ public class ProgramProcessTests
         }
     }
 
-    /// <summary>If its port is already taken it cannot start: it logs a fatal message and exits with a failure code.</summary>
+    /// <summary>If its port is already taken it cannot start: it logs a critical entry with the exception and exits with a failure code.</summary>
     [Fact]
     public async Task TheExecutable_ExitsWithAFailure_WhenItsPortIsTaken()
     {
@@ -91,7 +91,7 @@ public class ProgramProcessTests
             await process.WaitForExitAsync(TestContext.Current.CancellationToken).WaitAsync(TimeSpan.FromSeconds(30), TestContext.Current.CancellationToken);
 
             Assert.NotEqual(0, process.ExitCode);
-            Assert.Contains("Maroik.FileStorage terminated unexpectedly", output, StringComparison.Ordinal);
+            Assert.Matches(@"(?m)^\d{2}:\d{2}:\d{2} crit: Maroik\.FileStorage\[0\] Maroik\.FileStorage terminated unexpectedly System\.IO\.IOException: ", output);
         }
         finally
         {

@@ -4,14 +4,8 @@
 // `dotnet Maroik.Worker.dll redrive-email-dead-letters` instead moves the dead-lettered e-mails back
 // into the e-mail queue and exits (run by an operator once the cause of the failures is fixed).
 
-using System.Globalization;
 using Maroik.Worker;
 using Maroik.Worker.Workers;
-using Serilog;
-
-Log.Logger = new LoggerConfiguration()
-    .WriteTo.Console(outputTemplate: WorkerHost.ConsoleOutputTemplate, formatProvider: CultureInfo.InvariantCulture)
-    .CreateBootstrapLogger();
 
 try
 {
@@ -27,10 +21,8 @@ try
 }
 catch (Exception ex)
 {
-    Log.Fatal(ex, "Maroik.Worker terminated unexpectedly");
+    // The host's logger may not exist yet (or is already disposed); disposing this one flushes the entry before the process exits.
+    using (var loggerFactory = LoggerFactory.Create(logging => logging.AddSimpleConsole(WorkerHost.ConfigureConsole)))
+        loggerFactory.CreateLogger("Maroik.Worker").LogCritical(ex, "Maroik.Worker terminated unexpectedly");
     throw;
-}
-finally
-{
-    await Log.CloseAndFlushAsync();
 }

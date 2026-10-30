@@ -4,7 +4,6 @@ using Maroik.Core.Contract.Messages;
 using Maroik.Worker.Interfaces;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
-using Serilog.Context;
 // ReSharper disable PropertyCanBeMadeInitOnly.Global
 
 namespace Maroik.Worker.Workers;
@@ -234,7 +233,7 @@ public sealed class EmailConsumerWorker(
     {
         // DeliveryTag tags every log line for this message even when deserialization fails before
         // a CorrelationId is known, and distinguishes a redelivery of the same message in the log.
-        using (LogContext.PushProperty("DeliveryTag", ea.DeliveryTag))
+        using (logger.BeginScope("DeliveryTag: {DeliveryTag}", ea.DeliveryTag))
         {
             _inFlight[ea.DeliveryTag] = 0;
             try
@@ -244,7 +243,7 @@ public sealed class EmailConsumerWorker(
 
                 // Threads the originating Website request's id through so this message's logs
                 // can be traced back to the request that published it.
-                using (LogContext.PushProperty("CorrelationId", message.CorrelationId))
+                using (logger.BeginScope("CorrelationId: {CorrelationId}", message.CorrelationId))
                 {
                     await using AsyncServiceScope scope = scopeFactory.CreateAsyncScope();
                     var handler = scope.ServiceProvider.GetRequiredService<IEmailMessageHandler>();
