@@ -1,10 +1,10 @@
 using Maroik.Core.Contract.Interfaces;
+using Maroik.Worker.Tests.Fixtures;
 using Maroik.Worker.Workers;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Testing;
 using Microsoft.Extensions.Time.Testing;
-using Moq;
 
 namespace Maroik.Worker.Tests.Workers;
 
@@ -15,31 +15,31 @@ namespace Maroik.Worker.Tests.Workers;
 /// </summary>
 public class CalendarReminderSchedulerTests
 {
-    private readonly Mock<ICalendarReminderDispatchService> _dispatch = new();
+    private readonly FakeCalendarReminderDispatchService _dispatch = new();
     private readonly FakeTimeProvider _clock = new(new DateTimeOffset(2026, 11, 2, 8, 0, 0, TimeSpan.Zero));
     private readonly FakeLogger<CalendarReminderScheduler> _logger = new();
 
-    /// <summary>The scheduler over a container holding the mocked dispatch service.</summary>
+    /// <summary>The scheduler over a container holding the fake dispatch service.</summary>
     private CalendarReminderScheduler Sut()
     {
         var services = new ServiceCollection();
-        services.AddScoped(_ => _dispatch.Object);
+        services.AddScoped<ICalendarReminderDispatchService>(_ => _dispatch);
         return new CalendarReminderScheduler(services.BuildServiceProvider().GetRequiredService<IServiceScopeFactory>(), _clock, _logger);
     }
 
     /// <summary>Waits (real time, bounded) until the dispatch service has been called <paramref name="times"/> times.</summary>
     private async Task CalledAsync(int times)
     {
-        for (int i = 0; i < 200 && _dispatch.Invocations.Count < times; i++)
+        for (int i = 0; i < 200 && _dispatch.DispatchDueAsyncCalls.Count < times; i++)
             await Task.Delay(10, TestContext.Current.CancellationToken);
-        Assert.Equal(times, _dispatch.Invocations.Count);
+        Assert.Equal(times, _dispatch.DispatchDueAsyncCalls.Count);
     }
 
     /// <summary>A run happens at start-up and then every minute, each asking for at most <c>MaxPerRun</c> reminders.</summary>
     [Fact]
     public async Task ItSends_AtStartUp_AndEveryMinute()
     {
-        _dispatch.Setup(d => d.DispatchDueAsync(CalendarReminderScheduler.MaxPerRun, It.IsAny<CancellationToken>())).ReturnsAsync(0);
+        _dispatch.OnDispatchDueAsync = (_, _) => Task.FromResult(0);
         using CalendarReminderScheduler scheduler = Sut();
 
         await scheduler.StartAsync(TestContext.Current.CancellationToken);
@@ -50,6 +50,8 @@ public class CalendarReminderSchedulerTests
         _clock.Advance(TimeSpan.FromSeconds(1));
         await CalledAsync(2);
         await scheduler.StopAsync(TestContext.Current.CancellationToken);
+
+        Assert.All(_dispatch.DispatchDueAsyncCalls, call => Assert.Equal(CalendarReminderScheduler.MaxPerRun, call.Max));
     }
 
     /// <summary>A run that throws is logged as an error with its exception, and the next minute's run still happens.</summary>
@@ -57,7 +59,8 @@ public class CalendarReminderSchedulerTests
     public async Task AFailingRun_IsLogged_AndTheNextRunStillHappens()
     {
         var broken = new InvalidOperationException("no database");
-        _dispatch.SetupSequence(d => d.DispatchDueAsync(It.IsAny<int>(), It.IsAny<CancellationToken>())).ThrowsAsync(broken).ReturnsAsync(0);
+        var runs = 0;
+        _dispatch.OnDispatchDueAsync = (_, _) => ++runs == 1 ? Task.FromException<int>(broken) : Task.FromResult(0);
         using CalendarReminderScheduler scheduler = Sut();
 
         await scheduler.StartAsync(TestContext.Current.CancellationToken);

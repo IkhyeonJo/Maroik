@@ -3,25 +3,25 @@ using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Contract.Messages;
 using Maroik.Core.Contract.Settings;
 using Maroik.Worker.Handlers;
+using Maroik.Worker.Tests.Fixtures;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Testing;
 using Microsoft.Extensions.Options;
-using Moq;
 
 namespace Maroik.Worker.Tests.Handlers;
 
 /// <summary>
 /// Unit tests for <see cref="EmailMessageHandler"/>.
-/// <see cref="IMailClient"/> and <see cref="IAccountMailStatusService"/> are mocked so no real
+/// <see cref="IMailClient"/> and <see cref="IAccountMailStatusService"/> are fakes so no real
 /// SMTP server or database is needed.
 /// </summary>
 public class EmailMessageHandlerTests
 {
-    /// <summary>Mock <c>IMailClient</c> injected into the system under test.</summary>
-    private readonly Mock<IMailClient> _mailClient = new();
-    /// <summary>Mock <c>IAccountMailStatusService</c> injected into the system under test.</summary>
-    private readonly Mock<IAccountMailStatusService> _accountMailStatusService = new();
-    /// <summary>SMTP settings for the handler under test (the mail client is mocked, so nothing is contacted).</summary>
+    /// <summary>Fake <c>IMailClient</c> injected into the system under test.</summary>
+    private readonly FakeMailClient _mailClient = new();
+    /// <summary>Fake <c>IAccountMailStatusService</c> injected into the system under test.</summary>
+    private readonly FakeAccountMailStatusService _accountMailStatusService = new();
+    /// <summary>SMTP settings for the handler under test (the mail client is a fake, so nothing is contacted).</summary>
     private readonly IOptions<ServerSetting> _settings = Options.Create(new ServerSetting
     {
         SmtpHost = "smtp.example.com",
@@ -36,10 +36,10 @@ public class EmailMessageHandlerTests
     /// <summary>Records what the handler logs.</summary>
     private readonly FakeLogger<EmailMessageHandler> _logger = new();
 
-    /// <summary>The handler under test over the mocked dependencies.</summary>
+    /// <summary>The handler under test over the fake dependencies.</summary>
     private EmailMessageHandler CreateSut() => new(
-        _mailClient.Object,
-        _accountMailStatusService.Object,
+        _mailClient,
+        _accountMailStatusService,
         _settings,
         _logger);
 
@@ -47,38 +47,28 @@ public class EmailMessageHandlerTests
     [Fact]
     public async Task HandleAsync_DoesNotUpdateAccount_WhenMailSentSuccessfully()
     {
-        _mailClient.Setup(m => m.SendMailAsync(
-                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
-                It.IsAny<ServerSetting>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(ServiceResult.Ok());
+        _mailClient.OnSendMailAsync = (_, _, _, _, _) => Task.FromResult(ServiceResult.Ok());
 
         var sut = CreateSut();
         var message = new SendEmailMessage("user@example.com", "subject", "body");
 
         await sut.HandleAsync(message, TestContext.Current.CancellationToken);
 
-        _accountMailStatusService.Verify(
-            s => s.MarkMailSendFailedAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()),
-            Times.Never);
+        Assert.Empty(_accountMailStatusService.MarkMailSendFailedAsyncCalls);
     }
 
     /// <summary>Verifies that <c>HandleAsync</c> clears a previously recorded failure once the send succeeds.</summary>
     [Fact]
     public async Task HandleAsync_ClearsMailSendFailed_WhenMailSentSuccessfully()
     {
-        _mailClient.Setup(m => m.SendMailAsync(
-                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
-                It.IsAny<ServerSetting>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(ServiceResult.Ok());
+        _mailClient.OnSendMailAsync = (_, _, _, _, _) => Task.FromResult(ServiceResult.Ok());
 
         var sut = CreateSut();
         var message = new SendEmailMessage("user@example.com", "subject", "body");
 
         await sut.HandleAsync(message, TestContext.Current.CancellationToken);
 
-        _accountMailStatusService.Verify(
-            s => s.ClearMailSendFailedAsync("user@example.com", It.IsAny<CancellationToken>()),
-            Times.Once);
+        Assert.Equal("user@example.com", Assert.Single(_accountMailStatusService.ClearMailSendFailedAsyncCalls).Email);
         Assert.Single(_logger.Collector.GetSnapshot(), r => r.Level == LogLevel.Information && r.Message == "Email sent to user@example.com");
     }
 
@@ -86,10 +76,7 @@ public class EmailMessageHandlerTests
     [Fact]
     public async Task HandleAsync_MarksAccountFailToMailSent_WhenSmtpFails()
     {
-        _mailClient.Setup(m => m.SendMailAsync(
-                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
-                It.IsAny<ServerSetting>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(ServiceResult.Fail("SMTP connection refused"));
+        _mailClient.OnSendMailAsync = (_, _, _, _, _) => Task.FromResult(ServiceResult.Fail("SMTP connection refused"));
 
         var sut = CreateSut();
         var message = new SendEmailMessage("user@example.com", "subject", "body");
@@ -97,12 +84,8 @@ public class EmailMessageHandlerTests
         var thrown = await Assert.ThrowsAsync<InvalidOperationException>(
             () => sut.HandleAsync(message, TestContext.Current.CancellationToken));
 
-        _accountMailStatusService.Verify(
-            s => s.MarkMailSendFailedAsync("user@example.com", It.IsAny<CancellationToken>()),
-            Times.Once);
-        _accountMailStatusService.Verify(
-            s => s.ClearMailSendFailedAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()),
-            Times.Never);
+        Assert.Equal("user@example.com", Assert.Single(_accountMailStatusService.MarkMailSendFailedAsyncCalls).Email);
+        Assert.Empty(_accountMailStatusService.ClearMailSendFailedAsyncCalls);
         Assert.Single(_logger.Collector.GetSnapshot(),
             r => r.Level == LogLevel.Warning && r.Message == "SMTP send failed for user@example.com: SMTP connection refused");
         Assert.Equal("SMTP send failed for user@example.com: SMTP connection refused", thrown.Message);
@@ -112,10 +95,7 @@ public class EmailMessageHandlerTests
     [Fact]
     public async Task HandleAsync_PassesCancellationTokenThroughToAccountService()
     {
-        _mailClient.Setup(m => m.SendMailAsync(
-                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
-                It.IsAny<ServerSetting>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(ServiceResult.Fail("SMTP connection refused"));
+        _mailClient.OnSendMailAsync = (_, _, _, _, _) => Task.FromResult(ServiceResult.Fail("SMTP connection refused"));
 
         var sut = CreateSut();
         using var cts = new CancellationTokenSource();
@@ -123,9 +103,6 @@ public class EmailMessageHandlerTests
 
         await Assert.ThrowsAsync<InvalidOperationException>(() => sut.HandleAsync(message, cts.Token));
 
-        _accountMailStatusService.Verify(
-            // ReSharper disable once AccessToDisposedClosure
-            s => s.MarkMailSendFailedAsync("user@example.com", cts.Token),
-            Times.Once);
+        Assert.Equal(("user@example.com", cts.Token), Assert.Single(_accountMailStatusService.MarkMailSendFailedAsyncCalls));
     }
 }

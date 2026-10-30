@@ -5,8 +5,7 @@ using Maroik.Worker.Interfaces;
 using Maroik.Worker.Tests.Fixtures;
 using Maroik.Worker.Workers;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-using Moq;
+using Microsoft.Extensions.Logging.Abstractions;
 using RabbitMQ.Client;
 // ReSharper disable ClassNeverInstantiated.Global
 
@@ -51,7 +50,7 @@ public class EmailConsumerWorkerBrokerTests(WorkerBrokerFixture broker) : IClass
         var services = new ServiceCollection();
         services.AddSingleton<IEmailMessageHandler>(handler);
         var worker = new EmailConsumerWorker(broker.CreateFactory(), services.BuildServiceProvider().GetRequiredService<IServiceScopeFactory>(),
-            Mock.Of<ILogger<EmailConsumerWorker>>())
+            NullLogger<EmailConsumerWorker>.Instance)
         {
             ConnectRetryInitialDelay = TimeSpan.FromMilliseconds(100),
             DrainTimeout = TimeSpan.FromSeconds(10),
