@@ -1,6 +1,6 @@
 // Maroik.FileStorage — Program.cs
 // Entry point for the file-storage microservice.
-// Configures DI, Swagger/OpenAPI, CORS, and the HTTP pipeline, then starts Kestrel.
+// Configures DI, CORS, and the HTTP pipeline, then starts Kestrel.
 
 using System.Globalization;
 using Maroik.Core.Client.Clients;
@@ -10,7 +10,6 @@ using Maroik.FileStorage.Interfaces;
 using Maroik.FileStorage.Services;
 using Maroik.FileStorage.Settings;
 using Maroik.FileStorage.Workers;
-using Microsoft.OpenApi;
 using Serilog;
 using Serilog.Events;
 
@@ -64,16 +63,6 @@ try
     builder.Services.AddSingleton<IFileManagerScanQueue, FileManagerScanQueue>();
     builder.Services.AddHostedService<FileManagerScanWorker>();
 
-    // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
-    // Exposes the OpenAPI metadata endpoint consumed by SwaggerUI.
-    builder.Services.AddEndpointsApiExplorer();
-
-    // Configure Swagger document generation (title and version shown in the UI).
-    builder.Services.AddSwaggerGen(c =>
-    {
-        c.SwaggerDoc("v1", new OpenApiInfo { Title = "Maroik.FileStorage", Version = "v1" });
-    });
-
     builder.Services.AddCors(options =>
     {
         options.AddPolicy("AllowAll",
@@ -81,15 +70,6 @@ try
     });
 
     var app = builder.Build();
-
-    // Mount the Swagger JSON endpoint and the interactive Swagger UI at the app root.
-    app.UseSwagger();
-    app.UseSwaggerUI(c =>
-    {
-        c.SwaggerEndpoint("./swagger/v1/swagger.json", "Maroik.FileStorage");
-        c.DocumentTitle = "Maroik.FileStorage";
-        c.RoutePrefix = ""; // Serve Swagger UI at "/" instead of "/swagger".
-    });
 
     app.UseSerilogRequestLogging(); // Log each HTTP request (method, path, status, duration) via Serilog
     app.UseRouting();

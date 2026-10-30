@@ -166,8 +166,8 @@ Finance
   change on a re-save. Accepted; not a defect to raise.
 
 Files and content
-- Maroik.FileStorage is only ever reachable on the internal network; its `[AllowAnonymous]` endpoints
-  and always-on Swagger UI are intended.
+- Maroik.FileStorage is only ever reachable on the internal network; its `[AllowAnonymous]` endpoints are intended. It has
+  no Swagger UI or OpenAPI document (Swashbuckle removed 2026-10-30, owner's request; pinned by `ProgramRoutesTests`).
 - Editing a post, private note or calendar event without choosing a new file removes the existing
   attachment (pinned by tests such as `EditBoardAsync_ClearsTheExistingAttachmentRecord_WhenNoFileIsSubmitted`).
 - The same holds when an admin clears the lock on someone else's FreeForum post (the
