@@ -9,7 +9,7 @@
 
 @* Should only include grid declaration *@
 
-@(Html
+@(await Html
     .Grid(Model)
     .Build(columns =>
     {
@@ -36,4 +36,5 @@
         pager.ShowPageSizes = true;
         pager.RowsPerPage = 10;
     })
+    .RenderAsync()
 )
