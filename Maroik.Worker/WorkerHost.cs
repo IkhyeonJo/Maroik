@@ -7,8 +7,9 @@ using Maroik.Core.Service.Services;
 using Maroik.Worker.Handlers;
 using Maroik.Worker.Interfaces;
 using Maroik.Worker.Workers;
-using Microsoft.Extensions.Logging.Console;
 using RabbitMQ.Client;
+using Serilog;
+using Serilog.Events;
 
 namespace Maroik.Worker;
 
@@ -22,28 +23,24 @@ internal static class WorkerHost
     private const string DefaultRabbitMqConnectionString = "amqp://guest:guest@localhost:5672/";
 
     /// <summary>
-    /// The console line format, shared with the logger <c>Program.cs</c> reports a failed start-up with. SingleLine: a line break
-    /// inside a logged value (a recipient address from a queued message …) is written as a space, so one entry stays one line and
-    /// a value cannot start a forged entry of its own. The scopes carry a message's delivery tag and correlation id.
+    /// The console sink's line format, shared with the bootstrap logger in <c>Program.cs</c>. <c>{Message:j}</c>, not the usual
+    /// <c>:lj</c>: property values are rendered JSON-escaped (in quotes), so a value holding a line break cannot end the line and
+    /// forge an entry of its own.
     /// </summary>
-    internal static void ConfigureConsole(SimpleConsoleFormatterOptions options)
-    {
-        options.SingleLine = true;
-        options.IncludeScopes = true;
-        options.TimestampFormat = "HH:mm:ss ";
-        options.ColorBehavior = LoggerColorBehavior.Disabled;
-    }
+    internal const string ConsoleOutputTemplate =
+        "[{Timestamp:HH:mm:ss} {Level:u3}] [{CorrelationId}] {SourceContext}: {Message:j}{NewLine}{Exception}";
 
     /// <summary>Builds (does not start) the worker host from the command line / environment / appsettings in <paramref name="args"/>.</summary>
     internal static IHost Build(string[] args)
     {
         var builder = Host.CreateApplicationBuilder(args);
 
-        builder.Logging.ClearProviders();
-        builder.Logging.AddSimpleConsole(ConfigureConsole);
-        builder.Logging.SetMinimumLevel(LogLevel.Information);
-        builder.Logging.AddFilter("Microsoft", LogLevel.Warning);
-        builder.Logging.AddFilter("Microsoft.Hosting.Lifetime", LogLevel.Information);
+        builder.Services.AddSerilog((_, configuration) => configuration
+            .MinimumLevel.Information()
+            .MinimumLevel.Override("Microsoft", LogEventLevel.Warning)
+            .MinimumLevel.Override("Microsoft.Hosting.Lifetime", LogEventLevel.Information)
+            .Enrich.FromLogContext()
+            .WriteTo.Console(outputTemplate: ConsoleOutputTemplate, formatProvider: CultureInfo.InvariantCulture));
 
         #region ServerSettings (SMTP, the reminders' and the File Manager sweep's — reuses the shared ServerSetting shape)
 

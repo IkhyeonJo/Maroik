@@ -37,5 +37,5 @@ M:System.Runtime.CompilerServices.ValueTaskAwaiter`1.GetResult;Await the ValueTa
 M:System.Threading.Thread.Sleep(System.Int32);Await Task.Delay (with the TimeProvider and a CancellationToken).
 M:System.Threading.Thread.Sleep(System.TimeSpan);Await Task.Delay (with the TimeProvider and a CancellationToken).
 
-# Output: production code logs through ILogger (structured, level-filtered), never straight to the console.
-T:System.Console;Log through ILogger.
+# Output: production code logs through ILogger / Serilog (structured, level-filtered), never straight to the console.
+T:System.Console;Log through ILogger (or Serilog's Log in Program.cs).

@@ -7,7 +7,7 @@ namespace Maroik.FileStorage.Tests;
 /// The service exposes its API controllers and nothing else: no Swagger UI and no OpenAPI document (Swashbuckle was removed on
 /// 2026-10-30 at the owner's request).
 /// </summary>
-[Collection("FileStorage host")]
+[Collection("FileStorage host (Program builds a process-wide Serilog logger)")]
 public class ProgramRoutesTests(WebApplicationFactory<Program> baseFactory) : IClassFixture<WebApplicationFactory<Program>>
 {
     /// <summary>The paths Swagger UI and its OpenAPI document used to answer on are not found.</summary>

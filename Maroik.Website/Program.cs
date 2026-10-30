@@ -16,45 +16,31 @@ using Maroik.Website.Middlewares;
 using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.CookiePolicy;
 using Microsoft.AspNetCore.DataProtection;
-using Microsoft.AspNetCore.HttpLogging;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Rewrite;
 using Microsoft.AspNetCore.Session;
-using Microsoft.Extensions.Caching.StackExchangeRedis;
-using Microsoft.Extensions.Logging.Console;
+using Serilog;
+using Serilog.Events;
 using StackExchange.Redis;
 
-// The console line format, shared by the host's logger and the one that reports a failed start-up. SingleLine: a line break
-// inside a logged value (an e-mail address typed into the login form, a file name …) is written as a space, so one entry stays
-// one line and a value cannot start a forged entry of its own.
-static void ConfigureConsole(SimpleConsoleFormatterOptions options)
-{
-    options.SingleLine = true;
-    options.TimestampFormat = "HH:mm:ss ";
-    options.ColorBehavior = LoggerColorBehavior.Disabled;
-}
+// Bootstrap logger captures startup errors before the host is built.
+Log.Logger = new LoggerConfiguration()
+    .WriteTo.Console(outputTemplate: LogTemplates.Console, formatProvider: CultureInfo.InvariantCulture)
+    .CreateBootstrapLogger();
 
 try
 {
     var builder = WebApplication.CreateBuilder(args);
 
-    builder.Logging.ClearProviders();
-    builder.Logging.AddSimpleConsole(ConfigureConsole);
-    builder.Logging.SetMinimumLevel(LogLevel.Information);
-    builder.Logging.AddFilter("Microsoft", LogLevel.Warning);
-    builder.Logging.AddFilter("Microsoft.Hosting.Lifetime", LogLevel.Information);
-    builder.Logging.AddFilter("Microsoft.AspNetCore.HttpLogging.HttpLoggingMiddleware", LogLevel.Information);
-    builder.Logging.AddFilter("System", LogLevel.Warning);
-
-    // One entry per request: method, path (no query), status and duration — never headers, cookies or bodies.
-    builder.Services.AddHttpLogging(options =>
-    {
-        options.LoggingFields = HttpLoggingFields.RequestMethod | HttpLoggingFields.RequestPath |
-            HttpLoggingFields.ResponseStatusCode | HttpLoggingFields.Duration;
-        options.CombineLogs = true;
-    });
+    builder.Host.UseSerilog((_, _, configuration) => configuration
+        .MinimumLevel.Information()
+        .MinimumLevel.Override("Microsoft", LogEventLevel.Warning)
+        .MinimumLevel.Override("Microsoft.Hosting.Lifetime", LogEventLevel.Information)
+        .MinimumLevel.Override("System", LogEventLevel.Warning)
+        .Enrich.FromLogContext()
+        .WriteTo.Console(outputTemplate: LogTemplates.Console, formatProvider: CultureInfo.InvariantCulture));
 
     #region ServerSettings
 
@@ -125,8 +111,6 @@ try
     // (there is no separate "StackExchange.Valkey" package) connects to it unmodified.
 
     var valkeyConnectionString = builder.Configuration.GetConnectionString("Valkey");
-    // Set when the keyring falls back to the file system; logged once the host (and its logger) is built.
-    string? fileKeyRingPath = null;
     IConnectionMultiplexer? valkey = null;
     if (!string.IsNullOrEmpty(valkeyConnectionString))
     {
@@ -138,11 +122,11 @@ try
     if (valkey != null)
     {
         builder.Services.AddSingleton(valkey);
-        builder.Services.AddStackExchangeRedisCache(options => options.InstanceName = "MaroikWebsite:");
-        // The cache shares the multiplexer registered above (resolved from the container, not captured from this method:
-        // CA2025 reads a capture as a task that could outlive a disposal elsewhere in the top-level statements).
-        builder.Services.AddOptions<RedisCacheOptions>().Configure<IConnectionMultiplexer>((options, multiplexer) =>
-            options.ConnectionMultiplexerFactory = () => Task.FromResult(multiplexer));
+        builder.Services.AddStackExchangeRedisCache(options =>
+        {
+            options.ConnectionMultiplexerFactory = () => Task.FromResult(valkey);
+            options.InstanceName = "MaroikWebsite:";
+        });
         builder.Services.AddDataProtection()
             .PersistKeysToStackExchangeRedis(valkey, "MaroikWebsite:DataProtection-Keys")
             .SetApplicationName("Maroik");
@@ -160,7 +144,10 @@ try
         builder.Services.AddDataProtection()
             .PersistKeysToFileSystem(new DirectoryInfo(keyRingPath))
             .SetApplicationName("Maroik");
-        fileKeyRingPath = keyRingPath;
+        Log.Warning(
+            "No Valkey connection string configured — Data Protection keys persist to {KeyRingPath} " +
+            "and the distributed cache is in-process. Multi-instance deployments require Valkey",
+            keyRingPath);
     }
 
     string? cookieDomain = hosting.CookieDomain;
@@ -288,12 +275,6 @@ try
 
     var app = builder.Build();
 
-    if (fileKeyRingPath != null)
-        app.Logger.LogWarning(
-            "No Valkey connection string configured — Data Protection keys persist to {KeyRingPath} " +
-            "and the distributed cache is in-process. Multi-instance deployments require Valkey",
-            fileKeyRingPath);
-
     // First, so every later middleware (HSTS, redirects, cookies) sees the visitor's scheme.
     app.UseForwardedHeaders();
 
@@ -321,7 +302,7 @@ try
             pipeline.UseRewriter(new RewriteOptions().AddRedirectToWww());
         });
 
-    app.UseHttpLogging(); // Log each HTTP request (method, path, status, duration)
+    app.UseSerilogRequestLogging(); // Log each HTTP request (method, path, status, duration) via Serilog
     app.UseRouting(); // Routing middleware for routing requests (UseRouting)
     app.UseCors();
 
@@ -412,8 +393,10 @@ try
 }
 catch (Exception ex) when (ex is not HostAbortedException)
 {
-    // The host's logger may not exist yet (or is already disposed); disposing this one flushes the entry before the process exits.
-    using (var loggerFactory = LoggerFactory.Create(logging => logging.AddSimpleConsole(ConfigureConsole)))
-        loggerFactory.CreateLogger("Maroik.Website").LogCritical(ex, "Maroik.Website terminated unexpectedly");
+    Log.Fatal(ex, "Maroik.Website terminated unexpectedly");
     throw;
+}
+finally
+{
+    await Log.CloseAndFlushAsync();
 }

@@ -414,14 +414,10 @@ dependency, retry); `Information` = business / audit events; `Debug`/`Trace` = d
 How:
 
 - **Structured templates with named placeholders** (`"Locked account {Email} after {Attempts} attempts"`), never string
-  interpolation or concatenation, so the values stay queryable and cannot forge extra log lines. The hosts log with .NET's own
-  logging (no Serilog, since 2026-10-30, owner's request): `builder.Logging.ClearProviders()` plus `AddSimpleConsole` with
-  `SingleLine = true` (`Program.cs` of the Website and FileStorage, `WorkerHost`; the worker also writes the scopes — a message's
-  `DeliveryTag` / `CorrelationId`, set with `ILogger.BeginScope`). SingleLine writes a line break inside a value as a space, so one
-  entry is one line and a value cannot start a forged entry; each host has a test that fails if a value can break the line. Unlike
-  Serilog's `:j`, a `\r` or a terminal escape (`ESC`) in a value is written as it is (accepted by the owner). Requests are logged by
-  `UseHttpLogging` (method, path, status, duration only — no headers, query or body). The `Logging` section of `appsettings*.json`
-  is not used: the levels live in the code.
+  interpolation or concatenation, so the values stay queryable and cannot forge extra log lines. The console output templates
+  (`Maroik.Website/Constants/LogTemplates.cs`, `Maroik.FileStorage/Constants/LogTemplates.cs`, `WorkerHost.ConsoleOutputTemplate`)
+  render `{Message:j}`, not Serilog's usual `:lj` — `:l` writes a string value raw, so a line break inside it would start a
+  forged line. Keep `:j`; each host has a test that fails if a value can break the line.
 - **Never log secrets or content:** passwords, password hashes, registration / reset tokens or their protected (Data Protection) form, session
   or antiforgery values, connection strings, mail bodies, uploaded file bytes, post/comment text. Identify an account by the
   identifier the existing logs already use (its email). A test asserts a secret does not appear when one could leak.
@@ -436,14 +432,14 @@ Enforced by tests where a syntax tree can decide (since 2026-10-20, at the owner
   so an allowed silent catch (an expected condition turned into a result) always states its reason;
 - a silent `catch` swallows every exception: no type or `Exception` itself, no `when` filter, and the exception is not handed on
   (a health check's `HealthCheckResult.Unhealthy(..., ex)` hands it on). A comment does not excuse that;
-- an `Error` / `Critical` log inside a `catch` that names its exception does not pass that exception
+- an `Error` / `Critical` (Serilog `Error` / `Fatal`) log inside a `catch` that names its exception does not pass that exception
   first (judged against the innermost enclosing `catch`);
 - a log call passes the caught exception's `.Message`;
 - a template placeholder's name ends in a secret noun (`Password`, `Token`, `Secret`, `Hash`, `ConnectionString`, `Cookie`);
   `{PasswordReset}` (whether a reset happened) passes;
 - a value passed to a log is a variable or member whose name ends in one of those nouns (`account.HashedPassword`) — this
   reads names only, so a secret passed under an innocent name is still the reviewer's to catch;
-- `Maroik.Core.Repository` mentions `ILogger` / `ILoggerFactory` / a static `Log`.
+- `Maroik.Core.Repository` mentions `ILogger` / `ILoggerFactory` / Serilog `Log`.
 `TheRules_FireOnWhatTheyForbid_AndOnlyOnThat` pins each rule against a bad and a good sample. Whether a use case logs at all, at
 which level and with what text stays with its own tests (the TDD order above). `DomainArchitectureTests.Domain_ShouldNot_Log`
 keeps `Maroik.Core.Domain` off `Microsoft.Extensions.Logging`.
@@ -462,7 +458,7 @@ CA1821, CA2011 (stack, buffers, ValueTask, finalizers). Only these rules are tur
 
 Further rule-ID blocks in the same file, also `error`: "Logging templates" (CA2254, CA2017, CA1727 — see Logging) and
 "Async and cancellation" (CA2016: forward the `CancellationToken` you received; CA1849: call the async API in an async method,
-e.g. `await app.RunAsync()`, `SaveChangesAsync`, `CancelAsync`).
+e.g. `await app.RunAsync()`, `await Log.CloseAndFlushAsync()`, `SaveChangesAsync`, `CancelAsync`).
 
 Also `error`, by rule ID:
 - **Security** ("Security" block): .NET's injection-taint, XML, antiforgery (CA3147), deserialization (CA23xx) and
@@ -558,7 +554,7 @@ The namespace follows the folder path; `.editorconfig` makes a mismatch a build 
 cannot leave its namespace behind.
 
 Interfaces a project defines live in `Interfaces/` (`Maroik.Core.Contract`, and the hosts' own: `Maroik.Website/Interfaces`,
-`Maroik.Worker/Interfaces`, `Maroik.FileStorage/Interfaces`), constants such as the `SessionKeys` in `Constants/`,
+`Maroik.Worker/Interfaces`, `Maroik.FileStorage/Interfaces`), constants such as the console `LogTemplates` in `Constants/`,
 extension methods in `Extensions/` (`EnumExtensions.GetDescription`, the Domain's `DateTimeExtensions` too), and `*Mapper`
 classes in `Mappers/`. `Interfaces/` holds only interfaces (a record a contract carries, such as `HtmlImgPatch`, is a `Dtos/`
 type) and `Extensions/` only classes of extension members (a plain static helper is named for its job, e.g.

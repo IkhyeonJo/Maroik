@@ -19,7 +19,7 @@ namespace Maroik.FileStorage.Tests.Controllers;
 /// (a clean image is written under the storage root and can be downloaded back) and the download edge
 /// cases (unknown type, unreadable file).
 /// </summary>
-[Collection("FileStorage host")]
+[Collection("FileStorage host (Program builds a process-wide Serilog logger)")]
 public class FileControllerTests(WebApplicationFactory<Program> baseFactory)
     : IClassFixture<WebApplicationFactory<Program>>
 {

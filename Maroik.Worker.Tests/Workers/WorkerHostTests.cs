@@ -78,39 +78,6 @@ public class WorkerHostTests(WorkerBrokerFixture broker) : IClassFixture<WorkerB
         Assert.Equal("http://files.maroik.test", host.Services.GetRequiredService<IOptions<ServerSetting>>().Value.FileStorageBaseUrl);
     }
 
-    /// <summary>When it cannot start (here: a broker address that is not a URI) it logs one critical console entry with the exception and exits with a failure code.</summary>
-    [Fact]
-    public async Task TheExecutable_LogsACriticalEntryAndFails_WhenItCannotStart()
-    {
-        string dll = Path.Combine(AppContext.BaseDirectory, "Maroik.Worker.dll");
-        var info = new System.Diagnostics.ProcessStartInfo("dotnet", $"\"{dll}\"")
-        {
-            WorkingDirectory = AppContext.BaseDirectory, RedirectStandardOutput = true, RedirectStandardError = true, UseShellExecute = false,
-            Environment =
-            {
-                ["ConnectionStrings__RabbitMQ"] = "not a broker address",
-                ["ConnectionStrings__DefaultConnection"] = "Host=127.0.0.1;Port=1;Database=unused;Username=u;Password=p",
-                ["DOTNET_ENVIRONMENT"] = "Production"
-            }
-        };
-        using var process = System.Diagnostics.Process.Start(info)!;
-        Task<string> stdout = process.StandardOutput.ReadToEndAsync(Ct);
-        Task<string> stderr = process.StandardError.ReadToEndAsync(Ct);
-        try
-        {
-            await process.WaitForExitAsync(Ct).WaitAsync(TimeSpan.FromSeconds(60), Ct);
-        }
-        finally
-        {
-            if (!process.HasExited) process.Kill(entireProcessTree: true);
-        }
-        string output = await stdout;
-        _ = await stderr;
-
-        Assert.NotEqual(0, process.ExitCode);
-        Assert.Matches(@"(?m)^\d{2}:\d{2}:\d{2} crit: Maroik\.Worker\[0\] Maroik\.Worker terminated unexpectedly System\.UriFormatException: ", output);
-    }
-
     /// <summary>
     /// The File Manager's hourly sweep is wired: the scheduler runs as a hosted service, the File Manager service is scoped (it uses the
     /// DbContext) and reaches file storage through the file client.

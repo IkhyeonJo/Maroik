@@ -78,30 +78,6 @@ public class EmailConsumerWorkerTests
         channel.Verify(c => c.BasicNackAsync(It.IsAny<ulong>(), It.IsAny<bool>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
-    /// <summary>
-    /// The handler's entries carry the message's delivery tag and correlation id as scopes (so a mail's log lines can be traced back
-    /// to the website request that queued it), and the worker's own entries about the message carry its delivery tag.
-    /// </summary>
-    [Fact]
-    public async Task OnMessageReceivedAsync_LogsInsideTheDeliveryTagAndCorrelationIdScopes()
-    {
-        using var loggerProvider = new FakeLoggerProvider();
-        using var loggerFactory = new LoggerFactory([loggerProvider]);
-        ILogger handlerLogger = loggerFactory.CreateLogger("Handler");
-        var handler = new Mock<IEmailMessageHandler>();
-        handler.Setup(h => h.HandleAsync(It.IsAny<SendEmailMessage>(), It.IsAny<CancellationToken>()))
-            .Callback(() => handlerLogger.LogInformation("Sending"))
-            .Returns(Task.CompletedTask);
-        using var worker = CreateSut(handler.Object, out var channel, loggerFactory.CreateLogger<EmailConsumerWorker>());
-        channel.Setup(c => c.BasicAckAsync(7, false, It.IsAny<CancellationToken>())).ThrowsAsync(new InvalidOperationException("channel closed"));
-
-        await worker.OnMessageReceivedAsync(this, MakeDeliverArgs(JsonSerializer.SerializeToUtf8Bytes(_message), deliveryTag: 7));
-
-        IReadOnlyList<FakeLogRecord> records = loggerProvider.Collector.GetSnapshot();
-        Assert.Equal(["DeliveryTag: 7", "CorrelationId: corr-1"], Assert.Single(records, r => r.Category == "Handler").Scopes.Select(s => s?.ToString()));
-        Assert.Equal(["DeliveryTag: 7"], Assert.Single(records, r => r.Level == LogLevel.Error).Scopes.Select(s => s?.ToString()));
-    }
-
     /// <summary>On message received async invalid JSON on first delivery republishes for retry (ack, not nack) and never calls handler.</summary>
     [Fact]
     public async Task OnMessageReceivedAsync_InvalidJson_FirstDelivery_RepublishesForRetryAndNeverCallsHandler()

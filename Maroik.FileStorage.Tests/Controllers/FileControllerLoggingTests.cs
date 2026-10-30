@@ -16,9 +16,10 @@ namespace Maroik.FileStorage.Tests.Controllers;
 /// traversal path, bad extension …) and every refused / missing download is logged with the path and
 /// the caller's correlation id, at the level the reason deserves. (The Website logs the refusal too, but
 /// only this service knows the exact reason and sees a direct call that bypassed the Website.)
-/// The controller's logger is replaced with a <see cref="FakeLogger{T}"/>, so only its own entries are captured.
+/// The controller's logger is replaced with a <see cref="FakeLogger{T}"/> — the host uses Serilog,
+/// which does not forward to Microsoft.Extensions.Logging providers.
 /// </summary>
-[Collection("FileStorage host")]
+[Collection("FileStorage host (Program builds a process-wide Serilog logger)")]
 public class FileControllerLoggingTests(WebApplicationFactory<Program> baseFactory) : IClassFixture<WebApplicationFactory<Program>>
 {
     /// <summary>The leading bytes of a JPEG (JFIF) file.</summary>

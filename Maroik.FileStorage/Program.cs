@@ -5,42 +5,30 @@
 using System.Globalization;
 using Maroik.Core.Client.Clients;
 using Maroik.Core.Contract.Interfaces;
+using Maroik.FileStorage.Constants;
 using Maroik.FileStorage.Interfaces;
 using Maroik.FileStorage.Services;
 using Maroik.FileStorage.Settings;
 using Maroik.FileStorage.Workers;
-using Microsoft.AspNetCore.HttpLogging;
-using Microsoft.Extensions.Logging.Console;
+using Serilog;
+using Serilog.Events;
 
-// The console line format, shared by the host's logger and the one that reports a failed start-up. SingleLine: a line break
-// inside a logged value (an upload path …) is written as a space, so one entry stays one line and a value cannot start a forged
-// entry of its own.
-static void ConfigureConsole(SimpleConsoleFormatterOptions options)
-{
-    options.SingleLine = true;
-    options.TimestampFormat = "HH:mm:ss ";
-    options.ColorBehavior = LoggerColorBehavior.Disabled;
-}
+// Bootstrap logger captures startup errors before the host is built.
+Log.Logger = new LoggerConfiguration()
+    .WriteTo.Console(outputTemplate: LogTemplates.Console, formatProvider: CultureInfo.InvariantCulture)
+    .CreateBootstrapLogger();
 
 try
 {
     var builder = WebApplication.CreateBuilder(args);
 
-    builder.Logging.ClearProviders();
-    builder.Logging.AddSimpleConsole(ConfigureConsole);
-    builder.Logging.SetMinimumLevel(LogLevel.Information);
-    builder.Logging.AddFilter("Microsoft", LogLevel.Warning);
-    builder.Logging.AddFilter("Microsoft.Hosting.Lifetime", LogLevel.Information);
-    builder.Logging.AddFilter("Microsoft.AspNetCore.HttpLogging.HttpLoggingMiddleware", LogLevel.Information);
-    builder.Logging.AddFilter("System", LogLevel.Warning);
-
-    // One entry per request: method, path (no query), status and duration — never headers or bodies.
-    builder.Services.AddHttpLogging(options =>
-    {
-        options.LoggingFields = HttpLoggingFields.RequestMethod | HttpLoggingFields.RequestPath |
-            HttpLoggingFields.ResponseStatusCode | HttpLoggingFields.Duration;
-        options.CombineLogs = true;
-    });
+    builder.Host.UseSerilog((_, _, configuration) => configuration
+        .MinimumLevel.Information()
+        .MinimumLevel.Override("Microsoft", LogEventLevel.Warning)
+        .MinimumLevel.Override("Microsoft.Hosting.Lifetime", LogEventLevel.Information)
+        .MinimumLevel.Override("System", LogEventLevel.Warning)
+        .Enrich.FromLogContext()
+        .WriteTo.Console(outputTemplate: LogTemplates.Console, formatProvider: CultureInfo.InvariantCulture));
 
     // Register MVC controllers (FileController and any future controllers).
     builder.Services.AddControllers();
@@ -83,7 +71,7 @@ try
 
     var app = builder.Build();
 
-    app.UseHttpLogging(); // Log each HTTP request (method, path, status, duration)
+    app.UseSerilogRequestLogging(); // Log each HTTP request (method, path, status, duration) via Serilog
     app.UseRouting();
     app.UseCors("AllowAll");
 
@@ -94,8 +82,10 @@ try
 }
 catch (Exception ex)
 {
-    // The host's logger may not exist yet (or is already disposed); disposing this one flushes the entry before the process exits.
-    using (var loggerFactory = LoggerFactory.Create(logging => logging.AddSimpleConsole(ConfigureConsole)))
-        loggerFactory.CreateLogger("Maroik.FileStorage").LogCritical(ex, "Maroik.FileStorage terminated unexpectedly");
+    Log.Fatal(ex, "Maroik.FileStorage terminated unexpectedly");
     throw;
+}
+finally
+{
+    Log.CloseAndFlush();
 }
