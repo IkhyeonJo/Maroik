@@ -10,8 +10,8 @@
  * (import("x") in a *type* position does not turn the file into a module.)
  */
 
-// NonFactors MVC.Grid 6 client companion — wwwroot/{area}/js/mvc-grid/nonfactors-mvc-grid.js.
-// Not published to npm (NuGet-ecosystem vendored JS). Typed loosely to the surface the
+// NonFactors MVC Grid 8.0.0 client — wwwroot/{area}/js/mvc-grid/nonfactors-mvc-grid*.js, the client of
+// Maroik.Website/Grids (merged from NonFactors AspNetCore.Grid; no NuGet package). Not published to npm. Typed loosely to the surface the
 // custom scripts actually touch: new MvcGrid(el), .url.searchParams, .reload().
 declare class MvcGrid {
     /** Binds the grid behavior to its rendered `.mvc-grid` container. */
