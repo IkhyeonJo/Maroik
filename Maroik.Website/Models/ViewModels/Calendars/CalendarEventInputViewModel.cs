@@ -15,10 +15,10 @@ namespace Maroik.Website.Models.ViewModels.Calendars;
 public class CalendarEventInputViewModel : IValidatableObject
 {
     /// <summary>Database row ID; 0 for a new event, positive for an edit.</summary>
-    public int Id { get; set; }
+    public long Id { get; set; }
 
     /// <summary>The owning calendar's database ID.</summary>
-    public int CalendarId { get; set; }
+    public long CalendarId { get; set; }
 
     /// <summary>Title / headline of the calendar event.</summary>
     public string? Title { get; set; }

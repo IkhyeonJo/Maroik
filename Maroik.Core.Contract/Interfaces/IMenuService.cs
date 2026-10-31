@@ -32,10 +32,10 @@ public interface IMenuService
     Task<IEnumerable<SubCategoryResponse>> SearchSubCategoriesAsync(string? search, CancellationToken ct = default);
 
     /// <summary>Returns a single category by its ID, or null.</summary>
-    Task<CategoryResponse?> GetCategoryByIdAsync(int id, CancellationToken ct = default);
+    Task<CategoryResponse?> GetCategoryByIdAsync(long id, CancellationToken ct = default);
 
     /// <summary>Returns a single sub-category by its ID, or null.</summary>
-    Task<SubCategoryResponse?> GetSubCategoryByIdAsync(int id, CancellationToken ct = default);
+    Task<SubCategoryResponse?> GetSubCategoryByIdAsync(long id, CancellationToken ct = default);
 
     /// <summary>Creates a new top-level navigation category.</summary>
     Task<ServiceResult> CreateCategoryAsync(CategoryRequest request, string actorEmail, CancellationToken ct = default);

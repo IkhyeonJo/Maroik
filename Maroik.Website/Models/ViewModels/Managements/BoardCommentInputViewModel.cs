@@ -9,7 +9,7 @@ namespace Maroik.Website.Models.ViewModels.Managements;
 public class BoardCommentInputViewModel
 {
     /// <summary>Database ID of the board post this comment belongs to.</summary>
-    public int BoardId { get; set; }
+    public long BoardId { get; set; }
 
     /// <summary>Plain-text or HTML body of the comment entered by the note's owner.</summary>
     public string? Content { get; set; }

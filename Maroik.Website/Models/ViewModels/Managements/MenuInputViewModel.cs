@@ -12,11 +12,11 @@ public class MenuInputViewModel
 {
     /// <summary>Database row ID of the menu item; 0 for a new item, positive for an edit or delete.</summary>
     [Display(Name = "Id")]
-    public int Id { get; set; }
+    public long Id { get; set; }
 
     /// <summary>ID of the parent Category (sub-category requests only).</summary>
     [Display(Name = "CategoryId")]
-    public int CategoryId { get; set; }
+    public long CategoryId { get; set; }
 
     /// <summary>Internal programmatic name of the menu item (used in code references).</summary>
     [Required(ErrorMessage = "Please enter Name")]

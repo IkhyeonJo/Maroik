@@ -299,7 +299,7 @@ public class AccountBookController(
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.User)]
-    public async Task<IActionResult> IsIncomeExists(int id, CancellationToken ct)
+    public async Task<IActionResult> IsIncomeExists(long id, CancellationToken ct)
     {
         try
         {
@@ -516,7 +516,7 @@ public class AccountBookController(
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.User)]
-    public async Task<IActionResult> IsExpenditureExists(int id, CancellationToken ct)
+    public async Task<IActionResult> IsExpenditureExists(long id, CancellationToken ct)
     {
         try
         {

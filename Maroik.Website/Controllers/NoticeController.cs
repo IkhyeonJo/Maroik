@@ -113,7 +113,7 @@ public class NoticeController(
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.User)]
-    public async Task<IActionResult> IsFixedIncomeExists(int id, CancellationToken ct)
+    public async Task<IActionResult> IsFixedIncomeExists(long id, CancellationToken ct)
     {
         try
         {
@@ -339,7 +339,7 @@ public class NoticeController(
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.User)]
-    public async Task<IActionResult> IsFixedExpenditureExists(int id, CancellationToken ct)
+    public async Task<IActionResult> IsFixedExpenditureExists(long id, CancellationToken ct)
     {
         try
         {

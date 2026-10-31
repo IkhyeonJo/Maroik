@@ -12,7 +12,7 @@ namespace Maroik.Website.Models.ViewModels.Managements;
 public class BoardInputViewModel
 {
     /// <summary>Database row ID; 0 for a new post, positive for an edit.</summary>
-    public int Id { get; set; }
+    public long Id { get; set; }
 
     /// <summary>Post title; must be 1 to <see cref="TitledContentPolicy.MaxTitleLength"/> characters.</summary>
     [Required(ErrorMessage = "Title is required.")]

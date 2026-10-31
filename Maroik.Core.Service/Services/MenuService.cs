@@ -67,14 +67,14 @@ public class MenuService(
         item.Order.ToString(CultureInfo.InvariantCulture).Contains(search, StringComparison.Ordinal);
 
     /// <inheritdoc />
-    public async Task<CategoryResponse?> GetCategoryByIdAsync(int id, CancellationToken ct = default)
+    public async Task<CategoryResponse?> GetCategoryByIdAsync(long id, CancellationToken ct = default)
     {
         Category? category = await categoryRepository.FindByIdAsync(id, ct);
         return category == null ? null : CategoryMapper.ToResponse(category);
     }
 
     /// <inheritdoc />
-    public async Task<SubCategoryResponse?> GetSubCategoryByIdAsync(int id, CancellationToken ct = default)
+    public async Task<SubCategoryResponse?> GetSubCategoryByIdAsync(long id, CancellationToken ct = default)
     {
         SubCategory? sub = await subCategoryRepository.FindByIdAsync(id, ct);
         return sub == null ? null : SubCategoryMapper.ToResponse(sub);

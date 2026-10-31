@@ -29,12 +29,14 @@ public class ForumControllerPageTests(MaroikWebApplicationFactory factory)
         AuthenticatedSessionHelper.LoginAsync(factory, _client, email, "UserPassword1!", role, TestContext.Current.CancellationToken);
 
     /// <summary>Inserts a free-forum post by <paramref name="writer"/> directly into the database and returns its id.</summary>
-    private long SeedBoard(string writer, string title, string content = "Body", bool locked = false, bool noticed = false, bool deleted = false, DateTime? created = null)
+    private long SeedBoard(string writer, string title, string content = "Body", bool locked = false, bool noticed = false, bool deleted = false, DateTime? created = null, bool idBeyondInt32 = false)
     {
         using var scope = factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         var board = new Board
         {
+            // "Board"."Id" is bigint: an explicit id above int.MaxValue (and above every id so far, so it stays unique).
+            Id = idBeyondInt32 ? Math.Max(int.MaxValue, db.Boards.Max(b => b.Id)) + 1 : 0,
             Type = FreeForumType, Title = title, Content = content, Writer = writer,
             Locked = locked, Noticed = noticed, Deleted = deleted, View = 0,
             Created = created ?? DateTime.UtcNow, Updated = created ?? DateTime.UtcNow
@@ -131,6 +133,22 @@ public class ForumControllerPageTests(MaroikWebApplicationFactory factory)
         Assert.Contains("PublicBody-1", html, StringComparison.Ordinal);
         Assert.Contains("CommentText-1", html, StringComparison.Ordinal);
         Assert.Equal(1, ViewCount(id));
+    }
+
+    /// <summary>A post whose id is beyond <see cref="int.MaxValue"/> (the column is bigint) renders, and so does its edit page for the author.</summary>
+    [Fact]
+    public async Task DetailAndEdit_PostWithAnIdBeyondInt32_Render()
+    {
+        var author = await LoginAsync("forum-page-bigid@test.com");
+        long id = SeedBoard(author.Nickname, "BigIdTitle-1", idBeyondInt32: true);
+
+        var detail = await GetAsync(Detail(id));
+        var edit = await GetAsync(Edit(id), author);
+
+        Assert.Equal(System.Net.HttpStatusCode.OK, detail.StatusCode);
+        Assert.Contains("BigIdTitle-1", await BodyAsync(detail), StringComparison.Ordinal);
+        Assert.Equal(System.Net.HttpStatusCode.OK, edit.StatusCode);
+        Assert.Contains(id.ToString(System.Globalization.CultureInfo.InvariantCulture), await BodyAsync(edit), StringComparison.Ordinal);
     }
 
     /// <summary>A locked post is not readable by a stranger (redirect to the list, no view counted) but is by its author and by an admin.</summary>

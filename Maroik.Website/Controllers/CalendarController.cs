@@ -271,7 +271,7 @@ public class CalendarController(
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.Admin)]
     [RequiredHttpPostAccess(Role = Role.User)]
-    public async Task<IActionResult> IsCalendarExists(int id)
+    public async Task<IActionResult> IsCalendarExists(long id)
     {
         try
         {
@@ -347,7 +347,7 @@ public class CalendarController(
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.Admin)]
     [RequiredHttpPostAccess(Role = Role.User)]
-    public async Task<IActionResult> IsCalendarEventExists(int id)
+    public async Task<IActionResult> IsCalendarEventExists(long id)
     {
         try
         {
@@ -374,7 +374,7 @@ public class CalendarController(
     [RequiredHttpPostAccess(Role = Role.Admin)]
     [RequiredHttpPostAccess(Role = Role.User)]
     [RequiredHttpPostAccess(Role = Role.Anonymous)]
-    public async Task<IActionResult> IsOtherCalendarEventExists(int id)
+    public async Task<IActionResult> IsOtherCalendarEventExists(long id)
     {
         try
         {
@@ -698,7 +698,7 @@ public class CalendarController(
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.Admin)]
     [RequiredHttpPostAccess(Role = Role.User)]
-    public async Task<IActionResult> DeleteCalendarEvent(int id)
+    public async Task<IActionResult> DeleteCalendarEvent(long id)
     {
         try
         {

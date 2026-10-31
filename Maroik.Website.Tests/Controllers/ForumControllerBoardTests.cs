@@ -41,12 +41,14 @@ public class ForumControllerBoardTests(MaroikWebApplicationFactory factory)
         AuthenticatedSessionHelper.LoginAsync(factory, _client, email, "AdminPassword1!", Role.Admin, TestContext.Current.CancellationToken);
 
     /// <summary>Inserts a free-forum post by <paramref name="writer"/> directly into the database and returns its id.</summary>
-    private long SeedBoard(string writer, bool locked = false, bool deleted = false)
+    private long SeedBoard(string writer, bool locked = false, bool deleted = false, bool idBeyondInt32 = false)
     {
         using var scope = factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         var board = new Board
         {
+            // "Board"."Id" is bigint: an explicit id above int.MaxValue (and above every id so far, so it stays unique).
+            Id = idBeyondInt32 ? Math.Max(int.MaxValue, db.Boards.Max(b => b.Id)) + 1 : 0,
             Type = FreeForumType,
             Title = "Test Post",
             Content = "Body",
@@ -93,6 +95,20 @@ public class ForumControllerBoardTests(MaroikWebApplicationFactory factory)
     {
         var session = await LoginAsUserAsync();
         long boardId = SeedBoard(writer: "SomeoneElse");
+
+        using var request = session.BuildJsonPostRequest($"/Forum/IsBoardExists?id={boardId}");
+        var response = await _client.SendAsync(request, TestContext.Current.CancellationToken);
+        string json = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        Assert.Contains("\"result\":true", json, StringComparison.Ordinal);
+    }
+
+    /// <summary>A post whose id is beyond <see cref="int.MaxValue"/> (the column is bigint) is found.</summary>
+    [Fact]
+    public async Task IsBoardExists_IdBeyondInt32_ReturnsSuccessResult()
+    {
+        var session = await LoginAsUserAsync();
+        long boardId = SeedBoard(writer: "SomeoneElse", idBeyondInt32: true);
 
         using var request = session.BuildJsonPostRequest($"/Forum/IsBoardExists?id={boardId}");
         var response = await _client.SendAsync(request, TestContext.Current.CancellationToken);
@@ -209,6 +225,23 @@ public class ForumControllerBoardTests(MaroikWebApplicationFactory factory)
         string json = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
         Assert.Contains("\"result\":true", json, StringComparison.Ordinal);
+    }
+
+    /// <summary>The owner can delete a post whose id is beyond <see cref="int.MaxValue"/> (the column is bigint).</summary>
+    [Fact]
+    public async Task DeleteBoard_IdBeyondInt32_SoftDeletes()
+    {
+        var session = await LoginAsUserAsync();
+        long boardId = SeedBoard(writer: session.Nickname, idBeyondInt32: true);
+
+        using var request = session.BuildJsonPostRequest("/Forum/DeleteBoard", new { Id = boardId });
+        var response = await _client.SendAsync(request, TestContext.Current.CancellationToken);
+        string json = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        Assert.Contains("\"result\":true", json, StringComparison.Ordinal);
+        using var scope = factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        Assert.True(db.Boards.Single(b => b.Id == boardId).Deleted);
     }
 
     /// <summary>Delete board non owner non admin is denied.</summary>

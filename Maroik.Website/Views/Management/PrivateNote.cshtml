@@ -278,7 +278,7 @@
                                     <td>
                                         @if (board.TitleVisible)
                                         {
-                                            @Html!.ActionLink($"{board.Title} [{board.CommentCount}]", "PrivateNote", new {method = "detail", boardId = (int)board.Id, page = Model.Pager!.CurrentPage})
+                                            @Html!.ActionLink($"{board.Title} [{board.CommentCount}]", "PrivateNote", new {method = "detail", boardId = board.Id, page = Model.Pager!.CurrentPage})
                                         }
                                         else
                                         {

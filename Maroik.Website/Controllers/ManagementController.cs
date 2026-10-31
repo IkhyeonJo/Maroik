@@ -594,7 +594,7 @@ public class ManagementController(
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.Admin)]
-    public async Task<IActionResult> IsCategoryExists(int id)
+    public async Task<IActionResult> IsCategoryExists(long id)
     {
         try
         {
@@ -627,7 +627,7 @@ public class ManagementController(
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.Admin)]
-    public async Task<IActionResult> IsSubCategoryExists(int id)
+    public async Task<IActionResult> IsSubCategoryExists(long id)
     {
         try
         {
@@ -1005,7 +1005,7 @@ public class ManagementController(
     #region Edit, List, Detail, Write
 
     /// <summary>Displays the caller's private notes in the mode named by <paramref name="method"/>: "list" (default), "write", "detail" or "edit".</summary>
-    public async Task<IActionResult> PrivateNote(string method = "list", int? boardId = null, int page = 1,
+    public async Task<IActionResult> PrivateNote(string method = "list", long? boardId = null, int page = 1,
         string searchType = "", string searchText = "")
     {
         switch (method)
@@ -1041,18 +1041,18 @@ public class ManagementController(
                 {
                     Method = method,
                     DetailCurrentPage = page,
-                    DetailBoardId = (int)boardId
+                    DetailBoardId = boardId.Value
                 };
 
                 try
                 {
-                    BoardResponse? privateNoteBoard = await boardService.GetBoardByIdAsync((long)boardId, BoardTypes.PrivateNote, HttpContext.RequestAborted);
-                    BoardAttachedFileDto? attachedFile = await boardService.GetAttachedFileByBoardIdAsync((long)boardId, HttpContext.RequestAborted);
+                    BoardResponse? privateNoteBoard = await boardService.GetBoardByIdAsync(boardId.Value, BoardTypes.PrivateNote, HttpContext.RequestAborted);
+                    BoardAttachedFileDto? attachedFile = await boardService.GetAttachedFileByBoardIdAsync(boardId.Value, HttpContext.RequestAborted);
 
                     if (privateNoteBoard == null || privateNoteBoard.Deleted || !boardService.CanView(privateNoteBoard, loggedInAccount))
                         return RedirectToAction(BoardTypes.PrivateNote, "Management");
 
-                    await boardService.IncrementBoardViewAsync((long)boardId, HttpContext.RequestAborted);
+                    await boardService.IncrementBoardViewAsync(boardId.Value, HttpContext.RequestAborted);
 
                     (privateNoteBoard.Content, bool isImgTagIncluded) = await boardService.PrepareHtmlForDisplayAsync(privateNoteBoard.Content ?? "", HttpContext.RequestAborted);
 
@@ -1076,7 +1076,7 @@ public class ManagementController(
                         };
 
                     // Preload comments and accounts for detail view
-                    List<BoardCommentResponse> comments = [.. await boardService.GetCommentsByBoardIdAsync((long)boardId, HttpContext.RequestAborted)];
+                    List<BoardCommentResponse> comments = [.. await boardService.GetCommentsByBoardIdAsync(boardId.Value, HttpContext.RequestAborted)];
                     // Only the accounts shown on this page (the note's author and its commenters) are
                     // needed, to highlight admin-authored entries — not every account in the system.
                     var detailNicknames = comments.Select(c => c.Writer)
@@ -1109,7 +1109,7 @@ public class ManagementController(
                 {
                     Method = method,
                     EditCurrentPage = page,
-                    EditBoardId = (int)boardId
+                    EditBoardId = boardId.Value
                 };
 
                 // The account from HttpContext.GetLoggedInAccount() is re-fetched from the database by ViewBagPopulatorFilter
@@ -1118,8 +1118,8 @@ public class ManagementController(
 
                 try
                 {
-                    BoardResponse? privateNoteBoard = await boardService.GetBoardByIdAsync((long)boardId, BoardTypes.PrivateNote, HttpContext.RequestAborted);
-                    BoardAttachedFileDto? attachedFile = await boardService.GetAttachedFileByBoardIdAsync((long)boardId, HttpContext.RequestAborted);
+                    BoardResponse? privateNoteBoard = await boardService.GetBoardByIdAsync(boardId.Value, BoardTypes.PrivateNote, HttpContext.RequestAborted);
+                    BoardAttachedFileDto? attachedFile = await boardService.GetAttachedFileByBoardIdAsync(boardId.Value, HttpContext.RequestAborted);
 
                     if (privateNoteBoard == null || privateNoteBoard.Deleted || !loggedInAccount.IsOwner(privateNoteBoard.Writer))
                     {
@@ -1287,7 +1287,7 @@ public class ManagementController(
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.Admin)]
     [RequiredHttpPostAccess(Role = Role.User)]
-    public async Task<IActionResult> IsBoardExists(int id)
+    public async Task<IActionResult> IsBoardExists(long id)
     {
         try
         {
@@ -1404,7 +1404,7 @@ public class ManagementController(
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.Admin)]
     [RequiredHttpPostAccess(Role = Role.User)]
-    public async Task<IActionResult> DeleteComment(int id)
+    public async Task<IActionResult> DeleteComment(long id)
     {
         try
         {

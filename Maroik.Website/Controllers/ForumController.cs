@@ -202,7 +202,7 @@ public class ForumController(
 
     #region Edit, List, Detail, Write
     /// <summary>Displays the free-forum page in the mode named by <paramref name="method"/>: "list" (default), "write", "detail" or "edit".</summary>
-    public async Task<IActionResult> FreeForum(string method = "list", int? boardId = null, int page = 1, string searchType = "", string searchText = "", CancellationToken ct = default)
+    public async Task<IActionResult> FreeForum(string method = "list", long? boardId = null, int page = 1, string searchType = "", string searchText = "", CancellationToken ct = default)
     {
         switch (method)
         {
@@ -230,13 +230,13 @@ public class ForumController(
                 {
                     Method = method,
                     DetailCurrentPage = page,
-                    DetailBoardId = (int)boardId
+                    DetailBoardId = boardId.Value
                 };
 
                 try
                 {
-                    BoardResponse? freeBoard = await boardService.GetBoardByIdAsync((long)boardId, BoardTypes.FreeForum, ct);
-                    BoardAttachedFileDto? boardAttachedFile = await boardService.GetAttachedFileByBoardIdAsync((long)boardId, ct);
+                    BoardResponse? freeBoard = await boardService.GetBoardByIdAsync(boardId.Value, BoardTypes.FreeForum, ct);
+                    BoardAttachedFileDto? boardAttachedFile = await boardService.GetAttachedFileByBoardIdAsync(boardId.Value, ct);
 
                     if (freeBoard == null || freeBoard.Deleted)
                         return RedirectToAction(BoardTypes.FreeForum, "Forum");
@@ -249,7 +249,7 @@ public class ForumController(
                     if (!boardService.CanView(freeBoard, loggedInAccount))
                         return RedirectToAction(BoardTypes.FreeForum, "Forum");
 
-                    await boardService.IncrementBoardViewAsync((long)boardId, ct);
+                    await boardService.IncrementBoardViewAsync(boardId.Value, ct);
 
                     (freeBoard.Content, bool isImgTagIncluded) = await boardService.PrepareHtmlForDisplayAsync(freeBoard.Content ?? "", ct);
 
@@ -273,7 +273,7 @@ public class ForumController(
                         CanDelete = freeForumOutputViewModel.LoggedInAccount.IsOwnerOrAdmin(freeBoard.Writer)
                     };
 
-                    List<BoardCommentResponse> comments = [.. await boardService.GetCommentsByBoardIdAsync((long)boardId, ct)];
+                    List<BoardCommentResponse> comments = [.. await boardService.GetCommentsByBoardIdAsync(boardId.Value, ct)];
                     var detailNicknames = comments.Select(c => c.Writer)
                         .Append(freeBoard.Writer ?? "")
                         .Where(w => !string.IsNullOrEmpty(w))
@@ -301,13 +301,13 @@ public class ForumController(
                 {
                     Method = method,
                     EditCurrentPage = page,
-                    EditBoardId = (int)boardId
+                    EditBoardId = boardId.Value
                 };
 
                 try
                 {
-                    BoardResponse? freeBoard = await boardService.GetBoardByIdAsync((long)boardId, BoardTypes.FreeForum, ct);
-                    BoardAttachedFileDto? boardAttachedFile = await boardService.GetAttachedFileByBoardIdAsync((long)boardId, ct);
+                    BoardResponse? freeBoard = await boardService.GetBoardByIdAsync(boardId.Value, BoardTypes.FreeForum, ct);
+                    BoardAttachedFileDto? boardAttachedFile = await boardService.GetAttachedFileByBoardIdAsync(boardId.Value, ct);
 
                     if (freeBoard == null || freeBoard.Deleted)
                         return RedirectToAction(BoardTypes.FreeForum, "Forum");
@@ -455,7 +455,7 @@ public class ForumController(
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.Admin)]
     [RequiredHttpPostAccess(Role = Role.User)]
-    public async Task<IActionResult> IsBoardExists(int id, CancellationToken ct)
+    public async Task<IActionResult> IsBoardExists(long id, CancellationToken ct)
     {
         try
         {
@@ -571,7 +571,7 @@ public class ForumController(
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.Admin)]
     [RequiredHttpPostAccess(Role = Role.User)]
-    public async Task<IActionResult> DeleteComment(int id, CancellationToken ct)
+    public async Task<IActionResult> DeleteComment(long id, CancellationToken ct)
     {
         try
         {

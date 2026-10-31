@@ -15,7 +15,7 @@ public class FixedExpenditureInputViewModel : IValidatableObject
 {
     /// <summary>Database row ID; 0 for a new record, positive for an edit.</summary>
     [Display(Name = "Id")]
-    public int Id { get; set; }
+    public long Id { get; set; }
 
     /// <summary>Top-level expenditure category (e.g. "ConsumerSpending", "NonConsumerSpending").</summary>
     [Required(ErrorMessage = "Please enter MainClass")]

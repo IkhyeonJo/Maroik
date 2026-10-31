@@ -31,13 +31,13 @@ public class PrivateNoteOutputViewModel
     public BoardOutputViewModel? BoardOutputViewModel { get; set; }
 
     /// <summary>ID of the post currently open in the detail panel; 0 when none.</summary>
-    public int DetailBoardId { get; set; }
+    public long DetailBoardId { get; set; }
 
     /// <summary>Page number the user was on when they opened the detail panel, used for "back" navigation.</summary>
     public int DetailCurrentPage { get; set; }
 
     /// <summary>ID of the post currently open in the edit form; 0 when none.</summary>
-    public int EditBoardId { get; set; }
+    public long EditBoardId { get; set; }
 
     /// <summary>Page number the user was on when they opened the edit form, used for "back" navigation.</summary>
     public int EditCurrentPage { get; set; }

@@ -12,7 +12,7 @@ public class FixedIncomeInputViewModel
 {
     /// <summary>Database row ID; 0 for a new record, positive for an edit.</summary>
     [Display(Name = "Id")]
-    public int Id { get; set; }
+    public long Id { get; set; }
 
     /// <summary>Top-level income category (e.g. "RegularIncome", "IrregularIncome").</summary>
     [Required(ErrorMessage = "Please enter MainClass")]

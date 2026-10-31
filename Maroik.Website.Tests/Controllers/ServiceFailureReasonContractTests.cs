@@ -253,8 +253,8 @@ public class ServiceFailureReasonContractTests(MaroikWebApplicationFactory facto
         public Task<IEnumerable<SubCategoryResponse>> GetAllSubCategoriesAsync(CancellationToken ct = default) => inner.GetAllSubCategoriesAsync(ct);
         public Task<IEnumerable<CategoryResponse>> SearchCategoriesAsync(string? search, CancellationToken ct = default) => inner.SearchCategoriesAsync(search, ct);
         public Task<IEnumerable<SubCategoryResponse>> SearchSubCategoriesAsync(string? search, CancellationToken ct = default) => inner.SearchSubCategoriesAsync(search, ct);
-        public Task<CategoryResponse?> GetCategoryByIdAsync(int id, CancellationToken ct = default) => inner.GetCategoryByIdAsync(id, ct);
-        public Task<SubCategoryResponse?> GetSubCategoryByIdAsync(int id, CancellationToken ct = default) => inner.GetSubCategoryByIdAsync(id, ct);
+        public Task<CategoryResponse?> GetCategoryByIdAsync(long id, CancellationToken ct = default) => inner.GetCategoryByIdAsync(id, ct);
+        public Task<SubCategoryResponse?> GetSubCategoryByIdAsync(long id, CancellationToken ct = default) => inner.GetSubCategoryByIdAsync(id, ct);
         public Task<ServiceResult> CreateCategoryAsync(CategoryRequest request, string actorEmail, CancellationToken ct = default) => inner.CreateCategoryAsync(request, actorEmail, ct);
         public Task<ServiceResult> UpdateCategoryAsync(CategoryRequest request, string actorEmail, CancellationToken ct = default) => inner.UpdateCategoryAsync(request, actorEmail, ct);
         public Task<ServiceResult> CreateSubCategoryAsync(SubCategoryRequest request, string actorEmail, CancellationToken ct = default) => inner.CreateSubCategoryAsync(request, actorEmail, ct);

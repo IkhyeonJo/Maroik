@@ -60,7 +60,7 @@ public static class CalendarEventViewModelExtensions
         public async Task<CalendarEventOutputViewModel?> GetCalendarEventDetailViewModelAsync(
             IEnumerable<CalendarResponse> calendars,
             string userTimeZoneIanaId,
-            int calendarEventId,
+            long calendarEventId,
             bool includeReminders,
             CancellationToken ct)
         {

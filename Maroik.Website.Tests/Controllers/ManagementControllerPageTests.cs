@@ -28,12 +28,14 @@ public class ManagementControllerPageTests(MaroikWebApplicationFactory factory)
         AuthenticatedSessionHelper.LoginAsync(factory, _client, email, "UserPassword1!", role, TestContext.Current.CancellationToken);
 
     /// <summary>Inserts a private note by <paramref name="writer"/> directly into the database and returns its id.</summary>
-    private long SeedNote(string writer, string title, string content = "Body", bool deleted = false)
+    private long SeedNote(string writer, string title, string content = "Body", bool deleted = false, bool idBeyondInt32 = false)
     {
         using var scope = factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         var board = new Board
         {
+            // "Board"."Id" is bigint: an explicit id above int.MaxValue (and above every id so far, so it stays unique).
+            Id = idBeyondInt32 ? Math.Max(int.MaxValue, db.Boards.Max(b => b.Id)) + 1 : 0,
             Type = PrivateNoteType, Title = title, Content = content, Writer = writer,
             Locked = false, Noticed = false, Deleted = deleted, View = 0, Created = DateTime.UtcNow, Updated = DateTime.UtcNow
         };
@@ -99,6 +101,27 @@ public class ManagementControllerPageTests(MaroikWebApplicationFactory factory)
         int deletable = System.Text.RegularExpressions.Regex
             .Matches(html, "aPrivateNoteDeleteComment\" href=\"#\" data-commentId=\"(\\d+)\"").Select(m => m.Groups[1].Value).Distinct().Count();
         Assert.Equal(1, deletable);
+    }
+
+    /// <summary>
+    /// A note whose id is beyond <see cref="int.MaxValue"/> (the column is bigint) is linked from the list with its full id, and its
+    /// detail and edit pages render for the owner.
+    /// </summary>
+    [Fact]
+    public async Task ListDetailAndEdit_NoteWithAnIdBeyondInt32_Work()
+    {
+        var owner = await LoginAsync("mgmt-page-bigid@test.com");
+        long id = SeedNote(owner.Nickname, "BigIdNote-1", idBeyondInt32: true);
+
+        string list = await BodyAsync(await GetAsync("/Management/PrivateNote", owner));
+        var detail = await GetAsync(Detail(id), owner);
+        var edit = await GetAsync(Edit(id), owner);
+
+        Assert.Contains($"boardId={id}&", list, StringComparison.Ordinal);
+        Assert.Equal(System.Net.HttpStatusCode.OK, detail.StatusCode);
+        Assert.Contains("BigIdNote-1", await BodyAsync(detail), StringComparison.Ordinal);
+        Assert.Equal(System.Net.HttpStatusCode.OK, edit.StatusCode);
+        Assert.Contains("BigIdNote-1", await BodyAsync(edit), StringComparison.Ordinal);
     }
 
     // -- PrivateNote: list ---------------------------------------------------------------------------
