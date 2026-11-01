@@ -282,6 +282,22 @@ public class FileManagerServiceUploadTests
         _h.Files.Verify(f => f.AppendFileManagerChunkAsync(It.IsAny<Guid>(), It.IsAny<long>(), It.IsAny<Stream>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
+    /// <summary>
+    /// An offset so large that offset + length overflows a long is refused the same way: the range check must not wrap round to a
+    /// negative sum that passes it (file storage would then refuse the offset, and the request ended as a "temporary error").
+    /// </summary>
+    [Fact]
+    public async Task AppendChunkAsync_RefusesAnOffsetWhoseEndOverflows()
+    {
+        FileManagerUploadStart start = await StartAsync(Upload("a.bin", 10));
+
+        var (result, _) = await _h.Sut.AppendChunkAsync(H.Email, start.UploadId, long.MaxValue - 1, new MemoryStream(new byte[4]), 4, TestContext.Current.CancellationToken);
+
+        Assert.Equal(ServiceErrorType.Validation, result.ErrorType);
+        Assert.Equal(ServiceErrorKeys.InputInvalid, result.ErrorKey);
+        _h.Files.Verify(f => f.AppendFileManagerChunkAsync(It.IsAny<Guid>(), It.IsAny<long>(), It.IsAny<Stream>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
     /// <summary>An upload id the account does not have (another account's, a finished file's) is "not found".</summary>
     [Fact]
     public async Task AppendChunkAsync_AnswersNotFound_ForAnUploadTheAccountDoesNotHave()

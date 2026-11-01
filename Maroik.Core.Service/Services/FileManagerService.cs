@@ -434,8 +434,9 @@ public class FileManagerService(
         if (await FindUploadAsync(accountEmail, uploadId, ct) is not { } upload)
             return (UploadNotFound(), 0);
 
-        // Nothing beyond the declared (and reserved) size is accepted.
-        if (offset < 0 || offset + chunkLength > upload.Size)
+        // Nothing beyond the declared (and reserved) size is accepted. Compared as offset > size - length, not offset + length > size:
+        // the sum of a huge offset and the length overflows a long into a negative number that would pass.
+        if (offset < 0 || offset > upload.Size - chunkLength)
             return (ServiceResult.Validation("FileManager.ChunkInvalid", ServiceErrorKeys.InputInvalid), 0);
 
         long? length = await fileClient.AppendFileManagerChunkAsync(uploadId, offset, chunk, BaseUrl, ct);
