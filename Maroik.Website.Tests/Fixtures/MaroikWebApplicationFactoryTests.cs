@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using StackExchange.Redis;
 
 namespace Maroik.Website.Tests.Fixtures;
 
@@ -23,5 +24,18 @@ public class MaroikWebApplicationFactoryTests(MaroikWebApplicationFactory factor
 
         Assert.NotEmpty(fileProviders);
         Assert.All(fileProviders, provider => Assert.False(provider.Source.ReloadOnChange, provider.Source.Path));
+    }
+
+    /// <summary>
+    /// The test host does not connect to Valkey. There is none in the test run, and <c>Program.cs</c> reads the connection
+    /// string before <c>ConfigureAppConfiguration</c> overrides apply, so the Development value (<c>localhost:6379</c>) would
+    /// win: every host — the base one and each <c>WithWebHostBuilder</c> host — then waited out StackExchange.Redis'
+    /// 5-second backlog timeout while the Data Protection key ring was read at start-up (about 10 s per host, the larger
+    /// part of this project's run time).
+    /// </summary>
+    [Fact]
+    public void TheTestHost_DoesNotConnectToValkey()
+    {
+        Assert.Null(factory.Services.GetService<IConnectionMultiplexer>());
     }
 }

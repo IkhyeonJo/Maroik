@@ -82,6 +82,14 @@ public class MaroikWebApplicationFactory : WebApplicationFactory<Program>, IAsyn
         // here edits appsettings*.json during a run, so nothing is lost.
         builder.UseSetting("hostBuilder:reloadConfigOnChange", "false");
 
+        // -- No Valkey ---------------------------------------------------------
+        // A host-level setting, because Program.cs reads the connection string before the ConfigureAppConfiguration
+        // overrides below apply. Without it the Development value (localhost:6379) won, and every host waited out the
+        // Redis client's 5-second timeouts while reading the Data Protection key ring at start-up (~10 s per host).
+        // Program.cs then takes its no-Valkey path (key ring in the git-ignored content-root folder); the Valkey path is
+        // covered by ProgramStartupTests on a host of its own.
+        builder.UseSetting("ConnectionStrings:Valkey", "");
+
         // -- Override configuration -------------------------------------------
         builder.ConfigureAppConfiguration((_, config) =>
         {

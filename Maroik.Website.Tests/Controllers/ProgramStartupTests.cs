@@ -75,16 +75,21 @@ public class ProgramStartupTests(MaroikWebApplicationFactory factory)
         Assert.Equal(CulturePolicy.SupportedCultures.OrderBy(c => c), options.SupportedUICultures!.Select(c => c.Name).OrderBy(c => c));
     }
 
-    /// <summary>With a Valkey connection string the shared multiplexer backs the distributed cache, namespaced under "MaroikWebsite:".</summary>
+    /// <summary>
+    /// With a Valkey connection string the shared multiplexer backs the distributed cache, namespaced under "MaroikWebsite:".
+    /// The test host runs without Valkey, so this host sets one (nothing listens there: it waits out the client's timeouts
+    /// once, which is why only this test does it).
+    /// </summary>
     [Fact]
     public async Task Startup_BacksTheDistributedCacheWithTheSharedValkeyMultiplexer()
     {
-        using HttpClient client = factory.CreateClient();
+        using var factory1 = factory.WithWebHostBuilder(b => b.UseSetting("ConnectionStrings:Valkey", "localhost:6379,abortConnect=false"));
+        using HttpClient client = factory1.CreateClient();
 
-        RedisCacheOptions options = factory.Services.GetRequiredService<IOptions<RedisCacheOptions>>().Value;
+        RedisCacheOptions options = factory1.Services.GetRequiredService<IOptions<RedisCacheOptions>>().Value;
 
         Assert.Equal("MaroikWebsite:", options.InstanceName);
         Assert.NotNull(options.ConnectionMultiplexerFactory);
-        Assert.Same(factory.Services.GetRequiredService<IConnectionMultiplexer>(), await options.ConnectionMultiplexerFactory!());
+        Assert.Same(factory1.Services.GetRequiredService<IConnectionMultiplexer>(), await options.ConnectionMultiplexerFactory!());
     }
 }
