@@ -2,6 +2,7 @@ using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Contract.Settings;
 using Maroik.Core.Domain.Calendars;
+using Maroik.Core.Domain.Primitives;
 using Maroik.Core.Service.Services;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Testing;
@@ -2184,5 +2185,36 @@ public class CalendarServiceTests
 
         _attachmentContent.Verify(a => a.SanitizeAndDecryptContent("<p>new</p>"), Times.Once);
         _attachmentContent.Verify(a => a.SanitizeAndDecryptContent("<p>edited</p>"), Times.Once);
+    }
+
+    // -- Raw description bound ---------------------------------------------
+
+    /// <summary>A description longer than <see cref="TitledContentPolicy.MaxRawBodyLength"/> as submitted (raw, before sanitizing).</summary>
+    private static string OverLongRawDescription() => new('x', TitledContentPolicy.MaxRawBodyLength + 1);
+
+    /// <summary>An over-long event description is refused before the sanitizer runs and before any transaction starts.</summary>
+    [Fact]
+    public async Task CreateCalendarEventAsync_RefusesAnOverLongRawDescription_BeforeSanitizingIt()
+    {
+        ServiceResult result = await CreateSut().CreateCalendarEventAsync(
+            new CalendarEventRequest { CalendarId = 1, Description = OverLongRawDescription() }, "user@example.com", "1", [], null,
+            TestContext.Current.CancellationToken);
+
+        Assert.Equal(("CalendarEvent.DescriptionTooLong", ServiceErrorType.Validation), (result.ErrorCode, result.ErrorType));
+        _attachmentContent.Verify(a => a.SanitizeAndDecryptContent(It.IsAny<string>()), Times.Never);
+        _unitOfWork.Verify(u => u.BeginAsync(It.IsAny<System.Data.IsolationLevel?>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    /// <summary>The update path refuses an over-long raw description the same way.</summary>
+    [Fact]
+    public async Task UpdateCalendarEventAsync_RefusesAnOverLongRawDescription_BeforeSanitizingIt()
+    {
+        ServiceResult result = await CreateSut().UpdateCalendarEventAsync(
+            new CalendarEventRequest { Id = 1, CalendarId = 1, Description = OverLongRawDescription() }, "user@example.com", "1", [], null,
+            TestContext.Current.CancellationToken);
+
+        Assert.Equal(("CalendarEvent.DescriptionTooLong", ServiceErrorType.Validation), (result.ErrorCode, result.ErrorType));
+        _attachmentContent.Verify(a => a.SanitizeAndDecryptContent(It.IsAny<string>()), Times.Never);
+        _unitOfWork.Verify(u => u.BeginAsync(It.IsAny<System.Data.IsolationLevel?>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 }

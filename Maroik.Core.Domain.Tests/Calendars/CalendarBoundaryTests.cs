@@ -115,6 +115,16 @@ public class CalendarBoundaryTests
         Assert.Equal(TitledContentPolicy.MaxBodyLength, calendar.Description?.Length);
     }
 
+    /// <summary>The raw event description is bounded at <see cref="TitledContentPolicy.MaxRawBodyLength"/> before it is sanitized.</summary>
+    [Fact]
+    public void CalendarEvent_RawDescription_IsBoundedBeforeSanitizing()
+    {
+        Assert.False(CalendarEvent.ValidateRawDescription(Text(TitledContentPolicy.MaxRawBodyLength)).IsError);
+        Assert.False(CalendarEvent.ValidateRawDescription(null).IsError);
+        ErrorAssert.Validation(CalendarEvent.ValidateRawDescription(Text(TitledContentPolicy.MaxRawBodyLength + 1)),
+            "CalendarEvent.DescriptionTooLong", "Event description must be {0} characters or fewer.", TitledContentPolicy.MaxBodyLength);
+    }
+
     /// <summary>Verifies the title / description / location length limits, the empty title and the unknown status on <c>CalendarEvent.Create</c>.</summary>
     [Fact]
     public void CalendarEvent_Create_AcceptsTextAtTheLimits_AndRefusesOneMore()

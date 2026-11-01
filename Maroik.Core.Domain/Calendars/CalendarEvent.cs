@@ -14,6 +14,15 @@ namespace Maroik.Core.Domain.Calendars;
 /// </summary>
 public sealed class CalendarEvent : AggregateRoot<long>
 {
+    /// <summary>
+    /// Refuses a event description longer than <see cref="TitledContentPolicy.MaxRawBodyLength"/> as submitted, before it is sanitized, with
+    /// the same error as an over-long sanitized one.
+    /// </summary>
+    public static ErrorOr<Success> ValidateRawDescription(string? raw) =>
+        raw?.Length > TitledContentPolicy.MaxRawBodyLength
+            ? DomainError.Validation("CalendarEvent.DescriptionTooLong", "Event description must be {0} characters or fewer.", TitledContentPolicy.MaxBodyLength)
+            : Result.Success;
+
     /// <summary>ID of the calendar this event belongs to.</summary>
     public long CalendarId { get; private set; }
 

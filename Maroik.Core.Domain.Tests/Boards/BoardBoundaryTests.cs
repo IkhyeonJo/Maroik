@@ -47,6 +47,26 @@ public class BoardBoundaryTests
             "Board.ContentTooLong", "Post content must be {0} characters or fewer.", TitledContentPolicy.MaxBodyLength);
     }
 
+    /// <summary>
+    /// The raw (not yet sanitized) body is bounded at <see cref="TitledContentPolicy.MaxRawBodyLength"/> before the sanitizer sees it:
+    /// sanitizing deeply nested HTML takes time that grows faster than its length (1.1 MB took 68 s). A raw body over that bound is
+    /// refused with the content's own error; one at it passes, and the sanitized content is still held to MaxBodyLength.
+    /// </summary>
+    [Fact]
+    public void TheRawBody_IsBoundedBeforeSanitizing()
+    {
+        Assert.Equal(4 * TitledContentPolicy.MaxBodyLength, TitledContentPolicy.MaxRawBodyLength);
+
+        Assert.False(Domain.Boards.Board.ValidateRawContent(Text(TitledContentPolicy.MaxRawBodyLength)).IsError);
+        Assert.False(Domain.Boards.Board.ValidateRawContent(null).IsError);
+        ErrorAssert.Validation(Domain.Boards.Board.ValidateRawContent(Text(TitledContentPolicy.MaxRawBodyLength + 1)),
+            "Board.ContentTooLong", "Post content must be {0} characters or fewer.", TitledContentPolicy.MaxBodyLength);
+
+        Assert.False(BoardComment.ValidateRawContent(Text(TitledContentPolicy.MaxRawBodyLength)).IsError);
+        ErrorAssert.Validation(BoardComment.ValidateRawContent(Text(TitledContentPolicy.MaxRawBodyLength + 1)),
+            "BoardComment.ContentTooLong", "Comment must be {0} characters or fewer.", TitledContentPolicy.MaxBodyLength);
+    }
+
     /// <summary>Verifies that <c>Board.Update</c> accepts a title and content at the maximum length and refuses one character more.</summary>
     [Fact]
     public void Board_Update_AcceptsATitleAndContentAtTheLimit_AndRefusesOneMore()

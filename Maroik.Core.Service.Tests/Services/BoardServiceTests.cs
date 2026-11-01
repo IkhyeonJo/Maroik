@@ -4,6 +4,7 @@ using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Contract.Settings;
 using Maroik.Core.Domain.Accounts;
 using Maroik.Core.Domain.Boards;
+using Maroik.Core.Domain.Primitives;
 using Maroik.Core.Service.Services;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Testing;
@@ -1700,5 +1701,51 @@ public class BoardServiceTests
 
         _attachmentContent.Verify(s => s.SanitizeAndDecryptContent("<p>hello</p>"), Times.Once);
         _attachmentContent.Verify(s => s.SanitizeAndDecryptContent("New Content"), Times.Once);
+    }
+
+    // -- Raw body bound ----------------------------------------------------
+
+    /// <summary>A body longer than <see cref="TitledContentPolicy.MaxRawBodyLength"/> as submitted (raw, before sanitizing).</summary>
+    private static string OverLongRawBody() => new('x', TitledContentPolicy.MaxRawBodyLength + 1);
+
+    /// <summary>
+    /// An over-long post body is refused before the sanitizer runs (its time grows faster than the length for nested HTML) and
+    /// before any transaction starts, with the content's own validation error.
+    /// </summary>
+    [Fact]
+    public async Task WriteBoardAsync_RefusesAnOverLongRawBody_BeforeSanitizingIt()
+    {
+        ServiceResult result = await CreateSut().WriteBoardAsync(
+            new BoardRequest { Type = BoardTypes.FreeForum, Title = "t", Content = OverLongRawBody(), Writer = "Alice" }, isAdmin: false, null,
+            TestContext.Current.CancellationToken);
+
+        Assert.Equal(("Board.ContentTooLong", ServiceErrorType.Validation), (result.ErrorCode, result.ErrorType));
+        _attachmentContent.Verify(s => s.SanitizeAndDecryptContent(It.IsAny<string>()), Times.Never);
+        _unitOfWork.Verify(u => u.BeginAsync(It.IsAny<IsolationLevel?>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    /// <summary>The edit path refuses an over-long raw body the same way.</summary>
+    [Fact]
+    public async Task EditBoardAsync_RefusesAnOverLongRawBody_BeforeSanitizingIt()
+    {
+        ServiceResult result = await CreateSut().EditBoardAsync(
+            new BoardRequest { Id = 1, Type = BoardTypes.FreeForum, Title = "t", Content = OverLongRawBody() }, "Alice", isAdmin: false, null,
+            TestContext.Current.CancellationToken);
+
+        Assert.Equal(("Board.ContentTooLong", ServiceErrorType.Validation), (result.ErrorCode, result.ErrorType));
+        _attachmentContent.Verify(s => s.SanitizeAndDecryptContent(It.IsAny<string>()), Times.Never);
+        _unitOfWork.Verify(u => u.BeginAsync(It.IsAny<IsolationLevel?>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    /// <summary>A comment arrives as a JSON body (up to Kestrel's 30 MB), so its raw content is bounded the same way.</summary>
+    [Fact]
+    public async Task WriteCommentAsync_RefusesAnOverLongRawBody_BeforeSanitizingIt()
+    {
+        ServiceResult result = await CreateSut().WriteCommentAsync(
+            new BoardCommentRequest { BoardId = 1, Content = OverLongRawBody(), Writer = "Alice" }, ct: TestContext.Current.CancellationToken);
+
+        Assert.Equal(("BoardComment.ContentTooLong", ServiceErrorType.Validation), (result.ErrorCode, result.ErrorType));
+        _attachmentContent.Verify(s => s.SanitizeContent(It.IsAny<string>()), Times.Never);
+        _unitOfWork.Verify(u => u.BeginAsync(It.IsAny<IsolationLevel?>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 }

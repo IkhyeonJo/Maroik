@@ -489,6 +489,8 @@ public class CalendarService(
         var fileError = attachmentContent.ValidateAttachedFile(attachedFile);
         if (fileError != null) return fileError;
 
+        // Bounded before the sanitizer runs: its time grows faster than the length for nested HTML.
+        if (CalendarEvent.ValidateRawDescription(request.Description) is { IsError: true } tooLong) return ServiceResult.FromError(tooLong.FirstError);
         string description = attachmentContent.SanitizeAndDecryptContent(request.Description ?? "");
 
         await unitOfWork.BeginAsync(ct: ct);
@@ -554,6 +556,8 @@ public class CalendarService(
         var fileError = attachmentContent.ValidateAttachedFile(attachedFile);
         if (fileError != null) return fileError;
 
+        // Bounded before the sanitizer runs: its time grows faster than the length for nested HTML.
+        if (CalendarEvent.ValidateRawDescription(request.Description) is { IsError: true } tooLong) return ServiceResult.FromError(tooLong.FirstError);
         string description = attachmentContent.SanitizeAndDecryptContent(request.Description ?? "");
 
         await unitOfWork.BeginAsync(ct: ct);

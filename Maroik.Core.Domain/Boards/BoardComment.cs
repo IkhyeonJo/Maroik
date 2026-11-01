@@ -13,6 +13,15 @@ namespace Maroik.Core.Domain.Boards;
 /// </summary>
 public sealed class BoardComment : AggregateRoot<long>
 {
+    /// <summary>
+    /// Refuses a comment longer than <see cref="TitledContentPolicy.MaxRawBodyLength"/> as submitted, before it is sanitized, with
+    /// the same error as an over-long sanitized one.
+    /// </summary>
+    public static ErrorOr<Success> ValidateRawContent(string? raw) =>
+        raw?.Length > TitledContentPolicy.MaxRawBodyLength
+            ? DomainError.Validation("BoardComment.ContentTooLong", "Comment must be {0} characters or fewer.", TitledContentPolicy.MaxBodyLength)
+            : Result.Success;
+
     /// <summary>ID of the parent board post.</summary>
     public long BoardId { get; private set; }
 

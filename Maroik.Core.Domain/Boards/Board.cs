@@ -13,6 +13,15 @@ namespace Maroik.Core.Domain.Boards;
 /// </summary>
 public sealed class Board : AggregateRoot<long>
 {
+    /// <summary>
+    /// Refuses a post content longer than <see cref="TitledContentPolicy.MaxRawBodyLength"/> as submitted, before it is sanitized, with
+    /// the same error as an over-long sanitized one.
+    /// </summary>
+    public static ErrorOr<Success> ValidateRawContent(string? raw) =>
+        raw?.Length > TitledContentPolicy.MaxRawBodyLength
+            ? DomainError.Validation("Board.ContentTooLong", "Post content must be {0} characters or fewer.", TitledContentPolicy.MaxBodyLength)
+            : Result.Success;
+
     /// <summary>Board type identifier (e.g. "FreeForum", "PrivateNote").</summary>
     public string Type { get; }
 

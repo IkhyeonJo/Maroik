@@ -111,6 +111,8 @@ public class BoardService(
         var fileError = attachmentContent.ValidateAttachedFile(attachedFile);
         if (fileError != null) return fileError;
 
+        // Bounded before the sanitizer runs: its time grows faster than the length for nested HTML.
+        if (Board.ValidateRawContent(request.Content) is { IsError: true } tooLong) return ServiceResult.FromError(tooLong.FirstError);
         string content = attachmentContent.SanitizeAndDecryptContent(request.Content ?? "");
 
         await unitOfWork.BeginAsync(ct: ct);
@@ -175,6 +177,8 @@ public class BoardService(
         var fileError = attachmentContent.ValidateAttachedFile(newFile);
         if (fileError != null) return fileError;
 
+        // Bounded before the sanitizer runs: its time grows faster than the length for nested HTML.
+        if (Board.ValidateRawContent(request.Content) is { IsError: true } tooLong) return ServiceResult.FromError(tooLong.FirstError);
         string content = attachmentContent.SanitizeAndDecryptContent(request.Content ?? "");
 
         await unitOfWork.BeginAsync(ct: ct);
@@ -285,6 +289,8 @@ public class BoardService(
     public async Task<ServiceResult> WriteCommentAsync(BoardCommentRequest request, string? requiredOwnerNickname = null, bool isAdmin = false, string? requiredType = null, CancellationToken ct = default)
     {
         DateTime utcNow = timeProvider.GetUtcNow().UtcDateTime;
+        // Bounded before the sanitizer runs: a comment arrives as a JSON body of up to 30 MB.
+        if (BoardComment.ValidateRawContent(request.Content) is { IsError: true } tooLong) return ServiceResult.FromError(tooLong.FirstError);
         string content = attachmentContent.SanitizeContent(request.Content ?? "");
 
         await unitOfWork.BeginAsync(ct: ct);
