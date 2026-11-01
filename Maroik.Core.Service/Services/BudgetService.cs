@@ -58,6 +58,8 @@ public class BudgetService(
     public async Task<(ServiceResult Result, BudgetPreviewResponse? Preview)> PreviewAsync(string accountEmail, BudgetKind kind, int year, string timeZoneIanaId, string address, string input, CancellationToken ct = default)
     {
         if (Refusal(accountEmail, kind, year) is { } refused) return (refused, null);
+        // Before the input is loaded against or parsed: the preview runs on every pause in typing, with no other bound on its length.
+        if (BudgetCellInput.CheckLength(input) is { IsError: true } tooLong) return (ServiceResult.FromError(tooLong.FirstError), null);
         BudgetWorkbook workbook = await LoadAsync(accountEmail, kind, year, timeZoneIanaId, [input], ct);
         return (ServiceResult.Ok(), BudgetMapper.ToResponse(workbook.Preview(kind, year, address, input)));
     }

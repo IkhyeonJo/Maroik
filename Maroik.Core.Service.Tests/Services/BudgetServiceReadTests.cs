@@ -104,6 +104,25 @@ public class BudgetServiceReadTests
         Assert.Equal(("ConsumerSpending", "PinMoney", "USD", 7m), (line.MainClass, line.SubClass, line.Currency, line.Months[1]));
     }
 
+    /// <summary>
+    /// An input longer than a cell may hold is refused before the workbook is loaded or the input parsed: the preview runs on every
+    /// pause in typing, and the parser recurses once per prefix sign, so an unbounded "=----…1" would overflow the stack and end
+    /// the website process.
+    /// </summary>
+    [Fact]
+    public async Task PreviewAsync_RefusesAnInputLongerThanACellHolds_BeforeParsingIt()
+    {
+        _h.Sheet(BudgetKind.Expenditure, 2026, H.Email, Meal);
+        string input = "=" + new string('-', BudgetCellInput.MaxLength) + "1";
+
+        var (result, preview) = await _h.Sut.PreviewAsync(H.Email, BudgetKind.Expenditure, 2026, "UTC", "C2", input, TestContext.Current.CancellationToken);
+
+        Assert.Equal(("Budget.InputTooLong", "A cell can hold at most {0} characters.", ServiceErrorType.Validation),
+            (result.ErrorCode, result.ErrorKey, result.ErrorType));
+        Assert.Equal([BudgetCellInput.MaxLength], result.ErrorArgs);
+        Assert.Null(preview);
+    }
+
     /// <summary>The preview colours the input, lists its problems with their message keys, and shows the value it would have.</summary>
     [Fact]
     public async Task PreviewAsync_ColoursAndCalculates()

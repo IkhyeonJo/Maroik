@@ -16,13 +16,22 @@ public static class BudgetCellInput
     /// <summary>The longest input a cell holds.</summary>
     public const int MaxLength = 1000;
 
+    /// <summary>
+    /// The length rule alone: <see cref="Parse"/> applies it first, and so does any path that must refuse an over-long input before
+    /// parsing it (the formula bar's preview). The parser recurses once per prefix sign, which only this limit bounds.
+    /// </summary>
+    public static ErrorOr<Success> CheckLength(string? input) =>
+        input is not null && input.Length > MaxLength
+            ? DomainError.Validation("Budget.InputTooLong", "A cell can hold at most {0} characters.", MaxLength)
+            : Result.Success;
+
     /// <summary>The stored form of <paramref name="input"/> typed into a cell of <paramref name="role"/>; null clears the cell.</summary>
     public static ErrorOr<string?> Parse(BudgetCellRole role, string? input, FormulaScope scope)
     {
         if (role is not (BudgetCellRole.Budget or BudgetCellRole.Free))
             return DomainError.Validation("Budget.CellReadOnly", "This cell cannot be edited.");
-        if (input is not null && input.Length > MaxLength)
-            return DomainError.Validation("Budget.InputTooLong", "A cell can hold at most {0} characters.", MaxLength);
+        if (CheckLength(input) is { IsError: true } tooLong)
+            return tooLong.Errors;
 
         string text = input?.Trim() ?? "";
         if (text.Length == 0) return (string?)null;

@@ -68,6 +68,19 @@ public class BudgetCellInputTests
         Assert.False(BudgetCellInput.Parse(BudgetCellRole.Free, new string('a', BudgetCellInput.MaxLength), Scope).IsError);
     }
 
+    /// <summary>
+    /// The length rule on its own, for paths that must refuse an over-long input before anything parses it (the formula bar's
+    /// preview): the parser recurses once per prefix sign, so an unbounded "=----…1" would overflow the stack and end the process.
+    /// </summary>
+    [Fact]
+    public void CheckLength_RefusesAnInputLongerThanTheLimit()
+    {
+        ErrorAssert.Validation(BudgetCellInput.CheckLength(new string('-', BudgetCellInput.MaxLength + 1)),
+            "Budget.InputTooLong", "A cell can hold at most {0} characters.", BudgetCellInput.MaxLength);
+        Assert.False(BudgetCellInput.CheckLength(new string('-', BudgetCellInput.MaxLength)).IsError);
+        Assert.False(BudgetCellInput.CheckLength(null).IsError);
+    }
+
     /// <summary>A stored input becomes its definition: a bound formula, a number, a boolean or text.</summary>
     [Fact]
     public void Define_MakesTheCellDefinition()
