@@ -88,12 +88,12 @@ public class NoticeController(
         if (HttpContext.Request.Headers.XRequestedWith == "XMLHttpRequest")
         {
             AccountResponse account = HttpContext.GetLoggedInAccount();
-            var assets = await assetService.GetAssetsAsync(account.Email!, ct);
+            var assets = await assetService.GetAssetsAsync(account.RequireEmail(), ct);
             var incomes = string.IsNullOrEmpty(wholeSearch)
-                ? await fixedIncomeService.GetFixedIncomesAsync(account.Email!, ct)
-                : await fixedIncomeService.SearchFixedIncomesAsync(account.Email!, wholeSearch, ct);
+                ? await fixedIncomeService.GetFixedIncomesAsync(account.RequireEmail(), ct)
+                : await fixedIncomeService.SearchFixedIncomesAsync(account.RequireEmail(), wholeSearch, ct);
             var viewModels = incomes
-                .ToDisplayViewModels(assets, key => localizer[key].Value, account.TimeZoneIanaId!, settings.Value.NoticeMaturityDateDay, timeProvider.GetUtcNow().UtcDateTime)
+                .ToDisplayViewModels(assets, key => localizer[key].Value, account.RequireTimeZoneIanaId(), settings.Value.NoticeMaturityDateDay, timeProvider.GetUtcNow().UtcDateTime)
                 .OrderByDescending(a => a.Expired).ThenByDescending(m => m.Noticed)
                 .ThenByDescending(m => m.Unpunctuality).ThenByDescending(a => a.Created)
                 .ThenByDescending(a => a.Updated)
@@ -102,7 +102,7 @@ public class NoticeController(
         }
 
         AccountResponse loggedInAccount = HttpContext.GetLoggedInAccount();
-        var fixedIncomeAssets = (await assetService.GetAssetsAsync(loggedInAccount.Email!, ct))
+        var fixedIncomeAssets = (await assetService.GetAssetsAsync(loggedInAccount.RequireEmail(), ct))
             .Where(x => !x.Deleted).OrderBy(x => x.ProductName).ToList();
         ViewBag.Assets = fixedIncomeAssets;
         ViewBag.DefaultAssetProductName = fixedIncomeAssets.FirstOrDefault()?.ProductName;
@@ -248,10 +248,10 @@ public class NoticeController(
     public async Task<IActionResult> ExportExcelFixedIncome(string fileName = "", CancellationToken ct = default)
     {
         AccountResponse account = HttpContext.GetLoggedInAccount();
-        var assets = await assetService.GetAssetsAsync(account.Email!, ct);
-        var incomes = await fixedIncomeService.GetFixedIncomesAsync(account.Email!, ct);
-        var stream = excelExportService.CreateFixedIncomeExcel(incomes, assets, key => localizer[key].Value, account.TimeZoneIanaId!, settings.Value.NoticeMaturityDateDay);
-        string name = fileName.ToExcelFileName(account.TimeZoneIanaId!, timeProvider.GetUtcNow().UtcDateTime);
+        var assets = await assetService.GetAssetsAsync(account.RequireEmail(), ct);
+        var incomes = await fixedIncomeService.GetFixedIncomesAsync(account.RequireEmail(), ct);
+        var stream = excelExportService.CreateFixedIncomeExcel(incomes, assets, key => localizer[key].Value, account.RequireTimeZoneIanaId(), settings.Value.NoticeMaturityDateDay);
+        string name = fileName.ToExcelFileName(account.RequireTimeZoneIanaId(), timeProvider.GetUtcNow().UtcDateTime);
         return File(stream, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", name);
     }
     #endregion
@@ -314,12 +314,12 @@ public class NoticeController(
         if (HttpContext.Request.Headers.XRequestedWith == "XMLHttpRequest")
         {
             AccountResponse account = HttpContext.GetLoggedInAccount();
-            var assets = await assetService.GetAssetsAsync(account.Email!, ct);
+            var assets = await assetService.GetAssetsAsync(account.RequireEmail(), ct);
             var expenditures = string.IsNullOrEmpty(wholeSearch)
-                ? await fixedExpenditureService.GetFixedExpendituresAsync(account.Email!, ct)
-                : await fixedExpenditureService.SearchFixedExpendituresAsync(account.Email!, wholeSearch, ct);
+                ? await fixedExpenditureService.GetFixedExpendituresAsync(account.RequireEmail(), ct)
+                : await fixedExpenditureService.SearchFixedExpendituresAsync(account.RequireEmail(), wholeSearch, ct);
             var viewModels = expenditures
-                .ToDisplayViewModels(assets, key => localizer[key].Value, account.TimeZoneIanaId!, settings.Value.NoticeMaturityDateDay, timeProvider.GetUtcNow().UtcDateTime)
+                .ToDisplayViewModels(assets, key => localizer[key].Value, account.RequireTimeZoneIanaId(), settings.Value.NoticeMaturityDateDay, timeProvider.GetUtcNow().UtcDateTime)
                 .OrderByDescending(a => a.Expired).ThenByDescending(m => m.Noticed)
                 .ThenByDescending(m => m.Unpunctuality).ThenByDescending(a => a.Created)
                 .ThenByDescending(a => a.Updated)
@@ -328,7 +328,7 @@ public class NoticeController(
         }
 
         AccountResponse loggedInAccount = HttpContext.GetLoggedInAccount();
-        var fixedExpenditureAssets = (await assetService.GetAssetsAsync(loggedInAccount.Email!, ct))
+        var fixedExpenditureAssets = (await assetService.GetAssetsAsync(loggedInAccount.RequireEmail(), ct))
             .Where(x => !x.Deleted).OrderBy(x => x.ProductName).ToList();
         ViewBag.Assets = fixedExpenditureAssets;
         ViewBag.DefaultAssetProductName = fixedExpenditureAssets.FirstOrDefault()?.ProductName;
@@ -476,10 +476,10 @@ public class NoticeController(
     public async Task<IActionResult> ExportExcelFixedExpenditure(string fileName = "", CancellationToken ct = default)
     {
         AccountResponse account = HttpContext.GetLoggedInAccount();
-        var assets = await assetService.GetAssetsAsync(account.Email!, ct);
-        var expenditures = await fixedExpenditureService.GetFixedExpendituresAsync(account.Email!, ct);
-        var stream = excelExportService.CreateFixedExpenditureExcel(expenditures, assets, key => localizer[key].Value, account.TimeZoneIanaId!, settings.Value.NoticeMaturityDateDay);
-        string name = fileName.ToExcelFileName(account.TimeZoneIanaId!, timeProvider.GetUtcNow().UtcDateTime);
+        var assets = await assetService.GetAssetsAsync(account.RequireEmail(), ct);
+        var expenditures = await fixedExpenditureService.GetFixedExpendituresAsync(account.RequireEmail(), ct);
+        var stream = excelExportService.CreateFixedExpenditureExcel(expenditures, assets, key => localizer[key].Value, account.RequireTimeZoneIanaId(), settings.Value.NoticeMaturityDateDay);
+        string name = fileName.ToExcelFileName(account.RequireTimeZoneIanaId(), timeProvider.GetUtcNow().UtcDateTime);
         return File(stream, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", name);
     }
     #endregion

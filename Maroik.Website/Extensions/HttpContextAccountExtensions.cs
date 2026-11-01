@@ -31,8 +31,6 @@ public static class HttpContextAccountExtensions
         /// <exception cref="InvalidOperationException">
         /// The filter has not run for this request, or the account has no email (the anonymous placeholder).
         /// </exception>
-        public string GetLoggedInEmail() =>
-            context.GetLoggedInAccount().Email
-            ?? throw new InvalidOperationException("The logged-in account of this request has no email (it is the anonymous placeholder).");
+        public string GetLoggedInEmail() => context.GetLoggedInAccount().RequireEmail();
     }
 }

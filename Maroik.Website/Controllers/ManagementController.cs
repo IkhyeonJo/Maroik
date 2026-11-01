@@ -74,7 +74,7 @@ public class ManagementController(
     {
         AccountResponse loggedInAccount = HttpContext.GetLoggedInAccount();
         string? loggedInAccountTimeZoneIanaId = loggedInAccount.TimeZoneIanaId;
-        AccountResponse? tempAccount = await profileService.GetProfileAsync(loggedInAccount.Email!, HttpContext.RequestAborted);
+        AccountResponse? tempAccount = await profileService.GetProfileAsync(loggedInAccount.RequireEmail(), HttpContext.RequestAborted);
 
         return View(new ProfileOutputViewModel()
         {
@@ -310,7 +310,7 @@ public class ManagementController(
             return View();
         }
 
-        string tz = HttpContext.GetLoggedInAccount().TimeZoneIanaId!;
+        string tz = HttpContext.GetLoggedInAccount().RequireTimeZoneIanaId();
         var accounts = string.IsNullOrEmpty(wholeSearch)
             ? await managementAccountService.GetAllAccountsAsync(HttpContext.RequestAborted)
             : await managementAccountService.SearchAccountsAsync(wholeSearch, HttpContext.RequestAborted);
@@ -452,8 +452,8 @@ public class ManagementController(
     {
         AccountResponse account = HttpContext.GetLoggedInAccount();
         var accounts = await managementAccountService.GetAllAccountsAsync(HttpContext.RequestAborted);
-        var stream = excelExportService.CreateAccountExcel(accounts, key => localizer[key].Value, account.TimeZoneIanaId!);
-        string name = fileName.ToExcelFileName(account.TimeZoneIanaId!, timeProvider.GetUtcNow().UtcDateTime);
+        var stream = excelExportService.CreateAccountExcel(accounts, key => localizer[key].Value, account.RequireTimeZoneIanaId());
+        string name = fileName.ToExcelFileName(account.RequireTimeZoneIanaId(), timeProvider.GetUtcNow().UtcDateTime);
         return File(stream, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", name);
     }
 
@@ -827,7 +827,7 @@ public class ManagementController(
         var categories = await menuService.GetAllCategoriesAsync(HttpContext.RequestAborted);
         var subCats = await menuService.GetAllSubCategoriesAsync(HttpContext.RequestAborted);
         var stream = excelExportService.CreateMenuExcel(categories, subCats, key => localizer[key].Value);
-        string name = fileName.ToExcelFileName(account.TimeZoneIanaId!, timeProvider.GetUtcNow().UtcDateTime);
+        string name = fileName.ToExcelFileName(account.RequireTimeZoneIanaId(), timeProvider.GetUtcNow().UtcDateTime);
         return File(stream, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", name);
     }
 
@@ -870,7 +870,7 @@ public class ManagementController(
                 Type = BoardTypes.PrivateNote,
                 Title = boardInputViewModel.Title,
                 Content = boardInputViewModel.Content,
-                Writer = loggedInAccount.Nickname!
+                Writer = loggedInAccount.RequireNickname()
             };
 
             AttachedFileDto? attachedFile = await boardInputViewModel.UploadedFile.ToAttachedFileInfoAsync(serverSettings.Value.MaxAttachedFileSizeBytes, HttpContext.RequestAborted);
@@ -915,12 +915,12 @@ public class ManagementController(
             BoardCommentRequest commentRequest = new()
             {
                 BoardId = boardCommentInputViewModel.BoardId,
-                AvatarImagePath = loggedInAccount.AvatarImagePath!,
-                Writer = loggedInAccount.Nickname!,
+                AvatarImagePath = loggedInAccount.RequireAvatarImagePath(),
+                Writer = loggedInAccount.RequireNickname(),
                 Content = boardCommentInputViewModel.Content
             };
 
-            ServiceResult result = await boardService.WriteCommentAsync(commentRequest, loggedInAccount.Nickname!, requiredType: BoardTypes.PrivateNote, ct: HttpContext.RequestAborted);
+            ServiceResult result = await boardService.WriteCommentAsync(commentRequest, loggedInAccount.RequireNickname(), requiredType: BoardTypes.PrivateNote, ct: HttpContext.RequestAborted);
             return result.Success
                 ? Json(new { result = true, boardId = boardCommentInputViewModel.BoardId, page = boardCommentInputViewModel.DetailCurrentPage })
                 : Json(new { result = false, error = localizer[result.ErrorKey, result.ErrorArgs].ToPlainString() });
@@ -1019,7 +1019,7 @@ public class ManagementController(
                 {
                     Method = method,
                     LoggedInAccount = loggedInAccount,
-                    LoggedInAccountTimeZoneIanaId = loggedInAccount.TimeZoneIanaId ?? ""
+                    LoggedInAccountTimeZoneIanaId = loggedInAccount.RequireTimeZoneIanaId()
                 };
                 // Management is in no anonymous menu, so AuthorizationFilter only lets a signed-in account reach this page.
                 return View(privateNoteOutputViewModel);
@@ -1089,7 +1089,7 @@ public class ManagementController(
                     privateNoteOutputViewModel.DetailBoardComments =
                         [.. comments.Select(c => c.ToCommentRow(privateNoteBoard.Writer, loggedInAccount.IsOwner(c.Writer), adminNicknames))];
                     privateNoteOutputViewModel.LoggedInAccount = loggedInAccount;
-                    privateNoteOutputViewModel.LoggedInAccountTimeZoneIanaId = loggedInAccount.TimeZoneIanaId ?? "";
+                    privateNoteOutputViewModel.LoggedInAccountTimeZoneIanaId = loggedInAccount.RequireTimeZoneIanaId();
                     privateNoteOutputViewModel.ViewerSeesLocalTime = loggedInAccount.SeesLocalTime();
 
                     return View(privateNoteOutputViewModel);
@@ -1143,7 +1143,7 @@ public class ManagementController(
                             IsImgTagIncluded = isImgTagIncluded
                         };
                     privateNoteOutputViewModel.LoggedInAccount = loggedInAccount;
-                    privateNoteOutputViewModel.LoggedInAccountTimeZoneIanaId = loggedInAccount.TimeZoneIanaId ?? "";
+                    privateNoteOutputViewModel.LoggedInAccountTimeZoneIanaId = loggedInAccount.RequireTimeZoneIanaId();
 
                     return View(privateNoteOutputViewModel);
                 }
@@ -1213,7 +1213,7 @@ public class ManagementController(
 
                 #region Preload comment counts and attached files for view
                 privateNoteOutputViewModel.LoggedInAccount = loggedInAccount;
-                privateNoteOutputViewModel.LoggedInAccountTimeZoneIanaId = loggedInAccount.TimeZoneIanaId ?? "";
+                privateNoteOutputViewModel.LoggedInAccountTimeZoneIanaId = loggedInAccount.RequireTimeZoneIanaId();
                 privateNoteOutputViewModel.ViewerSeesLocalTime = loggedInAccount.SeesLocalTime();
                 // Only the writers on this page are needed (to highlight admin-authored notes).
                 var listNicknames = boardResponses.Select(b => b.Writer)
@@ -1342,7 +1342,7 @@ public class ManagementController(
 
             AttachedFileDto? attachedFile = await boardInputViewModel.UploadedFile.ToAttachedFileInfoAsync(serverSettings.Value.MaxAttachedFileSizeBytes, HttpContext.RequestAborted);
 
-            ServiceResult result = await boardService.EditBoardAsync(boardRequest, loggedInAccount.Nickname!, loggedInAccount.Role == Role.Admin, attachedFile, HttpContext.RequestAborted);
+            ServiceResult result = await boardService.EditBoardAsync(boardRequest, loggedInAccount.RequireNickname(), loggedInAccount.Role == Role.Admin, attachedFile, HttpContext.RequestAborted);
             return result.Success
                 ? Json(new { result = true, message = localizer["The board has been successfully updated."].Value })
                 : Json(new { result = false, error = localizer[result.ErrorKey, result.ErrorArgs].ToPlainString() });
@@ -1380,7 +1380,7 @@ public class ManagementController(
             ServiceResult result = await boardService.DeleteBoardAsync(
                 boardInputViewModel.Id,
                 BoardTypes.PrivateNote,
-                loggedInAccount.Nickname!,
+                loggedInAccount.RequireNickname(),
                 false,
                 HttpContext.RequestAborted);
 
@@ -1414,7 +1414,7 @@ public class ManagementController(
 
             ServiceResult result = await boardService.DeleteCommentAsync(
                 id,
-                loggedInAccount.Nickname!,
+                loggedInAccount.RequireNickname(),
                 loggedInAccount.Role == Role.Admin,
                 BoardTypes.PrivateNote,
                 HttpContext.RequestAborted);

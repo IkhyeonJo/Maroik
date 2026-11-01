@@ -68,7 +68,7 @@ public class ForumController(
                 Type = BoardTypes.FreeForum,
                 Title = boardInputViewModel.Title,
                 Content = boardInputViewModel.Content,
-                Writer = loggedInAccount.Nickname!,
+                Writer = loggedInAccount.RequireNickname(),
                 Locked = boardInputViewModel.Locked,
                 Noticed = boardInputViewModel.Noticed
             };
@@ -114,8 +114,8 @@ public class ForumController(
             BoardCommentRequest commentRequest = new()
             {
                 BoardId = boardCommentInputViewModel.BoardId,
-                AvatarImagePath = loggedInAccount.AvatarImagePath!,
-                Writer = loggedInAccount.Nickname!,
+                AvatarImagePath = loggedInAccount.RequireAvatarImagePath(),
+                Writer = loggedInAccount.RequireNickname(),
                 Content = boardCommentInputViewModel.Content
             };
 
@@ -215,7 +215,7 @@ public class ForumController(
                 {
                     Method = method,
                     LoggedInAccount = loggedInAccount,
-                    LoggedInAccountTimeZoneIanaId = loggedInAccount.TimeZoneIanaId ?? ""
+                    LoggedInAccountTimeZoneIanaId = loggedInAccount.RequireTimeZoneIanaId()
                 };
 
                 bool isAccountSessionExist = loggedInAccount.Role != Role.Anonymous;
@@ -336,7 +336,7 @@ public class ForumController(
                         IsImgTagIncluded = isImgTagIncluded
                     };
                     freeForumOutputViewModel.LoggedInAccount = loggedInAccount;
-                    freeForumOutputViewModel.LoggedInAccountTimeZoneIanaId = loggedInAccount.TimeZoneIanaId ?? "";
+                    freeForumOutputViewModel.LoggedInAccountTimeZoneIanaId = loggedInAccount.RequireTimeZoneIanaId();
 
                     return View(freeForumOutputViewModel);
                 }
@@ -516,7 +516,7 @@ public class ForumController(
 
             AttachedFileDto? attachedFile = await boardInputViewModel.UploadedFile.ToAttachedFileInfoAsync(serverSettings.Value.MaxAttachedFileSizeBytes, ct);
 
-            ServiceResult result = await boardService.EditBoardAsync(boardRequest, loggedInAccount.Nickname!, loggedInAccount.Role == Role.Admin, attachedFile, ct);
+            ServiceResult result = await boardService.EditBoardAsync(boardRequest, loggedInAccount.RequireNickname(), loggedInAccount.Role == Role.Admin, attachedFile, ct);
             return result.Success
                 ? Json(new { result = true, message = localizer["The board has been successfully updated."].Value })
                 : Json(new { result = false, error = localizer[result.ErrorKey, result.ErrorArgs].ToPlainString() });
@@ -549,7 +549,7 @@ public class ForumController(
             ServiceResult result = await boardService.DeleteBoardAsync(
                 boardInputViewModel.Id,
                 BoardTypes.FreeForum,
-                loggedInAccount.Nickname!,
+                loggedInAccount.RequireNickname(),
                 loggedInAccount.Role == Role.Admin,
                 ct);
 
@@ -580,7 +580,7 @@ public class ForumController(
 
             ServiceResult result = await boardService.DeleteCommentAsync(
                 id,
-                loggedInAccount.Nickname!,
+                loggedInAccount.RequireNickname(),
                 loggedInAccount.Role == Role.Admin,
                 BoardTypes.FreeForum,
                 ct);

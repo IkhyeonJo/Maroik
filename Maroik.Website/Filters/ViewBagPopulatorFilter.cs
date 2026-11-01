@@ -73,7 +73,7 @@ public class ViewBagPopulatorFilter(
         // HttpContext.GetLoggedInAccount() — never null from here on (anonymous placeholder at worst).
         context.HttpContext.Items[HttpContextItemKeys.LoggedInAccount] = loggedInAccount;
         controller.ViewBag.TimeZoneOptions = timeZoneCatalogService.GetTimeZoneOptions();
-        controller.ViewBag.CopyrightYear = timeProvider.GetUtcNow().UtcDateTime.ConvertTimeByTimeZoneIanaId(loggedInAccount.TimeZoneIanaId ?? "UTC").Year;
+        controller.ViewBag.CopyrightYear = timeProvider.GetUtcNow().UtcDateTime.ConvertTimeByTimeZoneIanaId(loggedInAccount.RequireTimeZoneIanaId()).Year;
 
         (IEnumerable<CategoryResponse>? roleCategories, IEnumerable<SubCategoryResponse>? roleSubCategories) = loggedInAccount.Role switch
         {
@@ -104,7 +104,7 @@ public class ViewBagPopulatorFilter(
                 var counts = await dashboardService.GetNoticeCountsAsync(
                     loggedInAccount.Email ?? "",
                     serverSettings.Value.NoticeMaturityDateDay,
-                    loggedInAccount.TimeZoneIanaId ?? "UTC",
+                    loggedInAccount.RequireTimeZoneIanaId(),
                     context.HttpContext.RequestAborted);
 
                 fixedIncomesNoticedCount = counts.FixedIncomesNoticed;

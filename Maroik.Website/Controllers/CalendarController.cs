@@ -94,7 +94,7 @@ public class CalendarController(
 
             ServiceResult createEventResult = await calendarService.CreateCalendarEventAsync(
                 calendarEventInputViewModel.ToCalendarEventRequest(),
-                loggedInAccount.Email!,
+                loggedInAccount.RequireEmail(),
                 $"{loggedInAccount.Role}Index",
                 calendarEventInputViewModel.SerializedCalendarReminders.ToReminderInfoList(),
                 await calendarEventInputViewModel.CalendarEventUploadedFile.ToAttachedFileInfoAsync(serverSettings.Value.MaxAttachedFileSizeBytes, HttpContext.RequestAborted),
@@ -126,7 +126,7 @@ public class CalendarController(
 
         // A refused upload is a security event: record who sent what (the attachment service logs its own refusals).
         AccountResponse loggedInAccount = HttpContext.GetLoggedInAccount();
-        string uploaderEmail = loggedInAccount.Email!;
+        string uploaderEmail = loggedInAccount.RequireEmail();
         if (summernoteImageFile.Length <= 0 || summernoteImageFile.Length > serverSettings.Value.MaxAttachedFileSizeBytes)
         {
             logger.LogWarning("Editor image upload refused: size {Size} bytes is outside the {MaxBytes}-byte limit for {Email}",
@@ -184,20 +184,20 @@ public class CalendarController(
     public async Task<IActionResult> AdminIndex()
     {
         AccountResponse loggedInAccount = HttpContext.GetLoggedInAccount();
-        string userTimezone = loggedInAccount.TimeZoneIanaId ?? "UTC";
+        string userTimezone = loggedInAccount.RequireTimeZoneIanaId();
 
-        List<CalendarResponse> calendars = await calendarService.GetCalendarsAsync(loggedInAccount.Email!, HttpContext.RequestAborted);
+        List<CalendarResponse> calendars = await calendarService.GetCalendarsAsync(loggedInAccount.RequireEmail(), HttpContext.RequestAborted);
         if (calendars.Count == 0)
         {
             // First visit for this account: auto-provision a default personal calendar
             // so the grid is never empty and events can be created immediately.
-            await calendarService.EnsureDefaultCalendarAsync(loggedInAccount.Email!, new CalendarRequest
+            await calendarService.EnsureDefaultCalendarAsync(loggedInAccount.RequireEmail(), new CalendarRequest
             {
-                Name = loggedInAccount.Nickname!,
+                Name = loggedInAccount.RequireNickname(),
                 TimeZoneIanaId = loggedInAccount.TimeZoneIanaId,
                 HtmlColorCode = "#fc330e"
             }, HttpContext.RequestAborted);
-            calendars = await calendarService.GetCalendarsAsync(loggedInAccount.Email!, HttpContext.RequestAborted);
+            calendars = await calendarService.GetCalendarsAsync(loggedInAccount.RequireEmail(), HttpContext.RequestAborted);
         }
 
         CalendarOutputViewModel vm = new()
@@ -216,19 +216,19 @@ public class CalendarController(
     public async Task<IActionResult> UserIndex()
     {
         AccountResponse loggedInAccount = HttpContext.GetLoggedInAccount();
-        string userTimezone = loggedInAccount.TimeZoneIanaId ?? "UTC";
+        string userTimezone = loggedInAccount.RequireTimeZoneIanaId();
 
-        List<CalendarResponse> calendars = await calendarService.GetCalendarsAsync(loggedInAccount.Email!, HttpContext.RequestAborted);
+        List<CalendarResponse> calendars = await calendarService.GetCalendarsAsync(loggedInAccount.RequireEmail(), HttpContext.RequestAborted);
         if (calendars.Count == 0)
         {
             // Same first-visit provisioning as AdminIndex (see comment there).
-            await calendarService.EnsureDefaultCalendarAsync(loggedInAccount.Email!, new CalendarRequest
+            await calendarService.EnsureDefaultCalendarAsync(loggedInAccount.RequireEmail(), new CalendarRequest
             {
-                Name = loggedInAccount.Nickname!,
+                Name = loggedInAccount.RequireNickname(),
                 TimeZoneIanaId = loggedInAccount.TimeZoneIanaId,
                 HtmlColorCode = "#fc330e"
             }, HttpContext.RequestAborted);
-            calendars = await calendarService.GetCalendarsAsync(loggedInAccount.Email!, HttpContext.RequestAborted);
+            calendars = await calendarService.GetCalendarsAsync(loggedInAccount.RequireEmail(), HttpContext.RequestAborted);
         }
 
         List<CalendarResponse> otherCalendars = await calendarService.GetVisibleOtherCalendarsAsync(loggedInAccount, HttpContext.RequestAborted);
@@ -352,10 +352,10 @@ public class CalendarController(
         try
         {
             AccountResponse loggedInAccount = HttpContext.GetLoggedInAccount();
-            List<CalendarResponse> calendars = await calendarService.GetCalendarsAsync(loggedInAccount.Email!, HttpContext.RequestAborted);
+            List<CalendarResponse> calendars = await calendarService.GetCalendarsAsync(loggedInAccount.RequireEmail(), HttpContext.RequestAborted);
 
             CalendarEventOutputViewModel? calendarEvent = await calendarService.GetCalendarEventDetailViewModelAsync(
-                calendars, loggedInAccount.TimeZoneIanaId ?? "UTC", id, includeReminders: true, HttpContext.RequestAborted);
+                calendars, loggedInAccount.RequireTimeZoneIanaId(), id, includeReminders: true, HttpContext.RequestAborted);
 
             return calendarEvent == null
                 ? Json(new { result = false, error = localizer["Input is invalid"].Value })
@@ -386,7 +386,7 @@ public class CalendarController(
                 await calendarService.GetVisibleOtherCalendarsAsync(sessionAccount, HttpContext.RequestAborted);
 
             CalendarEventOutputViewModel? calendarEvent = await calendarService.GetCalendarEventDetailViewModelAsync(
-                calendars, loggedInAccount.TimeZoneIanaId ?? "UTC", id, includeReminders: false, HttpContext.RequestAborted);
+                calendars, loggedInAccount.RequireTimeZoneIanaId(), id, includeReminders: false, HttpContext.RequestAborted);
 
             return calendarEvent == null
                 ? Json(new { result = false, error = localizer["Input is invalid"].Value })
@@ -454,7 +454,7 @@ public class CalendarController(
             List<CalendarResponse> otherCalendars =
                 await calendarService.GetVisibleOtherCalendarsAsync(sessionAccount, HttpContext.RequestAborted);
 
-            string userTimezone = loggedInAccount.TimeZoneIanaId ?? "UTC";
+            string userTimezone = loggedInAccount.RequireTimeZoneIanaId();
             List<CalendarEventOutputViewModel> calendarEvents = [];
 
             // Ignore any requested calendar the account doesn't own and isn't subscribed to,
@@ -591,7 +591,7 @@ public class CalendarController(
 
             ServiceResult updateEventResult = await calendarService.UpdateCalendarEventAsync(
                 calendarEventInputViewModel.ToCalendarEventRequest(),
-                loggedInAccount.Email!,
+                loggedInAccount.RequireEmail(),
                 $"{loggedInAccount.Role}Index",
                 calendarEventInputViewModel.SerializedCalendarReminders.ToReminderInfoList(),
                 await calendarEventInputViewModel.CalendarEventUploadedFile.ToAttachedFileInfoAsync(serverSettings.Value.MaxAttachedFileSizeBytes, HttpContext.RequestAborted),
@@ -650,7 +650,7 @@ public class CalendarController(
                     return Json(new { result = false, error = localizer["Login required."].Value });
 
                 ServiceResult otherCalendarResult = await calendarService.UpdateOtherCalendarAsync(
-                    loggedInAccount.Email!,
+                    loggedInAccount.RequireEmail(),
                     otherCalendars.Select(c => new OtherCalendarRequest { CalendarId = c.CalendarId }),
                     HttpContext.RequestAborted);
 

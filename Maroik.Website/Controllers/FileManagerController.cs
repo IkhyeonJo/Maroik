@@ -40,7 +40,7 @@ public class FileManagerController(
     private string Email => HttpContext.GetLoggedInEmail();
 
     /// <summary>The signed-in account's time zone.</summary>
-    private string TimeZone => HttpContext.GetLoggedInAccount().TimeZoneIanaId ?? "UTC";
+    private string TimeZone => HttpContext.GetLoggedInAccount().RequireTimeZoneIanaId();
 
     /// <summary>The localized name of the drive root.</summary>
     private string RootName => localizer["My Drive"].Value;

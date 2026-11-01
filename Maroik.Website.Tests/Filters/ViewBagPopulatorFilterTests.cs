@@ -120,7 +120,7 @@ public class ViewBagPopulatorFilterTests
         _dashboardService
             .Setup(d => d.GetNoticeCountsAsync("user@test.com", 7, It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new NotificationDto { FixedIncomesNoticed = 2, FixedExpendituresNoticed = 3, FixedIncomesExpired = 1, FixedExpendituresExpired = 4 });
-        return new AccountResponse { Email = "user@test.com", Role = Role.User };
+        return new AccountResponse { Email = "user@test.com", Role = Role.User, TimeZoneIanaId = "UTC" };
     }
 
     // -- ServerSettings -------------------------------------------------------
@@ -207,7 +207,7 @@ public class ViewBagPopulatorFilterTests
     [Fact]
     public async Task OnActionExecutionAsync_LogsAWarning_AndShowsZeroCounts_WhenTheNoticeCountsCannotBeLoaded()
     {
-        var account = new AccountResponse { Email = "user@test.com", Role = Role.User };
+        var account = new AccountResponse { Email = "user@test.com", Role = Role.User, TimeZoneIanaId = "UTC" };
         _dashboardService
             .Setup(d => d.GetNoticeCountsAsync("user@test.com", 7, It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new InvalidOperationException("db down"));
@@ -229,7 +229,7 @@ public class ViewBagPopulatorFilterTests
     [Fact]
     public async Task OnActionExecutionAsync_KeepsTheAccountAuthorizationFilterStashed()
     {
-        var stashedAccount = new AccountResponse { Email = "user@test.com", Nickname = "FromAuthFilter", Role = Role.User };
+        var stashedAccount = new AccountResponse { Email = "user@test.com", Nickname = "FromAuthFilter", Role = Role.User, TimeZoneIanaId = "UTC" };
         _dashboardService
             .Setup(d => d.GetNoticeCountsAsync("user@test.com", 7, It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new NotificationDto());
@@ -279,7 +279,7 @@ public class ViewBagPopulatorFilterTests
     public async Task OnActionExecutionAsync_SetsZeroNoticeCounts_ForASignedInAdmin()
     {
         var (context, controller) = BuildContext();
-        SignIn(context, new AccountResponse { Email = "admin@test.com", Role = Role.Admin });
+        SignIn(context, new AccountResponse { Email = "admin@test.com", Role = Role.Admin, TimeZoneIanaId = "UTC" });
 
         await CreateSut().OnActionExecutionAsync(context, EmptyNext());
 
@@ -377,7 +377,7 @@ public class ViewBagPopulatorFilterTests
     public async Task OnActionExecutionAsync_PublishesNavigationMenusFromHttpContextItems_ToViewBag()
     {
         var (context, controller) = BuildContext(controllerName: "AccountBook", actionName: "Income");
-        SignIn(context, new AccountResponse { Email = "user@test.com", Role = Role.User });
+        SignIn(context, new AccountResponse { Email = "user@test.com", Role = Role.User, TimeZoneIanaId = "UTC" });
         var userCategories = new List<CategoryResponse>
         {
             new() { Id = 1, DisplayName = "AccountBook", Controller = "AccountBook", Action = "Income" }
@@ -401,7 +401,7 @@ public class ViewBagPopulatorFilterTests
     public async Task OnActionExecutionAsync_SetsActiveCategory_FromRolePublishedCategories()
     {
         var (context, controller) = BuildContext(controllerName: "AccountBook", actionName: "Income");
-        SignIn(context, new AccountResponse { Email = "user@test.com", Role = Role.User });
+        SignIn(context, new AccountResponse { Email = "user@test.com", Role = Role.User, TimeZoneIanaId = "UTC" });
         // Simulate AuthorizationFilter, which runs earlier in the pipeline, having already published these.
         controller.ViewBag.UserCategories = new List<CategoryResponse>
         {
@@ -421,7 +421,7 @@ public class ViewBagPopulatorFilterTests
     public async Task OnActionExecutionAsync_LeavesActiveCategoryUnset_WhenNoRouteMatch()
     {
         var (context, controller) = BuildContext(controllerName: "Forum", actionName: "FreeForum");
-        SignIn(context, new AccountResponse { Email = "user@test.com", Role = Role.User });
+        SignIn(context, new AccountResponse { Email = "user@test.com", Role = Role.User, TimeZoneIanaId = "UTC" });
         controller.ViewBag.UserCategories = new List<CategoryResponse>
         {
             new() { Id = 1, DisplayName = "AccountBook", Controller = "AccountBook", Action = "Income" }
@@ -456,7 +456,7 @@ public class ViewBagPopulatorFilterTests
             .Setup(d => d.GetNoticeCountsAsync(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new InvalidOperationException("db down"));
         var (context, controller) = BuildContext();
-        SignIn(context, new AccountResponse { Email = "user@test.com", Role = Role.User });
+        SignIn(context, new AccountResponse { Email = "user@test.com", Role = Role.User, TimeZoneIanaId = "UTC" });
 
         var ex = await Record.ExceptionAsync(() => CreateSut().OnActionExecutionAsync(context, EmptyNext()));
 

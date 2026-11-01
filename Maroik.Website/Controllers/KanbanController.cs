@@ -32,7 +32,7 @@ public class KanbanController(
     public async Task<IActionResult> UserIndex(CancellationToken ct)
     {
         AccountResponse account = HttpContext.GetLoggedInAccount();
-        List<KanbanLaneResponse> board = await kanbanService.GetBoardAsync(account.Email!, account.TimeZoneIanaId ?? "UTC", ct);
+        List<KanbanLaneResponse> board = await kanbanService.GetBoardAsync(account.RequireEmail(), account.RequireTimeZoneIanaId(), ct);
         KanbanBoardViewModel vm = board.ToViewModel();
 
         return HttpContext.Request.Headers.XRequestedWith == "XMLHttpRequest"
