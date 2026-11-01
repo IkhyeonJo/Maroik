@@ -1,9 +1,6 @@
 <Solution>
   <Configurations>
     <Platform Name="Any CPU" />
-    <Platform Name="ARM" />
-    <Platform Name="iPhone" />
-    <Platform Name="iPhoneSimulator" />
     <Platform Name="x64" />
     <Platform Name="x86" />
   </Configurations>
