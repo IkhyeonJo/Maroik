@@ -66,7 +66,7 @@ public class HttpContextAccountExtensionsTests
         context.Items[HttpContextItemKeys.LoggedInAccount] = new AccountResponse { Email = null };
 
         var ex = Assert.Throws<InvalidOperationException>(() => context.GetLoggedInEmail());
-        Assert.Contains("no email", ex.Message, StringComparison.Ordinal);
+        Assert.Contains($"no {nameof(AccountResponse.Email)}", ex.Message, StringComparison.Ordinal);
     }
 
     /// <summary>With no account resolved for the request it throws, as <c>GetLoggedInAccount</c> does.</summary>
