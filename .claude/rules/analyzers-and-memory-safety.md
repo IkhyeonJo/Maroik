@@ -3,7 +3,6 @@ paths:
   - "**/*.cs"
   - "**/*.csproj"
   - "**/*.props"
-  - "**/*.targets"
   - ".editorconfig"
   - "**/*.globalconfig"
   - "global.json"

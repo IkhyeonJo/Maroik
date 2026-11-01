@@ -67,6 +67,11 @@ items above:
 - Client scripts — `.claude/rules/client-scripts.md`
 - Error handling — `.claude/rules/error-handling.md`
 
+A new feature area gets its own rule file with `paths:` globs for its files, named in this list.
+`ClaudeRulesArchitectureTests` (`Maroik.Core.Contract.Tests`) fails when a glob matches no file of the repository (a
+renamed or removed folder), when a rule file is neither path-scoped nor imported, and when this list and the folder
+disagree.
+
 ## Reviewing this repo
 
 - **Read "Intended design" before starting any review** — the items above and every `.claude/rules/` file of an
