@@ -7,7 +7,6 @@ paths:
   - "Maroik.Website/tsconfig*.json"
   - "Maroik.Website/.npmrc"
   - "**/*.cshtml"
-  - "**/*.ts"
   - "**/Program.cs"
   - "**/*Sanitizer*"
 ---

@@ -4,7 +4,7 @@ paths:
   - "Maroik.Core.Service.Tests/**"
   - "Maroik.Core.Repository/**"
   - "Maroik.Core.Repository.Tests/**"
-  - "Maroik.Core.Contract/**"
+  - "Maroik.Core.Contract/Interfaces/**"
   - "**/*UnitOfWork*"
   - "**/*Repository*"
 ---

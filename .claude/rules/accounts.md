@@ -9,7 +9,8 @@ paths:
   - "**/*Register*"
   - "**/*GuidToken*"
   - "**/*SignIn*"
-  - "**/*Profile*"
+  - "**/Profile*"
+  - "**/*ProfileService*"
   - "**/*Session*"
   - "**/*Management*"
 ---

@@ -1,8 +1,7 @@
 ---
 paths:
-  - "**/*.Tests/**"
-  - "Maroik.Core.Domain/**"
-  - "Maroik.Core.Service/**"
+  - "Maroik.Core.Domain.Tests/**"
+  - "Maroik.Core.Service.Tests/**"
 ---
 
 # Mutation testing (on demand)

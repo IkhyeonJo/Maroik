@@ -12,11 +12,15 @@ paths:
   - "**/Uploads/**"
   - "**/*Upload*"
   - "**/*Summernote*"
-  - "**/*Image*"
+  - "**/*ImageUpload*"
+  - "**/*ImageValidator*"
+  - "**/StrippedImage*"
   - "**/*FileClient*"
   - "Maroik.FileStorage/**"
   - "Maroik.FileStorage.Tests/**"
-  - "**/*Calendar*"
+  - "**/*CalendarEvent*"
+  - "**/*CalendarService*"
+  - "**/*CalendarController*"
   - "**/*Management*"
 ---
 

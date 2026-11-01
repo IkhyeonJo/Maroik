@@ -3,8 +3,8 @@ paths:
   - "Maroik.Website/Controllers/**"
   - "Maroik.Website.Tests/Controllers/**"
   - "Maroik.Website/Resources/Controllers/**"
-  - "Maroik.Core.Service/**"
-  - "Maroik.Core.Contract/Dtos/**"
+  - "**/*Result*"
+  - "**/ServiceErrorKeys*"
 ---
 
 # Intended design: Error handling
