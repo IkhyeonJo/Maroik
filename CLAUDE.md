@@ -41,278 +41,6 @@ Deployment and schema
 - `Maroik.Core.PostgreSQL` (`Contexts/ApplicationDbContext`, `Models/*`) is EF Core scaffold output. Leave it out of
   repo-wide comment / style passes; touch it only when the schema mapping itself changes.
 
-Operations and hosting
-- CI/CD (`.github/workflows/ci-cd.yml`) runs on pushes to `main`, pull requests into `main` and on demand only — not on
-  pushes to other branches. A feature branch is checked by opening its pull request (or a manual run). Do not widen the
-  triggers.
-- Maroik only ever runs under docker-compose on Linux (Ubuntu). Behaviour that differs only on a Windows dev box
-  (path separators, a test that fails only there) is an environment difference, not a defect.
-- The containers run as root (no `USER` in the Dockerfiles).
-- In production TLS ends at Cloudflare: the site is reached only through a Cloudflare Tunnel, which hands requests
-  to the website container over plain HTTP, so there is no origin certificate. `Program.cs` takes
-  `X-Forwarded-Proto` from private-network peers only (pinned by `ForwardedProtoTests`).
-- `Deploy.sh` choice 1 (build here) also asks how the site is reached and lays `docker-compose.prod.<mode>.yml` over the
-  stack; the website reads it as `ServerSetting:HostingMode` (`HostingProfile`; unset = `Tunnel`, which choice 2 and
-  `AutoDeploy.sh` always run). `PortForwarding`: Caddy (`Maroik.Caddy/Caddyfile`) ends HTTPS with a Let's Encrypt
-  certificate on 80 / 443 and is trusted like cloudflared. `NoDomain`: plain HTTP on a published port for a home network —
-  no HSTS / https / www redirects, cookies without Secure and without the `__Secure-` prefix, no forwarded scheme taken
-  (pinned by `HostingModeStartupTests`). Passwords travel unencrypted there; that is the owner's accepted trade-off.
-  The answers are asked on every deploy, never saved.
-- `AllowedHosts` is `*`. The `amqp://guest:guest@localhost` fallbacks (`Program.cs`, `WorkerHost`) are never
-  used in a deployment (the env files always set the connection string).
-- Data Protection keys are stored unencrypted (Valkey, or the file fallback); they only live on the server.
-- Every response carries `Cache-Control: no-cache, no-store`, static files (JS / CSS / images) included: the header
-  middleware in `Maroik.Website/Program.cs` runs before `UseStaticFiles`, and nothing overrides it. This is on purpose, so
-  the login page (and the pages after a logout) always come up fresh. Do not add browser caching for static files
-  (`OnPrepareResponse` `max-age` / `immutable`), even though the `asp-append-version` fingerprints would allow it.
-
-Authorization and navigation
-- The navigation menu is the access-control list: a `Category` maps to one controller, a `SubCategory`
-  to one action, and `AuthorizationFilter` allows a GET only when it resolves to a menu item for the
-  role. Controller boundaries follow the menu, so large controllers (organized with `#region`) and
-  mode-switching GET actions such as `FreeForum(method = "edit")` are intended. Do not split controllers
-  (including into partial classes) or add GET actions that would need new menu rows.
-- `AuthorizationFilter.Deny()` redirects to `/Dashboard/AnonymousIndex`, and each role's `_Layout`
-  script has a global `ajaxError` handler that sends every failed AJAX call to the same page. The two
-  work as a pair; keep both.
-- Admin safeguards (`AdminSafeguardPolicy`, applied by `ManagementAccountService` update and delete): an administrator
-  cannot lock, delete or demote their own account (re-saving it unchanged, unlocking and restoring it stay allowed), and
-  nobody can lock, delete or demote the last active administrator (Admin, not locked, not deleted). Each admin edit / delete
-  first locks the active administrators' rows (`FindActiveAdminsForUpdateAsync`, email order), then the edited row, so two
-  concurrent edits cannot leave no administrator. A failed-login lockout is not covered (see Accounts).
-- Menu safeguard (`MenuSafeguardPolicy`, applied by `MenuService` category / sub-category update and delete): a change that
-  takes away the administrators' last route to `Management/Menu` — the Admin "Management" category and its Admin "Menu"
-  item in the seed — is refused, or nobody could repair the menu from the UI. Every other entry stays the administrator's
-  call, and so does that one while a second route to it exists; a menu that already had no route is not held to one. Each
-  update / delete first locks every category, then every sub-category (`GetAllForUpdateAsync`, id order), then the edited
-  row, so two concurrent menu writes can neither both pass the check nor deadlock. `MenuSnapshot` judges a menu with
-  `MenuNavigationMatcher`'s rule (pinned by `MenuSafeguardTests.TheSnapshot_AgreesWithTheNavigationMatcher`).
-- The admin-only GET pages (`Management/Account`, `Management/Menu`, `Dashboard/AdminIndex`, ...) are protected
-  by the menu alone, while their POSTs also carry a role attribute. Getting the menu's `Role` right is the
-  administrator's job; do not add a second role check to those GETs.
-- `AuthorizationFilter` sends a signed-out visitor who opens an unlisted page to the public dashboard without
-  logging it (pinned by `OnAuthorizationAsync_LogsNothing_WhenAnAnonymousVisitorIsSentFromAnUnlistedPage`).
-  Denials of signed-in accounts go through `Deny()` and are logged.
-- The `ReturnUri` the layout uses after a culture change is not an open redirect: the router answers 404 to any
-  `//…` or `/\…` path, so no layout renders it. No extra validation is wanted.
-
-Accounts
-- A failed-login lockout is permanent until the user resets the password or an admin unlocks the
-  account. It only refuses new logins: sessions already signed in keep working, so guessing wrong on purpose
-  cannot throw the owner out. An administrator locking an unlocked account (`Account.LockAndEndSessions`)
-  also replaces the security stamp and so ends the account's sessions. A successful password reset always unlocks the account, including an admin-imposed lock, and signs
-  the user in straight away (fresh session id, new security stamp) unless the account has not accepted the
-  service terms. This does not weaken the lockout: the reset needs the single-use mailed token, not a guessed
-  password. Admin sanctions use `AdminResetPassword` + `MustChangePassword`, not `Locked`.
-- Registration and password-reset tokens are stored in the database only as their SHA-256 hash (`GuidToken.Hash`,
-  since 2026-10-30, owner's request; the columns keep their names): only the mailed link carries the token, so a leaked row
-  cannot be turned into a working link. The account is looked up by the hash, the 24-hour expiry is read from the token the
-  link presents (the hash binds its timestamp), and a resend always mints a new token, so only the latest confirmation
-  mail's link works (pinned by `TheStoredHash_PresentedAsTheToken_IsRefused`,
-  `Register_StoresOnlyTheHashOfTheMailedToken_AndTheMailedLinkStillWorks`). A fast unsalted hash is enough: the token
-  holds 16 CSPRNG bytes. `HashedPassword`, `RegistrationToken` and `ResetPasswordToken` never reach the admin screens:
-  `IManagementAccountService` returns plain `AccountResponse` rows, so the account grid, its whole-row search
-  and the Excel export neither show nor match them (a live token on screen hands the account to whoever sees it;
-  a searchable token or hash is a guessing oracle). Pinned by `AccountGrid_DoesNotRenderTheHashOrTheTokens`,
-  `SearchAsync_DoesNotMatchTheHashOrTheTokens` and the `ManagementAccountServiceTests` row checks. Do not add
-  them back.
-- A successful self-service password change ends the session; the user signs in again (as on other sites), and
-  every other session of the account is invalidated through the security stamp. Because it proves the current
-  password, it also lifts a lock and clears the failed-login counter (`Account.ChangePassword`) — otherwise an owner
-  locked by someone else's guesses, still signed in, would change the password and then be refused at that sign-in.
-- A deleted account's login answers "Your Account is Deleted. Please contact the administrator." — it is not
-  re-registrable.
-- The Login page is pre-filled with the public demo account (`demo@maroik.com` / `demoO12!!`), and the demo
-  account's dashboard always shows the fixed period from `ServerSetting.DemoDashboardYear/Month`.
-- Nicknames reject `<`, `>`, `"`, the backtick and `\` (after NFKC) but allow `&` and `'` ("R&D team",
-  "O'Brien"): nicknames are always output encoded, so those two are not an injection vector. An
-  administrator may create an account under a reserved nickname; self-registration may not.
-- IP-based rate limiting is done at Cloudflare. Do not add `AddRateLimiter` or IP-keyed throttling in
-  the app (behind Cloudflare, `RemoteIpAddress` is an edge address shared by every visitor). Login BCrypt CPU
-  cost and registration / reset mail volume are infrastructure concerns in the same way.
-- The public demo account has no server-side write protection: anyone can change its password, lock it or post
-  as it. Anyone can also lock any account with `MaxLoginAttempt` wrong guesses. Both are accepted.
-
-Data access and transactions
-- Every service write that runs in a transaction (several statements that must succeed together, or a `FOR UPDATE`
-  lock) spells out its own `BeginAsync` / `CommitAsync` / `RollbackAsync` (and the service tests assert them). Do not
-  fold them into a decorator, filter or "unit of work per request" helper. A single column-scoped write runs on its own
-  (`ProfileService.UpdateTimeZoneAsync`, the fixed income / expenditure CRUD), and so do the mail flows that persist a
-  token, send, then record the outcome (`AccountService.ForgotPasswordAsync`): a transaction around the send would hold
-  a row lock across the network call.
-- Several rows are locked in one statement, `... ORDER BY <column> FOR UPDATE` without `LIMIT` (e.g. the asset
-  balance lock). This is the pattern that fixed a lost-update bug; do not report it as a deadlock-ordering
-  risk. (`LIMIT` combined with `ORDER BY ... FOR UPDATE` would be a different, documented caveat.)
-- Posts and comments are owned by `Nickname`, not by email: a nickname is unique and never changes after
-  registration (only an unconfirmed account's can, via `ReplaceUnconfirmedRegistration`), and accounts are
-  only soft-deleted.
-
-Finance
-- An asset's currency label can be edited at any time (e.g. "$" → "USD"). Never reject a currency
-  change, whatever the existing balance looks like.
-- A transfer-type expenditure (deposit / investment / public pension / debt repayment), one-off or fixed,
-  requires its payment method and its deposit asset to carry the same currency label, on create and on update. Relabelling only one
-  of the two assets therefore makes editing an older transfer fail — intended.
-- A negative amount typed into an income / expenditure (one-off or fixed) is stored as its absolute value
-  (`Math.Abs`).
-- The dashboard's first year (`StartYear`) is found from the account's earliest income / expenditure by loading
-  them all.
-- `FixedSchedulePolicy.IsNoticed`'s behaviour around the year end and 29 February is accepted as it is.
-- Amounts are shown with every decimal place the `numeric(20,4)` columns store: the finance grids use
-  `AmountDisplay.GridFormat` (`#,0.####`, trailing zeros dropped) and the dashboard tooltips read
-  `FinanceAmountPolicy.MaxDecimalPlaces` from `#amountMaxDecimalPlaces`. The currency is a free-text label, so there is
-  no per-currency number of decimals (USD 12.50 shows as "12.5").
-- The edit forms receive amounts as JSON numbers, so an amount beyond ~15 significant digits (≥ ~9×10¹⁵) can
-  change on a re-save. Accepted; not a defect to raise.
-
-Files and content
-- Maroik.FileStorage is only ever reachable on the internal network; its `[AllowAnonymous]` endpoints
-  and always-on Swagger UI are intended.
-- Editing a post, private note or calendar event without choosing a new file removes the existing
-  attachment (pinned by tests such as `EditBoardAsync_ClearsTheExistingAttachmentRecord_WhenNoFileIsSubmitted`).
-- The same holds when an admin clears the lock on someone else's FreeForum post (the
-  `BoardEdit.LockCleared` path of `BoardService.EditBoardAsync`): `HandleAttachmentAsync` still runs, so
-  a request without a file removes the writer's attachment (pinned by
-  `EditBoardAsync_AdminNonOwner_ClearingALockWithoutAFile_ClearsTheWritersAttachmentRecord`).
-- Inline images in post / event bodies are fetched and embedded as base64 on every view
-  (`PrepareHtmlForDisplayAsync`). Keep that rendering path.
-- Replacing or clearing an attachment (post, private note, calendar event) only rewrites its database
-  record; the old file stays in Maroik.FileStorage, as does a file uploaded by a write whose transaction
-  later rolls back. There is no delete API for them on purpose — do not add one or a cleanup job. (The File Manager's
-  `api/FileManager/delete` is the one exception, and it only accepts its own `upload/FileManager/{guid}` paths; see File Manager.)
-- `HtmlContentSanitizerService` starts from the original allow-list (Ganss defaults plus `class`) and narrows only
-  three things: URL schemes to http/https, no `data-*` attributes, and no `position` / `top` / `left` / `right` /
-  `bottom` / `z-index` / `opacity` in inline styles (so a post cannot overlay the page). The rest of that
-  breadth — the `name` attribute, form elements (`form`, `input`, `button`, `select`, `textarea`) — is kept on
-  purpose. Do not raise it again.
-- An administrator cannot clear someone else's post lock from the UI (the edit page is owner-only); only a direct
-  POST to the edit endpoint can.
-- `BoardOutputViewModel.BoardAttachedFilePath` (Forum and Management) is populated by the controllers but
-  not rendered by any view. Keep it; do not remove it, and do not render the storage path in a view or
-  JSON response.
-
-Calendar
-- `GetCalendarEvents` loads every event of the selected calendars at once and the client pages through
-  them locally; `CalendarController` filters the requested calendars down to the ones the viewer may
-  see. No date-range querying.
-- Event reminders are e-mails only (`ReminderMethods.Email`; the DB CHECK allows nothing else) and are delivered since
-  2026-10-24 (owner's request): the domain works out each reminder's fire time when it is saved (`ReminderSchedule`: a timed
-  event's start minus the lead time; an all-day event's day minus N days / weeks at its time of day in the calendar's zone;
-  daylight-saving gaps move forward, overlaps take the earlier instant) and stores it with `HandledAt`. One already past is
-  handled at once (it would arrive late). The worker's `CalendarReminderScheduler` runs `CalendarReminderDispatchService` at
-  start-up and every minute: each due reminder in its own transaction (`LockDueAsync`, `FOR UPDATE SKIP LOCKED`), e-mailed to the
-  calendar's owner through the mail queue or skipped per `ReminderDeliveryPolicy` (owner gone / deleted / locked / unconfirmed /
-  the demo account, or over an hour late), then marked handled; a queue failure rolls back and is retried next minute. Viewers
-  of a shared calendar and visitors get no reminders and are not shown them (`IsOtherCalendarEventExists` sends `[]`). The mail
-  is Korean and English together (an account stores no language). Editing an event recreates its reminders, so a moved event's
-  reminder can be sent again for the new time. `CalendarRecurrence` / `RecurrenceId` stay unused on purpose — do not drop the table.
-
-Kanban
-- One board per user (`/Kanban/UserIndex`, User role only): the four fixed lanes of `KanbanLanes` (Backlog, To do, In progress,
-  Done), which cannot be added, renamed, deleted or reordered, and no board table. A lane's cards are in creation order (ties by id);
-  no position is stored and the order is not user-changeable.
-- A card never changes lane: no drag-and-drop, and the edit request has no lane (`KanbanCardUpdateRequest`). Moving work means
-  deleting the card and creating a new one in the other lane. Do not add a "move" action or a sortable library.
-- Whether a due date is overdue is decided by the domain in the owner's time zone (`KanbanCard.DueStateAt`), not by the browser.
-- Card writes are single non-transactional writes, and the demo account may use the board (no write protection, as elsewhere).
-
-File Manager
-- One drive per user (`/FileManager/UserIndex`, User role only), a folder tree of `FileManagerNode` rows. The default quota is
-  0 GB (`Account.FileManagerQuotaBytes` = 0): nobody can upload until an administrator sets a quota in `Management/Account`.
-  The demo account is treated like any other account.
-- Every structural write (create folder, rename, move, delete, begin / complete upload) first locks the owner's `Account` row
-  (`FindByEmailForUpdateAsync`) inside its transaction, so concurrent writes of one user cannot overrun the quota or create twin
-  names. FileStorage calls (abort, delete of the replaced or deleted files) run after the commit; a failed delete leaves an orphan
-  file, which is logged, not retried.
-- `Maroik.FileStorage`'s `api/FileManager/delete` is the one delete API of the file storage, and it refuses any path that is not
-  `upload/FileManager/{guid}`. Board / note / calendar attachments still have none (see Files and content).
-- Uploads go in 16 MB chunks to a staging file and are scanned by ClamAV on completion. There is no file size limit (since
-  2026-10-25, owner's request; only the quota bounds it), but ClamAV scans at most 2,147,483,645 bytes (clamd clamps its stream limit
-  to that; both compose files set `CLAMD_CONF_*` to 2048M and `MaxScanTime` to 10 minutes) — `FileManagerUploadPolicy.MaxScannableBytes`
-  on the domain's side, `ClamavClient.MaxStreamBytes` on the scanner's. A larger file can only be stored without a scan: `BeginUpload`
-  refuses it ("larger than 2 GB") unless the locked account row has the scan turned off, and `ClamavClient` never sends a stream that
-  long (it answers `LimitExceeded` at once). A scan that hits a clamd limit is never clean: it is `ClamavScanResult.LimitExceeded`
-  (`FileStorageRefusals.ScanLimitExceeded`), kept apart from a scanner outage (`Unavailable`) in the logs; both are refused as "could
-  not be scanned" and the staging file is dropped.
-- Abandoned uploads (since 2026-10-26, owner's request; it replaced "24 hours after the start, at the user's next upload"): an
-  unfinished upload is abandoned after `FileManagerUploadPolicy.StaleUploadAge` (1 hour) without activity, counted from its last
-  activity, not its start — `Updated` of an `Uploading` row is stamped by every stored chunk and every scan poll that answers
-  "scanning" (`RecordUploadActivityAsync`, a single column write, no transaction). An upload that keeps sending is never removed,
-  however many days it takes (a 16 MB chunk within the hour needs ~4.7 KB/s); an hour of silence means the page is gone, and the page
-  cannot resume a lost upload anyway. The worker's `FileManagerUploadSweepScheduler` runs `FileManagerService.RemoveStaleUploadsAsync`
-  at start-up and every hour (at most 100 accounts per run, each in its own transaction: account row locked, idleness judged again
-  under the lock, rows deleted, abort sent after the commit). `BeginUpload` still removes the account's idle uploads too, and
-  `CheckQuota` (the check before a batch) does not count them, so an account they filled can always start the upload that removes
-  them. The worker reads `FileStorage:BaseUrl` like the website.
-- "Turn off the virus scan for files" (since 2026-10-25, owner's request; it replaced the "keep a file the scan could not finish"
-  question flow): an administrator ticks it per account in `Management/Account` (`Account.FileManagerScanDisabled`, default false,
-  in the grid, its search, the Excel export and the admin update audit line). `CompleteUpload` reads it when the upload completes and
-  sends `skipScan` with `api/FileManager/complete`; FileStorage then moves the whole staging file into place at once (200, no scan
-  queued; a scan already queued is still followed) and logs it at Warning, as does `FileManagerService`. Such a file carries no mark:
-  it is listed, previewed and downloaded like any other, and turning the scan back on leaves it as it is. With the scan on, nothing is
-  asked: a file the scan could not finish is refused. Only the File Manager is affected — attachments (posts, notes, events) are
-  always scanned and refused whenever the scan is not clean.
-- The virus scan runs in the background (since 2026-10-25, owner's request: a 484 MB zip took 202 s, past the 100 s of the
-  HttpClient and of Cloudflare). `api/FileManager/complete` queues the scan (`IFileManagerScanQueue`, in memory) and answers 202 until
-  `FileManagerScanWorker` (2 scans at once) has stored the file (200) or refused it (400, answered once); the page asks
-  `CompleteUpload` again every `FileManagerUploadPolicy.ScanPollMilliseconds` and gives up (abort) after `MaxScanWaitMilliseconds`
-  or on Cancel, and sends the next file meanwhile. Completing is idempotent (an already completed upload answers "stored"). A
-  restart forgets the queue: the next `complete` of a whole staging file queues it again. A page closed during the scan leaves the
-  row `Uploading`, and the hourly sweep's abort removes the stored file too (abort drops staging, stored file and pending scan).
-- An overwrite keeps the old row until the new upload completes: the unique name index is partial (`WHERE NOT "Uploading"`), so
-  the uploading twin may coexist with it.
-- Downloading several items downloads each file separately (no ZIP). The page fetches each file whole before the browser saves it,
-  in a download dialog whose bar is measured against the file's size in bytes the server sends with the item / `ListDownloadFiles`
-  (the streamed response carries no Content-Length); Cancel aborts the file being fetched and skips the rest. Each role's
-  `ajaxError` handler ignores a request aborted on purpose (`thrownError === "abort"`); every other failure still redirects.
-- Preview is images only (png / jpg / gif / webp, proven by their header bytes) up to 100 MB.
-
-Budgets (Income Budget / Expenditure Budget)
-- The two AccountBook sub-menu pages render one view (`Views/AccountBook/Budget.cshtml`) and one script, told the kind. A sheet is
-  one (account, kind, year) and is handled like a spreadsheet: fixed rows per class (header, a line per sub-class and currency,
-  subtotals, totals), 30 free rows, columns A..Z (B..M months, N year total, O..Z free). Which cells are editable is decided by the
-  domain (`BudgetRow.EditableColumns`) and sent with the sheet; the script never derives it.
-- Formulas are an Excel-compatible language implemented in `Maroik.Core.Domain/Formulas` (lexer, recursive-descent parser, binder,
-  tree-walking evaluator, rewriter, highlighter, dependency graph with Tarjan / Kahn, `RecalculationEngine`). User text is never
-  compiled to code: a closed set of nodes and the `FormulaFunctions` catalog. Values are decimals and are never stored — every
-  request rebuilds and recalculates the account's workbook (all its sheets, the referenced ones, last year's) from the stored inputs
-  and the year's actual records, so a value cannot be stale. The "reactive" recalculation is per request (an edit recalculates what
-  it reaches, and the reply lists only the changed cells).
-- Inputs are stored with stable row keys (`B{L.<main>.<sub>.<currency hex>}`), not row numbers, so adding or removing a line never
-  breaks a reference and a formula copied from last year keeps working; a removed line's references show `#REF!` (and come back
-  if the line is added again). A circular reference is `#CYCLE!` (Excel only warns).
-- The formula bar's colouring is computed by the server on every pause in typing (`PreviewBudgetCell`); the client only paints
-  it. The round trip is accepted; do not move the lexer / parser into `site.ts`.
-- A budget cell's value is its budget only as a number from 0 to `FinanceAmountPolicy.MaxAbsoluteAmount`, rounded to 4 decimals;
-  otherwise `#NUM!`. Actuals are the real income / expenditure records of the month in the owner's time zone, by currency label
-  (no conversion); fixed schedules do not count until recorded.
-- A sheet is stored on its first write (account row locked, default lines in the default monetary unit); every later write locks
-  the sheet row (FOR UPDATE). The Excel download writes calculated values, not formulas (`ACTUAL` and the sheet names have no Excel
-  equivalent). Undo / redo lasts for the page session only.
-
-Client scripts
-- The front end is server-rendered Razor + jQuery + AdminLTE, chosen on purpose: for a CMS it is the simplest and
-  fastest stack, has no build chain beyond `tsc`, and stays runnable for years. Do not propose replacing it with a SPA
-  framework (React, Vue, Angular, Blazor, ...) or adding a bundler.
-- The vendored client libraries (jQuery, Bootstrap, AdminLTE and its plugins) are not tracked for security patches. The
-  client is never trusted: the strict CSP in `Maroik.Website/Program.cs` (`script-src 'self'`, no `'unsafe-inline'` /
-  `'unsafe-eval'`) blocks injected script, `HtmlContentSanitizerService` strips the `data-*` attributes library gadgets
-  read, and the server re-validates every write. Do not raise an outdated client library or its CVEs as a finding.
-- No bundler, no `import`/`export`: every `site.ts` is an IIFE global script compiled 1:1.
-- `wwwroot/{admin,user,anonymous}` each keep the full vendored AdminLTE plugin set, including plugins no view references
-  (datatables, pdfmake, codemirror, jszip, dropzone, flot, raphael, ...). Do not prune them.
-- Each role (`admin` / `user` / `anonymous`) keeps its own script per view, even when two scripts are
-  nearly identical. Do not merge them into shared scripts; the only shared helpers are the `window`
-  globals each role's `_Layout` script defines.
-- No `any` and no type assertion (`x as T`, `x!`; `as const` aside) in `TypeScripts/**` or `TypeScripts.Tests/**`
-  (pinned by `TypeScripts.Tests/_common/noExplicitAny.test.ts` / `noImplicitAny.test.ts`), with `strict` plus
-  `noUncheckedIndexedAccess`, `exactOptionalPropertyTypes` and the other strict options in both tsconfigs. A value
-  the code cannot prove goes through the runtime-check toolkit each role's `_Layout` script puts on `window`
-  (`fieldValue`, `parseJson`, `byId`, `required`, `onReply`, … — see `TypeScripts/README.md`): a missing element
-  throws, and an ajax reply that does not pass its check shows the generic "temporary error" toast. Each page
-  declares its reply checks to mirror the controller's `Json(...)` result field for field, so a controller's reply
-  change updates the page's check in the same change. `global.d.ts` is type-only (no runtime code).
-
 Code and tests
 - The DDD + Clean Architecture layering is deliberate preparation for growth, not over-engineering.
 - Long rationale comments are wanted; do not trim them in a review.
@@ -322,24 +50,32 @@ Code and tests
 - A service reachable only on the internal Docker network gets no app-level authentication (API keys, shared
   secrets, JWT) and no `IsDevelopment()` gating: the network boundary is its security boundary.
 
-Error handling
-- Controller actions keep their per-action `catch` blocks and return HTTP 200 with
-  `{ result, error }`; exceptions are logged on the server. A genuine input-validation failure shows its
-  specific reason (or "Input is invalid"), while an infrastructure failure shows a generic
-  "temporary error, please try again" message.
-- Every `[HttpPost]` action is accounted for in `ControllerFailureContractTests`: either a row that makes its service throw
-  and asserts the generic failure (HTTP 200, no exception text), or an `_exemptPosts` entry with the reason (non-AJAX
-  form posts and plain file downloads, which fall to the global exception page). `EveryPostAction_IsCoveredByAFailureContractTest_OrExemptWithAReason`
-  fails for a new POST action until it has one of the two.
+The other areas of "Intended design" each live in their own file under `.claude/rules/`, which Claude Code loads
+when a file of that area is read or edited (the `paths:` globs at the top of each file). They are as binding as the
+items above:
+
+- Operations and hosting — `.claude/rules/operations-and-hosting.md`
+- Authorization and navigation — `.claude/rules/authorization-and-navigation.md`
+- Accounts — `.claude/rules/accounts.md`
+- Data access and transactions — `.claude/rules/data-access-and-transactions.md`
+- Finance — `.claude/rules/finance.md`
+- Files and content — `.claude/rules/files-and-content.md`
+- Calendar — `.claude/rules/calendar.md`
+- Kanban — `.claude/rules/kanban.md`
+- File Manager — `.claude/rules/file-manager.md`
+- Budgets (Income Budget / Expenditure Budget) — `.claude/rules/budgets.md`
+- Client scripts — `.claude/rules/client-scripts.md`
+- Error handling — `.claude/rules/error-handling.md`
 
 ## Reviewing this repo
 
-- **Read "Intended design" above before starting any review**, and check every candidate finding against it
-  before reporting.
-- **Intended design and the tests decide.** A behaviour listed above, or pinned by a test, is intended — leave it and do
+- **Read "Intended design" before starting any review** — the items above and every `.claude/rules/` file of an
+  area the review touches (a whole-repo review reads them all) — and check every candidate finding against it before
+  reporting.
+- **Intended design and the tests decide.** A behaviour listed there, or pinned by a test, is intended — leave it and do
   not raise it. Anything else is judged on its own merits; when it is unclear whether a behaviour is deliberate, look for
   the reason first (`git log -S` / `git blame`, the rationale comments) and ask before calling it a bug.
-- Items listed under "Intended design" above stay closed; re-raise one only if its premise changes (for example
+- Items listed under "Intended design" stay closed; re-raise one only if its premise changes (for example
   `Maroik.FileStorage` becomes reachable from outside the internal network).
 
 ## Strict TDD — no test, no code
@@ -370,202 +106,6 @@ Consequences that apply to every change — C# under `Maroik.Core.*` / `Maroik.W
 
 When asked for a change and it is unclear what test would drive it, ask that question first — the answer is the specification.
 
-## Logging — written and tested with the code, like TDD
-
-Logging is part of the behaviour, not decoration added afterwards. Every new or changed use case, endpoint, worker step or
-client call ships with its logging **and the test that proves it**, in the same change. The order is the TDD order:
-
-1. **Red.** Before the production code, write the test that asserts the log entry (level, message template / rendered text,
-   whether an exception is attached, and — where relevant — that no secret is present). Use a recording `ILogger<T>` (see
-   `RecordingLogger` in `Maroik.Core.Client.Tests/Clients/FileClientTests.cs`) and watch it fail because the log is missing.
-2. **Green.** Add the smallest logging that passes.
-3. **A log call no test would notice disappearing does not stay.** Remove the log call and confirm the test fails.
-
-What must be logged:
-
-- **Every `catch` either logs or rethrows.** A swallowed exception with no log is a defect. The only allowed silent catches are
-  deliberate, commented, and tested translations of an *expected* condition into a result (e.g. a PostgreSQL unique-violation
-  turned into `Conflict`, `OperationCanceledException` on shutdown, a health check returning its own `HealthCheckResult`).
-  Everything else logs with the exception object as the first argument (`logger.LogError(ex, "… {Id}", id)`), never
-  `ex.Message` alone.
-- **Security and audit events are logged at `Information`/`Warning`**, whether they succeed or fail: login success / failure /
-  lockout, registration, email confirmation, password-reset request and completion, forced password change, role / lock /
-  delete changes made by an admin, permission denials, and rejected uploads. The log must let an operator answer "who did what to
-  which account, and when" without reading the database.
-- **Every failed write use case** logs why it failed (a result of `Failure`/`Conflict`/`Validation` produced by an unexpected
-  condition is logged; a plain user-input validation error is not an event).
-- **External calls** (SMTP, RabbitMQ, file storage, ClamAV) log a failure with the target, and a degraded-but-continuing
-  path (fallback, retry, dropped item) logs a `Warning`.
-
-Levels: `Error` = unexpected failure someone must look at; `Warning` = abnormal but handled (hostile-looking input, degraded
-dependency, retry); `Information` = business / audit events; `Debug`/`Trace` = diagnostics only, off in production.
-
-How:
-
-- **Structured templates with named placeholders** (`"Locked account {Email} after {Attempts} attempts"`), never string
-  interpolation or concatenation, so the values stay queryable and cannot forge extra log lines. The console output templates
-  (`Maroik.Website/Constants/LogTemplates.cs`, `Maroik.FileStorage/Constants/LogTemplates.cs`, `WorkerHost.ConsoleOutputTemplate`)
-  render `{Message:j}`, not Serilog's usual `:lj` — `:l` writes a string value raw, so a line break inside it would start a
-  forged line. Keep `:j`; each host has a test that fails if a value can break the line.
-- **Never log secrets or content:** passwords, password hashes, registration / reset tokens or their protected (Data Protection) form, session
-  or antiforgery values, connection strings, mail bodies, uploaded file bytes, post/comment text. Identify an account by the
-  identifier the existing logs already use (its email). A test asserts a secret does not appear when one could leak.
-- **Layering:** `Maroik.Core.Domain` never logs (it stays pure — it returns errors); `Maroik.Core.Repository` does not log (the
-  exception propagates to the service that owns the transaction and logs there). Services, clients, workers, controllers and
-  filters log. Do not log-and-rethrow the same exception at several layers — log it once, where it is handled.
-- **Done also means** every `catch` you added or touched satisfies the rules above and its test is green.
-
-Enforced by tests where a syntax tree can decide (since 2026-10-20, at the owner's request): `LoggingRuleArchitectureTests`
-(`Maroik.Core.Contract.Tests`) reads every production source with the Roslyn parser (the PostgreSQL scaffold aside) and fails when
-- a `catch` neither logs, nor throws, nor carries a comment (in its block or just before `catch`) saying why it may be silent —
-  so an allowed silent catch (an expected condition turned into a result) always states its reason;
-- a silent `catch` swallows every exception: no type or `Exception` itself, no `when` filter, and the exception is not handed on
-  (a health check's `HealthCheckResult.Unhealthy(..., ex)` hands it on). A comment does not excuse that;
-- an `Error` / `Critical` (Serilog `Error` / `Fatal`) log inside a `catch` that names its exception does not pass that exception
-  first (judged against the innermost enclosing `catch`);
-- a log call passes the caught exception's `.Message`;
-- a template placeholder's name ends in a secret noun (`Password`, `Token`, `Secret`, `Hash`, `ConnectionString`, `Cookie`);
-  `{PasswordReset}` (whether a reset happened) passes;
-- a value passed to a log is a variable or member whose name ends in one of those nouns (`account.HashedPassword`) — this
-  reads names only, so a secret passed under an innocent name is still the reviewer's to catch;
-- `Maroik.Core.Repository` mentions `ILogger` / `ILoggerFactory` / Serilog `Log`.
-`TheRules_FireOnWhatTheyForbid_AndOnlyOnThat` pins each rule against a bad and a good sample. Whether a use case logs at all, at
-which level and with what text stays with its own tests (the TDD order above). `DomainArchitectureTests.Domain_ShouldNot_Log`
-keeps `Maroik.Core.Domain` off `Microsoft.Extensions.Logging`.
-
-The compiler does enforce the template rules (`.editorconfig`, "Logging templates" block, all `error`): CA2254 (the message
-template is a constant — no interpolation or concatenation), CA2017 (its `{Placeholders}` match the arguments) and CA1727
-(placeholders are PascalCase).
-
-
-## Memory safety — resource-lifetime analyzers are build errors
-
-`.editorconfig` (`[*.cs]`, "Memory safety" block) sets these rules to `error`, for production and test code alike:
-CA2000, CA1001, CA2213, CA2215, CA2216, CA1063, CA1816, CA2025 (disposal / ownership), CA2014, CA2012, CA2015, CA2018,
-CA1821, CA2011 (stack, buffers, ValueTask, finalizers). Only these rules are turned on, not `AnalysisLevel=latest-all`
-(that wider attempt was rolled back on 2026-10-15). No project allows `unsafe` code.
-
-Further rule-ID blocks in the same file, also `error`: "Logging templates" (CA2254, CA2017, CA1727 — see Logging) and
-"Async and cancellation" (CA2016: forward the `CancellationToken` you received; CA1849: call the async API in an async method,
-e.g. `await app.RunAsync()`, `await Log.CloseAndFlushAsync()`, `SaveChangesAsync`, `CancelAsync`).
-
-Also `error`, by rule ID:
-- **Security** ("Security" block): .NET's injection-taint, XML, antiforgery (CA3147), deserialization (CA23xx) and
-  crypto / TLS / randomness (CA53xx) rules. CA3003 (file path injection) is left off on purpose: it offers no hook to declare
-  `StoragePath.ResolveWithinRoot` as a sanitizer, so it could only be met with suppressions; path traversal is pinned by
-  `StoragePathTests` and the `FileController` tests, and held in two ways by `FileSystemAccessArchitectureTests`. In
-  `Maroik.FileStorage` (the one service whose paths come from a request) by the type system: `StoragePath` is a value only
-  `StoragePath.ResolveWithinRoot` / `InDirectory` can make, `Helpers/StorageFiles` is the service's only code that names `File`,
-  `Directory`, `FileStream`, `FileInfo` or `DirectoryInfo`, and its members take a `StoragePath`, never a `string` — an unchecked
-  path does not compile into a file access. Everywhere else (paths from server configuration or a fixed folder) each use is
-  listed by file, member and API with the reason its path is safe, and the list must match the code exactly: a new use, even
-  inside a listed member, fails until it is listed after checking where its path comes from. SecurityCodeScan (whose SCS0018 did accept that declaration) was removed
-  on 2026-10-20 — unmaintained since 2022 and the analyzer most likely to stop loading after an SDK bump. CA2100 is off for
-  `*.Tests/**` only — the test fixtures create and drop throwaway databases with DDL, whose identifiers cannot be parameters.
-- **String comparison and culture** (CA1304, CA1305, CA1307, CA1309, CA1310, CA1311): `StringComparison.Ordinal` for
-  identifiers, paths and test assertions (xUnit's `Assert.Contains(string, string)` included), `CultureInfo.InvariantCulture`
-  for machine formats (parsing, storage keys, log rendering, Excel cells, the domain's English messages),
-  `CultureInfo.CurrentCulture` only for text shown to the user (`Int64Extensions` size labels). Inside an EF Core query a
-  .NET `ToLower` runs as SQL anyway, so a case-insensitive match uses `EF.Functions.ILike` with `EscapeLike` /
-  `LikeEscapeCharacter` (`AccountRepository.NicknameExistsIgnoreCaseAsync`), never `ToLowerInvariant` (not translatable).
-- **Banned APIs** (RS0030, `BannedSymbols.txt`, Microsoft.CodeAnalysis.BannedApiAnalyzers): every production project,
-  Domain and Contract included, may not read the clock directly (`DateTime.Now/UtcNow/Today`, `DateTimeOffset.Now/UtcNow` —
-  use the injected `TimeProvider`), block on async work (`Task.Wait/WaitAll/WaitAny`, `.Result`, `GetAwaiter().GetResult()`,
-  `Thread.Sleep`) or write to `Console`. It is wired in `Directory.Build.props` for every `.csproj` whose name does not end
-  in `.Tests` (a build-time analyzer, `PrivateAssets=all`, so not a runtime dependency — the `.csproj` package graph that
-  `SolutionLayeringArchitectureTests` checks is unchanged). A method ID names one overload, so the file lists every overload;
-  before bumping the analyzer, check that the `Microsoft.CodeAnalysis` version its DLL references (not the package number;
-  5.6.0 references 4.12) is not newer than the SDK's compiler (Roslyn 5.0), or the analyzer silently fails to load (CS8032).
-
-- **Unnecessary usings** (IDE0005): it runs at build time only because `Directory.Build.props` sets
-  `GenerateDocumentationFile` (which also checks doc-comment references such as `paramref`; missing doc comments, CS1591,
-  stay allowed). In a C# 14 `extension(T value)` block the receiver is not a `paramref` target — say "this value" instead.
-
-`UnitOfWork.RollbackAsync` / `DisposeAsync` ignore only a `DbException` (the database already ended the transaction);
-any other rollback failure propagates after the transaction is released and the tracker cleared (pinned by
-`UnitOfWorkTests.*_Rethrows_AFailureThatIsNotADatabaseError_AndStillClearsTheTracker`).
-
-The code has no `#pragma warning disable`.
-
-- **One pinned SDK.** `global.json` pins the exact .NET SDK (`rollForward: disable`); CI installs it from that file and every
-  Dockerfile's build stage uses the same `sdk:<version>` tag (pinned by `SdkPinArchitectureTests`). The analyzers are build
-  errors, so an SDK bump (a newer Roslyn) is one deliberate change to all of these at once. The runtime images (`aspnet` /
-  `runtime`) stay on the floating `10.0` tag so they pick up runtime security patches. `.github/workflows/sdk-bump.yml` checks
-  weekly for a newer SDK of the pinned channel and opens one pull request that moves all of them together (Dependabot would
-  split global.json and the Dockerfiles into pull requests that each fail the test); it starts CI/CD on that branch itself,
-  since a pull request opened with `GITHUB_TOKEN` triggers no workflow. It needs the repository setting "Allow GitHub Actions
-  to create and approve pull requests".
-
-- **CA2000 stays on the default `dispose_analysis_kind`, not `AllPaths`** (tried 2026-10-16). In `AllPaths` mode it reports
-  the construction site of a type whose async `DisposeAsync` awaits e.g. `Task.WhenAll` / `Task.Yield`, even after every owned
-  field was disposed (`FakeSmtpServer`), so it could only be met with suppressions. The genuine exception-path leaks that run
-  surfaced were fixed: a constructor / factory that starts a listener closes it if starting fails (`FakeSmtpServer`,
-  `FakeClamavServer.Start`), a semaphore is created right before the try that disposes it (`HtmlParserService`), and
-  `RabbitMqEmailPublisher.DisposeAsync` is idempotent (a second call returns at once; a call that timed out disposed nothing
-  and can be repeated).
-- **Configure analyzers by rule ID only.** `AnalysisLevel=latest-all` (or any `AnalysisMode`) ships an SDK globalconfig that
-  sets every rule by ID, and a rule-ID entry beats a category or all-analyzers entry whichever file it is in (`.editorconfig`
-  wins over the globalconfig only at the same level). So under `latest-all` a `dotnet_analyzer_diagnostic.severity = ...` or
-  `dotnet_analyzer_diagnostic.category-<X>.severity = ...` line in `.editorconfig` is silently ignored, while
-  `dotnet_diagnostic.<ID>.severity` lines still apply (verified 2026-10-16). Widen the analysis by adding rule-ID lines, not
-  bulk or category lines.
-
-- **Fix the code; do not suppress.** No `#pragma warning disable`, `[SuppressMessage]`, per-file severity override or
-  CA2000 option change (`dispose_ownership_transfer_*`, `excluded_*`) for these rules. A real false positive is a discussion
-  with the owner first.
-- Dispose with `using` / `await using`. When ownership moves to something that disposes it later (a `FileStreamResult`, a
-  `MultipartFormDataContent` part), use the try/finally hand-over: assign `null` right after the hand-over and dispose the
-  non-null leftover in `finally` (see `FileController.Download`, `MultipartForm`).
-- A class that owns a disposable field disposes it in `Dispose` / `DisposeAsync` (e.g. `EmailConsumerWorker.Dispose`),
-  not only on a happy-path method such as `StopAsync`.
-- A client from `IHttpClientFactory` is disposed after use (`using HttpClient`); it does not own its pooled handler, and a
-  response it already returned (the streaming `OpenReadAsync`) keeps working.
-- Tests: multipart bodies are built with the per-project `Fixtures/MultipartForm` helper (`Of`, `AddText`, `AddFile`),
-  never `new StringContent(...)` / `new ByteArrayContent(...)` added inline; a helper that sends a request takes a
-  `Func<...>` and disposes what it builds (`ErrorOf`, `Send`).
-- A leak fix with observable behaviour gets a regression test like any bug fix (`FileClientTests.EveryCall_DisposesTheHttpClientItCreated`,
-  `FileControllerTests.Download_ClosesTheFile_WhenItFailsAfterOpeningIt`); where nothing is observable, the build error is the red step.
-
-## Folder names are plural nouns
-
-The folder that directly holds a `.cs` file is a plural noun (`Accounts`, `Calendars`, `Fixtures`, `ArchitectureRules`,
-`Mappers`), and its namespace matches it. A singular noun is pluralized (`Account` → `Accounts`); an adjective or a
-mass / concept word is first replaced by a noun that has a plural (`Shared` → `Layouts`, `Infrastructure` → `Fixtures`,
-`Architecture` → `ArchitectureRules`, `Messaging` → `Messages`, `Time` → `TimeZones`, `Media` → `Uploads`).
-A `Resources/...` resx folder mirrors its class's folder, so it follows. Razor `Views/{Controller}` folders hold no `.cs` and
-keep the controller name.
-
-`.editorconfig` cannot see folder names, so the `CheckPluralFolderNames` target in `Directory.Build.props` warns at build
-time (`MAROIK0001`) for a folder whose name does not end in `s`; the zero-warning rule makes it a gate. It covers
-`Maroik.Core.PostgreSQL` too: EF Core's scaffold puts everything at the project root by default, and this project's folders
-are the scaffold options, so re-scaffold with `--context-dir Contexts --output-dir Models`.
-The namespace follows the folder path; `.editorconfig` makes a mismatch a build error (`IDE0130`), so a folder rename
-cannot leave its namespace behind.
-
-Interfaces a project defines live in `Interfaces/` (`Maroik.Core.Contract`, and the hosts' own: `Maroik.Website/Interfaces`,
-`Maroik.Worker/Interfaces`, `Maroik.FileStorage/Interfaces`), constants such as the console `LogTemplates` in `Constants/`,
-extension methods in `Extensions/` (`EnumExtensions.GetDescription`, the Domain's `DateTimeExtensions` too), and `*Mapper`
-classes in `Mappers/`. `Interfaces/` holds only interfaces (a record a contract carries, such as `HtmlImgPatch`, is a `Dtos/`
-type) and `Extensions/` only classes of extension members (a plain static helper is named for its job, e.g.
-`Maroik.Website/Serializers/ClientJsonSerializer`). Enforced for every production project except the
-`Maroik.Core.PostgreSQL` scaffold by `FolderRoleArchitectureTests` (`Maroik.Core.Contract.Tests`), which reads the sources
-with the Roslyn parser. The same test holds the `*.Tests` projects to one rule: every type that is not a `*Tests` class (a
-fake, a fixture, an assertion helper such as `ErrorAssert` or `RepositoryPaths`) lives in `Fixtures/`, so the folders that
-mirror the production code hold only its tests. A test class covers one area and sits in that area's folder
-(`Calendars/CalendarBoundaryTests`); only the cross-aggregate checks of `Maroik.Core.Domain.Tests/Invariants` (the clock, the
-error contract) have no production folder of their own.
-
-## One type per file, named after it
-
-Every `.cs` file holds one top-level type (class, record, struct, interface, enum, delegate) and is named after it
-(`AdminStanding.cs`, `MenuSnapshot.cs`, `SeededAccount.cs`). StyleCop.Analyzers is referenced for that alone: `.editorconfig`
-sets SA1402 (one type per file; `stylecop.json` counts every kind of type, not only classes) and SA1649 (file name = first
-type) to `error` by rule ID, and `stylecop.globalconfig` turns every other StyleCop rule off. That file uses category lines —
-the one exception to "configure analyzers by rule ID only" below, which holds only while no `AnalysisLevel=latest-all` /
-`AnalysisMode` is set — plus a rule-ID line for SA1201, which 1.2.0-beta.556 reports with no source location for C# 14
-`extension` blocks (a location-less diagnostic follows only a rule-ID line in a global config). Nested types are fine, and
-SA1649 does not judge a `partial` type, so `ProgramAccessor.cs` (`public partial class Program`) keeps its name.
-
 ## Always write resx + unit tests alongside code
 
 Whenever you add or change code, also write the matching pieces in the same change —
@@ -590,38 +130,6 @@ don't leave them for later or treat them as optional:
   changed behavior in a source project **or in a `.ts` file** gets corresponding tests
   added in its `.Tests` project in the same change, not deferred.
 
-## Aggregate model
-
-Every domain type persisted independently through its own `I*Repository`
-(`IGenericRepository<T>` — its own `CreateAsync`/`UpdateEntityAsync`, not a cascade
-through a parent) is an `AggregateRoot<TId>`, never a bare `Entity<TId>`. This
-includes `BoardComment`, `BoardAttachedFile`, `CalendarEventReminder`,
-`CalendarEventAttachedFile`, `CalendarShared` and `OtherCalendar` — reclassified
-from `Entity<T>` to `AggregateRoot<T>` (base class only; parent-reference fields
-are plain IDs, not object references), the same criterion applied to
-`Category`/`SubCategory` in commit `284dc52f`. Enforced by
-`ContractArchitectureTests.EveryRepositoryInterface_MustPersist_AnAggregateRoot`.
-
-## Repository tests
-
-`Maroik.Core.Repository.Tests` runs entirely against a real PostgreSQL 17 database
-(Testcontainers) — there is no EF Core InMemory provider. One container is shared by
-the whole assembly (`Fixtures/PostgresContainerFixture`, an xUnit v3 assembly
-fixture); it loads the real schema **and seed data** from
-`Maroik.DB/PostgreSQL/SQL_Init_Script/Debugging/Init.sql` into a template database,
-and each test class gets its own throwaway DB cloned from that template
-(`DatabaseFixture` + `RepositoryTestBase`). Docker must be available;
-test-collection parallelism is off (`xunit.runner.json`).
-
-Because every test starts from the seed (menu/category rows plus the admin and demo accounts), a test must not assume an
-empty table: insert under keys unique to the test (`RepositoryTestBase.UniqueEmail`
-/ `Unique`, or `EnsureAccountsAsync` / `EnsureAssetsAsync` / `InsertCalendarAsync` /
-`InsertCalendarEventAsync` for FK parents, and `EnsureNicknamesAsync` for a `Board` / `BoardComment`
-`Writer`, which `Board_fk_0` / `BoardComment_fk_1` point at `Account.Nickname`) and scope "list/count" assertions to the
-rows or account the test itself created. Real CHECK / FK / composite-PK behaviour is
-now exercised (e.g. `FixedIncome_DepositDayMonth_check`,
-`CalendarEventReminder_Method_check`, `Board_Type_check`).
-
 ## Tests that need Docker
 
 Besides `Maroik.Core.Repository.Tests` (PostgreSQL) the following start throwaway containers with Testcontainers, so Docker must
@@ -635,24 +143,6 @@ bridge, the browser aborts a request in flight (`net::ERR_NETWORK_CHANGED`), and
 session to be running. A solution-wide run must therefore run the modules one at a time:
 
     dotnet test --solution Maroik.slnx --max-parallel-test-modules 1
-
-## Mutation testing (on demand)
-
-Coverage says code ran, not that a test would notice it breaking. Stryker.NET (not pinned in the repo — install it
-globally, version 5.0.0) changes the production code and reports which changes NO test catches ("survivors"). Run it from the
-test project's folder, with the Microsoft.Testing.Platform runner (this repo uses xUnit v3 / MTP; the default vstest runner reports a false 0 %):
-
-    dotnet tool install -g dotnet-stryker --version 5.0.0   # once
-    cd Maroik.Core.Domain.Tests
-    dotnet stryker --test-runner mtp --project Maroik.Core.Domain.csproj --reporter json --reporter cleartext
-
-Read the survivors, not just the score. Known limits of the MTP runner: mutants inside **static field initializers**
-(`static readonly` tables such as the reserved nicknames or the class taxonomies) are reported as survived even when a test does fail
-for them (apply the mutation by hand to check), and a few mutants are equivalent (an `>=` vs `>` that only differs at an
-exact-`now` instant). Baseline (2026-10-13): `Maroik.Core.Domain` 95.73 % (the rest is those two categories), `Maroik.Core.Service` 95.57 % (as of
-the 2026-10-05 survivor review, the survivors left are equivalent — `?? ""` fallbacks on a value that is never null, duplicated guards, ordering of groups that hold a
-single row). Service tests assert Begin/Commit/Rollback, the exact `ErrorCode`/`ErrorKey`/`ErrorType`, and every `catch`'s log entry;
-keep new Service tests to that standard.
 
 ## Architecture validation tests
 
@@ -668,44 +158,19 @@ for shipped code, `tests` for `*.Tests`): `dotnet sln Maroik.slnx add <csproj> -
 `SolutionLayeringArchitectureTests` (`EveryProject_MustBeRegisteredInTheSolution`,
 `EveryProject_MustBeNestedUnderTheMatchingSolutionFolder`).
 
-## Domain error messages must go through DomainError
+## Rules kept in `.claude/rules/`
 
-The domain speaks English only and does no translation. Every `Maroik.Core.Domain` error is built via
-`Maroik.Core.Domain.Errors.DomainError` (`.Validation`/`.Conflict`/`.Failure`) — **never** call the raw
-`ErrorOr.Error.Validation` / `.Conflict` / `.Failure` / `.NotFound` / `.Forbidden` / `.Unexpected` factories
-directly outside `DomainError.cs` itself. `DomainError` keeps the English message template and its values
-separately in `Error.Metadata` (`MessageTemplate` / `MessageArgs`), so the outer layers can translate it.
-This applies even to a message with no runtime value to interpolate (pass zero `args`) — a message that
-starts static and later gains an interpolated value must not be able to silently lose its template.
+These sections apply to the C# code, the build or the tests, and load with the files they govern. Each keeps its
+heading, so a comment that cites "CLAUDE.md, <section>" is found through this list:
 
-Why: a raw `Error.X(code, "some message")` bakes the description straight into `Error.Description`
-with no composite-format template in `Error.Metadata`, so the Website's `IHtmlLocalizer` resx lookup
-falls back to the baked (often English, sometimes value-specific) string instead of resolving a
-`ko-KR` translation. This was the actual state of ~98 of 104 Domain error call sites, and for
-`Money.Add`/`Subtract`'s currency-mismatch errors it was a live bug: a genuinely runtime currency
-code was interpolated straight into the message, so no resx key could ever match it.
+- Logging — written and tested with the code, like TDD — `.claude/rules/logging.md`
+- Memory safety — resource-lifetime analyzers are build errors (with its "Security", "String comparison and culture",
+  "Banned APIs" and "One pinned SDK" parts) — `.claude/rules/analyzers-and-memory-safety.md`
+- Folder names are plural nouns — `.claude/rules/csharp-code-structure.md`
+- One type per file, named after it — `.claude/rules/csharp-code-structure.md`
+- Aggregate model — `.claude/rules/csharp-code-structure.md`
+- Domain error messages must go through DomainError — `.claude/rules/csharp-code-structure.md`
+- Service error keys must come from ServiceErrorKeys — `.claude/rules/csharp-code-structure.md`
+- Repository tests — `.claude/rules/repository-tests.md`
+- Mutation testing (on demand) — `.claude/rules/mutation-testing.md`
 
-Enforced by `DomainArchitectureTests.Domain_ErrorMessages_MustGoThrough_DomainError`
-(`Maroik.Core.Domain.Tests/ArchitectureRules/DomainArchitectureTests.cs`) — a NetArchTest custom rule that
-inspects each type's IL for a direct call to a raw `ErrorOr.Error` factory method (a type-dependency
-check doesn't work here since every Domain type legitimately depends on the unrelated `ErrorOr<T>`
-return type). Keep it green; when a new error is added, add it via `DomainError`, and add the
-matching resx entry — with a `{0}`/`{1}` composite-format key, not a baked value — to every controller
-resx pair (`en-US` + `ko-KR`) that can surface it.
-
-Cultures are a Website concern: the supported UI cultures and the culture → default time-zone pre-select
-live in `Maroik.Website/Constants/CulturePolicy.cs`, not in the domain. `Maroik.Core.Domain.Extensions.DateTimeExtensions`
-is time-zone conversion, not language handling.
-
-## Service error keys must come from ServiceErrorKeys
-
-The message key of a failed service result (`ServiceResult`, `LoginResult`, `RegisterResult`, `SummernoteUploadResult`)
-is also the resx key the controller looks it up under, so it is written as a `Maroik.Core.Contract.Dtos.ServiceErrorKeys`
-constant, never a literal (the machine error *code*, e.g. `"Board.NotFound"`, stays a literal). Keys a controller compares
-against and answers itself (`"invalid-image"`, `"reset-password-invalid"`, ...) live in `ServiceErrorKeys.Signals` and are
-used by both sides. Rewording a value means renaming its resx key in every controller pair in the same change.
-
-Enforced by `ServiceErrorKeyArchitectureTests` (`Maroik.Core.Service.Tests`, no literal keys in the service sources) and
-`ServiceErrorKeyResxTests` (`Maroik.Website.Tests`), which follows the calls from each controller into the services with
-Mono.Cecil and fails when a key the controller can receive is missing from its `en-US` / `ko-KR` resx, or when a key is
-reached from no controller at all.

@@ -535,6 +535,9 @@ and is not retried. A release that changes `Maroik.DB/` (the schema) is not depl
 full deploy in How to Deploy (above) is run by hand, because it rebuilds the database from `Init.sql` and restores the backup.
 
 ## Contributing
+Read [CONTRIBUTING.md](CONTRIBUTING.md) first: the prerequisites, the commands that define "done", and the rules the build
+and the tests do not check for you (the full rule set is `CLAUDE.md` and `.claude/rules/`).
+
 1. Fork the repository
 2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
 3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
