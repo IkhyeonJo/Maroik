@@ -84,8 +84,10 @@ public class StylesheetFlowTests(E2ESharedFixture fixture) : E2ETestBase(fixture
     {
         IPage page = await OpenAsync(role, path);
 
-        Assert.Equal("rgba(80, 180, 255, 0.15)", await StyleAsync(page, ".fc-daygrid-day.fc-day-sun", "background-color"));
-        Assert.Equal("rgba(80, 180, 255, 0.15)", await StyleAsync(page, ".fc-daygrid-day.fc-day-sat", "background-color"));
+        // Today's cell is excluded: FullCalendar paints it with its own today highlight, which wins over the weekend tint,
+        // so on a day when the first Sunday / Saturday cell of the month view is today the tint would not show there.
+        Assert.Equal("rgba(80, 180, 255, 0.15)", await StyleAsync(page, ".fc-daygrid-day.fc-day-sun:not(.fc-day-today)", "background-color"));
+        Assert.Equal("rgba(80, 180, 255, 0.15)", await StyleAsync(page, ".fc-daygrid-day.fc-day-sat:not(.fc-day-today)", "background-color"));
         Assert.Equal("none", await StyleAsync(page, ".fc-dayGridMonth-button", "display"));
 
         Assert.Equal("rgb(255, 255, 255)", await StyleAsync(page, popup, "background-color"));
