@@ -49,7 +49,7 @@ public class NoticeController(
 
         try
         {
-            string email = HttpContext.GetLoggedInAccount().Email!;
+            string email = HttpContext.GetLoggedInEmail();
 
             var request = new FixedIncomeRequest
             {
@@ -117,7 +117,7 @@ public class NoticeController(
     {
         try
         {
-            string email = HttpContext.GetLoggedInAccount().Email!;
+            string email = HttpContext.GetLoggedInEmail();
             FixedIncomeResponse? item = await fixedIncomeService.GetByIdAsync(email, id, ct);
             if (item == null)
                 return Json(new { result = false, error = localizer["Input is invalid"].Value });
@@ -155,7 +155,7 @@ public class NoticeController(
         {
             string baseLabel = localizer["Amount"].Value;
             AssetResponse? asset = await assetService.GetAssetAsync(
-                HttpContext.GetLoggedInAccount().Email!, productName, ct);
+                HttpContext.GetLoggedInEmail(), productName, ct);
 
             string label = !string.IsNullOrEmpty(asset?.MonetaryUnit)
                 ? baseLabel.GetAmountLabel(asset.MonetaryUnit)
@@ -186,7 +186,7 @@ public class NoticeController(
 
         try
         {
-            string email = HttpContext.GetLoggedInAccount().Email!;
+            string email = HttpContext.GetLoggedInEmail();
 
             var request = new FixedIncomeRequest
             {
@@ -226,7 +226,7 @@ public class NoticeController(
     {
         try
         {
-            string email = HttpContext.GetLoggedInAccount().Email!;
+            string email = HttpContext.GetLoggedInEmail();
             var result = await fixedIncomeService.DeleteAsync(email, fixedIncomeInputViewModel.Id, ct);
             return result.Success
                 ? Json(new { result = true, message = localizer["The fixedIncome has been successfully deleted."].Value })
@@ -274,7 +274,7 @@ public class NoticeController(
 
         try
         {
-            string email = HttpContext.GetLoggedInAccount().Email!;
+            string email = HttpContext.GetLoggedInEmail();
 
             var request = new FixedExpenditureRequest
             {
@@ -343,7 +343,7 @@ public class NoticeController(
     {
         try
         {
-            string email = HttpContext.GetLoggedInAccount().Email!;
+            string email = HttpContext.GetLoggedInEmail();
             FixedExpenditureResponse? item = await fixedExpenditureService.GetByIdAsync(email, id, ct);
             if (item == null)
                 return Json(new { result = false, error = localizer["Input is invalid"].Value });
@@ -382,7 +382,7 @@ public class NoticeController(
         {
             string baseLabel = localizer["Amount"].Value;
             AssetResponse? asset = await assetService.GetAssetAsync(
-                HttpContext.GetLoggedInAccount().Email!, productName, ct);
+                HttpContext.GetLoggedInEmail(), productName, ct);
 
             string label = !string.IsNullOrEmpty(asset?.MonetaryUnit)
                 ? baseLabel.GetAmountLabel(asset.MonetaryUnit)
@@ -413,7 +413,7 @@ public class NoticeController(
 
         try
         {
-            string email = HttpContext.GetLoggedInAccount().Email!;
+            string email = HttpContext.GetLoggedInEmail();
 
             var request = new FixedExpenditureRequest
             {
@@ -454,7 +454,7 @@ public class NoticeController(
     {
         try
         {
-            string email = HttpContext.GetLoggedInAccount().Email!;
+            string email = HttpContext.GetLoggedInEmail();
             var result = await fixedExpenditureService.DeleteAsync(email, fixedExpenditureInputViewModel.Id, ct);
             return result.Success
                 ? Json(new { result = true, message = localizer["The fixedExpenditure has been successfully deleted."].Value })

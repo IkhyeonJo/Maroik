@@ -44,4 +44,38 @@ public class HttpContextAccountExtensionsTests
 
         Assert.Throws<InvalidOperationException>(() => context.GetLoggedInAccount());
     }
+
+    /// <summary>Returns the email of the account stored under the logged-in-account key.</summary>
+    [Fact]
+    public void GetLoggedInEmail_ReturnsTheStoredAccountsEmail()
+    {
+        var context = new DefaultHttpContext();
+        context.Items[HttpContextItemKeys.LoggedInAccount] = new AccountResponse { Email = "user@test.com" };
+
+        Assert.Equal("user@test.com", context.GetLoggedInEmail());
+    }
+
+    /// <summary>
+    /// The anonymous placeholder has no email: it throws instead of handing a null email on to a service, so an
+    /// action that needs a signed-in account fails loudly when it is reached without one.
+    /// </summary>
+    [Fact]
+    public void GetLoggedInEmail_Throws_WhenTheAccountHasNoEmail()
+    {
+        var context = new DefaultHttpContext();
+        context.Items[HttpContextItemKeys.LoggedInAccount] = new AccountResponse { Email = null };
+
+        var ex = Assert.Throws<InvalidOperationException>(() => context.GetLoggedInEmail());
+        Assert.Contains("no email", ex.Message, StringComparison.Ordinal);
+    }
+
+    /// <summary>With no account resolved for the request it throws, as <c>GetLoggedInAccount</c> does.</summary>
+    [Fact]
+    public void GetLoggedInEmail_Throws_WhenNoAccountWasResolved()
+    {
+        var context = new DefaultHttpContext();
+
+        var ex = Assert.Throws<InvalidOperationException>(() => context.GetLoggedInEmail());
+        Assert.Contains("ViewBagPopulatorFilter", ex.Message, StringComparison.Ordinal);
+    }
 }

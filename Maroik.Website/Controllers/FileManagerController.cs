@@ -37,7 +37,7 @@ public class FileManagerController(
     #region Read
 
     /// <summary>The signed-in account's email.</summary>
-    private string Email => HttpContext.GetLoggedInAccount().Email!;
+    private string Email => HttpContext.GetLoggedInEmail();
 
     /// <summary>The signed-in account's time zone.</summary>
     private string TimeZone => HttpContext.GetLoggedInAccount().TimeZoneIanaId ?? "UTC";

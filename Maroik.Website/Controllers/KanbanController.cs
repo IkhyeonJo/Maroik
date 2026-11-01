@@ -51,7 +51,7 @@ public class KanbanController(
         if (!ModelState.IsValid)
             return Json(new { result = false, error = localizer["Input is invalid"].Value });
 
-        string email = HttpContext.GetLoggedInAccount().Email!;
+        string email = HttpContext.GetLoggedInEmail();
         try
         {
             var result = await kanbanService.CreateAsync(email, new KanbanCardCreateRequest
@@ -83,7 +83,7 @@ public class KanbanController(
         if (!ModelState.IsValid)
             return Json(new { result = false, error = localizer["Input is invalid"].Value });
 
-        string email = HttpContext.GetLoggedInAccount().Email!;
+        string email = HttpContext.GetLoggedInEmail();
         try
         {
             var result = await kanbanService.UpdateAsync(email, new KanbanCardUpdateRequest
@@ -112,7 +112,7 @@ public class KanbanController(
     [RequiredHttpPostAccess(Role = Role.User)]
     public async Task<IActionResult> DeleteKanbanCard(long id, CancellationToken ct)
     {
-        string email = HttpContext.GetLoggedInAccount().Email!;
+        string email = HttpContext.GetLoggedInEmail();
         try
         {
             var result = await kanbanService.DeleteAsync(email, id, ct);

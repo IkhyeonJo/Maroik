@@ -50,7 +50,7 @@ public class CalendarController(
                 return Json(new { result = false, error = localizer["Input is invalid"].Value });
 
             CalendarRequest tempCalendar = calendarInputViewModel.Calendars.FirstOrDefault() ?? new CalendarRequest();
-            string accountEmail = HttpContext.GetLoggedInAccount().Email!;
+            string accountEmail = HttpContext.GetLoggedInEmail();
 
             ServiceResult result = await calendarService.CreateCalendarAsync(accountEmail, tempCalendar, HttpContext.RequestAborted);
 
@@ -276,7 +276,7 @@ public class CalendarController(
         try
         {
             var tempCalendars =
-                await calendarService.GetCalendarsAsync(HttpContext.GetLoggedInAccount().Email!,
+                await calendarService.GetCalendarsAsync(HttpContext.GetLoggedInEmail(),
                     HttpContext.RequestAborted);
 
             if (tempCalendars.Count == 0)
@@ -306,7 +306,7 @@ public class CalendarController(
     {
         try
         {
-            List<CalendarResponse> calendars = await calendarService.GetCalendarsAsync(HttpContext.GetLoggedInAccount().Email!, HttpContext.RequestAborted);
+            List<CalendarResponse> calendars = await calendarService.GetCalendarsAsync(HttpContext.GetLoggedInEmail(), HttpContext.RequestAborted);
 
             return Json(new { result = true, calendars });
         }
@@ -505,7 +505,7 @@ public class CalendarController(
         try
         {
             List<CalendarSharedSummaryResponse> setCalendarShareds =
-                await calendarService.GetCalendarSharedSummariesAsync(HttpContext.GetLoggedInAccount().Email!, HttpContext.RequestAborted);
+                await calendarService.GetCalendarSharedSummariesAsync(HttpContext.GetLoggedInEmail(), HttpContext.RequestAborted);
 
             return Json(new { result = true, setCalendarShareds });
         }
@@ -525,7 +525,7 @@ public class CalendarController(
         try
         {
             List<CalendarBrowseSummaryResponse> browseCalendarsOfInterests =
-                await calendarService.GetBrowseCalendarsOfInterestAsync(HttpContext.GetLoggedInAccount().Email!, HttpContext.RequestAborted);
+                await calendarService.GetBrowseCalendarsOfInterestAsync(HttpContext.GetLoggedInEmail(), HttpContext.RequestAborted);
 
             return Json(new { result = true, browseCalendarsOfInterests });
         }
@@ -555,7 +555,7 @@ public class CalendarController(
             }
 
             CalendarRequest calendarRequest = calendarInputViewModel.Calendars.FirstOrDefault() ?? new CalendarRequest();
-            string accountEmail = HttpContext.GetLoggedInAccount().Email!;
+            string accountEmail = HttpContext.GetLoggedInEmail();
 
             ServiceResult updateResult = await calendarService.UpdateCalendarAsync(accountEmail, calendarRequest, HttpContext.RequestAborted);
 
@@ -621,7 +621,7 @@ public class CalendarController(
                 return Json(new { result = false, error = localizer["Input is invalid"].Value });
             }
 
-            ServiceResult sharedResult = await calendarService.UpdateCalendarSharedAsync(HttpContext.GetLoggedInAccount().Email!, calendarShareds, HttpContext.RequestAborted);
+            ServiceResult sharedResult = await calendarService.UpdateCalendarSharedAsync(HttpContext.GetLoggedInEmail(), calendarShareds, HttpContext.RequestAborted);
 
             return !sharedResult.Success ? Json(new { result = false, error = localizer[sharedResult.ErrorKey, sharedResult.ErrorArgs].ToPlainString() }) : Json(new { result = true, message = localizer["The calendar shared has been successfully updated."].Value });
         }
@@ -680,7 +680,7 @@ public class CalendarController(
         try
         {
             CalendarRequest tempCalendar = calendarInputViewModel.Calendars.FirstOrDefault() ?? new CalendarRequest();
-            string accountEmail = HttpContext.GetLoggedInAccount().Email!;
+            string accountEmail = HttpContext.GetLoggedInEmail();
 
             ServiceResult deleteCalendarResult = await calendarService.DeleteCalendarAsync(accountEmail, tempCalendar, HttpContext.RequestAborted);
 
@@ -702,7 +702,7 @@ public class CalendarController(
     {
         try
         {
-            string email = HttpContext.GetLoggedInAccount().Email!;
+            string email = HttpContext.GetLoggedInEmail();
 
             ServiceResult deleteEventResult = await calendarService.DeleteCalendarEventAsync(id, email, HttpContext.RequestAborted);
 

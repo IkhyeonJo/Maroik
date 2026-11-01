@@ -22,5 +22,17 @@ public static class HttpContextAccountExtensions
         public AccountResponse GetLoggedInAccount() =>
             context.Items[HttpContextItemKeys.LoggedInAccount] as AccountResponse
             ?? throw new InvalidOperationException($"{nameof(ViewBagPopulatorFilter)} has not resolved the logged-in account for this request.");
+
+        /// <summary>
+        /// Returns the email of the logged-in account — for an action that only runs for a signed-in account and hands
+        /// the email on to a service. Replaces the null-forgiving <c>GetLoggedInAccount().Email!</c>, which would pass a
+        /// null email on if such an action were ever reached by the anonymous placeholder.
+        /// </summary>
+        /// <exception cref="InvalidOperationException">
+        /// The filter has not run for this request, or the account has no email (the anonymous placeholder).
+        /// </exception>
+        public string GetLoggedInEmail() =>
+            context.GetLoggedInAccount().Email
+            ?? throw new InvalidOperationException("The logged-in account of this request has no email (it is the anonymous placeholder).");
     }
 }

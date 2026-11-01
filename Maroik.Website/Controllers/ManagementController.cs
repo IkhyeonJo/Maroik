@@ -62,7 +62,7 @@ public class ManagementController(
     /// E-mail of the signed-in administrator, passed to the admin write use cases so their audit log
     /// records who made the change (resolved by ViewBagPopulatorFilter).
     /// </summary>
-    private string AdminEmail => HttpContext.GetLoggedInAccount().Email!;
+    private string AdminEmail => HttpContext.GetLoggedInEmail();
 
     #region Profile
 
@@ -951,7 +951,7 @@ public class ManagementController(
             return Ok(new { result = false, errorMessage = localizer["Please attach a file."].Value });
 
         // A refused upload is a security event: record who sent what (the attachment service logs its own refusals).
-        string uploaderEmail = HttpContext.GetLoggedInAccount().Email!;
+        string uploaderEmail = HttpContext.GetLoggedInEmail();
         if (summernoteImageFile.Length <= 0 || summernoteImageFile.Length > serverSettings.Value.MaxAttachedFileSizeBytes)
         {
             logger.LogWarning("Editor image upload refused: size {Size} bytes is outside the {MaxBytes}-byte limit for {Email}",

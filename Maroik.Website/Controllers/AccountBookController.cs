@@ -49,7 +49,7 @@ public class AccountBookController(
         if (!ModelState.IsValid || !FinanceAmountPolicy.TryParseInput(assetInputViewModel.Amount, out decimal amount))
             return Json(new { result = false, error = localizer["Input is invalid"].Value });
 
-        string email = HttpContext.GetLoggedInAccount().Email!;
+        string email = HttpContext.GetLoggedInEmail();
 
         var request = new AssetRequest
         {
@@ -119,7 +119,7 @@ public class AccountBookController(
         try
         {
             AssetResponse? asset = await assetService.GetAssetAsync(
-                HttpContext.GetLoggedInAccount().Email!, productName, ct);
+                HttpContext.GetLoggedInEmail(), productName, ct);
 
             return asset == null
                 ? Json(new { result = false, error = localizer["Fail to find the asset by given product name"].Value })
@@ -146,7 +146,7 @@ public class AccountBookController(
         if (!ModelState.IsValid || !FinanceAmountPolicy.TryParseInput(assetInputViewModel.Amount, out decimal amount))
             return Json(new { result = false, error = localizer["Input is invalid"].Value });
 
-        string email = HttpContext.GetLoggedInAccount().Email!;
+        string email = HttpContext.GetLoggedInEmail();
 
         var request = new AssetRequest
         {
@@ -182,7 +182,7 @@ public class AccountBookController(
     [RequiredHttpPostAccess(Role = Role.User)]
     public async Task<IActionResult> DeleteAsset([FromBody] AssetInputViewModel assetInputViewModel, CancellationToken ct)
     {
-        string email = HttpContext.GetLoggedInAccount().Email!;
+        string email = HttpContext.GetLoggedInEmail();
         try
         {
             var result = await assetService.DeleteAsync(email, assetInputViewModel.ProductName!, ct);
@@ -303,7 +303,7 @@ public class AccountBookController(
     {
         try
         {
-            string email = HttpContext.GetLoggedInAccount().Email!;
+            string email = HttpContext.GetLoggedInEmail();
             string tz = HttpContext.GetLoggedInAccount().TimeZoneIanaId!;
 
             IncomeResponse? income = await incomeService.GetByIdAsync(email, id, ct);
@@ -330,7 +330,7 @@ public class AccountBookController(
         {
             string baseLabel = localizer["Amount"].Value;
             AssetResponse? asset = await assetService.GetAssetAsync(
-                HttpContext.GetLoggedInAccount().Email!, productName, ct);
+                HttpContext.GetLoggedInEmail(), productName, ct);
 
             string label = !string.IsNullOrEmpty(asset?.MonetaryUnit)
                 ? baseLabel.GetAmountLabel(asset.MonetaryUnit)
@@ -396,7 +396,7 @@ public class AccountBookController(
     [RequiredHttpPostAccess(Role = Role.User)]
     public async Task<IActionResult> DeleteIncome([FromBody] IncomeInputViewModel incomeInputViewModel, CancellationToken ct)
     {
-        string email = HttpContext.GetLoggedInAccount().Email!;
+        string email = HttpContext.GetLoggedInEmail();
         try
         {
             var result = await incomeService.DeleteAsync(email, incomeInputViewModel.Id, ct);
@@ -520,7 +520,7 @@ public class AccountBookController(
     {
         try
         {
-            string email = HttpContext.GetLoggedInAccount().Email!;
+            string email = HttpContext.GetLoggedInEmail();
             string tz = HttpContext.GetLoggedInAccount().TimeZoneIanaId!;
 
             ExpenditureResponse? expenditure = await expenditureService.GetByIdAsync(email, id, ct);
@@ -547,7 +547,7 @@ public class AccountBookController(
         {
             string baseLabel = localizer["Amount"].Value;
             AssetResponse? asset = await assetService.GetAssetAsync(
-                HttpContext.GetLoggedInAccount().Email!, productName, ct);
+                HttpContext.GetLoggedInEmail(), productName, ct);
 
             string label = !string.IsNullOrEmpty(asset?.MonetaryUnit)
                 ? baseLabel.GetAmountLabel(asset.MonetaryUnit)
@@ -616,7 +616,7 @@ public class AccountBookController(
     public async Task<IActionResult> DeleteExpenditure(
         [FromBody] ExpenditureInputViewModel expenditureInputViewModel, CancellationToken ct)
     {
-        string email = HttpContext.GetLoggedInAccount().Email!;
+        string email = HttpContext.GetLoggedInEmail();
         try
         {
             var result = await expenditureService.DeleteAsync(email, expenditureInputViewModel.Id, ct);
