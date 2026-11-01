@@ -90,10 +90,6 @@ function fixture(): string {
 }
 
 describe("user/Calendar/UserIndex", () => {
-    it("loads without throwing", () => {
-        expect(() => loadSite("user", "Calendar", "UserIndex", fixture())).not.toThrow();
-    });
-
     it("flags a day-reminder above CalendarReminderPolicy.MaxDaysBeforeEvent (28)", () => {
         const h = loadSite("user", "Calendar", "UserIndex", fixture());
         const row = h.$(".divCreateEventNotificationAllDayCheckedRow");

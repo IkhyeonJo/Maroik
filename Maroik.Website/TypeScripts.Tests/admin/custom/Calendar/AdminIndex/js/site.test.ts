@@ -83,10 +83,6 @@ function fixture(): string {
 }
 
 describe("admin/Calendar/AdminIndex", () => {
-    it("loads without throwing (FullCalendar / moment / datepicker stubs suffice)", () => {
-        expect(() => loadSite("admin", "Calendar", "AdminIndex", fixture())).not.toThrow();
-    });
-
     it("flags a day-reminder above CalendarReminderPolicy.MaxDaysBeforeEvent (28)", () => {
         const h = loadSite("admin", "Calendar", "AdminIndex", fixture());
         const row = h.$(".divCreateEventNotificationAllDayCheckedRow");
