@@ -2,14 +2,11 @@ using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Domain.Accounts;
 using Maroik.Core.PostgreSQL.Contexts;
 using Maroik.Core.PostgreSQL.Models;
-using Microsoft.AspNetCore.Antiforgery;
-using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Distributed;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Testcontainers.PostgreSql;
@@ -39,6 +36,38 @@ namespace Maroik.Website.Tests.Fixtures;
 /// </summary>
 public class MaroikWebApplicationFactory : WebApplicationFactory<Program>, IAsyncLifetime
 {
+    /// <summary>The configuration the test host runs with (handed to it as host settings; see <see cref="ConfigureWebHost"/>).</summary>
+    private static readonly Dictionary<string, string> _settings = new()
+    {
+        // Use a test domain; www prefix avoids AddRedirectToWww triggering
+        ["ServerSetting:DomainName"] = "https://www.localhost",
+        ["ServerSetting:SessionExpireMinutes"] = "60",
+        ["ServerSetting:MaxLoginAttempt"] = "5",
+        ["ServerSetting:NoticeMaturityDateDay"] = "7",
+        ["ServerSetting:FileStorageBaseUrl"] = "http://localhost:5001",
+
+        // SMTP — not used in route tests
+        ["ServerSetting:SmtpOptions:smtpUserName"] = "test",
+        ["ServerSetting:SmtpOptions:smtpPassword"] = "test",
+        ["ServerSetting:SmtpOptions:smtpHost"] = "localhost",
+        ["ServerSetting:SmtpOptions:smtpPort"] = "25",
+        ["ServerSetting:SmtpOptions:smtpSsl"] = "false",
+        ["ServerSetting:SmtpOptions:fromEmail"] = "test@localhost",
+        ["ServerSetting:SmtpOptions:fromFullName"] = "Test",
+
+        // FileStorage
+        ["FileStorage:BaseUrl"] = "http://localhost:5001",
+
+        // DB — replaced below by the Testcontainers PostgreSQL connection, but a value is required to avoid null errors
+        ["ConnectionStrings:DefaultConnection"] = "Host=localhost;Database=test;Username=test;Password=test",
+
+        // No Valkey in a test run: without this the Development value (localhost:6379) won, and every host waited out the
+        // Redis client's 5-second timeouts while reading the Data Protection key ring at start-up (~10 s per host).
+        // Program.cs then takes its no-Valkey path (key ring in the git-ignored content-root folder); the Valkey path is
+        // covered by ProgramStartupTests on a host of its own.
+        ["ConnectionStrings:Valkey"] = ""
+    };
+
     /// <summary>Throwaway PostgreSQL 17 container initialized from the production <c>Init.sql</c>.</summary>
     private readonly PostgreSqlContainer _postgres = new PostgreSqlBuilder("postgres:17")
         // Schema comes from the real init script (not EF's EnsureCreated, which
@@ -82,43 +111,13 @@ public class MaroikWebApplicationFactory : WebApplicationFactory<Program>, IAsyn
         // here edits appsettings*.json during a run, so nothing is lost.
         builder.UseSetting("hostBuilder:reloadConfigOnChange", "false");
 
-        // -- No Valkey ---------------------------------------------------------
-        // A host-level setting, because Program.cs reads the connection string before the ConfigureAppConfiguration
-        // overrides below apply. Without it the Development value (localhost:6379) won, and every host waited out the
-        // Redis client's 5-second timeouts while reading the Data Protection key ring at start-up (~10 s per host).
-        // Program.cs then takes its no-Valkey path (key ring in the git-ignored content-root folder); the Valkey path is
-        // covered by ProgramStartupTests on a host of its own.
-        builder.UseSetting("ConnectionStrings:Valkey", "");
-
         // -- Override configuration -------------------------------------------
-        builder.ConfigureAppConfiguration((_, config) =>
-        {
-            config.AddInMemoryCollection(new Dictionary<string, string>
-            {
-                // Use a test domain; www prefix avoids AddRedirectToWww triggering
-                ["ServerSetting:DomainName"] = "https://www.localhost",
-                ["ServerSetting:SessionExpireMinutes"] = "60",
-                ["ServerSetting:MaxLoginAttempt"] = "5",
-                ["ServerSetting:NoticeMaturityDateDay"] = "7",
-                ["ServerSetting:FileStorageBaseUrl"] = "http://localhost:5001",
-
-                // SMTP — not used in route tests
-                ["ServerSetting:SmtpOptions:smtpUserName"] = "test",
-                ["ServerSetting:SmtpOptions:smtpPassword"] = "test",
-                ["ServerSetting:SmtpOptions:smtpHost"] = "localhost",
-                ["ServerSetting:SmtpOptions:smtpPort"] = "25",
-                ["ServerSetting:SmtpOptions:smtpSsl"] = "false",
-                ["ServerSetting:SmtpOptions:fromEmail"] = "test@localhost",
-                ["ServerSetting:SmtpOptions:fromFullName"] = "Test",
-
-                // FileStorage
-                ["FileStorage:BaseUrl"] = "http://localhost:5001",
-
-                // DB — replaced below by the Testcontainers PostgreSQL connection, but a value is required to avoid null errors
-                ["ConnectionStrings:DefaultConnection"] = "Host=localhost;Database=test;Username=test;Password=test",
-                ["ConnectionStrings:Valkey"] = ""
-            }!);
-        });
+        // Host-level settings, because Program.cs reads ServerSetting (DomainName -> the cookie domain, SessionExpireMinutes,
+        // MaxLoginAttempt) and the Valkey connection string at start-up, before ConfigureAppConfiguration overrides apply.
+        // Those used to lose to appsettings.Development.json there (localhost, 10 minutes, 3 attempts) while the services saw
+        // these values, and a PostConfigure had to clear the cookie domain to make the two agree.
+        foreach ((string key, string value) in _settings)
+            builder.UseSetting(key, value);
 
         // -- Point PostgreSQL at the Testcontainers instance ------------------
         builder.ConfigureServices(services =>
@@ -151,12 +150,6 @@ public class MaroikWebApplicationFactory : WebApplicationFactory<Program>, IAsyn
 
             // Replace Valkey-backed Data Protection with ephemeral in-memory keys.
             services.AddDataProtection().UseEphemeralDataProtectionProvider();
-
-            // Program.cs reads DomainName before ConfigureAppConfiguration overrides take effect,
-            // so Session/Antiforgery cookies end up with Domain=localhost (from appsettings.Development.json).
-            // PostConfigure clears the domain so the CookieContainerHandler accepts cookies for www.localhost.
-            services.PostConfigure<SessionOptions>(options => options.Cookie.Domain = null);
-            services.PostConfigure<AntiforgeryOptions>(options => options.Cookie.Domain = null);
         });
     }
 

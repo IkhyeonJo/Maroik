@@ -1,5 +1,8 @@
+using Microsoft.AspNetCore.Antiforgery;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using StackExchange.Redis;
 
 namespace Maroik.Website.Tests.Fixtures;
@@ -37,5 +40,22 @@ public class MaroikWebApplicationFactoryTests(MaroikWebApplicationFactory factor
     public void TheTestHost_DoesNotConnectToValkey()
     {
         Assert.Null(factory.Services.GetService<IConnectionMultiplexer>());
+    }
+
+    /// <summary>
+    /// <c>Program.cs</c> builds the session and cookie set-up from the factory's settings, not from appsettings.Development.json.
+    /// It reads them before <c>ConfigureAppConfiguration</c> overrides apply, so the factory hands them over as host settings;
+    /// otherwise the host ran on a mix — Development's domain (<c>localhost</c>), 10-minute sessions and 3 login attempts at
+    /// start-up, the factory's values (<c>www.localhost</c>, 60, 5) everywhere else — and needed a cookie-domain patch.
+    /// </summary>
+    [Fact]
+    public void TheTestHost_StartsProgramWithTheFactorysServerSettings()
+    {
+        SessionOptions session = factory.Services.GetRequiredService<IOptions<SessionOptions>>().Value;
+        AntiforgeryOptions antiforgery = factory.Services.GetRequiredService<IOptions<AntiforgeryOptions>>().Value;
+
+        Assert.Equal(TimeSpan.FromMinutes(60), session.IdleTimeout);
+        Assert.Equal("www.localhost", session.Cookie.Domain);
+        Assert.Equal("www.localhost", antiforgery.Cookie.Domain);
     }
 }
