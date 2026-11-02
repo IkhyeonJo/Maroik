@@ -270,11 +270,14 @@ public class CalendarService(
             if (previous == null || !previous.IsOwnedBy(accountEmail))
                 return await unitOfWork.FailAsync(ServiceResult.NotFound("Calendar.NotFound", ServiceErrorKeys.CalendarNotFound), ct);
 
+            string previousTimeZone = previous.TimeZone.Value;
             var updateResult = previous.Update(request.Name, request.Description, request.TimeZoneIanaId, request.HtmlColorCode, utcNow);
             if (updateResult.IsError)
                 return await unitOfWork.FailAsync(updateResult.FirstError, ct);
 
             await calendarRepository.UpdateEntityAsync(previous, ct);
+            if (previous.TimeZone.Value != previousTimeZone)
+                await RescheduleAllDayRemindersAsync(previous, utcNow, ct);
             await unitOfWork.CommitAsync(ct);
             return ServiceResult.Ok();
         }
@@ -658,6 +661,23 @@ public class CalendarService(
     /// <summary>Generic failure returned (after logging) when a calendar write throws unexpectedly.</summary>
     private static ServiceResult UnexpectedFailure => ServiceResult.Failure(
         "Calendar.Unexpected", ServiceResult.TemporaryErrorKey);
+
+    /// <summary>
+    /// After the calendar's time zone changed: an all-day event's reminder fires at a time of day in the calendar's zone, so each
+    /// pending one is scheduled again in the new zone (<see cref="CalendarEventReminder.Reschedule"/>). A timed event's reminders
+    /// follow the event's own start and stay as they are.
+    /// </summary>
+    private async Task RescheduleAllDayRemindersAsync(Calendar calendar, DateTime utcNow, CancellationToken ct)
+    {
+        foreach (CalendarEvent calendarEvent in (await calendarEventRepository.GetByCalendarIdsAsync([calendar.Id], ct)).Where(e => e.AllDay))
+        {
+            foreach (CalendarEventReminder reminder in await calendarEventReminderRepository.GetByCalendarEventIdAsync(calendarEvent.Id, ct))
+            {
+                reminder.Reschedule(calendarEvent, calendar.TimeZone.Value, utcNow);
+                await calendarEventReminderRepository.UpdateEntityAsync(reminder, ct);
+            }
+        }
+    }
 
     /// <summary>
     /// Builds the remote storage path for a calendar event attachment

@@ -27,4 +27,5 @@ that specific change. Check every candidate review finding in this area against 
   the demo account, or over an hour late), then marked handled; a queue failure rolls back and is retried next minute. Viewers
   of a shared calendar and visitors get no reminders and are not shown them (`IsOtherCalendarEventExists` sends `[]`). The mail
   is Korean and English together (an account stores no language). Editing an event recreates its reminders, so a moved event's
-  reminder can be sent again for the new time. `CalendarRecurrence` / `RecurrenceId` stay unused on purpose — do not drop the table.
+  reminder can be sent again for the new time. Changing a calendar's time zone reschedules the pending reminders of its all-day
+  events in the new zone, in the same transaction (`CalendarEventReminder.Reschedule`, since 2026-11-02); handled ones stay as they are. `CalendarRecurrence` / `RecurrenceId` stay unused on purpose — do not drop the table.

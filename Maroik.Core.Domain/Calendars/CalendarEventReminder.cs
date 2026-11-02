@@ -117,6 +117,22 @@ public sealed class CalendarEventReminder : AggregateRoot<long>
             minutesBefore, hoursBefore, daysBefore, weeksBefore, timesBefore, fireAtUtc, fireAtUtc < utcNow ? utcNow : null);
     }
 
+    /// <summary>
+    /// Works out a pending reminder's fire time again, for its event in the calendar's (new) time zone — an all-day event's reminder
+    /// is scheduled at a time of day in that zone, so it moves when the calendar's zone changes. As on creation, a time already past
+    /// is handled at once (it would arrive late). A reminder already handled is left as it is, so it is never sent twice.
+    /// </summary>
+    public void Reschedule(CalendarEvent calendarEvent, string calendarTimeZoneIanaId, DateTime utcNow)
+    {
+        if (HandledAt is not null)
+            return;
+
+        FireAtUtc = ReminderSchedule.FireAtUtc(calendarEvent.AllDay, calendarEvent.StartDate, calendarTimeZoneIanaId,
+            MinutesBeforeEvent, HoursBeforeEvent, DaysBeforeEvent, WeeksBeforeEvent, TimesBeforeEvent);
+        if (FireAtUtc < utcNow)
+            MarkHandled(utcNow);
+    }
+
     /// <summary>Records that the reminder was handled (sent, or skipped) at <paramref name="utcNow"/>.</summary>
     public void MarkHandled(DateTime utcNow) => HandledAt = DateTime.SpecifyKind(utcNow, DateTimeKind.Utc);
 }

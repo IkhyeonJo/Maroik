@@ -134,6 +134,52 @@ public class CalendarEventReminderTests
         Assert.Equal(new DateTime(2026, 11, 1, 0, 0, 0, DateTimeKind.Utc), result.Value.FireAtUtc);
     }
 
+    // -- Reschedule --------------------------------------------------------------
+
+    /// <summary>Event 2, all day on 2026-11-02.</summary>
+    private static readonly CalendarEvent _allDay = CalendarEvent.Reconstitute(2, 7, "Trip", null, true,
+        new DateTime(2026, 11, 2), new DateTime(2026, 11, 3), null, null, null, "Busy", null, _now, _now);
+
+    /// <summary>
+    /// A pending reminder is scheduled again in the calendar's new time zone: an all-day event's "1 day before at 09:00" follows the
+    /// zone the calendar is now in (2026-11-01 09:00 in New York, EST, is 14:00 UTC; in Seoul it was 00:00 UTC).
+    /// </summary>
+    [Fact]
+    public void Reschedule_MovesAPendingReminder_ToTheCalendarsNewTimeZone()
+    {
+        var reminder = CalendarEventReminder.Create(2, _allDay, "Asia/Seoul", null, null, 1, null, new TimeOnly(9, 0), _now).Value;
+
+        reminder.Reschedule(_allDay, "America/New_York", _now);
+
+        Assert.Equal(new DateTime(2026, 11, 1, 14, 0, 0, DateTimeKind.Utc), reminder.FireAtUtc);
+        Assert.Null(reminder.HandledAt);
+    }
+
+    /// <summary>A reminder already handled (sent or skipped) is left as it is: it is never sent twice.</summary>
+    [Fact]
+    public void Reschedule_LeavesAHandledReminder_AsItIs()
+    {
+        DateTime fire = new(2026, 11, 1, 0, 0, 0, DateTimeKind.Utc);
+        var reminder = CalendarEventReminder.Reconstitute(3, 2, "Email", null, null, 1, null, new TimeOnly(9, 0), fire, _now);
+
+        reminder.Reschedule(_allDay, "America/New_York", _now);
+
+        Assert.Equal((fire, _now), (reminder.FireAtUtc, reminder.HandledAt));
+    }
+
+    /// <summary>A reminder whose new time has already passed is handled at once, as on creation: sending it now would arrive late.</summary>
+    [Fact]
+    public void Reschedule_HandlesAtOnce_AReminderWhoseNewTimeHasPassed()
+    {
+        var reminder = CalendarEventReminder.Create(2, _allDay, "America/New_York", null, null, 1, null, new TimeOnly(9, 0), _now).Value;
+        DateTime later = new(2026, 11, 1, 6, 0, 0, DateTimeKind.Utc);
+
+        reminder.Reschedule(_allDay, "Asia/Seoul", later);
+
+        Assert.Equal(new DateTime(2026, 11, 1, 0, 0, 0, DateTimeKind.Utc), reminder.FireAtUtc);
+        Assert.Equal(later, reminder.HandledAt);
+    }
+
     // -- MarkHandled -------------------------------------------------------------
 
     /// <summary>MarkHandled records when the reminder was handled.</summary>

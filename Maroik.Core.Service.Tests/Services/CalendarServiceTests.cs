@@ -1796,6 +1796,53 @@ public class CalendarServiceTests
         AssertCommitted();
     }
 
+    /// <summary>
+    /// A new time zone reschedules the calendar's pending all-day reminders inside the update's transaction: an all-day event's
+    /// "1 day before at 09:00" is a time of day in the calendar's zone (UTC 09:00 becomes Seoul 09:00 = 00:00 UTC). A timed event's
+    /// reminders follow the event's own zone and are not touched.
+    /// </summary>
+    [Fact]
+    public async Task UpdateCalendarAsync_ReschedulesThePendingAllDayReminders_WhenTheTimeZoneChanges()
+    {
+        List<string> steps = [];
+        _calendarRepo.Setup(r => r.FindByIdForUpdateAsync(1, It.IsAny<CancellationToken>())).ReturnsAsync(MakeCalendar(1));
+        CalendarEvent allDay = CalendarEvent.Reconstitute(10, 1, "Trip", null, true,
+            new DateTime(2026, 8, 10), new DateTime(2026, 8, 10), null, null, null, "Busy", null, Now, Now);
+        _eventRepo.Setup(r => r.GetByCalendarIdsAsync(It.Is<IEnumerable<long>>(ids => ids.SequenceEqual(new long[] { 1 })), It.IsAny<CancellationToken>()))
+            .ReturnsAsync([allDay, MakeCalendarEvent(11, 1)]);
+        _reminderRepo.Setup(r => r.GetByCalendarEventIdAsync(10, It.IsAny<CancellationToken>())).ReturnsAsync(
+        [
+            CalendarEventReminder.Reconstitute(5, 10, "Email", null, null, 1, null, new TimeOnly(9, 0), new DateTime(2026, 8, 9, 9, 0, 0), null)
+        ]);
+        CalendarEventReminder? saved = null;
+        _reminderRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<CalendarEventReminder>(), It.IsAny<CancellationToken>()))
+            .Callback((CalendarEventReminder reminder, CancellationToken _) => { saved = reminder; steps.Add("reminder"); }).Returns(Task.CompletedTask);
+        _unitOfWork.Setup(u => u.CommitAsync(It.IsAny<CancellationToken>())).Callback(() => steps.Add("commit")).Returns(Task.CompletedTask);
+
+        ServiceResult result = await CreateSut().UpdateCalendarAsync(Owner,
+            new CalendarRequest { Id = 1, Name = "MyCalendar", TimeZoneIanaId = "Asia/Seoul", HtmlColorCode = "#3788d8" }, TestContext.Current.CancellationToken);
+
+        Assert.True(result.Success);
+        Assert.Equal(["reminder", "commit"], steps);
+        Assert.Equal((5L, new DateTime(2026, 8, 9, 0, 0, 0, DateTimeKind.Utc)), (saved!.Id, saved.FireAtUtc));
+        Assert.Null(saved.HandledAt);
+        _reminderRepo.Verify(r => r.GetByCalendarEventIdAsync(11, It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    /// <summary>An update that keeps the time zone leaves the reminders alone (nothing to reschedule, nothing loaded).</summary>
+    [Fact]
+    public async Task UpdateCalendarAsync_LeavesTheReminders_WhenTheTimeZoneStaysTheSame()
+    {
+        _calendarRepo.Setup(r => r.FindByIdForUpdateAsync(1, It.IsAny<CancellationToken>())).ReturnsAsync(MakeCalendar(1));
+
+        ServiceResult result = await CreateSut().UpdateCalendarAsync(Owner,
+            new CalendarRequest { Id = 1, Name = "Renamed", TimeZoneIanaId = "UTC", HtmlColorCode = "#3788d8" }, TestContext.Current.CancellationToken);
+
+        Assert.True(result.Success);
+        _eventRepo.Verify(r => r.GetByCalendarIdsAsync(It.IsAny<IEnumerable<long>>(), It.IsAny<CancellationToken>()), Times.Never);
+        _reminderRepo.Verify(r => r.UpdateEntityAsync(It.IsAny<CalendarEventReminder>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
     /// <summary>An unknown calendar on update is the "could not be found" NotFound.</summary>
     [Fact]
     public async Task UpdateCalendarAsync_ReturnsCalendarNotFound_ForAnUnknownCalendar()
