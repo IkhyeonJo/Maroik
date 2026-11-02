@@ -48,3 +48,7 @@ that specific change. Check every candidate review finding in this area against 
   middleware in `Maroik.Website/Program.cs` runs before `UseStaticFiles`, and nothing overrides it. This is on purpose, so
   the login page (and the pages after a logout) always come up fresh. Do not add browser caching for static files
   (`OnPrepareResponse` `max-age` / `immutable`), even though the `asp-append-version` fingerprints would allow it.
+- `Backup.sh` runs once a day at 04:00 server time (`Maroik.Crontab/InitCron`; since 2026-11-02, owner's decision — it ran hourly
+  before). A run copies and xz-compresses the whole upload tree, File Manager included, and can outlast an hour on a large drive;
+  the script has no lock. A lost server loses up to a day of data; that is the accepted trade-off. Pinned by
+  `BackupScheduleArchitectureTests`.

@@ -38,7 +38,7 @@ x-logging: &default-logging
     max-file: "3"
 
 # Named volumes — Docker-managed, survive `down`; wiped only by `down -v`.
-# (Hourly backups of the DB + upload files go to an external HDD via Maroik.Crontab.)
+# (Daily backups (04:00) of the DB + upload files go to an external HDD via Maroik.Crontab.)
 volumes:
       datasource:            # PostgreSQL data directory (/var/lib/postgresql/data)
       dataprotection-keys:   # ASP.NET Core default Data Protection key-ring location (/root/.aspnet/DataProtection-Keys). The website does NOT use it: Program.cs persists the ring to Valkey (ConnectionStrings__Valkey, set in the env file) and, only without Valkey, to <ContentRoot>/dataprotection-keys (not this volume). FileStorage uses no Data Protection at all.
@@ -181,7 +181,7 @@ services:
         environment:
           - ASPNETCORE_URLS=http://+:80   # bind HTTP only; TLS is not used on the private network
         volumes:
-          - ./Maroik.FileStorage/upload/:/app/upload:rw            # uploaded files persisted to the host tree (backed up hourly)
+          - ./Maroik.FileStorage/upload/:/app/upload:rw            # uploaded files persisted to the host tree (backed up daily)
           - dataprotection-keys:/root/.aspnet/DataProtection-Keys  # unused: FileStorage does not use Data Protection
 
     # ── Maroik.Worker ────────────────────────────────────────────────────────

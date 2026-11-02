@@ -75,12 +75,12 @@ does anything and lists whatever is missing:
 | `Maroik.DB/PostgreSQL/SQL_Init_Script/Production/Init.sql` | The database the stack starts from: a backup's `pg_dump`, or `Debugging/Init.sql` (same schema, demo data) on a new server. |
 | `Maroik.FileStorage/upload/` | Uploaded attachments. Empty is allowed only on a new server: `Deploy.sh` asks first (`ALLOW_EMPTY_UPLOAD=1` skips the question). |
 
-Every backup `Maroik.Crontab/Backup.sh` makes (`Maroik-Backup-YYYY-MM-DD-HH-MM-SS.tar.xz`, hourly) holds exactly these
+Every backup `Maroik.Crontab/Backup.sh` makes (`Maroik-Backup-YYYY-MM-DD-HH-MM-SS.tar.xz`, daily at 04:00) holds exactly these
 three, laid out like the clone, so extracting it into the clone puts each one where `Deploy.sh` looks. The archives are
 on the backup drive in `BACKUP_BASE_DIR` (`/home/ubuntu/512GB/Maroik-Backup` by default), and the newest one is also kept
 next to the clone, in `/home/ubuntu`.
 
-Either choice then starts the whole stack, mounts the backup drive, installs the cron jobs (hourly backup, resource
+Either choice then starts the whole stack, mounts the backup drive, installs the cron jobs (daily backup at 04:00, resource
 monitoring, and with choice 2 the auto deploy) and closes every inbound port but the mode's (80 / 443 for port forwarding,
 the chosen port without a domain). In the commands below, answer `1` to build
 on the server or `2` when production should follow GitHub's `main`.
