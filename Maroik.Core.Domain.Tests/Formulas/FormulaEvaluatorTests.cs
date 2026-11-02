@@ -77,6 +77,38 @@ public class FormulaEvaluatorTests
     }
 
     /// <summary>
+    /// Every operand is evaluated once, however the result turns out: re-evaluating an operand to return its error (%, ABS, NOT), its
+    /// value (IFERROR) or its coercion (COUNT) doubled the work at each nesting level, so a 26-character formula of 22 percent signs
+    /// took 21 seconds and each further sign doubled it. Counted here as the reads of B1, which each formula reaches once.
+    /// </summary>
+    [Theory]
+    [InlineData("=B1%%%%%%%%%%%%%%%%%%%%", "a", "#VALUE!")]
+    [InlineData("=ABS(ABS(ABS(ABS(ABS(ABS(ABS(ABS(ABS(ABS(B1))))))))))", "a", "#VALUE!")]
+    [InlineData("=NOT(NOT(NOT(NOT(NOT(NOT(NOT(NOT(NOT(NOT(B1))))))))))", "a", "#VALUE!")]
+    [InlineData("=IFERROR(IFERROR(IFERROR(IFERROR(IFERROR(IFERROR(IFERROR(IFERROR(IFERROR(IFERROR(B1,0),0),0),0),0),0),0),0),0),0)", "x", "x")]
+    [InlineData("=COUNT(B1&\"\")", "1", "1")]
+    public void EachOperand_IsEvaluatedOnce(string input, string b1, string expected)
+    {
+        int reads = 0;
+        var context = new FormulaContext(address =>
+        {
+            reads++;
+            return T(b1);
+        }, _ => null);
+
+        FormulaValue value = FormulaEvaluator.Evaluate(Bind(input), context);
+
+        Assert.Equal(1, reads);
+        Assert.Equal(expected, value switch
+        {
+            ErrorValue e => FormulaLexer.ErrorText(e.Kind),
+            TextValue t => t.Value,
+            NumberValue n => n.Value.ToString(System.Globalization.CultureInfo.InvariantCulture),
+            _ => value.ToString(),
+        });
+    }
+
+    /// <summary>
     /// Concatenation stops at Excel's cell text limit (32,767 characters): a longer result is #VALUE!, as in Excel. Without it, cells
     /// that concatenate each other grow the text exponentially (three cells of 140 references each reach billions of characters).
     /// </summary>

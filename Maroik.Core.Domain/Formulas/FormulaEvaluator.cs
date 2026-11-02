@@ -93,11 +93,42 @@ public static class FormulaEvaluator
             NameNode => new ErrorValue(FormulaErrorKind.Name),
             ReferenceNode or RangeNode => Single(node),
             UnaryNode u => Unary(u),
-            PercentNode p => ToNumber(Scalar(p.Operand)) is NumberValue v ? new NumberValue(v.Value / 100) : ToNumber(Scalar(p.Operand)),
+            PercentNode p => Percent(p.Operand),
             BinaryNode b => Binary(b),
             CallNode c => Call(c),
             _ => ValueError,
         };
+
+        // Each operand is evaluated once and its value reused: evaluating it again to return its error (or its value) doubled the
+        // work at every nesting level, so a short formula of nested %, ABS, NOT or IFERROR ran for hours.
+
+        /// <summary>The operand as a percentage (divided by 100), or the error its coercion to a number is.</summary>
+        private FormulaValue Percent(FormulaNode operand)
+        {
+            FormulaValue number = ToNumber(Scalar(operand));
+            return number is NumberValue n ? new NumberValue(n.Value / 100) : number;
+        }
+
+        /// <summary>ABS: the absolute value of the operand, or the error its coercion to a number is.</summary>
+        private FormulaValue Abs(FormulaNode operand)
+        {
+            FormulaValue number = ToNumber(Scalar(operand));
+            return number is NumberValue n ? new NumberValue(Math.Abs(n.Value)) : number;
+        }
+
+        /// <summary>NOT: the negation of the operand, or the error its coercion to a boolean is.</summary>
+        private FormulaValue Not(FormulaNode operand)
+        {
+            FormulaValue logical = ToBoolean(Scalar(operand));
+            return logical is BooleanValue b ? new BooleanValue(!b.Value) : logical;
+        }
+
+        /// <summary>IFERROR: the value, or the fallback when the value is an error.</summary>
+        private FormulaValue IfError(FormulaNode value, FormulaNode fallback)
+        {
+            FormulaValue result = Scalar(value);
+            return result is ErrorValue ? Scalar(fallback) : result;
+        }
 
         /// <summary>A reference's one value (#REF! when it points outside, #VALUE! for a range).</summary>
         private FormulaValue Single(FormulaNode node)
@@ -249,7 +280,7 @@ public static class FormulaEvaluator
                 case "ROUND": return Round(args, (v, d) => Math.Round(v, d, MidpointRounding.AwayFromZero));
                 case "ROUNDUP": return Round(args, (v, d) => Math.Round(v, d, v >= 0 ? MidpointRounding.ToPositiveInfinity : MidpointRounding.ToNegativeInfinity));
                 case "ROUNDDOWN": return Round(args, (v, d) => Math.Round(v, d, MidpointRounding.ToZero));
-                case "ABS": return ToNumber(Scalar(args[0])) is NumberValue n ? new NumberValue(Math.Abs(n.Value)) : ToNumber(Scalar(args[0]));
+                case "ABS": return Abs(args[0]);
                 case "IF":
                 {
                     FormulaValue condition = ToBoolean(Scalar(args[0]));
@@ -257,10 +288,10 @@ public static class FormulaEvaluator
                     if (test.Value) return Scalar(args[1]);
                     return args.Count > 2 ? Scalar(args[2]) : new BooleanValue(false);
                 }
-                case "IFERROR": return Scalar(args[0]) is ErrorValue ? Scalar(args[1]) : Scalar(args[0]);
+                case "IFERROR": return IfError(args[0], args[1]);
                 case "AND": return Logical(args, all: true);
                 case "OR": return Logical(args, all: false);
-                case "NOT": return ToBoolean(Scalar(args[0])) is BooleanValue b ? new BooleanValue(!b.Value) : ToBoolean(Scalar(args[0]));
+                case "NOT": return Not(args[0]);
                 case "ACTUAL": return Actual(args[0]);
                 default: return new ErrorValue(FormulaErrorKind.Name);
             }
@@ -306,11 +337,14 @@ public static class FormulaEvaluator
             {
                 if (TargetOf(arg) is { } target)
                     count += target.Cells.Select(context.ValueOf).Count(v => v is NumberValue);
-                else if (Scalar(arg) is NumberValue or BooleanValue || Scalar(arg) is TextValue && ToNumber(Scalar(arg)) is NumberValue)
+                else if (Counts(Scalar(arg)))
                     count++;
             }
 
             return count;
+
+            // A direct argument counts when it is a number, a boolean or numeric text (evaluated once, by the caller).
+            static bool Counts(FormulaValue value) => value is NumberValue or BooleanValue || (value is TextValue && ToNumber(value) is NumberValue);
         }
 
         /// <summary>
