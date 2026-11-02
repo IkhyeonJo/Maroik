@@ -1,3 +1,5 @@
+using ErrorOr;
+using Maroik.Core.Domain.Errors;
 using Maroik.Core.Domain.Formulas;
 
 namespace Maroik.Core.Domain.Budgets;
@@ -15,6 +17,16 @@ public sealed class BudgetSheetLayout
 
     /// <summary>How many columns a sheet has (A..Z).</summary>
     public const int ColumnCount = 26;
+
+    /// <summary>
+    /// The most lines a sheet holds. A line is a sub-class and a free-text currency, so lines were unbounded, and every request
+    /// rebuilds the sheet's rows (a subtotal and a total per currency) and their formulas from them.
+    /// </summary>
+    public const int MaxLines = 100;
+
+    /// <summary>Whether a sheet of <paramref name="lineCount"/> lines may take one more (<see cref="MaxLines"/>).</summary>
+    public static ErrorOr<Success> CanAddLine(int lineCount) =>
+        lineCount >= MaxLines ? DomainError.Validation("Budget.TooManyLines", "A sheet can have at most {0} lines.", MaxLines) : Result.Success;
 
     /// <summary>The year-total column.</summary>
     public const string YearColumn = "N";

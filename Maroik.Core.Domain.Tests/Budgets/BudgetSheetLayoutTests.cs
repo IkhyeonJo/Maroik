@@ -145,4 +145,21 @@ public class BudgetSheetLayoutTests
             foreach (char column in "ABCDEFGHIJKLMNOPQRSTUVWXYZ")
                 Assert.Equal(layout.Role(row.Key, column.ToString()) is BudgetCellRole.Budget or BudgetCellRole.Free, row.EditableColumns.Contains(column, StringComparison.Ordinal));
     }
+
+    /// <summary>
+    /// A sheet holds at most <see cref="BudgetSheetLayout.MaxLines"/> lines (a line is a sub-class and a free-text currency, so
+    /// lines were unbounded, and every request rebuilds the sheet's rows and its subtotal formulas from them).
+    /// </summary>
+    [Fact]
+    public void CanAddLine_RefusesALine_BeyondTheMaximum()
+    {
+        Assert.Equal(100, BudgetSheetLayout.MaxLines);
+        Assert.False(BudgetSheetLayout.CanAddLine(BudgetSheetLayout.MaxLines - 1).IsError);
+
+        var refused = BudgetSheetLayout.CanAddLine(BudgetSheetLayout.MaxLines);
+
+        Assert.Equal("Budget.TooManyLines", refused.FirstError.Code);
+        Assert.Equal("A sheet can have at most {0} lines.", refused.FirstError.Metadata![Maroik.Core.Domain.Errors.DomainError.MessageTemplateMetadataKey]);
+        Assert.Equal([100], (object[])refused.FirstError.Metadata![Maroik.Core.Domain.Errors.DomainError.MessageArgsMetadataKey]);
+    }
 }

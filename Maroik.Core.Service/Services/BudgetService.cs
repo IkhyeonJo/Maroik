@@ -190,8 +190,11 @@ public class BudgetService(
             ErrorOr<BudgetLine> line = BudgetLine.Create(kind, mainClass, subClass, currency);
             if (line.IsError) return ServiceResult.FromError(line.FirstError);
             if (lines.Contains(line.Value)) return ServiceResult.Conflict("Budget.LineExists", ServiceErrorKeys.BudgetLineExists);
+            if (BudgetSheetLayout.CanAddLine(lines.Count) is { IsError: true } full) return ServiceResult.FromError(full.FirstError);
             await lineRepository.CreateAsync(BudgetSheetLine.Create(sheet.Id, line.Value, UtcNow), ct);
-            return ServiceResult.Ok();
+            // The new line's rows lengthen every range spanning them: the sheet's formulas are held to their bound again.
+            BudgetWorkbook workbook = await LoadAsync(accountEmail, kind, year, timeZoneIanaId, [], ct);
+            return workbook.CheckReferences(kind, year) is { IsError: true } tooMany ? ServiceResult.FromError(tooMany.FirstError) : ServiceResult.Ok();
         }, ct);
         return result.Success ? await GetSheetAsync(accountEmail, kind, year, timeZoneIanaId, ct) : (result, null);
     }

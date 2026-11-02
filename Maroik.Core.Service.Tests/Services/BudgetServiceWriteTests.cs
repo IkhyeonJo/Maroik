@@ -191,6 +191,40 @@ public class BudgetServiceWriteTests
         _h.AssertTransactions(2, 0);
     }
 
+    /// <summary>A sheet already holding <see cref="BudgetSheetLayout.MaxLines"/> lines takes no more; nothing is committed.</summary>
+    [Fact]
+    public async Task AddLineAsync_RefusesALine_BeyondTheMaximum()
+    {
+        _h.Sheet(BudgetKind.Expenditure, 2026, H.Email,
+            [.. Enumerable.Range(0, BudgetSheetLayout.MaxLines).Select(i => BudgetLine.Create(BudgetKind.Expenditure, "ConsumerSpending", "PinMoney", $"C{i}").Value)]);
+
+        var (result, sheet) = await _h.Sut.AddLineAsync(H.Email, BudgetKind.Expenditure, 2026, "UTC", "ConsumerSpending", "MealOrEatOutExpenses", "KRW", TestContext.Current.CancellationToken);
+
+        Assert.Equal(("Budget.TooManyLines", "A sheet can have at most {0} lines.", ServiceErrorType.Validation), (result.ErrorCode, result.ErrorKey, result.ErrorType));
+        Assert.Null(sheet);
+        Assert.Equal(BudgetSheetLayout.MaxLines, _h.Lines.All.Count);
+        _h.AssertTransactions(1, 0);
+    }
+
+    /// <summary>
+    /// A new line lengthens every range spanning it, so a line that would make the sheet's formulas read more than
+    /// <see cref="BudgetWorkbook.MaxReferencesPerSheet"/> cells is refused: 11 whole-sheet sums read 11 x 884 cells with the Meal line,
+    /// and 11 x 962 once a USD line (with its subtotal and total rows) is added.
+    /// </summary>
+    [Fact]
+    public async Task AddLineAsync_RefusesALine_ThatMakesTheFormulasReadTooManyCells()
+    {
+        long id = _h.Sheet(BudgetKind.Expenditure, 2026, H.Email, Meal);
+        foreach (char column in "OPQRSTUVWXY")
+            _h.Cell(id, "F.1", column.ToString(), "=SUM(A{H.ConsumerSpending}:Z{F.30})");
+
+        var (result, sheet) = await _h.Sut.AddLineAsync(H.Email, BudgetKind.Expenditure, 2026, "UTC", "ConsumerSpending", "PinMoney", "USD", TestContext.Current.CancellationToken);
+
+        Assert.Equal(("Budget.TooManyReferences", "The formulas of a sheet can read at most {0} cells in total."), (result.ErrorCode, result.ErrorKey));
+        Assert.Null(sheet);
+        _h.AssertTransactions(1, 0);
+    }
+
     /// <summary>The first line of a sheet not stored yet creates the sheet with its default lines first.</summary>
     [Fact]
     public async Task AddLineAsync_CreatesTheSheetFirst()

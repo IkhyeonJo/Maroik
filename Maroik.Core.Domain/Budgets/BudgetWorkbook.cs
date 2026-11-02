@@ -36,11 +36,39 @@ public sealed class BudgetWorkbook
         /// <summary>The current inputs of its editable cells.</summary>
         public Dictionary<BudgetCellKey, string> Inputs { get; } = [];
 
+        /// <summary>The number of cells each stored input reads (see <see cref="MaxReferencesPerSheet"/>).</summary>
+        public Dictionary<BudgetCellKey, int> References { get; } = [];
+
         /// <summary>The scope its formulas are bound in (set once every sheet is known).</summary>
         public FormulaScope Scope { get; set; } = null!;
     }
 
     /// <summary>The loaded sheets by name.</summary>
+    /// <summary>
+    /// The most cells the stored formulas of one sheet may read in total (each formula's distinct cells, summed). Every request builds
+    /// the dependency graph and evaluates every range from them, so a sheet full of whole-sheet ranges cost seconds and gigabytes per
+    /// request; with at most 60 sheets loaded, this bounds a request's graph.
+    /// </summary>
+    public const int MaxReferencesPerSheet = 10_000;
+
+    /// <summary>The refusal of formulas that would read more than <see cref="MaxReferencesPerSheet"/> cells.</summary>
+    private static Error TooManyReferences() =>
+        DomainError.Validation("Budget.TooManyReferences", "The formulas of a sheet can read at most {0} cells in total.", MaxReferencesPerSheet);
+
+    /// <summary>The number of cells a stored input reads (0 for a constant).</summary>
+    private static int ReferencesOf(CellDefinition definition) => definition.Formula?.Precedents.Count ?? 0;
+
+    /// <summary>
+    /// Whether the stored formulas of a sheet keep within <see cref="MaxReferencesPerSheet"/> as they are now: a new line lengthens
+    /// every range spanning it, so a caller that adds a line checks the sheet again (an edit is checked by <see cref="Edit"/>).
+    /// </summary>
+    public ErrorOr<Success> CheckReferences(BudgetKind kind, int year)
+    {
+        ErrorOr<Sheet> found = SheetOf(kind, year);
+        if (found.IsError) return found.Errors;
+        return found.Value.References.Values.Sum() > MaxReferencesPerSheet ? TooManyReferences() : Result.Success;
+    }
+
     private readonly Dictionary<string, Sheet> _sheets = new(StringComparer.Ordinal);
 
     /// <summary>The actuals.</summary>
@@ -70,7 +98,9 @@ public sealed class BudgetWorkbook
             {
                 if (sheet.Layout.Role(key.RowKey, key.Column) is not (BudgetCellRole.Budget or BudgetCellRole.Free)) continue;
                 sheet.Inputs[key] = input;
-                _engine.Define(new CellAddress(sheet.Name, key.RowKey, key.Column), BudgetCellInput.Define(input, sheet.Scope));
+                CellDefinition definition = BudgetCellInput.Define(input, sheet.Scope);
+                sheet.References[key] = ReferencesOf(definition);
+                _engine.Define(new CellAddress(sheet.Name, key.RowKey, key.Column), definition);
             }
 
             foreach (BudgetRow row in sheet.Layout.Rows)
@@ -188,14 +218,36 @@ public sealed class BudgetWorkbook
             writes.Add(new BudgetCellWrite(rowKey, column, stored.Value));
         }
 
-        List<CellAddress> addresses = [];
-        foreach (BudgetCellWrite write in writes)
+        // The cells the sheet's formulas would read after the edit, checked before anything is applied.
+        List<CellDefinition?> definitions = [.. writes.Select(w => w.Input is null ? null : BudgetCellInput.Define(w.Input, sheet.Scope))];
+        Dictionary<BudgetCellKey, int> references = new(sheet.References);
+        for (int i = 0; i < writes.Count; i++)
         {
+            var key = new BudgetCellKey(writes[i].RowKey, writes[i].Column);
+            if (definitions[i] is { } definition) references[key] = ReferencesOf(definition);
+            else references.Remove(key);
+        }
+
+        if (references.Values.Sum() > MaxReferencesPerSheet) return TooManyReferences();
+
+        List<CellAddress> addresses = [];
+        for (int i = 0; i < writes.Count; i++)
+        {
+            BudgetCellWrite write = writes[i];
             var key = new BudgetCellKey(write.RowKey, write.Column);
             var address = new CellAddress(sheet.Name, write.RowKey, write.Column);
-            if (write.Input is null) sheet.Inputs.Remove(key);
-            else sheet.Inputs[key] = write.Input;
-            _engine.Define(address, write.Input is null ? null : BudgetCellInput.Define(write.Input, sheet.Scope));
+            if (write.Input is null)
+            {
+                sheet.Inputs.Remove(key);
+                sheet.References.Remove(key);
+            }
+            else
+            {
+                sheet.Inputs[key] = write.Input;
+                sheet.References[key] = references[key];
+            }
+
+            _engine.Define(address, definitions[i]);
             addresses.Add(address);
         }
 

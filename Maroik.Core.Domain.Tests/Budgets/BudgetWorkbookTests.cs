@@ -283,4 +283,45 @@ public class BudgetWorkbookTests
         Assert.False(view.Exists);
         Assert.Equal(Labor.Key, view.Rows[1].Key);
     }
+
+    // -- Formula references -----------------------------------------------------------
+
+    /// <summary>A formula reading the whole of <see cref="Workbook"/>'s sheet (35 rows x 26 columns = 910 cells).</summary>
+    private const string WholeSheet = "=SUM(A{H.ConsumerSpending}:Z{F.30})";
+
+    /// <summary>Stored inputs of <paramref name="count"/> whole-sheet formulas, in free row F.1 from column O on.</summary>
+    private static (string Key, string Column, string Input)[] WholeSheetFormulas(int count) =>
+        [.. "OPQRSTUVWXYZ".Take(count).Select(column => ("F.1", column.ToString(), WholeSheet))];
+
+    /// <summary>
+    /// The stored formulas of a sheet read at most <see cref="BudgetWorkbook.MaxReferencesPerSheet"/> cells in total: every request
+    /// builds the dependency graph and evaluates every range from them, so a sheet full of whole-sheet ranges cost seconds and
+    /// gigabytes per request. An edit past the bound is refused; one that keeps it (replacing a formula) is taken.
+    /// </summary>
+    [Fact]
+    public void Edit_RefusesFormulas_ThatWouldReadTooManyCells()
+    {
+        BudgetWorkbook workbook = Workbook(null, WholeSheetFormulas(10));
+
+        var refused = workbook.Edit(BudgetKind.Expenditure, 2026, [new BudgetCellEdit("Y6", "=SUM(A1:Z35)")]);
+        var replaced = workbook.Edit(BudgetKind.Expenditure, 2026, [new BudgetCellEdit("O6", "=SUM(A1:Z35)")]);
+        var small = workbook.Edit(BudgetKind.Expenditure, 2026, [new BudgetCellEdit("Y6", "=SUM(A1:Z1)")]);
+
+        Assert.Equal(10_000, BudgetWorkbook.MaxReferencesPerSheet);
+        Assert.Equal("Budget.TooManyReferences", refused.FirstError.Code);
+        Assert.Equal([10_000], (object[])refused.FirstError.Metadata![Maroik.Core.Domain.Errors.DomainError.MessageArgsMetadataKey]);
+        Assert.False(replaced.IsError);
+        Assert.False(small.IsError);
+    }
+
+    /// <summary>
+    /// The same bound for the stored state as it is: a new line lengthens every range spanning it, so the caller checks the sheet
+    /// again after adding one (10 x 910 cells pass, 11 do not).
+    /// </summary>
+    [Fact]
+    public void CheckReferences_HoldsTheStoredFormulas_ToTheBound()
+    {
+        Assert.False(Workbook(null, WholeSheetFormulas(10)).CheckReferences(BudgetKind.Expenditure, 2026).IsError);
+        Assert.Equal("Budget.TooManyReferences", Workbook(null, WholeSheetFormulas(11)).CheckReferences(BudgetKind.Expenditure, 2026).FirstError.Code);
+    }
 }

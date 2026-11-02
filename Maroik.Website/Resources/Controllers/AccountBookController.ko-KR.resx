@@ -495,6 +495,12 @@
   <data name="This cell cannot be edited." xml:space="preserve">
     <value>이 셀은 편집할 수 없습니다.</value>
   </data>
+  <data name="A sheet can have at most {0} lines." xml:space="preserve">
+    <value>시트에는 최대 {0}개의 줄을 둘 수 있습니다.</value>
+  </data>
+  <data name="The formulas of a sheet can read at most {0} cells in total." xml:space="preserve">
+    <value>한 시트의 수식들이 읽는 셀은 모두 합해 최대 {0}개까지입니다.</value>
+  </data>
   <data name="A cell can hold at most {0} characters." xml:space="preserve">
     <value>셀에는 최대 {0}자까지 넣을 수 있습니다.</value>
   </data>
