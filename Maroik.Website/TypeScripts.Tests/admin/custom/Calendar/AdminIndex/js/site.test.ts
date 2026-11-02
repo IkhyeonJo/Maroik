@@ -20,7 +20,7 @@ import {
 const LOCALIZERS = [
     "Minutes", "Hours", "Days", "Weeks", "BeforeAt", "IETFLanguageTag",
     "Today", "Month", "ConfirmDelete", "ThisFieldRequired", "ErrorInvalidNumber",
-    "ErrorRangeMinute", "ErrorRangeHour", "ErrorRangeDay", "ErrorRangeWeek", "FailedToLoadCalendars",
+    "ErrorRangeMinute", "ErrorRangeHour", "ErrorRangeDay", "ErrorRangeWeek", "FailedToLoadCalendars", "TooManyReminders",
 ];
 
 /** The admin calendar page DOM with empty calendar and event data. */
@@ -33,6 +33,7 @@ function fixture(): string {
         hidden("maxHoursBeforeEvent", "672") +
         hidden("maxDaysBeforeEvent", "28") +
         hidden("maxWeeksBeforeEvent", "4") +
+        hidden("maxRemindersPerEvent", "10") +
         hidden("reminderTimeIntervals", "[&quot;09:00&quot;,&quot;18:30&quot;]") +
         hidden("defaultReminderTimeOfDay", "09:00") +
         hidden("calendarNameCulture", "en-US") +
@@ -441,4 +442,4 @@ describe("admin/Calendar/AdminIndex — sharing settings", () => {
 });
 
 describeMissingServerConstants("admin", "Calendar", "AdminIndex", () => fixture());
-describeRequiredServerConstants("admin", "Calendar", "AdminIndex", () => fixture(), ["maxAttachedFileSizeBytes", "defaultReminderTimeOfDay"]);
+describeRequiredServerConstants("admin", "Calendar", "AdminIndex", () => fixture(), ["maxAttachedFileSizeBytes", "defaultReminderTimeOfDay", "maxRemindersPerEvent"]);

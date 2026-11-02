@@ -30,4 +30,6 @@ that specific change. Check every candidate review finding in this area against 
   reminder can be sent again for the new time. Changing a calendar's time zone reschedules the pending reminders of its all-day
   events in the new zone, in the same transaction (`CalendarEventReminder.Reschedule`, since 2026-11-02); handled ones stay as they are. An event holds at most
   `CalendarReminderPolicy.MaxRemindersPerEvent` (10) reminders (since 2026-11-02): each is a mail through the SMTP relay, and an
-  unbounded list let one request queue tens of thousands. `CalendarRecurrence` / `RecurrenceId` stay unused on purpose — do not drop the table.
+  unbounded list let one request queue tens of thousands; the page mirrors it from `#maxRemindersPerEvent` and adds no row past it.
+  An event's dates lie between `CalendarEvent.MinYear` (2) and `MaxYear` (9998) (since 2026-11-02): around year 1 / 9999 the
+  time-zone conversion, a reminder's lead time and the grid's exclusive end left DateTime's range and showed a "temporary error". `CalendarRecurrence` / `RecurrenceId` stay unused on purpose — do not drop the table.

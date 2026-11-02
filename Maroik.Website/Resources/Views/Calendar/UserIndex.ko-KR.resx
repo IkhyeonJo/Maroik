@@ -501,4 +501,7 @@
   <data name="Custom..." xml:space="preserve">
     <value>사용자 지정...</value>
   </data>
+  <data name="An event can have at most {0} reminders." xml:space="preserve">
+    <value>일정 하나에는 알림을 최대 {0}개까지 둘 수 있습니다.</value>
+  </data>
 </root>

@@ -501,4 +501,7 @@
   <data name="Custom..." xml:space="preserve">
     <value>Custom...</value>
   </data>
+  <data name="An event can have at most {0} reminders." xml:space="preserve">
+    <value>An event can have at most {0} reminders.</value>
+  </data>
 </root>

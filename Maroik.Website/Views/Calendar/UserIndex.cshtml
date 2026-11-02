@@ -29,6 +29,7 @@
 @* "Notify at HH:MM" options + default, from CalendarReminderPolicy / the view model, so the client stops regenerating the 15-minute list. *@
 @Html.Hidden("reminderTimeIntervals", ClientJsonSerializer.Serialize(Model.TimeIntervals))
 @Html.Hidden("defaultReminderTimeOfDay", CalendarReminderPolicy.DefaultReminderTimeOfDay)
+@Html.Hidden("maxRemindersPerEvent", CalendarReminderPolicy.MaxRemindersPerEvent)
 @* The culture CalendarService orders the "my calendars" list under, so the client re-sorts it the same way. *@
 @Html.Hidden("calendarNameCulture", System.Globalization.CultureInfo.CurrentCulture.Name)
 @Html.Hidden("localizerMinutes", Localizer["Minutes"].Value)
@@ -109,6 +110,7 @@
 @Html.Hidden("localizerErrorRangeHour", Localizer["ErrorRangeHour"].Value)
 @Html.Hidden("localizerErrorRangeDay", Localizer["ErrorRangeDay"].Value)
 @Html.Hidden("localizerErrorRangeWeek", Localizer["ErrorRangeWeek"].Value)
+@Html.Hidden("localizerTooManyReminders", Localizer["An event can have at most {0} reminders.", CalendarReminderPolicy.MaxRemindersPerEvent].Value)
 @Html.Hidden("localizerFailedToLoadCalendars", Localizer["FailedToLoadCalendars"].Value)
 @Html.Hidden("calendarEventOutputViewModels", ClientJsonSerializer.Serialize(Model.CalendarEventOutputViewModels))
 @Html.Hidden("otherCalendarEventOutputViewModels", ClientJsonSerializer.Serialize(Model.OtherCalendarEventOutputViewModels))

@@ -8,10 +8,10 @@ import { loadSite } from "@tests/_common/harness";
 
 /**
  * Removes every `<input type="hidden" id="...">` except the localizer texts and the inputs the scripts REQUIRE rather than default:
- * `noMaturityDate`, `maxAttachedFileSizeBytes`, `defaultReminderTimeOfDay` and the server-rendered event data (`calendarEventOutputViewModels`, `otherCalendarEventOutputViewModels`).
+ * `noMaturityDate`, `maxAttachedFileSizeBytes`, `defaultReminderTimeOfDay`, `maxRemindersPerEvent` and the server-rendered event data (`calendarEventOutputViewModels`, `otherCalendarEventOutputViewModels`).
  */
 export function withoutServerConstants(html: string): string {
-    return html.replace(/<input type="hidden" id="(?!localizer|noMaturityDate|maxAttachedFileSizeBytes|defaultReminderTimeOfDay|calendarEventOutputViewModels|otherCalendarEventOutputViewModels)[^"]*"[^>]*\/?>/g, "");
+    return html.replace(/<input type="hidden" id="(?!localizer|noMaturityDate|maxAttachedFileSizeBytes|defaultReminderTimeOfDay|maxRemindersPerEvent|calendarEventOutputViewModels|otherCalendarEventOutputViewModels)[^"]*"[^>]*\/?>/g, "");
 }
 
 /** Registers a test that the page script still initializes with its server-published constants removed. */

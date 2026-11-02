@@ -21,7 +21,7 @@ import {
 const LOCALIZERS = [
     "Minutes", "Hours", "Days", "Weeks", "BeforeAt", "IETFLanguageTag",
     "Today", "Month", "ConfirmDelete", "ThisFieldRequired", "ErrorInvalidNumber",
-    "ErrorRangeMinute", "ErrorRangeHour", "ErrorRangeDay", "ErrorRangeWeek", "FailedToLoadCalendars",
+    "ErrorRangeMinute", "ErrorRangeHour", "ErrorRangeDay", "ErrorRangeWeek", "FailedToLoadCalendars", "TooManyReminders",
 ];
 
 /** The user calendar page DOM with empty calendar and event data. */
@@ -34,6 +34,7 @@ function fixture(): string {
         hidden("maxHoursBeforeEvent", "672") +
         hidden("maxDaysBeforeEvent", "28") +
         hidden("maxWeeksBeforeEvent", "4") +
+        hidden("maxRemindersPerEvent", "10") +
         hidden("reminderTimeIntervals", "[&quot;09:00&quot;,&quot;18:30&quot;]") +
         hidden("defaultReminderTimeOfDay", "09:00") +
         hidden("calendarNameCulture", "en-US") +
@@ -878,4 +879,4 @@ describe("user/Calendar/UserIndex — edit form and shared-event view in detail"
 });
 
 describeMissingServerConstants("user", "Calendar", "UserIndex", () => fixture());
-describeRequiredServerConstants("user", "Calendar", "UserIndex", () => fixture(), ["maxAttachedFileSizeBytes", "defaultReminderTimeOfDay"]);
+describeRequiredServerConstants("user", "Calendar", "UserIndex", () => fixture(), ["maxAttachedFileSizeBytes", "defaultReminderTimeOfDay", "maxRemindersPerEvent"]);

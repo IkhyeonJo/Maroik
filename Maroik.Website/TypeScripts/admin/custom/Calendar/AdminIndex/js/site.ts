@@ -190,6 +190,8 @@
     const maxHoursBeforeEvent = parseInt(optionalFieldValue($("#maxHoursBeforeEvent")) ?? "", 10);
     const maxDaysBeforeEvent = parseInt(optionalFieldValue($("#maxDaysBeforeEvent")) ?? "", 10);
     const maxWeeksBeforeEvent = parseInt(optionalFieldValue($("#maxWeeksBeforeEvent")) ?? "", 10);
+    // Authoritative in CalendarReminderPolicy.MaxRemindersPerEvent (server); mirrored here for form UX only.
+    const maxRemindersPerEvent = parseInt(fieldValue($("#maxRemindersPerEvent")), 10);
     // "Notify at HH:MM" options for all-day reminders and the default selection, both published
     // by the server (CalendarViewModelMapper / CalendarReminderPolicy).
     const reminderTimeIntervals = parseJson(optionalFieldValue($("#reminderTimeIntervals")) || "[]", check.array(check.string), "#reminderTimeIntervals");
@@ -303,8 +305,16 @@
         ErrorRangeHour: fieldValue($("#localizerErrorRangeHour")),
         ErrorRangeDay: fieldValue($("#localizerErrorRangeDay")),
         ErrorRangeWeek: fieldValue($("#localizerErrorRangeWeek")),
-        FailedToLoadCalendars: fieldValue($("#localizerFailedToLoadCalendars"))
+        FailedToLoadCalendars: fieldValue($("#localizerFailedToLoadCalendars")),
+        TooManyReminders: fieldValue($("#localizerTooManyReminders"))
     };
+
+    /** Whether the reminder block holding `button` may take one more row; tells the user when it may not. */
+    function CanAddReminder(button: HTMLElement): boolean {
+        if ($(button).siblings("div[class$='Row']").length < maxRemindersPerEvent) return true;
+        toastr.warning(localizer.TooManyReminders);
+        return false;
+    }
 
     // Apply the localized names to every jQuery-UI datepicker on the page.
     $.datepicker.setDefaults({
@@ -2187,6 +2197,7 @@
     // and insert it before the button. Rows are removed by the delegated
     // `.a*DeleteNotification*` handlers just below.
     $createCalendarEventNotificationAllDayChecked.off("click").on("click", function() {
+        if (!CanAddReminder(this)) return;
         const htmlString = String.raw`
         <div class='divCreateEventNotificationAllDayCheckedRow'>
 
@@ -2213,6 +2224,7 @@
     });
 
     $createCalendarEventNotificationAllDayUnchecked.off("click").on("click", function() {
+        if (!CanAddReminder(this)) return;
         const htmlString = String.raw`
         <div class='divCreateEventNotificationAllDayUncheckedRow' style='padding-bottom:5px;'>
 
@@ -2237,6 +2249,7 @@
     });
 
     $editCalendarEventNotificationAllDayChecked.off("click").on("click", function() {
+        if (!CanAddReminder(this)) return;
         const htmlString = String.raw`
         <div class='divEditEventNotificationAllDayCheckedRow'>
 
@@ -2263,6 +2276,7 @@
     });
 
     $editCalendarEventNotificationAllDayUnchecked.off("click").on("click", function() {
+        if (!CanAddReminder(this)) return;
 
         const htmlString = String.raw`
         <div class='divEditEventNotificationAllDayUncheckedRow' style='padding-bottom:5px;'>

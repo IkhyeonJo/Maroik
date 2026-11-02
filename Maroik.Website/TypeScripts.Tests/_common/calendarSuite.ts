@@ -863,6 +863,24 @@ export function describeCalendarCommon(c: CalendarCommon): void {
             expect(h.$(`#${block} .${which}CalendarEventSelNotificationNumber${suffix}`).last().attr("min")).toBe("2");
         });
 
+        it.each([["create", true], ["create", false], ["edit", true], ["edit", false]])("the %s add-reminder button (all-day=%s) adds no row past the server's maxRemindersPerEvent, and says so", (which, allDay) => {
+            const suffix = allDay ? "AllDayChecked" : "AllDayUnchecked";
+            const cap = which.charAt(0).toUpperCase() + which.slice(1);
+            const block = `div${cap}EventNotification${suffix}`;
+            const h = build({
+                body: (html) => html.replace(hidden("maxRemindersPerEvent", "10"), hidden("maxRemindersPerEvent", "2"))
+                    .replace(`<div id="${block}"></div>`, `<div id="${block}"><a id="${which}CalendarEventNotification${suffix}"></a></div>`)
+            });
+            const add = () => h.$(`#${which}CalendarEventNotification${suffix}`).trigger("click");
+            add();
+            add();
+            expect(h.$(`#${block} .div${cap}EventNotification${suffix}Row`)).toHaveLength(2);
+            expect(h.toastr.warning).not.toHaveBeenCalled();
+            add();
+            expect(h.$(`#${block} .div${cap}EventNotification${suffix}Row`)).toHaveLength(2);
+            expect(h.toastr.warning).toHaveBeenCalledWith("L_TooManyReminders");
+        });
+
         it.each([["create", true], ["create", false], ["edit", true], ["edit", false]])("the %s add-reminder button (all-day=%s) inserts a fresh row with the right units and defaults", (which, allDay) => {
             const suffix = allDay ? "AllDayChecked" : "AllDayUnchecked";
             const h = build({
