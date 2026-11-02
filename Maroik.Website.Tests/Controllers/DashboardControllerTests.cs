@@ -244,5 +244,7 @@ public class DashboardControllerTests
 
         Assert.Contains("\"result\":true", json, StringComparison.Ordinal);
         Assert.True(response.Headers.TryGetValues("Set-Cookie", out var cookies) && cookies.Any(c => c.Contains(".AspNetCore.Culture", StringComparison.Ordinal)));
+        // Behind HTTPS (the default Tunnel profile) the cookie policy middleware makes it Secure; the action sets no flag of its own.
+        Assert.Contains("secure", cookies.Single(c => c.Contains(".AspNetCore.Culture", StringComparison.Ordinal)), StringComparison.OrdinalIgnoreCase);
     }
 }

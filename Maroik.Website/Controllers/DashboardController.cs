@@ -46,7 +46,9 @@ public class DashboardController(
             return Json(new { result = false });
 
         Response.Cookies.Append(CookieRequestCultureProvider.DefaultCookieName, CookieRequestCultureProvider.MakeCookieValue(new RequestCulture(culture)),
-            new CookieOptions { Expires = timeProvider.GetUtcNow().AddDays(30), Secure = true, HttpOnly = true, SameSite = SameSiteMode.Strict });
+            // No Secure flag of its own: the cookie policy middleware applies the hosting profile's (Secure behind HTTPS, none in
+            // NoDomain, where a browser would drop a Secure cookie set over plain HTTP).
+            new CookieOptions { Expires = timeProvider.GetUtcNow().AddDays(30), HttpOnly = true, SameSite = SameSiteMode.Strict });
 
         return Json(new { result = true });
     }

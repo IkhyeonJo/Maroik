@@ -38,7 +38,8 @@ that specific change. Check every candidate review finding in this area against 
   `AutoDeploy.sh` always run). `PortForwarding`: Caddy (`Maroik.Caddy/Caddyfile`) ends HTTPS with a Let's Encrypt
   certificate on 80 / 443 and is trusted like cloudflared. `NoDomain`: plain HTTP on a published port for a home network —
   no HSTS / https / www redirects, cookies without Secure and without the `__Secure-` prefix, no forwarded scheme taken
-  (pinned by `HostingModeStartupTests`). Passwords travel unencrypted there; that is the owner's accepted trade-off.
+  (pinned by `HostingModeStartupTests`); the culture cookie too sets no Secure flag of its own (since 2026-11-02,
+  `DashboardControllerCultureCookieTests`) and takes the cookie policy's. Passwords travel unencrypted there; that is the owner's accepted trade-off.
   The answers are asked on every deploy, never saved.
 - `AllowedHosts` is `*`. The `amqp://guest:guest@localhost` fallbacks (`Program.cs`, `WorkerHost`) are never
   used in a deployment (the env files always set the connection string).
