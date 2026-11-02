@@ -91,8 +91,13 @@ internal sealed class FakeSmtpServer : IAsyncDisposable
                 lock (_sessions) _sessions.Add(Task.Run(() => HandleSessionAsync(client)));
             }
         }
-        catch (OperationCanceledException) { /* shutting down */ }
-        catch (ObjectDisposedException) { /* shutting down */ }
+        catch (Exception) when (_stop.IsCancellationRequested)
+        {
+            // Shutting down: DisposeAsync signals the stop, then closes the listener while this loop may be anywhere, so the accept
+            // ends however that race falls — cancelled, on a disposed or not-listening listener (InvalidOperationException), or as a
+            // SocketException ("Operation canceled" / "Invalid argument") when closing the socket beats the token. Before the stop,
+            // any exception still fails the dispose (FakeSmtpServerTests).
+        }
     }
 
     /// <summary>Speaks a minimal SMTP dialogue on one connection (greeting, EHLO, STARTTLS when a certificate is set, AUTH, MAIL/RCPT/DATA, QUIT), recording what it receives.</summary>
