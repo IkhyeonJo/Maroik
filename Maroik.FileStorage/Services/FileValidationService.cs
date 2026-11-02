@@ -63,8 +63,23 @@ public class FileValidationService(IClamavClient clamavClient, IOptions<FileStor
         if (scan != ClamavScanResult.Clean)
             return (false, FileStorageRefusals.ScanUnavailable);
 
-        if (ext == ".zip" && IsZipEncrypted(memStream))
-            return (false, "Encrypted ZIP files are not allowed.");
+        if (ext == ".zip")
+        {
+            bool encrypted;
+            try
+            {
+                encrypted = IsZipEncrypted(memStream);
+            }
+            catch (ZipException)
+            {
+                // Expected input, not a fault: a file that starts like a ZIP but is no readable archive is refused as a bad format,
+                // and the controller logs the refusal like any other.
+                return (false, "Invalid or unsupported file format.");
+            }
+
+            if (encrypted)
+                return (false, "Encrypted ZIP files are not allowed.");
+        }
 
         StorageFiles.CreateDirectory(safeDir);
 

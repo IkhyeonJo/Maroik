@@ -412,6 +412,23 @@ public class FileValidationServiceTests
 
     // -- ZIP handling -------------------------------------------------------------------
 
+    /// <summary>
+    /// A file that starts like a ZIP but is not a readable archive (no central directory) is the caller's bad input: it is refused as
+    /// an invalid format, not thrown (which the controller would log as a failure), and nothing is saved.
+    /// </summary>
+    [Fact]
+    public async Task ValidateAndSaveAsync_RefusesAnUnreadableZip_AsAnInvalidFormat()
+    {
+        var dir = Path.Combine(CreateTempDir(), "target");
+        var service = new FileValidationService(CleanScanMock().Object, DefaultSettings());
+
+        var (success, error) = await service.ValidateAndSaveAsync(MakeFormFile([0x50, 0x4B, 0x03, 0x04, 0x14, 0x00, 0x00, 0x00, 0x01, 0x02], "broken.zip"), dir);
+
+        Assert.False(success);
+        Assert.Equal("Invalid or unsupported file format.", error);
+        Assert.False(Directory.Exists(dir));
+    }
+
     /// <summary>Validate and save async saves file, when zip is valid and not encrypted.</summary>
     [Fact]
     public async Task ValidateAndSaveAsync_SavesFile_WhenZipIsValidAndNotEncrypted()
