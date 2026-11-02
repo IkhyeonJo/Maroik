@@ -74,7 +74,8 @@ public static class FileManagerUploadPolicy
     /// </summary>
     public static ErrorOr<Success> CheckQuota(long quotaBytes, long usedBytes, long requestedBytes)
     {
-        long shortfall = usedBytes + requestedBytes - quotaBytes;
+        // In decimal: the long sum overflowed for a huge request into a negative number that read as "fits".
+        decimal shortfall = (decimal)usedBytes + requestedBytes - quotaBytes;
         if (shortfall <= 0)
             return Result.Success;
 

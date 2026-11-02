@@ -34,7 +34,8 @@ that specific change. Check every candidate review finding in this area against 
   to that; both compose files set `CLAMD_CONF_*` to 2048M and `MaxScanTime` to 10 minutes) — `FileManagerUploadPolicy.MaxScannableBytes`
   on the domain's side, `ClamavClient.MaxStreamBytes` on the scanner's. A larger file can only be stored without a scan: `BeginUpload`
   refuses it ("larger than 2 GB") unless the locked account row has the scan turned off, and `ClamavClient` never sends a stream that
-  long (it answers `LimitExceeded` at once). A scan that hits a clamd limit is never clean: it is `ClamavScanResult.LimitExceeded`
+  long (it answers `LimitExceeded` at once). The quota check compares in decimal (since 2026-11-02): the long sum of the usage and a
+  huge declared size overflowed into "fits" once the usage was over the quota, and a scan-off account has no size limit. A scan that hits a clamd limit is never clean: it is `ClamavScanResult.LimitExceeded`
   (`FileStorageRefusals.ScanLimitExceeded`), kept apart from a scanner outage (`Unavailable`) in the logs; both are refused as "could
   not be scanned" and the staging file is dropped.
 - Abandoned uploads (since 2026-10-26, owner's request; it replaced "24 hours after the start, at the user's next upload"): an

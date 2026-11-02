@@ -103,6 +103,22 @@ public class FileManagerUploadPolicyTests
         Assert.Equal("FileManager.QuotaExceeded", FileManagerUploadPolicy.CheckQuota(quotaBytes: 10, usedBytes: 50, requestedBytes: 1).FirstError.Code);
     }
 
+    /// <summary>
+    /// A size near long.MaxValue is refused, not passed: usedBytes + requestedBytes - quotaBytes overflowed a long into a negative
+    /// number that read as "fits" whenever the usage was already over the quota (an administrator lowered it), so an account whose
+    /// virus scan is off (no size limit) could reserve any size and fill the disk past its quota.
+    /// </summary>
+    [Fact]
+    public void CheckQuota_RefusesAHugeRequest_WhoseSumWithTheUsageOverflows()
+    {
+        const long gb = 1024L * 1024 * 1024;
+
+        var result = FileManagerUploadPolicy.CheckQuota(quotaBytes: 10 * gb, usedBytes: 11 * gb, requestedBytes: long.MaxValue);
+
+        Assert.Equal("FileManager.QuotaExceeded", result.FirstError.Code);
+        Assert.Equal([8_589_934_593m], (object[])result.FirstError.Metadata![DomainError.MessageArgsMetadataKey]);
+    }
+
     /// <summary>An upload is stale once its last activity is more than an hour ago.</summary>
     [Fact]
     public void IsStale_IsTrue_OnlyPastAnHourWithoutActivity()
