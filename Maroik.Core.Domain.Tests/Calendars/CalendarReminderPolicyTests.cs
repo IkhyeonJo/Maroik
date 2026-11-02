@@ -102,4 +102,22 @@ public class CalendarReminderPolicyTests
         int minute = int.Parse(parts[1], CultureInfo.InvariantCulture);
         Assert.Equal(0, minute % CalendarReminderPolicy.ReminderTimeOfDayStepMinutes);
     }
+
+    /// <summary>
+    /// An event holds at most <see cref="CalendarReminderPolicy.MaxRemindersPerEvent"/> reminders: each one is an e-mail through the
+    /// site's SMTP relay, so an unbounded list let one request queue tens of thousands of mails and use up the relay's daily quota
+    /// (and with it everyone's confirmation and reset mails).
+    /// </summary>
+    [Fact]
+    public void CheckCount_RefusesMoreRemindersThanTheMaximum()
+    {
+        Assert.Equal(10, CalendarReminderPolicy.MaxRemindersPerEvent);
+        Assert.False(CalendarReminderPolicy.CheckCount(CalendarReminderPolicy.MaxRemindersPerEvent).IsError);
+
+        var refused = CalendarReminderPolicy.CheckCount(CalendarReminderPolicy.MaxRemindersPerEvent + 1);
+
+        Assert.Equal("Reminder.TooMany", refused.FirstError.Code);
+        Assert.Equal("An event can have at most {0} reminders.", refused.FirstError.Metadata![Maroik.Core.Domain.Errors.DomainError.MessageTemplateMetadataKey]);
+        Assert.Equal([10], (object[])refused.FirstError.Metadata![Maroik.Core.Domain.Errors.DomainError.MessageArgsMetadataKey]);
+    }
 }

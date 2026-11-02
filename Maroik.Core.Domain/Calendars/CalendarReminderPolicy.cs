@@ -1,3 +1,6 @@
+using ErrorOr;
+using Maroik.Core.Domain.Errors;
+
 namespace Maroik.Core.Domain.Calendars;
 
 /// <summary>
@@ -33,6 +36,18 @@ public static class CalendarReminderPolicy
 
     /// <summary>Default "notify at" time-of-day pre-selected for a new all-day reminder.</summary>
     public const string DefaultReminderTimeOfDay = "09:00";
+
+    /// <summary>
+    /// The most reminders an event holds. Each reminder is an e-mail through the site's SMTP relay, so an unbounded list let one
+    /// request queue tens of thousands of mails and use up the relay's daily quota, and with it everyone's confirmation and reset mails.
+    /// </summary>
+    public const int MaxRemindersPerEvent = 10;
+
+    /// <summary>Whether an event may hold <paramref name="count"/> reminders (<see cref="MaxRemindersPerEvent"/>).</summary>
+    public static ErrorOr<Success> CheckCount(int count) =>
+        count > MaxRemindersPerEvent
+            ? DomainError.Validation("Reminder.TooMany", "An event can have at most {0} reminders.", MaxRemindersPerEvent)
+            : Result.Success;
 
     /// <summary>
     /// Returns <see langword="true"/> when the single non-null lead-time value falls within

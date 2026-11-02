@@ -697,6 +697,39 @@ public class CalendarServiceTests
         _unitOfWork.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Never);
     }
 
+    /// <summary>The reminders of <see cref="CalendarReminderPolicy.MaxRemindersPerEvent"/> + 1, each 30 minutes before the event.</summary>
+    private static List<CalendarReminderDto> TooManyReminders() =>
+        [.. Enumerable.Range(0, CalendarReminderPolicy.MaxRemindersPerEvent + 1).Select(_ => new CalendarReminderDto { MinutesBeforeEvent = 30 })];
+
+    /// <summary>
+    /// An event with more reminders than <see cref="CalendarReminderPolicy.MaxRemindersPerEvent"/> is refused before anything is
+    /// written: each reminder is a mail through the site's SMTP relay.
+    /// </summary>
+    [Fact]
+    public async Task CreateCalendarEventAsync_RefusesTooManyReminders_BeforeWritingAnything()
+    {
+        ServiceResult result = await CreateSut().CreateCalendarEventAsync(
+            new CalendarEventRequest { CalendarId = 1, Title = "Meeting", StartDate = Now.AddDays(40), EndDate = Now.AddDays(40) }, "user@example.com", "1",
+            TooManyReminders(), null, TestContext.Current.CancellationToken);
+
+        Assert.Equal(("Reminder.TooMany", "An event can have at most {0} reminders."), (result.ErrorCode, result.ErrorKey));
+        _unitOfWork.Verify(u => u.BeginAsync(It.IsAny<System.Data.IsolationLevel?>(), It.IsAny<CancellationToken>()), Times.Never);
+        _eventRepo.Verify(r => r.CreateCalendarEventAsync(It.IsAny<CalendarEvent>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    /// <summary>The same bound when an event is edited: its reminders are recreated from the request.</summary>
+    [Fact]
+    public async Task UpdateCalendarEventAsync_RefusesTooManyReminders_BeforeWritingAnything()
+    {
+        ServiceResult result = await CreateSut().UpdateCalendarEventAsync(
+            new CalendarEventRequest { Id = 1, CalendarId = 1, Title = "New Title" }, "user@example.com", "1",
+            TooManyReminders(), null, TestContext.Current.CancellationToken);
+
+        Assert.Equal(("Reminder.TooMany", "An event can have at most {0} reminders."), (result.ErrorCode, result.ErrorKey));
+        _unitOfWork.Verify(u => u.BeginAsync(It.IsAny<System.Data.IsolationLevel?>(), It.IsAny<CancellationToken>()), Times.Never);
+        _reminderRepo.Verify(r => r.DeleteByCalendarEventIdAsync(It.IsAny<long>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
     // -- GetCalendarEventsAsync (batch) ----------------------------------------
 
     /// <summary>Verifies that the batch overload fetches events in a single repository call and groups them by calendar ID.</summary>

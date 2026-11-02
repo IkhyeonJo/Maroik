@@ -273,4 +273,7 @@
   <data name="A temporary error occurred. Please try again later." xml:space="preserve">
     <value>A temporary error occurred. Please try again later.</value>
   </data>
+  <data name="An event can have at most {0} reminders." xml:space="preserve">
+    <value>An event can have at most {0} reminders.</value>
+  </data>
 </root>

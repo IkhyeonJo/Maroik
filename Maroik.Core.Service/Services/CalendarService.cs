@@ -491,6 +491,8 @@ public class CalendarService(
         DateTime utcNow = timeProvider.GetUtcNow().UtcDateTime;
         var fileError = attachmentContent.ValidateAttachedFile(attachedFile);
         if (fileError != null) return fileError;
+        // Each reminder is a mail through the site's SMTP relay: an event holds a bounded number of them.
+        if (CalendarReminderPolicy.CheckCount(reminders.Count) is { IsError: true } tooMany) return ServiceResult.FromError(tooMany.FirstError);
 
         // Bounded before the sanitizer runs: its time grows faster than the length for nested HTML.
         if (CalendarEvent.ValidateRawDescription(request.Description) is { IsError: true } tooLong) return ServiceResult.FromError(tooLong.FirstError);
@@ -558,6 +560,8 @@ public class CalendarService(
         DateTime utcNow = timeProvider.GetUtcNow().UtcDateTime;
         var fileError = attachmentContent.ValidateAttachedFile(attachedFile);
         if (fileError != null) return fileError;
+        // Each reminder is a mail through the site's SMTP relay: an event holds a bounded number of them.
+        if (CalendarReminderPolicy.CheckCount(reminders.Count) is { IsError: true } tooMany) return ServiceResult.FromError(tooMany.FirstError);
 
         // Bounded before the sanitizer runs: its time grows faster than the length for nested HTML.
         if (CalendarEvent.ValidateRawDescription(request.Description) is { IsError: true } tooLong) return ServiceResult.FromError(tooLong.FirstError);
