@@ -5,11 +5,18 @@ namespace Maroik.Core.Domain.Formulas;
 /// <summary>
 /// Evaluates a bound formula with Excel's value rules, in decimals: operands are coerced as Excel coerces them (numeric text and
 /// booleans to numbers, an empty cell to 0 / "" / FALSE), comparisons order numbers below text below booleans (text ignoring case),
-/// and the first error met — the left operand first — is the result. An overflow is #NUM!, a division by zero #DIV/0!.
+/// and the first error met — the left operand first — is the result. An overflow is #NUM!, a division by zero #DIV/0!, a text past
+/// <see cref="MaxTextLength"/> #VALUE!.
 /// A tree walk over a closed set of node types and the <see cref="FormulaFunctions"/> catalog: user text never becomes code.
 /// </summary>
 public static class FormulaEvaluator
 {
+    /// <summary>
+    /// The longest text a formula may produce: Excel's cell text limit. A longer concatenation is #VALUE!, as in Excel — without a
+    /// bound, cells concatenating each other grow the text exponentially (each cell multiplies the length of the one it repeats).
+    /// </summary>
+    public const int MaxTextLength = 32_767;
+
     /// <summary>The value of <paramref name="formula"/>; a formula that cannot be saved (syntax, argument counts) is #VALUE!.</summary>
     public static FormulaValue Evaluate(BoundFormula formula, FormulaContext context) =>
         formula.CanSave ? new Run(formula, context).Scalar(formula.Syntax.Root) : new ErrorValue(FormulaErrorKind.Value);
@@ -119,7 +126,9 @@ public static class FormulaEvaluator
                     FormulaValue l = ToText(left), r = ToText(right);
                     if (l is ErrorValue) return l;
                     if (r is ErrorValue) return r;
-                    return new TextValue(((TextValue)l).Value + ((TextValue)r).Value);
+                    string a = ((TextValue)l).Value, b = ((TextValue)r).Value;
+                    // Measured before the text is built, so an over-long result is never allocated.
+                    return a.Length + b.Length > MaxTextLength ? ValueError : new TextValue(a + b);
                 }
                 case "=" or "<>" or "<" or ">" or "<=" or ">=":
                     return Compare(node.Operator, left, right);

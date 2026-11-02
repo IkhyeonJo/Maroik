@@ -27,7 +27,9 @@ that specific change. Check every candidate review finding in this area against 
   it reaches, and the reply lists only the changed cells).
 - Inputs are stored with stable row keys (`B{L.<main>.<sub>.<currency hex>}`), not row numbers, so adding or removing a line never
   breaks a reference and a formula copied from last year keeps working; a removed line's references show `#REF!` (and come back
-  if the line is added again). A circular reference is `#CYCLE!` (Excel only warns).
+  if the line is added again). A circular reference is `#CYCLE!` (Excel only warns). A concatenation longer than Excel's cell text
+  limit (`FormulaEvaluator.MaxTextLength`, 32,767) is `#VALUE!` (since 2026-11-02): without it, cells repeating each other grew the
+  text exponentially (three 1,000-character cells reached billions of characters and exhausted the web process's memory).
 - The formula bar's colouring is computed by the server on every pause in typing (`PreviewBudgetCell`); the client only paints
   it. The round trip is accepted; do not move the lexer / parser into `site.ts`.
 - A budget cell's value is its budget only as a number from 0 to `FinanceAmountPolicy.MaxAbsoluteAmount`, rounded to 4 decimals;

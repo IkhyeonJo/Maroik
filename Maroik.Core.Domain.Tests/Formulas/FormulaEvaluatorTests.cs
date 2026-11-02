@@ -76,6 +76,21 @@ public class FormulaEvaluatorTests
         Assert.Equal(T("-0.25FALSE"), Evaluate("=-0.25&FALSE"));
     }
 
+    /// <summary>
+    /// Concatenation stops at Excel's cell text limit (32,767 characters): a longer result is #VALUE!, as in Excel. Without it, cells
+    /// that concatenate each other grow the text exponentially (three cells of 140 references each reach billions of characters).
+    /// </summary>
+    [Fact]
+    public void Concatenation_PastExcelsTextLimit_IsAValueError()
+    {
+        var cells = new Dictionary<string, FormulaValue> { ["B1"] = T(new string('x', FormulaEvaluator.MaxTextLength - 1)) };
+
+        Assert.Equal(32_767, FormulaEvaluator.MaxTextLength);
+        Assert.Equal(T(new string('x', FormulaEvaluator.MaxTextLength - 1) + "y"), Evaluate("=B1&\"y\"", cells));
+        Assert.Equal(E(FormulaErrorKind.Value), Evaluate("=B1&\"yz\"", cells));
+        Assert.Equal(E(FormulaErrorKind.Value), Evaluate("=B1&B1&B1", cells));
+    }
+
     /// <summary>Comparisons: same types by value (text ignoring case), numbers below text below booleans, empty as 0 or "".</summary>
     [Theory]
     [InlineData("=1<2", true)]
