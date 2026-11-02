@@ -2,6 +2,7 @@
 // ReSharper disable PropertyCanBeMadeInitOnly.Global
 using System.ComponentModel.DataAnnotations;
 using System.Globalization;
+using Maroik.Core.Domain.Calendars;
 // ReSharper disable InvalidXmlDocComment
 
 namespace Maroik.Website.Models.ViewModels.Calendars;
@@ -92,9 +93,13 @@ public class CalendarEventInputViewModel : IValidatableObject
 
     /// <summary>Matches the "yyyy-M-d" shape <c>ToCalendarEventRequest</c> splits an all-day date on.</summary>
     private static bool IsValidDateOnly(string? value) =>
-        DateTime.TryParseExact(value, "yyyy-M-d", CultureInfo.InvariantCulture, DateTimeStyles.None, out _);
+        DateTime.TryParseExact(value, "yyyy-M-d", CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime date)
+        && CalendarEvent.IsWithinYears(date);
 
     /// <summary>Matches the "yyyy-M-d H:m" shape <c>ParseLocalDateTime</c> splits a timed date on.</summary>
+    // Within the domain's years too (CalendarEvent.IsWithinYears): the controller converts a timed date to UTC before the domain sees
+    // it, and around year 1 that conversion threw, so the user saw a "temporary error" instead of a refused input.
     private static bool IsValidLocalDateTime(string? value) =>
-        DateTime.TryParseExact(value, "yyyy-M-d H:m", CultureInfo.InvariantCulture, DateTimeStyles.None, out _);
+        DateTime.TryParseExact(value, "yyyy-M-d H:m", CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime date)
+        && CalendarEvent.IsWithinYears(date);
 }

@@ -233,4 +233,28 @@ public class CalendarEventTests
         Assert.True(result.IsError);
         Assert.Equal("CalendarEvent.DescriptionTooLong", result.FirstError.Code);
     }
+
+    // -- Date range -------------------------------------------------------------------
+
+    /// <summary>
+    /// An event's dates lie between <see cref="CalendarEvent.MinYear"/> and <see cref="CalendarEvent.MaxYear"/>: around year 1 or 9999
+    /// the time-zone conversion, a reminder's lead time or the grid's exclusive end leave DateTime's range and threw, so the user saw a
+    /// "temporary error" instead of a refused input. The bounds are inclusive, on create and on update.
+    /// </summary>
+    [Theory]
+    [InlineData(1, 2026)]
+    [InlineData(2026, 9999)]
+    public void Dates_OutsideTheYearRange_AreRefused(int startYear, int endYear)
+    {
+        DateTime start = new(startYear, 1, 1), end = new(endYear, 12, 31);
+
+        var created = CalendarEvent.Create(1, "Title", null, true, start, end, null, null, null, null, Now);
+        var updated = ValidEvent().Update("Title", null, true, start, end, null, null, null, null, Now);
+
+        Assert.Equal((2, 9998), (CalendarEvent.MinYear, CalendarEvent.MaxYear));
+        Assert.Equal("CalendarEvent.DateOutOfRange", created.FirstError.Code);
+        Assert.Equal("Event dates must be between the years {0} and {1}.", created.FirstError.Metadata![Maroik.Core.Domain.Errors.DomainError.MessageTemplateMetadataKey]);
+        Assert.Equal("CalendarEvent.DateOutOfRange", updated.FirstError.Code);
+        Assert.False(CalendarEvent.Create(1, "Title", null, true, new DateTime(2, 1, 1), new DateTime(9998, 12, 31), null, null, null, null, Now).IsError);
+    }
 }

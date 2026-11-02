@@ -76,4 +76,19 @@ public class CalendarEventInputViewModelTests
     [Fact]
     public void Timed_Empty_ReportsEveryField() =>
         Assert.Equal(4, Errors(new CalendarEventInputViewModel { AllDay = false }).Count);
+
+    /// <summary>
+    /// A date outside the domain's years is refused here, before the controller converts it to UTC: around year 1 that conversion
+    /// threw and the user saw a "temporary error" instead of a refused input.
+    /// </summary>
+    [Theory]
+    [InlineData(true, "0001-01-01", "2024-06-03", nameof(CalendarEventInputViewModel.StartDate))]
+    [InlineData(true, "2024-06-01", "9999-12-31", nameof(CalendarEventInputViewModel.EndDate))]
+    [InlineData(false, "0001-01-01 00:00", "2024-06-03 10:00", nameof(CalendarEventInputViewModel.StartDate))]
+    [InlineData(false, "2024-06-01 10:00", "9999-12-31 23:59", nameof(CalendarEventInputViewModel.EndDate))]
+    public void Dates_OutsideTheDomainsYears_AreReportedPerField(bool allDay, string start, string end, string field) =>
+        Assert.Equal([field], Errors(new CalendarEventInputViewModel
+        {
+            AllDay = allDay, StartDate = start, EndDate = end, StartDateTimeZoneIanaId = "Asia/Seoul", EndDateTimeZoneIanaId = "UTC",
+        }));
 }

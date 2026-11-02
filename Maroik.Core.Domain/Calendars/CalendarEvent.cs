@@ -15,6 +15,18 @@ namespace Maroik.Core.Domain.Calendars;
 public sealed class CalendarEvent : AggregateRoot<long>
 {
     /// <summary>
+    /// The first year an event's dates may fall in. Around year 1 (and 9999) the time-zone conversion, a reminder's lead time and the
+    /// calendar grid's exclusive end leave DateTime's range; within these years every one of them stays representable.
+    /// </summary>
+    public const int MinYear = 2;
+
+    /// <summary>The last year an event's dates may fall in (see <see cref="MinYear"/>).</summary>
+    public const int MaxYear = 9998;
+
+    /// <summary>Whether <paramref name="date"/> falls between <see cref="MinYear"/> and <see cref="MaxYear"/>.</summary>
+    public static bool IsWithinYears(DateTime date) => date.Year is >= MinYear and <= MaxYear;
+
+    /// <summary>
     /// Refuses a event description longer than <see cref="TitledContentPolicy.MaxRawBodyLength"/> as submitted, before it is sanitized, with
     /// the same error as an over-long sanitized one.
     /// </summary>
@@ -194,6 +206,8 @@ public sealed class CalendarEvent : AggregateRoot<long>
     private static ErrorOr<Success> ValidateDatesAndZones(
         bool allDay, DateTime startDate, DateTime endDate, string? startTz, string? endTz)
     {
+        if (!IsWithinYears(startDate) || !IsWithinYears(endDate))
+            return DomainError.Validation("CalendarEvent.DateOutOfRange", "Event dates must be between the years {0} and {1}.", MinYear, MaxYear);
         bool rangeInvalid = allDay ? endDate.Date < startDate.Date : endDate < startDate;
         if (rangeInvalid)
             return DomainError.Validation("CalendarEvent.InvalidDateRange", "End date must not be earlier than start date.");
