@@ -556,7 +556,7 @@ public class CalendarServiceTests
         var sut = CreateSut();
 
         ServiceResult result = await sut.CreateCalendarEventAsync(
-            new CalendarEventRequest { CalendarId = 1 }, "user@example.com", "1", [], null, TestContext.Current.CancellationToken);
+            new CalendarEventRequest { StartDate = Now, EndDate = Now, CalendarId = 1 }, "user@example.com", "1", [], null, TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
         Assert.Contains("does not exist", result.ErrorKey, StringComparison.OrdinalIgnoreCase);
@@ -573,7 +573,7 @@ public class CalendarServiceTests
         var sut = CreateSut();
 
         ServiceResult result = await sut.CreateCalendarEventAsync(
-            new CalendarEventRequest { CalendarId = 1, Title = "Meeting" }, "user@example.com", "1", [], null, TestContext.Current.CancellationToken);
+            new CalendarEventRequest { StartDate = Now, EndDate = Now, CalendarId = 1, Title = "Meeting" }, "user@example.com", "1", [], null, TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
         _unitOfWork.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Once);
@@ -592,7 +592,7 @@ public class CalendarServiceTests
         var attachedFile = new AttachedFileDto { Bytes = [1, 2, 3], ContentType = "application/zip", FileName = "a.zip", Size = 3 };
 
         ServiceResult result = await sut.CreateCalendarEventAsync(
-            new CalendarEventRequest { CalendarId = 1, Title = "Meeting" }, "user@example.com", "1", [], attachedFile, TestContext.Current.CancellationToken);
+            new CalendarEventRequest { StartDate = Now, EndDate = Now, CalendarId = 1, Title = "Meeting" }, "user@example.com", "1", [], attachedFile, TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
         _eventFileRepo.Verify(r => r.CreateAsync(It.IsAny<CalendarEventAttachedFile>(), It.IsAny<CancellationToken>()), Times.Once);
@@ -612,7 +612,7 @@ public class CalendarServiceTests
         var attachedFile = new AttachedFileDto { Bytes = [1, 2, 3], ContentType = "application/zip", FileName = "a.zip", Size = 3 };
 
         ServiceResult result = await sut.CreateCalendarEventAsync(
-            new CalendarEventRequest { CalendarId = 1, Title = "Meeting" }, "user@example.com", "1", [], attachedFile, TestContext.Current.CancellationToken);
+            new CalendarEventRequest { StartDate = Now, EndDate = Now, CalendarId = 1, Title = "Meeting" }, "user@example.com", "1", [], attachedFile, TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
         Assert.Equal("CalendarEvent.AttachmentUploadFailed", result.ErrorCode);
@@ -636,7 +636,7 @@ public class CalendarServiceTests
         var attachedFile = new AttachedFileDto { Bytes = [1, 2, 3], ContentType = "application/zip", FileName = new string('n', 256) + ".zip", Size = 3 };
 
         ServiceResult result = await sut.CreateCalendarEventAsync(
-            new CalendarEventRequest { CalendarId = 1, Title = "Meeting" }, "user@example.com", "1", [], attachedFile, TestContext.Current.CancellationToken);
+            new CalendarEventRequest { StartDate = Now, EndDate = Now, CalendarId = 1, Title = "Meeting" }, "user@example.com", "1", [], attachedFile, TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
         Assert.Equal("CalendarEventAttachedFile.NameTooLong", result.ErrorCode);
@@ -722,7 +722,7 @@ public class CalendarServiceTests
     public async Task UpdateCalendarEventAsync_RefusesTooManyReminders_BeforeWritingAnything()
     {
         ServiceResult result = await CreateSut().UpdateCalendarEventAsync(
-            new CalendarEventRequest { Id = 1, CalendarId = 1, Title = "New Title" }, "user@example.com", "1",
+            new CalendarEventRequest { StartDate = Now, EndDate = Now, Id = 1, CalendarId = 1, Title = "New Title" }, "user@example.com", "1",
             TooManyReminders(), null, TestContext.Current.CancellationToken);
 
         Assert.Equal(("Reminder.TooMany", "An event can have at most {0} reminders."), (result.ErrorCode, result.ErrorKey));
@@ -775,7 +775,7 @@ public class CalendarServiceTests
         var sut = CreateSut();
 
         ServiceResult result = await sut.UpdateCalendarEventAsync(
-            new CalendarEventRequest { Id = 1, CalendarId = 1 }, "user@example.com", "1", [], null, TestContext.Current.CancellationToken);
+            new CalendarEventRequest { StartDate = Now, EndDate = Now, Id = 1, CalendarId = 1 }, "user@example.com", "1", [], null, TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
         _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
@@ -791,7 +791,7 @@ public class CalendarServiceTests
         var sut = CreateSut();
 
         ServiceResult result = await sut.UpdateCalendarEventAsync(
-            new CalendarEventRequest { Id = 1, CalendarId = 1 }, "user@example.com", "1", [], null, TestContext.Current.CancellationToken);
+            new CalendarEventRequest { StartDate = Now, EndDate = Now, Id = 1, CalendarId = 1 }, "user@example.com", "1", [], null, TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
         _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
@@ -810,7 +810,7 @@ public class CalendarServiceTests
         var sut = CreateSut();
 
         ServiceResult result = await sut.UpdateCalendarEventAsync(
-            new CalendarEventRequest { Id = 1, CalendarId = 1, Title = "New Title" }, "user@example.com", "1", [], null, TestContext.Current.CancellationToken);
+            new CalendarEventRequest { StartDate = Now, EndDate = Now, Id = 1, CalendarId = 1, Title = "New Title" }, "user@example.com", "1", [], null, TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
         _unitOfWork.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Once);
@@ -832,7 +832,7 @@ public class CalendarServiceTests
         var attachedFile = new AttachedFileDto { Bytes = [1, 2, 3], ContentType = "application/zip", FileName = "a.zip", Size = 3 };
 
         ServiceResult result = await sut.UpdateCalendarEventAsync(
-            new CalendarEventRequest { Id = 1, CalendarId = 1, Title = "New Title" }, "user@example.com", "1", [], attachedFile, TestContext.Current.CancellationToken);
+            new CalendarEventRequest { StartDate = Now, EndDate = Now, Id = 1, CalendarId = 1, Title = "New Title" }, "user@example.com", "1", [], attachedFile, TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
         _eventFileRepo.Verify(r => r.CreateAsync(It.IsAny<CalendarEventAttachedFile>(), It.IsAny<CancellationToken>()), Times.Once);
@@ -855,7 +855,7 @@ public class CalendarServiceTests
         var attachedFile = new AttachedFileDto { Bytes = [1, 2, 3], ContentType = "application/zip", FileName = "a.zip", Size = 3 };
 
         ServiceResult result = await sut.UpdateCalendarEventAsync(
-            new CalendarEventRequest { Id = 1, CalendarId = 1, Title = "New Title" }, "user@example.com", "1", [], attachedFile, TestContext.Current.CancellationToken);
+            new CalendarEventRequest { StartDate = Now, EndDate = Now, Id = 1, CalendarId = 1, Title = "New Title" }, "user@example.com", "1", [], attachedFile, TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
         Assert.Equal("CalendarEvent.AttachmentUploadFailed", result.ErrorCode);
@@ -884,7 +884,7 @@ public class CalendarServiceTests
         };
 
         ServiceResult result = await sut.UpdateCalendarEventAsync(
-            new CalendarEventRequest { Id = 1, CalendarId = 1, Title = "New Title" }, "user@example.com", "1", reminders, null, TestContext.Current.CancellationToken);
+            new CalendarEventRequest { StartDate = Now, EndDate = Now, Id = 1, CalendarId = 1, Title = "New Title" }, "user@example.com", "1", reminders, null, TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
         Assert.Contains("range", result.ErrorKey, StringComparison.OrdinalIgnoreCase);
@@ -908,7 +908,7 @@ public class CalendarServiceTests
 
     /// <summary>Edits event 1 as user@example.com from the "UserIndex" page with <paramref name="file"/>.</summary>
     private Task<ServiceResult> EditEventAsync(AttachedFileDto? file) => CreateSut().UpdateCalendarEventAsync(
-        new CalendarEventRequest { Id = 1, CalendarId = 1, Title = "New Title" }, "user@example.com", "UserIndex", [], file, TestContext.Current.CancellationToken);
+        new CalendarEventRequest { StartDate = Now, EndDate = Now, Id = 1, CalendarId = 1, Title = "New Title" }, "user@example.com", "UserIndex", [], file, TestContext.Current.CancellationToken);
 
     /// <summary>A zip named <paramref name="fileName"/> (2 bytes).</summary>
     private static AttachedFileDto Zip(string fileName = "new.zip") =>
@@ -1052,7 +1052,7 @@ public class CalendarServiceTests
         var sut = CreateSut();
 
         ServiceResult result = await sut.UpdateCalendarEventAsync(
-            new CalendarEventRequest { Id = 1, CalendarId = 1, Title = "Hijacked" }, "user@example.com", "1", [], null, TestContext.Current.CancellationToken);
+            new CalendarEventRequest { StartDate = Now, EndDate = Now, Id = 1, CalendarId = 1, Title = "Hijacked" }, "user@example.com", "1", [], null, TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
         _eventRepo.Verify(r => r.UpdateEntityAsync(It.IsAny<CalendarEvent>(), It.IsAny<CancellationToken>()), Times.Never);
@@ -1543,7 +1543,7 @@ public class CalendarServiceTests
         _calendarRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([MakeCalendar()]);
 
         ServiceResult result = await CreateSut().CreateCalendarEventAsync(
-            new CalendarEventRequest { CalendarId = 1, Title = "" }, "user@example.com", "1", [], null, TestContext.Current.CancellationToken);
+            new CalendarEventRequest { StartDate = Now, EndDate = Now, CalendarId = 1, Title = "" }, "user@example.com", "1", [], null, TestContext.Current.CancellationToken);
 
         Assert.Equal("CalendarEvent.TitleEmpty", result.ErrorCode);
         _eventRepo.Verify(r => r.CreateCalendarEventAsync(It.IsAny<CalendarEvent>(), It.IsAny<CancellationToken>()), Times.Never);
@@ -1559,7 +1559,7 @@ public class CalendarServiceTests
             .ThrowsAsync(new InvalidOperationException("secret detail"));
 
         ServiceResult result = await CreateSut().CreateCalendarEventAsync(
-            new CalendarEventRequest { CalendarId = 1, Title = "Meeting" }, "user@example.com", "1", [], null, TestContext.Current.CancellationToken);
+            new CalendarEventRequest { StartDate = Now, EndDate = Now, CalendarId = 1, Title = "Meeting" }, "user@example.com", "1", [], null, TestContext.Current.CancellationToken);
 
         Assert.Equal("CalendarEvent.CreateFailed", result.ErrorCode);
         Assert.Equal(ServiceResult.TemporaryErrorKey, result.ErrorKey);
@@ -1576,7 +1576,7 @@ public class CalendarServiceTests
         _eventRepo.Setup(r => r.FindByIdForUpdateAsync(1, It.IsAny<CancellationToken>())).ReturnsAsync(MakeCalendarEvent(1, 1, "Old"));
 
         ServiceResult result = await CreateSut().UpdateCalendarEventAsync(
-            new CalendarEventRequest { Id = 1, CalendarId = 1, Title = "" }, "user@example.com", "1", [], null, TestContext.Current.CancellationToken);
+            new CalendarEventRequest { StartDate = Now, EndDate = Now, Id = 1, CalendarId = 1, Title = "" }, "user@example.com", "1", [], null, TestContext.Current.CancellationToken);
 
         Assert.Equal("CalendarEvent.TitleEmpty", result.ErrorCode);
         _eventRepo.Verify(r => r.UpdateEntityAsync(It.IsAny<CalendarEvent>(), It.IsAny<CancellationToken>()), Times.Never);
@@ -1593,7 +1593,7 @@ public class CalendarServiceTests
             .ThrowsAsync(new InvalidOperationException("secret detail"));
 
         ServiceResult result = await CreateSut().UpdateCalendarEventAsync(
-            new CalendarEventRequest { Id = 1, CalendarId = 1, Title = "New" }, "user@example.com", "1", [], null, TestContext.Current.CancellationToken);
+            new CalendarEventRequest { StartDate = Now, EndDate = Now, Id = 1, CalendarId = 1, Title = "New" }, "user@example.com", "1", [], null, TestContext.Current.CancellationToken);
 
         Assert.Equal("CalendarEvent.UpdateFailed", result.ErrorCode);
         Assert.Equal(ServiceResult.TemporaryErrorKey, result.ErrorKey);
@@ -2061,7 +2061,7 @@ public class CalendarServiceTests
         _fileClient.Setup(f => f.UploadAsync(It.IsAny<byte[]>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(true);
 
         ServiceResult result = await CreateSut().CreateCalendarEventAsync(
-            new CalendarEventRequest { CalendarId = 1, Title = "T", Description = null }, Owner, "UserIndex", [], Zip(), TestContext.Current.CancellationToken);
+            new CalendarEventRequest { StartDate = Now, EndDate = Now, CalendarId = 1, Title = "T", Description = null }, Owner, "UserIndex", [], Zip(), TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
         _attachmentContent.Verify(a => a.SanitizeAndDecryptContent(""), Times.Once);
@@ -2076,7 +2076,7 @@ public class CalendarServiceTests
         GivenOwnedCalendars(MakeCalendar(1));
 
         ServiceResult result = await CreateSut().CreateCalendarEventAsync(
-            new CalendarEventRequest { CalendarId = 9, Title = "T" }, Owner, "UserIndex", [], null, TestContext.Current.CancellationToken);
+            new CalendarEventRequest { StartDate = Now, EndDate = Now, CalendarId = 9, Title = "T" }, Owner, "UserIndex", [], null, TestContext.Current.CancellationToken);
 
         Assert.Equal(ServiceErrorType.NotFound, result.ErrorType);
         Assert.Equal("Calendar.NotFound", result.ErrorCode);
@@ -2090,7 +2090,7 @@ public class CalendarServiceTests
         var thrown = new InvalidOperationException("db down");
         _calendarRepo.Setup(r => r.GetByAccountEmailAsync(Owner, It.IsAny<CancellationToken>())).ThrowsAsync(thrown);
 
-        await CreateSut().CreateCalendarEventAsync(new CalendarEventRequest { CalendarId = 1, Title = "T" }, Owner, "UserIndex", [], null, TestContext.Current.CancellationToken);
+        await CreateSut().CreateCalendarEventAsync(new CalendarEventRequest { StartDate = Now, EndDate = Now, CalendarId = 1, Title = "T" }, Owner, "UserIndex", [], null, TestContext.Current.CancellationToken);
 
         AssertLoggedError($"Failed to create calendar event for calendar 1 and account {Owner}", thrown);
     }
@@ -2107,7 +2107,7 @@ public class CalendarServiceTests
         _attachmentContent.Setup(a => a.SanitizeAndDecryptContent(It.IsAny<string>())).Returns<string>(h => h);
 
         ServiceResult result = await CreateSut().UpdateCalendarEventAsync(
-            new CalendarEventRequest { Id = 5, CalendarId = 2, Title = "T", Description = null }, Owner, "UserIndex", [], null, TestContext.Current.CancellationToken);
+            new CalendarEventRequest { StartDate = Now, EndDate = Now, Id = 5, CalendarId = 2, Title = "T", Description = null }, Owner, "UserIndex", [], null, TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
         _eventRepo.Verify(r => r.UpdateEntityAsync(It.Is<CalendarEvent>(e => e.Id == 5 && e.CalendarId == 2), It.IsAny<CancellationToken>()), Times.Once);
@@ -2143,7 +2143,7 @@ public class CalendarServiceTests
         GivenOwnedCalendars(MakeCalendar(1));
 
         ServiceResult result = await CreateSut().UpdateCalendarEventAsync(
-            new CalendarEventRequest { Id = 5, CalendarId = 9, Title = "T" }, Owner, "UserIndex", [], null, TestContext.Current.CancellationToken);
+            new CalendarEventRequest { StartDate = Now, EndDate = Now, Id = 5, CalendarId = 9, Title = "T" }, Owner, "UserIndex", [], null, TestContext.Current.CancellationToken);
 
         Assert.Equal(ServiceErrorType.NotFound, result.ErrorType);
         Assert.Equal("Calendar.NotFound", result.ErrorCode);
@@ -2167,7 +2167,7 @@ public class CalendarServiceTests
         _eventRepo.Setup(r => r.FindByIdForUpdateAsync(5, It.IsAny<CancellationToken>())).ReturnsAsync(existing);
 
         ServiceResult result = await CreateSut().UpdateCalendarEventAsync(
-            new CalendarEventRequest { Id = 5, CalendarId = 1, Title = "T" }, Owner, "UserIndex", [], null, TestContext.Current.CancellationToken);
+            new CalendarEventRequest { StartDate = Now, EndDate = Now, Id = 5, CalendarId = 1, Title = "T" }, Owner, "UserIndex", [], null, TestContext.Current.CancellationToken);
 
         Assert.Equal(ServiceErrorType.Validation, result.ErrorType);
         Assert.Equal("CalendarEvent.InvalidRequest", result.ErrorCode);
@@ -2182,7 +2182,7 @@ public class CalendarServiceTests
         var thrown = new InvalidOperationException("db down");
         _calendarRepo.Setup(r => r.GetByAccountEmailAsync(Owner, It.IsAny<CancellationToken>())).ThrowsAsync(thrown);
 
-        await CreateSut().UpdateCalendarEventAsync(new CalendarEventRequest { Id = 5, CalendarId = 1, Title = "T" }, Owner, "UserIndex", [], null, TestContext.Current.CancellationToken);
+        await CreateSut().UpdateCalendarEventAsync(new CalendarEventRequest { StartDate = Now, EndDate = Now, Id = 5, CalendarId = 1, Title = "T" }, Owner, "UserIndex", [], null, TestContext.Current.CancellationToken);
 
         AssertLoggedError($"Failed to update calendar event 5 for account {Owner}", thrown);
     }
@@ -2260,8 +2260,8 @@ public class CalendarServiceTests
         _eventRepo.Setup(r => r.FindByIdForUpdateAsync(5, It.IsAny<CancellationToken>())).ReturnsAsync(MakeCalendarEvent(5, calendarId: 1));
         _attachmentContent.Setup(a => a.SanitizeAndDecryptContent(It.IsAny<string>())).Returns<string>(h => h);
 
-        await CreateSut().CreateCalendarEventAsync(new CalendarEventRequest { CalendarId = 1, Title = "T", Description = "<p>new</p>" }, Owner, "UserIndex", [], null, TestContext.Current.CancellationToken);
-        await CreateSut().UpdateCalendarEventAsync(new CalendarEventRequest { Id = 5, CalendarId = 1, Title = "T", Description = "<p>edited</p>" }, Owner, "UserIndex", [], null, TestContext.Current.CancellationToken);
+        await CreateSut().CreateCalendarEventAsync(new CalendarEventRequest { StartDate = Now, EndDate = Now, CalendarId = 1, Title = "T", Description = "<p>new</p>" }, Owner, "UserIndex", [], null, TestContext.Current.CancellationToken);
+        await CreateSut().UpdateCalendarEventAsync(new CalendarEventRequest { StartDate = Now, EndDate = Now, Id = 5, CalendarId = 1, Title = "T", Description = "<p>edited</p>" }, Owner, "UserIndex", [], null, TestContext.Current.CancellationToken);
 
         _attachmentContent.Verify(a => a.SanitizeAndDecryptContent("<p>new</p>"), Times.Once);
         _attachmentContent.Verify(a => a.SanitizeAndDecryptContent("<p>edited</p>"), Times.Once);
@@ -2277,7 +2277,7 @@ public class CalendarServiceTests
     public async Task CreateCalendarEventAsync_RefusesAnOverLongRawDescription_BeforeSanitizingIt()
     {
         ServiceResult result = await CreateSut().CreateCalendarEventAsync(
-            new CalendarEventRequest { CalendarId = 1, Description = OverLongRawDescription() }, "user@example.com", "1", [], null,
+            new CalendarEventRequest { StartDate = Now, EndDate = Now, CalendarId = 1, Description = OverLongRawDescription() }, "user@example.com", "1", [], null,
             TestContext.Current.CancellationToken);
 
         Assert.Equal(("CalendarEvent.DescriptionTooLong", ServiceErrorType.Validation), (result.ErrorCode, result.ErrorType));
@@ -2290,7 +2290,7 @@ public class CalendarServiceTests
     public async Task UpdateCalendarEventAsync_RefusesAnOverLongRawDescription_BeforeSanitizingIt()
     {
         ServiceResult result = await CreateSut().UpdateCalendarEventAsync(
-            new CalendarEventRequest { Id = 1, CalendarId = 1, Description = OverLongRawDescription() }, "user@example.com", "1", [], null,
+            new CalendarEventRequest { StartDate = Now, EndDate = Now, Id = 1, CalendarId = 1, Description = OverLongRawDescription() }, "user@example.com", "1", [], null,
             TestContext.Current.CancellationToken);
 
         Assert.Equal(("CalendarEvent.DescriptionTooLong", ServiceErrorType.Validation), (result.ErrorCode, result.ErrorType));
