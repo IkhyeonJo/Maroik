@@ -34,7 +34,6 @@
     const $loading = $("#loading");
     const $formEditBoard = $("#formEditBoard");
     const $writeBoardTitle = $("#writeBoardTitle");
-    const $writeBoardNoticed = $("#writeBoardNoticed");
     const $writeBoardLocked = $("#writeBoardLocked");
     const $editBoardTitle = $("#editBoardTitle");
     const $editBoardLocked = $("#editBoardLocked");
@@ -289,13 +288,11 @@
 
         let title = $writeBoardTitle.val();
         let content = $writeBoardContent.val();
-        let noticed = $writeBoardNoticed.is(":checked");
         let locked = $writeBoardLocked.is(":checked");
 
         let formData = new FormData();
         formData.append("Title", title);
         formData.append("Content", content);
-        formData.append("Noticed", noticed);
         formData.append("Locked", locked);
         formData.append("UploadedFile", writeUploadedFile);
 

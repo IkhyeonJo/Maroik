@@ -14,7 +14,6 @@ const fixture =
    <input id="btnPrivateNoteSearchText" value="hello" />
    <input id="writeBoardTitle" value="t" /><input id="editBoardTitle" />
    <input type="checkbox" id="writeBoardLocked" /><input type="checkbox" id="editBoardLocked" />
-   <input type="checkbox" id="writeBoardNoticed" />
    <div id="loading"></div><textarea id="writePrivateNoteCommentContent"></textarea>
    <div id="confirmDeleteBoardDialogModal"></div>
    <form id="formWriteBoard"></form><form id="formEditBoard"></form>
@@ -46,6 +45,12 @@ describe("admin/Management/PrivateNote", () => {
         expect((instanceOfType(call.data, FormData)).get("Title")).toBe("t");
     });
 
+    it("the write form sends no Noticed flag: the page has no such box, and a private note is never pinned", () => {
+        const h = loadSite("admin", "Management", "PrivateNote", fixture);
+        h.$("#formWriteBoard").trigger("submit");
+        expect((instanceOfType(h.lastAjax().data, FormData)).has("Noticed")).toBe(false);
+    });
+
     it("the list button navigates to its data-link", () => {
         const h = loadSite("admin", "Management", "PrivateNote", fixture);
         h.$("#btnPrivateNoteList").trigger("click");
@@ -71,7 +76,7 @@ describeBoardScript({
     editAction: "EditPrivateNoteBoard",
     commentAction: "WritePrivateNoteComment",
     existsKey: "privateNoteBoard",
-    hasNoticed: true,
+    hasNoticed: false,
     downloadAction: "/Management/DownloadPrivateNoteAttachedFile",
 });
 
