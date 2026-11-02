@@ -46,7 +46,9 @@ that specific change. Check every candidate review finding in this area against 
   at start-up and every hour (at most 100 accounts per run, each in its own transaction: account row locked, idleness judged again
   under the lock, rows deleted, abort sent after the commit). `BeginUpload` still removes the account's idle uploads too, and
   `CheckQuota` (the check before a batch) does not count them, so an account they filled can always start the upload that removes
-  them. The worker reads `FileStorage:BaseUrl` like the website.
+  them. The worker reads `FileStorage:BaseUrl` like the website. A `complete` that fails (timeout, lost answer — not a refusal) is
+  aborted at once (since 2026-11-02, owner's request); when that abort fails too the row stays `Uploading` for this sweep, since a
+  dropped row would leave the staging / stored file where no sweep finds it.
 - "Turn off the virus scan for files" (since 2026-10-25, owner's request; it replaced the "keep a file the scan could not finish"
   question flow): an administrator ticks it per account in `Management/Account` (`Account.FileManagerScanDisabled`, default false,
   in the grid, its search, the Excel export and the admin update audit line). `CompleteUpload` reads it when the upload completes and

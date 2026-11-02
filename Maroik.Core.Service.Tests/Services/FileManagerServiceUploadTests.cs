@@ -396,17 +396,51 @@ public class FileManagerServiceUploadTests
         Assert.Contains(_h.Logger.Collector.GetSnapshot(), r => r.Level == LogLevel.Warning && r.Message == $"File Manager upload refused for {H.Email}: file {id} {reason}");
     }
 
-    /// <summary>A storage failure is a temporary error; the reservation is released.</summary>
+    /// <summary>
+    /// A storage failure is a temporary error. Unlike a refusal, a failure (a timeout, a lost answer) does not mean file storage dropped
+    /// the file — the scan may be queued, or the file already stored — so the upload is aborted before its reservation is released.
+    /// </summary>
     [Fact]
-    public async Task CompleteUploadAsync_AnswersATemporaryError_WhenStorageFails()
+    public async Task CompleteUploadAsync_AnswersATemporaryError_AndAbortsTheUpload_WhenStorageFails()
     {
+        List<string> steps = [];
         FileManagerUploadStart start = await StartAsync(Upload("a.bin", 10));
         _h.Files.Setup(f => f.CompleteFileManagerUploadAsync(start.UploadId, 10, It.IsAny<bool>(), H.BaseUrl, It.IsAny<CancellationToken>())).ReturnsAsync(FileUploadResult.Failed);
+        _h.Files.Setup(f => f.AbortFileManagerUploadAsync(start.UploadId, H.BaseUrl, It.IsAny<CancellationToken>()))
+            .Callback(() => steps.Add(_h.Nodes.All.Count == 1 ? "abort with the row kept" : "abort after the row was removed")).ReturnsAsync(true);
 
         (ServiceResult result, _) = await _h.Sut.CompleteUploadAsync(H.Email, start.UploadId, false, TestContext.Current.CancellationToken);
 
         Assert.Equal(ServiceResult.TemporaryErrorKey, result.ErrorKey);
+        Assert.Equal(["abort with the row kept"], steps);
         Assert.Empty(_h.Nodes.All);
+    }
+
+    /// <summary>
+    /// When the abort fails too, the upload row stays (still uploading) so the worker's hourly sweep aborts it once it has been idle for
+    /// an hour; dropping the row would leave the staging or stored file where no sweep could find it.
+    /// </summary>
+    [Fact]
+    public async Task CompleteUploadAsync_KeepsTheUploadForTheSweep_WhenStorageFails_AndTheAbortFails()
+    {
+        FileManagerUploadStart start = await StartAsync(Upload("a.bin", 10));
+        _h.Files.Setup(f => f.CompleteFileManagerUploadAsync(start.UploadId, 10, It.IsAny<bool>(), H.BaseUrl, It.IsAny<CancellationToken>())).ReturnsAsync(FileUploadResult.Failed);
+        _h.Files.Setup(f => f.AbortFileManagerUploadAsync(start.UploadId, H.BaseUrl, It.IsAny<CancellationToken>())).ReturnsAsync(false);
+
+        (ServiceResult result, _) = await _h.Sut.CompleteUploadAsync(H.Email, start.UploadId, false, TestContext.Current.CancellationToken);
+
+        Assert.Equal(ServiceResult.TemporaryErrorKey, result.ErrorKey);
+        Assert.True(Assert.Single(_h.Nodes.All).Uploading);
+        Assert.Contains(_h.Logger.Collector.GetSnapshot(), r => r.Level == LogLevel.Warning
+            && r.Message == $"File Manager: upload {start.UploadId} of {H.Email} could not be completed or aborted; left for the hourly sweep");
+
+        _h.Files.Setup(f => f.AbortFileManagerUploadAsync(start.UploadId, H.BaseUrl, It.IsAny<CancellationToken>())).ReturnsAsync(true);
+        _h.Time.Advance(FileManagerUploadPolicy.StaleUploadAge + TimeSpan.FromMinutes(1));
+        int removed = await _h.Sut.RemoveStaleUploadsAsync(100, TestContext.Current.CancellationToken);
+
+        Assert.Equal(1, removed);
+        Assert.Empty(_h.Nodes.All);
+        _h.Files.Verify(f => f.AbortFileManagerUploadAsync(start.UploadId, H.BaseUrl, It.IsAny<CancellationToken>()), Times.Exactly(2));
     }
 
     /// <summary>

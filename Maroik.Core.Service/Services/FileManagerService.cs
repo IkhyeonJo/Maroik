@@ -470,9 +470,18 @@ public class FileManagerService(
             return (ServiceResult.Ok(), FileManagerCompletion.Scanning);
         }
 
+        // A failure (a timeout, a lost answer) is not a refusal: file storage may still hold the staging file, a queued scan or the stored
+        // file. It is aborted first; when the abort fails too the row stays uploading, so the worker's hourly sweep aborts it once idle —
+        // without the row no sweep could find the file.
+        if (outcome == FileUploadResult.Failed && !await fileClient.AbortFileManagerUploadAsync(uploadId, BaseUrl, ct))
+        {
+            logger.LogWarning("File Manager: upload {UploadId} of {Email} could not be completed or aborted; left for the hourly sweep", uploadId, accountEmail);
+            return (Temporary(), FileManagerCompletion.Decided);
+        }
+
         if (outcome != FileUploadResult.Stored)
         {
-            // The file is not kept (file storage already dropped it): release the reservation.
+            // The file is not kept (file storage dropped it, or the abort above did): release the reservation.
             await nodeRepository.DeleteByEmailAndIdsAsync(accountEmail, [upload.Id], ct);
             switch (outcome)
             {

@@ -49,6 +49,7 @@ public interface IFileManagerService
     /// normal item (an upload already completed answers the same); an infected file, or one the scan could not finish, is refused. When
     /// the account's virus scan is off (read now, not when the upload started) file storage stores the file without a scan. With
     /// <paramref name="overwrite"/> a finished file of the same name is replaced (deleted); without it such a file makes the upload fail.
+    /// When file storage cannot be reached the upload is aborted; if the abort fails too it stays for the hourly sweep of abandoned uploads.
     /// </summary>
     Task<(ServiceResult Result, FileManagerCompletion Completion)> CompleteUploadAsync(string accountEmail, Guid uploadId, bool overwrite, CancellationToken ct = default);
 
