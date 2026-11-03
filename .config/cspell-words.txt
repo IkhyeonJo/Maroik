@@ -14,7 +14,9 @@ GPSOIGD
 HELO
 HOSTINGSTARTUPASSEMBLIES
 IPTC
+Ikhyeon
 IkhyeonJo
+Intelli
 JFIF
 Ldftn
 Mailpit
@@ -27,6 +29,7 @@ OPQRSTUVWXYZ
 PGPASSWORD
 Passw
 Perc
+Postgre
 QUJD
 RCDATA
 RSET
