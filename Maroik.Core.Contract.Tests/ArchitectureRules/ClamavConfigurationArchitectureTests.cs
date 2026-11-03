@@ -1,3 +1,4 @@
+// ReSharper disable UseRawString -- quote-heavy patterns that end in a quote, which a one-line raw string cannot.
 using System.Text.RegularExpressions;
 using Maroik.Core.Contract.Tests.Fixtures;
 

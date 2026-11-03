@@ -434,7 +434,7 @@ public sealed class FileManagerControllerTests(MaroikWebApplicationFactory facto
         var (session, _) = await LoginAsync();
         byte[] png = [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, 0, 0, 0, 0];
         await UploadAsync(session, "logo.png", png);
-        await UploadAsync(session, "fake.png", "<html>"u8.ToArray());
+        await UploadAsync(session, "fake.png", [.. "<html>"u8]);
         long logo = await IdOfAsync(session, "logo.png");
         long fake = await IdOfAsync(session, "fake.png");
 

@@ -1,3 +1,4 @@
+// ReSharper disable ClassNeverInstantiated.Global
 using Maroik.Core.Contract.Messages;
 using Maroik.Worker.Workers;
 using RabbitMQ.Client;

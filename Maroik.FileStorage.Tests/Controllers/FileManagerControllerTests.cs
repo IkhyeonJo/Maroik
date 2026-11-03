@@ -250,7 +250,7 @@ public sealed class FileManagerControllerTests(WebApplicationFactory<Program> ba
     public async Task AServiceFailure_IsLoggedWithTheException_AndNotLeaked()
     {
         var service = new Mock<Interfaces.IFileManagerStorageService>();
-        service.Setup(s => s.CompleteAsync(It.IsAny<string?>(), It.IsAny<long>(), It.IsAny<bool>(), It.IsAny<CancellationToken>())).ThrowsAsync(new IOException("disk-secret"));
+        service.Setup(s => s.CompleteAsync(It.IsAny<string?>(), It.IsAny<long>(), It.IsAny<bool>())).ThrowsAsync(new IOException("disk-secret"));
         var factory = baseFactory.WithWebHostBuilder(b => b.ConfigureServices(services =>
         {
             foreach (var d in services.Where(d => d.ServiceType == typeof(Interfaces.IFileManagerStorageService)).ToList()) services.Remove(d);

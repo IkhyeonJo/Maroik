@@ -73,7 +73,7 @@ public class FileManagerNamePolicyTests
     [InlineData("a|b")]
     [InlineData("a\tb")]
     [InlineData("a\nb")]
-    [InlineData("a\u0000b")]
+    [InlineData("a\0b")]
     [InlineData("a\u007Fb")]
     public void Validate_RefusesAForbiddenCharacter(string name)
     {

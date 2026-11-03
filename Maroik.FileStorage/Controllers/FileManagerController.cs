@@ -57,7 +57,7 @@ public class FileManagerController(IFileManagerStorageService storage, ILogger<F
     {
         try
         {
-            (string? error, bool scanning) = await storage.CompleteAsync(uploadId, expectedSize, skipScan, HttpContext.RequestAborted);
+            (string? error, bool scanning) = await storage.CompleteAsync(uploadId, expectedSize, skipScan);
             if (scanning)
                 return Accepted();
 

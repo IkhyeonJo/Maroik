@@ -72,7 +72,7 @@ public class FileManagerStorageService(IClamavClient clamavClient, IFileManagerS
     }
 
     /// <inheritdoc />
-    public async Task<(string? Error, bool Scanning)> CompleteAsync(string? uploadId, long expectedSize, bool skipScan, CancellationToken ct = default)
+    public async Task<(string? Error, bool Scanning)> CompleteAsync(string? uploadId, long expectedSize, bool skipScan)
     {
         string? id = CanonicalId(uploadId);
         StoragePath? staging = StagingFile(id);
@@ -181,7 +181,7 @@ public class FileManagerStorageService(IClamavClient clamavClient, IFileManagerS
     public string? Delete(string? filePath)
     {
         // Only "upload/FileManager/{GUID}" itself: an attachment, a staging file or a traversal is not a File Manager file.
-        string prefix = FileManagerDirectory + "/";
+        const string prefix = FileManagerDirectory + "/";
         string? id = filePath != null && filePath.StartsWith(prefix, StringComparison.Ordinal) ? CanonicalId(filePath[prefix.Length..]) : null;
         StoragePath? stored = id != null && filePath == prefix + id ? StoredFile(id) : null;
         if (stored == null)

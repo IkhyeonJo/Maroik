@@ -78,7 +78,7 @@ public class FileClientFileManagerTests
     {
         using var storage = new FakeStorage(HttpStatusCode.OK, "16777219");
 
-        long? length = await Sut(storage).AppendFileManagerChunkAsync(_uploadId, 16777216, new MemoryStream("abc"u8.ToArray()), BaseUrl, TestContext.Current.CancellationToken);
+        long? length = await Sut(storage).AppendFileManagerChunkAsync(_uploadId, 16777216, new MemoryStream([.. "abc"u8]), BaseUrl, TestContext.Current.CancellationToken);
 
         Assert.Equal(16777219, length);
         Assert.Equal($"{BaseUrl}/api/FileManager/chunk", storage.Url);

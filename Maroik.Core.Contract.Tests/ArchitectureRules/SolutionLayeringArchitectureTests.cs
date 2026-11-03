@@ -211,7 +211,7 @@ public class SolutionLayeringArchitectureTests
                 continue;
             }
 
-            string[] forbidden = project.ProjectReferences.Except(allowed).ToArray();
+            string[] forbidden = [.. project.ProjectReferences.Except(allowed)];
             if (forbidden.Length > 0)
                 violations.Add(
                     $"{project.Name} references {string.Join(", ", forbidden)} — allowed inward edges " +

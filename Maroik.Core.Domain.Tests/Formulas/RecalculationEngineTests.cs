@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using Maroik.Core.Domain.Formulas;
 using static Maroik.Core.Domain.Tests.Fixtures.FormulaFixture;
 
@@ -50,14 +51,15 @@ public class RecalculationEngineTests
     [Fact]
     public void Recalculate_EvaluatesOnlyTheReachedCells()
     {
-        int reads = 0;
-        RecalculationEngine engine = Engine(_ => { reads++; return 1m; }, ("A1", "5"), ("B1", "=A1+1"), ("C1", "=ACTUAL(Z1)"));
-        reads = 0;
+        // A box, not a captured local: the count is reset after the engine is built, which the actual-reader lambda reads.
+        StrongBox<int> reads = new(0);
+        RecalculationEngine engine = Engine(_ => { reads.Value++; return 1m; }, ("A1", "5"), ("B1", "=A1+1"), ("C1", "=ACTUAL(Z1)"));
+        reads.Value = 0;
 
         engine.Define(At("A1"), Def("6"));
         engine.Recalculate([At("A1")]);
 
-        Assert.Equal(0, reads);
+        Assert.Equal(0, reads.Value);
     }
 
     /// <summary>The cells of a cycle are #CYCLE!, and so is what reads them; the rest calculates.</summary>

@@ -24,11 +24,13 @@ public class ServiceErrorKeyResxTests
     private static readonly string _websiteDir = RepositoryPaths.Website;
 
     /// <summary>Every top-level <see cref="ServiceErrorKeys"/> value (the <see cref="ServiceErrorKeys.Signals"/> are not resx keys).</summary>
-    private static readonly HashSet<string> _keys = typeof(ServiceErrorKeys)
-        .GetFields(BindingFlags.Public | BindingFlags.Static)
-        .Where(f => f.IsLiteral)
-        .Select(f => (string)f.GetRawConstantValue()!)
-        .ToHashSet();
+    private static readonly HashSet<string> _keys =
+    [
+        .. typeof(ServiceErrorKeys)
+            .GetFields(BindingFlags.Public | BindingFlags.Static)
+            .Where(f => f.IsLiteral)
+            .Select(f => (string)f.GetRawConstantValue()!),
+    ];
 
     /// <summary>Resolves the Maroik assemblies from the test's own output folder.</summary>
     private static readonly ReaderParameters _readerParameters = CreateReaderParameters();
@@ -129,7 +131,7 @@ public class ServiceErrorKeyResxTests
     /// <summary>The keys of the resx file at <paramref name="path"/> (none when it does not exist).</summary>
     private static HashSet<string> ResxKeys(string path) =>
         File.Exists(path)
-            ? XDocument.Load(path).Root!.Elements("data").Select(d => (string)d.Attribute("name")!).ToHashSet()
+            ? [.. XDocument.Load(path).Root!.Elements("data").Select(d => (string)d.Attribute("name")!)]
             : [];
 
     /// <summary>Every service error key a controller can relay is defined in both cultures of its resx pair.</summary>

@@ -12,13 +12,13 @@ namespace Maroik.Core.Domain.Tests.Budgets;
 public class BudgetWorkbookTests
 {
     /// <summary>Meal / eat-out in KRW (row 2 of the expenditure sheet below).</summary>
-    private static readonly BudgetLine Meal = BudgetLine.Create(BudgetKind.Expenditure, "ConsumerSpending", "MealOrEatOutExpenses", "KRW").Value;
+    private static readonly BudgetLine _meal = BudgetLine.Create(BudgetKind.Expenditure, "ConsumerSpending", "MealOrEatOutExpenses", "KRW").Value;
 
     /// <summary>Pin money in KRW (row 3).</summary>
-    private static readonly BudgetLine Pin = BudgetLine.Create(BudgetKind.Expenditure, "ConsumerSpending", "PinMoney", "KRW").Value;
+    private static readonly BudgetLine _pin = BudgetLine.Create(BudgetKind.Expenditure, "ConsumerSpending", "PinMoney", "KRW").Value;
 
     /// <summary>Labor income in KRW (row 2 of the income sheet).</summary>
-    private static readonly BudgetLine Labor = BudgetLine.Create(BudgetKind.Income, "RegularIncome", "LaborIncome", "KRW").Value;
+    private static readonly BudgetLine _labor = BudgetLine.Create(BudgetKind.Income, "RegularIncome", "LaborIncome", "KRW").Value;
 
     // Expenditure2026: 1 header, 2 Meal, 3 Pin, 4 subtotal, 5 total, 6.. free rows (F.1 = row 6).
 
@@ -33,7 +33,7 @@ public class BudgetWorkbookTests
 
     /// <summary>A workbook of one expenditure sheet (Meal, Pin) with the given inputs and actuals.</summary>
     private static BudgetWorkbook Workbook(BudgetActuals? actuals = null, params (string Key, string Column, string Input)[] inputs) =>
-        new([Sheet(BudgetKind.Expenditure, 2026, [Meal, Pin], inputs)], actuals ?? Spent());
+        new([Sheet(BudgetKind.Expenditure, 2026, [_meal, _pin], inputs)], actuals ?? Spent());
 
     /// <summary>The cell of a view at an address.</summary>
     private static BudgetCellView Cell(BudgetSheetView view, string address) => view.Cells.Single(c => c.Address == address);
@@ -45,7 +45,7 @@ public class BudgetWorkbookTests
     [Fact]
     public void TheView_CalculatesTheSheet()
     {
-        BudgetSheetView view = Workbook(null, (Meal.Key, "B", "300000"), (Meal.Key, "C", $"=B{{{Meal.Key}}}*1.05"), (Pin.Key, "B", "1000")).View(BudgetKind.Expenditure, 2026);
+        BudgetSheetView view = Workbook(null, (_meal.Key, "B", "300000"), (_meal.Key, "C", $"=B{{{_meal.Key}}}*1.05"), (_pin.Key, "B", "1000")).View(BudgetKind.Expenditure, 2026);
 
         Assert.Equal(("H.ConsumerSpending", "F.1"), (view.Rows[0].Key, view.Rows[5].Key));
         Assert.Equal(N(315000), Cell(view, "C2").Value);
@@ -62,7 +62,7 @@ public class BudgetWorkbookTests
     [Fact]
     public void BudgetCells_CompareWithTheActuals()
     {
-        BudgetSheetView view = Workbook(Spent((Meal, 5, 150000m), (Pin, 1, 5m), (Meal, 2, 100m)), (Meal.Key, "F", "100000"), (Meal.Key, "B", "200"), (Meal.Key, "C", "100"))
+        BudgetSheetView view = Workbook(Spent((_meal, 5, 150000m), (_pin, 1, 5m), (_meal, 2, 100m)), (_meal.Key, "F", "100000"), (_meal.Key, "B", "200"), (_meal.Key, "C", "100"))
             .View(BudgetKind.Expenditure, 2026);
 
         Assert.Equal(new BudgetCellStatus(100000m, 150000m, -50000m, BudgetCellState.Over), Cell(view, "F2").Status);
@@ -77,7 +77,7 @@ public class BudgetWorkbookTests
     [Fact]
     public void BudgetValues_AreChecked()
     {
-        BudgetSheetView view = Workbook(null, (Meal.Key, "B", "=0-1"), (Meal.Key, "C", "=1.23456"), (Meal.Key, "D", "=\"x\""), (Meal.Key, "E", "=9E16*10"))
+        BudgetSheetView view = Workbook(null, (_meal.Key, "B", "=0-1"), (_meal.Key, "C", "=1.23456"), (_meal.Key, "D", "=\"x\""), (_meal.Key, "E", "=9E16*10"))
             .View(BudgetKind.Expenditure, 2026);
 
         Assert.Equal(new ErrorValue(FormulaErrorKind.Num), Cell(view, "B2").Value);
@@ -92,7 +92,7 @@ public class BudgetWorkbookTests
     {
         BudgetLine taxi = BudgetLine.Create(BudgetKind.Expenditure, "ConsumerSpending", "TransportationCost", "USD").Value;
 
-        BudgetSheetView view = Workbook(Spent((taxi, 3, 12m), (Meal, 3, 1m))).View(BudgetKind.Expenditure, 2026);
+        BudgetSheetView view = Workbook(Spent((taxi, 3, 12m), (_meal, 3, 1m))).View(BudgetKind.Expenditure, 2026);
 
         BudgetUnbudgetedLine line = Assert.Single(view.Unbudgeted);
         Assert.Equal(taxi, line.Line);
@@ -103,11 +103,11 @@ public class BudgetWorkbookTests
     [Fact]
     public void AnEdit_RecalculatesWhatItReaches()
     {
-        BudgetWorkbook workbook = Workbook(null, (Meal.Key, "C", $"=B{{{Meal.Key}}}*2"), ("F.1", "B", "7"));
+        BudgetWorkbook workbook = Workbook(null, (_meal.Key, "C", $"=B{{{_meal.Key}}}*2"), ("F.1", "B", "7"));
 
         BudgetEdit edit = workbook.Edit(BudgetKind.Expenditure, 2026, [new BudgetCellEdit("B2", "1,000")]).Value;
 
-        Assert.Equal([new BudgetCellWrite(Meal.Key, "B", "1000")], edit.Writes);
+        Assert.Equal([new BudgetCellWrite(_meal.Key, "B", "1000")], edit.Writes);
         Assert.Equal(["B2", "B4", "B5", "C2", "C4", "C5", "N2", "N4", "N5"], edit.Changed.Select(c => c.Address).Order(StringComparer.Ordinal));
         Assert.Equal(N(2000), Cell(workbook.View(BudgetKind.Expenditure, 2026), "C2").Value);
     }
@@ -128,16 +128,16 @@ public class BudgetWorkbookTests
     [Fact]
     public void Clearing_WritesNothing()
     {
-        BudgetEdit edit = Workbook(null, (Meal.Key, "B", "5")).Edit(BudgetKind.Expenditure, 2026, [new BudgetCellEdit("B2", "")]).Value;
+        BudgetEdit edit = Workbook(null, (_meal.Key, "B", "5")).Edit(BudgetKind.Expenditure, 2026, [new BudgetCellEdit("B2", "")]).Value;
 
-        Assert.Equal([new BudgetCellWrite(Meal.Key, "B", null)], edit.Writes);
+        Assert.Equal([new BudgetCellWrite(_meal.Key, "B", null)], edit.Writes);
     }
 
     /// <summary>An edit the cell does not accept, or of a cell the sheet does not have, is refused and changes nothing.</summary>
     [Fact]
     public void BadEdits_AreRefused()
     {
-        BudgetWorkbook workbook = Workbook(null, (Meal.Key, "B", "5"));
+        BudgetWorkbook workbook = Workbook(null, (_meal.Key, "B", "5"));
 
         Assert.Equal("Budget.CellNeedsNumber", workbook.Edit(BudgetKind.Expenditure, 2026, [new BudgetCellEdit("C2", "1"), new BudgetCellEdit("B2", "lunch")]).FirstError.Code);
         Assert.Equal("Budget.CellReadOnly", workbook.Edit(BudgetKind.Expenditure, 2026, [new BudgetCellEdit("N2", "1")]).FirstError.Code);
@@ -151,8 +151,8 @@ public class BudgetWorkbookTests
     public void Formulas_ReadOtherSheets()
     {
         BudgetWorkbook workbook = new([
-            Sheet(BudgetKind.Expenditure, 2026, [Meal], ("F.1", "B", "=Income!N{" + Labor.Key + "}*0.2")),
-            Sheet(BudgetKind.Income, 2026, [Labor], (Labor.Key, "B", "1000")),
+            Sheet(BudgetKind.Expenditure, 2026, [_meal], ("F.1", "B", "=Income!N{" + _labor.Key + "}*0.2")),
+            Sheet(BudgetKind.Income, 2026, [_labor], (_labor.Key, "B", "1000")),
         ], Spent());
         // Expenditure2026 with Meal only: 1 header, 2 Meal, 3 subtotal, 4 total, 5 = F.1.
 
@@ -188,11 +188,11 @@ public class BudgetWorkbookTests
     [Fact]
     public void FillRight_MovesRelativeReferences()
     {
-        BudgetWorkbook workbook = Workbook(null, (Meal.Key, "B", "100"), (Meal.Key, "C", $"=B{{{Meal.Key}}}*2"));
+        BudgetWorkbook workbook = Workbook(null, (_meal.Key, "B", "100"), (_meal.Key, "C", $"=B{{{_meal.Key}}}*2"));
 
         BudgetEdit edit = workbook.Copy(BudgetKind.Expenditure, 2026, "C2", "D2:E2").Value;
 
-        Assert.Equal([new BudgetCellWrite(Meal.Key, "D", $"=C{{{Meal.Key}}}*2"), new BudgetCellWrite(Meal.Key, "E", $"=D{{{Meal.Key}}}*2")], edit.Writes);
+        Assert.Equal([new BudgetCellWrite(_meal.Key, "D", $"=C{{{_meal.Key}}}*2"), new BudgetCellWrite(_meal.Key, "E", $"=D{{{_meal.Key}}}*2")], edit.Writes);
         Assert.Equal(N(800), Cell(workbook.View(BudgetKind.Expenditure, 2026), "E2").Value);
     }
 
@@ -200,26 +200,26 @@ public class BudgetWorkbookTests
     [Fact]
     public void Paste_TilesOrPastesOnce()
     {
-        Assert.Equal(["D", "E", "F", "G"], Workbook(null, (Meal.Key, "B", "1"), (Meal.Key, "C", "2")).Copy(BudgetKind.Expenditure, 2026, "B2:C2", "D2:G2").Value.Writes.Select(w => w.Column));
-        Assert.Equal(["D", "E"], Workbook(null, (Meal.Key, "B", "1"), (Meal.Key, "C", "2")).Copy(BudgetKind.Expenditure, 2026, "B2:C2", "D2:F2").Value.Writes.Select(w => w.Column));
-        Assert.Equal(["O", "P"], Workbook(null, (Meal.Key, "B", "1"), (Meal.Key, "C", "2")).Copy(BudgetKind.Expenditure, 2026, "b2:c2", "O6").Value.Writes.Select(w => w.Column));
+        Assert.Equal(["D", "E", "F", "G"], Workbook(null, (_meal.Key, "B", "1"), (_meal.Key, "C", "2")).Copy(BudgetKind.Expenditure, 2026, "B2:C2", "D2:G2").Value.Writes.Select(w => w.Column));
+        Assert.Equal(["D", "E"], Workbook(null, (_meal.Key, "B", "1"), (_meal.Key, "C", "2")).Copy(BudgetKind.Expenditure, 2026, "B2:C2", "D2:F2").Value.Writes.Select(w => w.Column));
+        Assert.Equal(["O", "P"], Workbook(null, (_meal.Key, "B", "1"), (_meal.Key, "C", "2")).Copy(BudgetKind.Expenditure, 2026, "b2:c2", "O6").Value.Writes.Select(w => w.Column));
     }
 
     /// <summary>A computed cell copies its formula; a label or blank cell copies as empty.</summary>
     [Fact]
     public void Copy_TakesComputedFormulas()
     {
-        BudgetEdit edit = Workbook(null).Copy(BudgetKind.Expenditure, 2026, "N2:N3", "O2:O3").Value;
+        BudgetEdit edit = Workbook().Copy(BudgetKind.Expenditure, 2026, "N2:N3", "O2:O3").Value;
 
-        Assert.Equal([$"=SUM(C{{{Meal.Key}}}:N{{{Meal.Key}}})", $"=SUM(C{{{Pin.Key}}}:N{{{Pin.Key}}})"], edit.Writes.Select(w => w.Input));
-        Assert.Equal([null], Workbook(null).Copy(BudgetKind.Expenditure, 2026, "A1", "O6").Value.Writes.Select(w => w.Input));
+        Assert.Equal([$"=SUM(C{{{_meal.Key}}}:N{{{_meal.Key}}})", $"=SUM(C{{{_pin.Key}}}:N{{{_pin.Key}}})"], edit.Writes.Select(w => w.Input));
+        Assert.Equal([null], Workbook().Copy(BudgetKind.Expenditure, 2026, "A1", "O6").Value.Writes.Select(w => w.Input));
     }
 
     /// <summary>A paste the target cells do not accept, that runs off the sheet, or with bad ranges, is refused.</summary>
     [Fact]
     public void BadPastes_AreRefused()
     {
-        BudgetWorkbook workbook = Workbook(null, ("F.1", "O", "note"), (Meal.Key, "B", "1"));
+        BudgetWorkbook workbook = Workbook(null, ("F.1", "O", "note"), (_meal.Key, "B", "1"));
 
         Assert.Equal("Budget.CellNeedsNumber", workbook.Copy(BudgetKind.Expenditure, 2026, "O6", "C2").FirstError.Code);
         Assert.Equal("Budget.CellReadOnly", workbook.Copy(BudgetKind.Expenditure, 2026, "B2", "N2").FirstError.Code);
@@ -232,7 +232,7 @@ public class BudgetWorkbookTests
     [Fact]
     public void ThePreview_ShowsTheValue()
     {
-        BudgetWorkbook workbook = Workbook(null, (Meal.Key, "B", "100"));
+        BudgetWorkbook workbook = Workbook(null, (_meal.Key, "B", "100"));
 
         BudgetFormulaPreview ok = workbook.Preview(BudgetKind.Expenditure, 2026, "C2", "=B2*3");
         BudgetFormulaPreview broken = workbook.Preview(BudgetKind.Expenditure, 2026, "C2", "=B2*");
@@ -253,20 +253,20 @@ public class BudgetWorkbookTests
     public void CarryOver_FillsEmptyBudgetCells()
     {
         BudgetWorkbook workbook = new([
-            Sheet(BudgetKind.Expenditure, 2026, [Meal, Pin], (Meal.Key, "C", "9")),
-            Sheet(BudgetKind.Expenditure, 2025, [Meal, Labor with { MainClass = "x" }], (Meal.Key, "B", "1"), (Meal.Key, "C", "2"), (Meal.Key, "D", $"=C{{{Meal.Key}}}*2"), ("F.1", "B", "free")),
+            Sheet(BudgetKind.Expenditure, 2026, [_meal, _pin], (_meal.Key, "C", "9")),
+            Sheet(BudgetKind.Expenditure, 2025, [_meal, _labor with { MainClass = "x" }], (_meal.Key, "B", "1"), (_meal.Key, "C", "2"), (_meal.Key, "D", $"=C{{{_meal.Key}}}*2"), ("F.1", "B", "free")),
         ], Spent());
 
         BudgetEdit edit = workbook.CarryOver(BudgetKind.Expenditure, 2026).Value;
 
-        Assert.Equal([new BudgetCellWrite(Meal.Key, "B", "1"), new BudgetCellWrite(Meal.Key, "D", $"=C{{{Meal.Key}}}*2")], edit.Writes);
+        Assert.Equal([new BudgetCellWrite(_meal.Key, "B", "1"), new BudgetCellWrite(_meal.Key, "D", $"=C{{{_meal.Key}}}*2")], edit.Writes);
         Assert.Equal(N(18), Cell(workbook.View(BudgetKind.Expenditure, 2026), "D2").Value);
     }
 
     /// <summary>Carry-over without last year's sheet copies nothing.</summary>
     [Fact]
     public void CarryOver_WithoutLastYear_CopiesNothing() =>
-        Assert.Empty(Workbook(null).CarryOver(BudgetKind.Expenditure, 2026).Value.Writes);
+        Assert.Empty(Workbook().CarryOver(BudgetKind.Expenditure, 2026).Value.Writes);
 
     /// <summary>The sheets a formula names, with the year of its own sheet for names without one.</summary>
     [Fact]
@@ -278,10 +278,10 @@ public class BudgetWorkbookTests
     [Fact]
     public void AnAbsentSheet_IsShownWithItsLines()
     {
-        BudgetSheetView view = new BudgetWorkbook([new BudgetSheetData(BudgetKind.Income, 2027, false, [Labor], new Dictionary<BudgetCellKey, string>())], Spent()).View(BudgetKind.Income, 2027);
+        BudgetSheetView view = new BudgetWorkbook([new BudgetSheetData(BudgetKind.Income, 2027, false, [_labor], new Dictionary<BudgetCellKey, string>())], Spent()).View(BudgetKind.Income, 2027);
 
         Assert.False(view.Exists);
-        Assert.Equal(Labor.Key, view.Rows[1].Key);
+        Assert.Equal(_labor.Key, view.Rows[1].Key);
     }
 
     // -- Formula references -----------------------------------------------------------

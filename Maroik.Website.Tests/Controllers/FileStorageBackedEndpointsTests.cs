@@ -537,7 +537,7 @@ public class FileStorageBackedEndpointsTests(MaroikWebApplicationFactory factory
     public async Task IsCalendarEventExists_DescribesTheAttachment_WithoutItsPathOrItsBytes()
     {
         using var host = CreateHost();
-        string email = "storage-cal-detail@test.com";
+        const string email = "storage-cal-detail@test.com";
         var session = await LoginAsync(host, email);
         string path = $"upload/Calendar/UserIndex/calendarEventAttachedFiles/{Guid.NewGuid():N}.zip";
         byte[] bytes = [.. "calendar-attachment-bytes"u8];
@@ -560,7 +560,7 @@ public class FileStorageBackedEndpointsTests(MaroikWebApplicationFactory factory
     public async Task IsOtherCalendarEventExists_DescribesTheAttachment_WithoutItsPathOrItsBytes_ToAnAnonymousVisitor()
     {
         using var host = CreateHost();
-        string email = "storage-cal-other-detail@test.com";
+        const string email = "storage-cal-other-detail@test.com";
         await LoginAsync(host, email);
         string path = $"upload/Calendar/UserIndex/calendarEventAttachedFiles/{Guid.NewGuid():N}.zip";
         byte[] bytes = [.. "shared-attachment-bytes"u8];
@@ -581,7 +581,7 @@ public class FileStorageBackedEndpointsTests(MaroikWebApplicationFactory factory
     public async Task DownloadCalendarEventAttachedFile_StreamsTheAttachment_ToTheOwnerOfTheCalendar()
     {
         using var host = CreateHost();
-        string email = "storage-cal-dl-owner@test.com";
+        const string email = "storage-cal-dl-owner@test.com";
         var session = await LoginAsync(host, email);
         string path = $"upload/Calendar/UserIndex/calendarEventAttachedFiles/{Guid.NewGuid():N}.zip";
         byte[] bytes = [.. "calendar-attachment-bytes"u8];
@@ -602,7 +602,7 @@ public class FileStorageBackedEndpointsTests(MaroikWebApplicationFactory factory
     public async Task DownloadCalendarEventAttachedFile_IsAllowedForAnAnonymousVisitor_OnAnAnonymouslySharedCalendar()
     {
         using var host = CreateHost();
-        string email = "storage-cal-dl-anon-owner@test.com";
+        const string email = "storage-cal-dl-anon-owner@test.com";
         await LoginAsync(host, email);
         string path = $"upload/Calendar/UserIndex/calendarEventAttachedFiles/{Guid.NewGuid():N}.zip";
         host.Files.Seed(path, [1, 2, 3]);
@@ -624,7 +624,7 @@ public class FileStorageBackedEndpointsTests(MaroikWebApplicationFactory factory
     public async Task DownloadCalendarEventAttachedFile_RefusesAViewerWhoMayNotSeeTheCalendar()
     {
         using var host = CreateHost();
-        string ownerEmail = "storage-cal-dl-private-owner@test.com";
+        const string ownerEmail = "storage-cal-dl-private-owner@test.com";
         await LoginAsync(host, ownerEmail);
         var stranger = await LoginAsync(host, "storage-cal-dl-stranger@test.com");
         var anonymous = await AuthenticatedSessionHelper.AnonymousAsync(host.Client, TestContext.Current.CancellationToken);
@@ -650,7 +650,7 @@ public class FileStorageBackedEndpointsTests(MaroikWebApplicationFactory factory
     public async Task DownloadCalendarEventAttachedFile_ReportsAFailure_WhenStorageCannotHandOutTheFile()
     {
         using var host = CreateHost();
-        string email = "storage-cal-dl-down@test.com";
+        const string email = "storage-cal-dl-down@test.com";
         var session = await LoginAsync(host, email);
         host.Files.ThrowOnDownload = true;
         long eventId = await SeedCalendarEventWithAttachmentAsync(email, $"upload/Calendar/UserIndex/calendarEventAttachedFiles/{Guid.NewGuid():N}.zip", 10);
@@ -702,7 +702,7 @@ public class FileStorageBackedEndpointsTests(MaroikWebApplicationFactory factory
     public async Task UpdateCalendarEvent_WithANewFile_ReplacesTheSameAttachmentRow()
     {
         using var host = CreateHost();
-        string email = "storage-cal-edit-replace@test.com";
+        const string email = "storage-cal-edit-replace@test.com";
         var session = await LoginAsync(host, email);
         string oldPath = $"upload/Calendar/UserIndex/calendarEventAttachedFiles/{Guid.NewGuid():N}.zip";
         host.Files.Seed(oldPath, [1]);
@@ -733,7 +733,7 @@ public class FileStorageBackedEndpointsTests(MaroikWebApplicationFactory factory
     public async Task UpdateCalendarEvent_WithoutAFile_ClearsTheSameAttachmentRow()
     {
         using var host = CreateHost();
-        string email = "storage-cal-edit-clear@test.com";
+        const string email = "storage-cal-edit-clear@test.com";
         var session = await LoginAsync(host, email);
         string path = $"upload/Calendar/UserIndex/calendarEventAttachedFiles/{Guid.NewGuid():N}.zip";
         host.Files.Seed(path, [1]);

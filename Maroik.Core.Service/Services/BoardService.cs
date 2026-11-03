@@ -314,7 +314,7 @@ public class BoardService(
             }
 
             IEnumerable<BoardComment> existing = await boardCommentRepository.GetByBoardIdOrderedAsync(request.BoardId, ct);
-            List<BoardComment> existingList = existing.ToList();
+            List<BoardComment> existingList = [.. existing];
 
             long order = BoardComment.NextOrder(existingList);
 

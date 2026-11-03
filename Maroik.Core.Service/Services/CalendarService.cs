@@ -85,7 +85,10 @@ public class CalendarService(
     public async Task<IEnumerable<CalendarEventReminderDto>> GetCalendarEventRemindersAsync(long calendarEventId, CancellationToken ct = default)
         => (await calendarEventReminderRepository.GetByCalendarEventIdAsync(calendarEventId, ct)).Select(CalendarEventReminderMapper.ToResponse);
 
-    /// <inheritdoc />
+    /// <summary>
+    /// Returns calendars that the given account has subscribed to from other users. Only this service reads it (the visible
+    /// "Other calendars"), so it is not part of <see cref="ICalendarService"/>.
+    /// </summary>
     public async Task<List<OtherCalendarResponse>> GetOtherCalendarsAsync(string email, CancellationToken ct = default)
     {
         List<OtherCalendarResponse> subscriptions =
@@ -116,7 +119,11 @@ public class CalendarService(
         ];
     }
 
-    /// <inheritdoc />
+    /// <summary>
+    /// Creates the CalendarShared row for each of the given calendars that doesn't already have one.
+    /// Fetches the sharing table once and reuses it for every ID, instead of one full scan per calendar.
+    /// Only this service calls it (before it reads the sharing status), so it is not part of <see cref="ICalendarService"/>.
+    /// </summary>
     public async Task<ServiceResult> EnsureCalendarSharedAsync(IEnumerable<long> calendarIds, CancellationToken ct = default)
     {
         List<long> ids = [.. calendarIds];

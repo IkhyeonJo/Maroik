@@ -15,7 +15,7 @@ public class LogTemplatesTests
     [Fact]
     public void Console_KeepsAValueWithLineBreaksOnOneLine()
     {
-        const string forged = "a@b.com\n[00:00:00 INF] Maroik: Login succeeded for admin@maroik.com\r\u001b[31m";
+        const string forged = "a@b.com\n[00:00:00 INF] Maroik: Login succeeded for admin@maroik.com\r\e[31m";
 
         string rendered = Render(LogTemplates.Console, "Login failed: no account for {Email}", forged);
 

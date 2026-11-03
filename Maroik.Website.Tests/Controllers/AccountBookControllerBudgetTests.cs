@@ -22,10 +22,14 @@ public class AccountBookControllerBudgetTests(MaroikWebApplicationFactory factor
     /// <summary>The row key of labor income in KRW.</summary>
     private const string LaborKey = "L.RegularIncome.LaborIncome.4B5257";
 
-    /// <summary>Signs in a fresh account (unique per test) that owns one KRW asset, so its new sheets get KRW lines.</summary>
-    private async Task<(AuthenticatedSession Session, string Email)> LoginAsync([System.Runtime.CompilerServices.CallerMemberName] string test = "")
+    /// <summary>
+    /// Signs in a fresh account (unique per test; <paramref name="who"/> names a second account of the same test) that owns one KRW
+    /// asset, so its new sheets get KRW lines.
+    /// </summary>
+    private async Task<(AuthenticatedSession Session, string Email)> LoginAsync(string? who = null, [System.Runtime.CompilerServices.CallerMemberName] string test = "")
     {
-        string email = $"budget-{Math.Abs(test.GetHashCode(StringComparison.Ordinal))}-{Guid.NewGuid():N}"[..40].ToLowerInvariant() + "@test.com";
+        string seed = who is null ? test : $"{test}-{who}";
+        string email = $"budget-{Math.Abs(seed.GetHashCode(StringComparison.Ordinal))}-{Guid.NewGuid():N}"[..40].ToLowerInvariant() + "@test.com";
         AuthenticatedSession session = await AuthenticatedSessionHelper.LoginAsync(factory, _client, email, "UserPassword1!", Role.User, TestContext.Current.CancellationToken);
         using var scope = factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();

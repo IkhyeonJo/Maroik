@@ -45,6 +45,18 @@ public class SpellingDictionaryArchitectureTests
         Assert.Equal(string.Join("\n", rider), string.Join("\n", cspell));
     }
 
+    /// <summary>
+    /// The shared ReSharper settings hold no spelling words of their own (<c>UserDictionary</c>): a third list would drift from the
+    /// two above unseen. A project word goes into the shared list, which Rider reads through its project dictionary.
+    /// </summary>
+    [Fact]
+    public void TheSharedRiderSettings_KeepNoWordListOfTheirOwn()
+    {
+        string settings = File.ReadAllText(Path.Combine(RepositoryPaths.Root, "Maroik.slnx.DotSettings"));
+
+        Assert.DoesNotContain("/UserDictionary/", settings, StringComparison.Ordinal);
+    }
+
     /// <summary>The cspell configuration reads that word list, so the shared words are the ones cspell uses.</summary>
     [Fact]
     public void CspellConfig_ReadsTheSharedWordList()

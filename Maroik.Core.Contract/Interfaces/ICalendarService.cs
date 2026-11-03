@@ -27,10 +27,6 @@ public interface ICalendarService
     /// <summary>Returns all reminder settings for the given calendar event.</summary>
     Task<IEnumerable<CalendarEventReminderDto>> GetCalendarEventRemindersAsync(long calendarEventId, CancellationToken ct = default);
 
-    /// <summary>Returns calendars that the given account has subscribed to from other users.</summary>
-    Task<List<OtherCalendarResponse>> GetOtherCalendarsAsync(string email, CancellationToken ct = default);
-
-
     /// <summary>
     /// Returns the calendars the caller can see beyond ones they own: calendars they subscribe
     /// to when logged in, or calendars shared anonymously when not. Used by every "Other
@@ -40,12 +36,6 @@ public interface ICalendarService
     /// <param name="loggedInAccount">The current session's account, or null when logged out.</param>
     /// <param name="ct">Cancellation token.</param>
     Task<List<CalendarResponse>> GetVisibleOtherCalendarsAsync(AccountResponse? loggedInAccount, CancellationToken ct = default);
-
-    /// <summary>
-    /// Creates the CalendarShared row for each of the given calendars that doesn't already have one.
-    /// Fetches the sharing table once and reuses it for every ID, instead of one full scan per calendar.
-    /// </summary>
-    Task<ServiceResult> EnsureCalendarSharedAsync(IEnumerable<long> calendarIds, CancellationToken ct = default);
 
     /// <summary>
     /// Returns the sharing status (ID/Name/User/Guest) of every calendar owned by

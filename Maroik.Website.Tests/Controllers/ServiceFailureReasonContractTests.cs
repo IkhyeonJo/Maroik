@@ -235,15 +235,15 @@ public class ServiceFailureReasonContractTests(MaroikWebApplicationFactory facto
         });
         var admin = await AuthenticatedSessionHelper.LoginAsync(host, client, "reason-menu-delete@test.com", "UserPassword1!", Role.Admin, TestContext.Current.CancellationToken);
 
-        async Task<string> Error(string url)
+        async Task<string> Error(HttpClient http, string url)
         {
-            var response = await client.SendAsync(admin.BuildJsonPostRequest(url, MenuBody(Role.User, id: 1, categoryId: 1)), TestContext.Current.CancellationToken);
+            var response = await http.SendAsync(admin.BuildJsonPostRequest(url, MenuBody(Role.User, id: 1, categoryId: 1)), TestContext.Current.CancellationToken);
             using var doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken));
             return doc.RootElement.GetProperty("error").GetString()!;
         }
 
-        Assert.Equal("Category name cannot be empty.", await Error("/Management/DeleteCategory"));
-        Assert.Equal("Sub-category name cannot be empty.", await Error("/Management/DeleteSubCategory"));
+        Assert.Equal("Category name cannot be empty.", await Error(client, "/Management/DeleteCategory"));
+        Assert.Equal("Sub-category name cannot be empty.", await Error(client, "/Management/DeleteSubCategory"));
     }
 
     /// <summary>The real menu service, except that every delete is refused with a recognizable reason.</summary>

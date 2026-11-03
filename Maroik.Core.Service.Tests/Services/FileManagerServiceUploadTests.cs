@@ -392,7 +392,7 @@ public class FileManagerServiceUploadTests
 
         Assert.Equal(key, result.ErrorKey);
         Assert.Empty(_h.Nodes.All);
-        long id = 1;
+        const long id = 1;
         Assert.Contains(_h.Logger.Collector.GetSnapshot(), r => r.Level == LogLevel.Warning && r.Message == $"File Manager upload refused for {H.Email}: file {id} {reason}");
     }
 
@@ -579,7 +579,7 @@ public class FileManagerServiceUploadTests
         Assert.Empty(_h.Nodes.All);
         _h.Files.Verify(f => f.AbortFileManagerUploadAsync(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
         _h.Files.Verify(f => f.DeleteFileManagerFileAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
-        long id = 1;
+        const long id = 1;
         Assert.Contains(_h.Logger.Collector.GetSnapshot(), r => r.Level == LogLevel.Warning && r.Message == $"File Manager upload refused for {H.Email}: file {id} could not be scanned");
     }
 

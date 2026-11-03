@@ -10,8 +10,8 @@ public class FileManagerPreviewPolicyTests
     /// <summary>The leading bytes of each previewable format.</summary>
     private static readonly byte[] _png = [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, 0, 0, 0, 0];
     private static readonly byte[] _jpeg = [0xFF, 0xD8, 0xFF, 0xE0, 0, 0, 0, 0, 0, 0, 0, 0];
-    private static readonly byte[] _gif = "GIF89a......"u8.ToArray();
-    private static readonly byte[] _webp = "RIFF\0\0\0\0WEBP"u8.ToArray();
+    private static readonly byte[] _gif = [.. "GIF89a......"u8];
+    private static readonly byte[] _webp = [.. "RIFF\0\0\0\0WEBP"u8];
 
     /// <summary>The preview size limit is 100 MB.</summary>
     [Fact]

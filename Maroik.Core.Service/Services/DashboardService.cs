@@ -82,7 +82,7 @@ public class DashboardService(
         var summary = new DashboardDto
         {
             DefaultMonetaryUnit = defaultMonetaryUnit?.Value,
-            Assets = assets.Select(AssetMapper.ToResponse).ToList(),
+            Assets = [.. assets.Select(AssetMapper.ToResponse)],
             SelectedYear = yearInt,
             SelectedMonth = monthInt,
             EndYear = accountToday.Year,

@@ -1,3 +1,4 @@
+// ReSharper disable UnusedAutoPropertyAccessor.Global
 namespace Maroik.Website.Models.ViewModels.AccountBooks;
 
 /// <summary>A reference of the formula being typed and the block it outlines on the grid.</summary>

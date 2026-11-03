@@ -90,8 +90,8 @@ public class KanbanControllerTests(MaroikWebApplicationFactory factory)
         string html = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
         Assert.Equal(System.Net.HttpStatusCode.OK, response.StatusCode);
-        int[] positions = new[] { "data-lane=\"Backlog\"", "data-lane=\"ToDo\"", "data-lane=\"InProgress\"", "data-lane=\"Done\"" }
-            .Select(marker => html.IndexOf(marker, StringComparison.Ordinal)).ToArray();
+        string[] markers = ["data-lane=\"Backlog\"", "data-lane=\"ToDo\"", "data-lane=\"InProgress\"", "data-lane=\"Done\""];
+        int[] positions = [.. markers.Select(marker => html.IndexOf(marker, StringComparison.Ordinal))];
         Assert.All(positions, p => Assert.True(p >= 0));
         Assert.Equal(positions.Order(), positions);
         Assert.Contains(">Backlog<", html, StringComparison.Ordinal);

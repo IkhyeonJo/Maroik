@@ -1,6 +1,5 @@
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Domain.Budgets;
-using Maroik.Core.Service.Tests.Fixtures;
 using H = Maroik.Core.Service.Tests.Fixtures.BudgetServiceHarness;
 
 namespace Maroik.Core.Service.Tests.Services;
@@ -12,7 +11,7 @@ namespace Maroik.Core.Service.Tests.Services;
 public class BudgetServiceReadTests
 {
     /// <summary>The harness.</summary>
-    private readonly BudgetServiceHarness _h = new();
+    private readonly H _h = new();
 
     /// <summary>Meal / eat-out in KRW.</summary>
     private static readonly BudgetLine _meal = BudgetLine.Create(BudgetKind.Expenditure, "ConsumerSpending", "MealOrEatOutExpenses", "KRW").Value;

@@ -148,9 +148,8 @@ Whitespace / EOL / quotes / semicolons for `*.ts` are pinned in the **repo-root
 mechanism (Rider reads JS/TS style straight from `.editorconfig`). `TypeScripts/**`
 is narrowed there to **whitespace-only** rules so a reformat-on-save can't churn the
 byte-faithful port; `TypeScripts.Tests/**` is 2-space; the `tsc` output (`wwwroot/**/custom/**/site.js`) is
-`generated_code = true`. `Maroik.sln.DotSettings`
-carries the few ReSharper-side JS/TS toggles that aren't editorconfig-backed (e.g. TS interfaces take **no** `I` prefix,
-unlike C#).
+`generated_code = true`. `Maroik.slnx.DotSettings` holds no JS/TS settings: all of it is in `.editorconfig`.
+TS interfaces take **no** `I` prefix, unlike C# (Rider's TypeScript inspections do not ask for one).
 
 ## Tech stack
 

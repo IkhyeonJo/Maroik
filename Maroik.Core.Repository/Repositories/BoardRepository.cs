@@ -159,7 +159,7 @@ public class BoardRepository(ApplicationDbContext context)
         int skip = (int)Math.Min(offset, int.MaxValue);
 
         List<OrmBoard> page = await filtered.Skip(skip).Take(query.PageSize).ToListAsync(ct);
-        return (page.Select(ToDomain).ToList(), totalCount);
+        return ([.. page.Select(ToDomain)], totalCount);
     }
 
     /// <inheritdoc />

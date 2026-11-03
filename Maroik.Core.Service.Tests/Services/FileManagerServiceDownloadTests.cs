@@ -97,7 +97,7 @@ public class FileManagerServiceDownloadTests
     public async Task OpenPreviewAsync_RefusesAFileWhoseBytesAreNotAnImage()
     {
         long id = _h.File("trick.png");
-        _h.Files.Setup(f => f.DownloadAsync(_h.Node(id).StoragePath!, H.BaseUrl, It.IsAny<CancellationToken>())).ReturnsAsync("<html><script>alert(1)</script>"u8.ToArray());
+        _h.Files.Setup(f => f.DownloadAsync(_h.Node(id).StoragePath!, H.BaseUrl, It.IsAny<CancellationToken>())).ReturnsAsync([.. "<html><script>alert(1)</script>"u8]);
 
         Assert.Equal(ServiceErrorKeys.FileManagerNoPreview, (await _h.Sut.OpenPreviewAsync(H.Email, id, TestContext.Current.CancellationToken)).Result.ErrorKey);
     }

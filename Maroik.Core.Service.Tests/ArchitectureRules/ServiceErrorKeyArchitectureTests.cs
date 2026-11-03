@@ -1,3 +1,4 @@
+// ReSharper disable UseRawString -- quote-heavy patterns that end in a quote, which a one-line raw string cannot.
 using System.Text.RegularExpressions;
 
 namespace Maroik.Core.Service.Tests.ArchitectureRules;
@@ -79,8 +80,8 @@ public partial class ServiceErrorKeyArchitectureTests
                     "Expenditure.SameAsset", "The values cannot be the same.");
                 """, "'The values cannot be the same.'")]
     [InlineData("""return new ConfirmEmailResult { InvalidToken = true, ErrorKey = "Something failed" };""", "'Something failed'")]
-    [InlineData("""return new ConfirmEmailResult { ErrorKey = ServiceErrorKeys.ConfirmEmailFailed };""", null)]
-    [InlineData("""return ServiceResult.Fail(ServiceErrorKeys.InputInvalid);""", null)]
+    [InlineData("return new ConfirmEmailResult { ErrorKey = ServiceErrorKeys.ConfirmEmailFailed };", null)]
+    [InlineData("return ServiceResult.Fail(ServiceErrorKeys.InputInvalid);", null)]
     [InlineData("""return ServiceResult.NotFound("Board.NotFound", ServiceErrorKeys.PostNotFound);""", null)]
     [InlineData("""/// <c>ServiceResult.Fail("example")</c>""", null)]
     public void LiteralKeysIn_FindsExactlyTheLiteralKeys(string source, string? expected)

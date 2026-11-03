@@ -84,7 +84,7 @@ public class EmailConsumerWorkerTests
     {
         var handler = new Mock<IEmailMessageHandler>();
         using var worker = CreateSut(handler.Object, out var channel);
-        byte[] body = Encoding.UTF8.GetBytes("not valid json");
+        byte[] body = [.. "not valid json"u8];
         BasicProperties? published = null;
         channel.Setup(c => c.BasicPublishAsync(
                 "", EmailConsumerWorker.RetryQueueName(1), false, It.IsAny<BasicProperties>(), It.IsAny<ReadOnlyMemory<byte>>(), It.IsAny<CancellationToken>()))
@@ -107,7 +107,7 @@ public class EmailConsumerWorkerTests
     {
         var handler = new Mock<IEmailMessageHandler>();
         using var worker = CreateSut(handler.Object, out var channel);
-        byte[] body = Encoding.UTF8.GetBytes("not valid json");
+        byte[] body = [.. "not valid json"u8];
 
         await worker.OnMessageReceivedAsync(this, MakeDeliverArgs(body, deliveryTag: 3, redelivered: true, retryCount: EmailConsumerWorker.MaxRetries));
 
@@ -122,7 +122,7 @@ public class EmailConsumerWorkerTests
     {
         var handler = new Mock<IEmailMessageHandler>();
         using var worker = CreateSut(handler.Object, out var channel);
-        byte[] body = "null"u8.ToArray();
+        byte[] body = [.. "null"u8];
         channel.Setup(c => c.BasicPublishAsync(
                 It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<BasicProperties>(), It.IsAny<ReadOnlyMemory<byte>>(), It.IsAny<CancellationToken>()))
             .Returns(ValueTask.CompletedTask);
@@ -636,7 +636,7 @@ public class EmailConsumerWorkerTests
     /// UTF-8 byte string): a value already at the limit dead-letters instead of retrying forever.
     /// </summary>
     [Theory]
-    [MemberData(nameof(ExhaustedRetryHeaders))]
+    [MemberData(nameof(ExhaustedRetryHeaders), DisableDiscoveryEnumeration = true)]
     public async Task OnMessageReceivedAsync_DeadLettersInsteadOfRetrying_WhenTheRetryHeaderIsAtTheLimit(object headerValue)
     {
         var handler = new Mock<IEmailMessageHandler>();

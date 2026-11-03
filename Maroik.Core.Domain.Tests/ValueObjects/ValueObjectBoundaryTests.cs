@@ -32,15 +32,15 @@ public class ValueObjectBoundaryTests
         Assert.NotEqual(HtmlColorCode.Create("#112233").Value, HtmlColorCode.Create("#445566").Value);
         Assert.Equal(TimeZoneId.Create("UTC").Value, TimeZoneId.Create("UTC").Value);
         Assert.NotEqual(TimeZoneId.Create("UTC").Value, TimeZoneId.Create("Asia/Seoul").Value);
-        Assert.Equal(Domain.ValueObjects.Email.Create("a@b.com").Value, Domain.ValueObjects.Email.Create("A@B.com").Value);
-        Assert.NotEqual(Domain.ValueObjects.Email.Create("a@b.com").Value, Domain.ValueObjects.Email.Create("c@b.com").Value);
+        Assert.Equal(Email.Create("a@b.com").Value, Email.Create("A@B.com").Value);
+        Assert.NotEqual(Email.Create("a@b.com").Value, Email.Create("c@b.com").Value);
     }
 
     /// <summary>Verifies that ordinary addresses, including dotted local parts and sub-domains, are accepted.</summary>
     [Theory]
     [InlineData("a@b.co")]
     [InlineData("first.last@sub.example.com")]
-    public void Email_AcceptsOrdinaryAddresses(string address) => Assert.False(Domain.ValueObjects.Email.Create(address).IsError);
+    public void Email_AcceptsOrdinaryAddresses(string address) => Assert.False(Email.Create(address).IsError);
 
     /// <summary>Verifies that malformed hosts, local parts and the display-name form are rejected with <c>Email.Invalid</c>.</summary>
     [Theory]
@@ -54,7 +54,7 @@ public class ValueObjectBoundaryTests
     [InlineData("Jane <jane@x.com>")] // display-name form
     public void Email_RejectsMalformedAddresses(string address)
     {
-        ErrorAssert.Validation(Domain.ValueObjects.Email.Create(address), "Email.Invalid", "'{0}' is not a valid email address.", address);
+        ErrorAssert.Validation(Email.Create(address), "Email.Invalid", "'{0}' is not a valid email address.", address);
     }
 
     /// <summary>Verifies that a 45-character currency code is accepted, a 46-character or blank one is refused.</summary>

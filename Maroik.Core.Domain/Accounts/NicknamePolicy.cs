@@ -176,10 +176,10 @@ public static class NicknamePolicy
         {
             switch (c)
             {
-                case (>= 'A' and <= 'Z') or (>= 'a' and <= 'z') or (>= 'À' and <= 'ɏ'):
+                case >= 'A' and <= 'Z' or >= 'a' and <= 'z' or >= 'À' and <= 'ɏ':
                     latin = true;
                     break;
-                case (>= 'Ͱ' and <= 'Ͽ') or (>= 'Ѐ' and <= 'ԯ'):
+                case >= 'Ͱ' and <= 'Ͽ' or >= 'Ѐ' and <= 'ԯ':
                     lookalike = true;
                     break;
             }

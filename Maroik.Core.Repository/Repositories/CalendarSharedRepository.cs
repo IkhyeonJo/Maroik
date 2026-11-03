@@ -34,8 +34,9 @@ public class CalendarSharedRepository(ApplicationDbContext context)
         // Distinct keeps the IN list short when a caller passes one id per subscription; an empty list answers without a round
         // trip. QueryAsync (not an untracked read) because the callers check for existing rows inside a write transaction and
         // must see rows this unit of work has already added but not yet saved.
-        long[] ids = [.. calendarIds.Distinct()];
-        return ids.Length == 0 ? [] : await QueryAsync(e => ids.Contains(e.CalendarId), ct: ct);
+        // A list, not an array: in C# 14 an array's Contains binds to the span overload (MemoryExtensions) inside an expression tree.
+        List<long> ids = [.. calendarIds.Distinct()];
+        return ids.Count == 0 ? [] : await QueryAsync(e => ids.Contains(e.CalendarId), ct: ct);
     }
 
     /// <inheritdoc />

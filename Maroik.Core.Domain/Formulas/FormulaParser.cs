@@ -268,7 +268,7 @@ public static class FormulaParser
         }
 
         /// <summary>NAME "(" [argument ("," argument)*] ")"; an empty argument is a <see cref="MissingNode"/>.</summary>
-        private FormulaNode Call()
+        private CallNode Call()
         {
             FormulaToken name = Next();
             Next(); // "(" — the lexer makes a function token only right before one.

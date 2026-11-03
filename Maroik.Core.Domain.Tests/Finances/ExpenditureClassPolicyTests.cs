@@ -150,8 +150,9 @@ public class ExpenditureClassPolicyTests
     [Fact]
     public void SubClassesByMainClass_HasTheKnownMainClasses()
     {
+        string[] expected = ["RegularSavings", "NonConsumerSpending", "ConsumerSpending"];
         Assert.Equal(
-            new[] { "RegularSavings", "NonConsumerSpending", "ConsumerSpending" }.OrderBy(x => x),
+            expected.OrderBy(x => x),
             ExpenditureClassPolicy.SubClassesByMainClass.Keys.OrderBy(x => x));
     }
 

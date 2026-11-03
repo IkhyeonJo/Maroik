@@ -419,10 +419,10 @@ public class CalendarViewModelMapperTests
 
         var reminders = json.ToReminderInfoList();
 
-        Assert.Single(reminders);
-        Assert.Equal(15, reminders[0].MinutesBeforeEvent);
-        Assert.Equal(1, reminders[0].DaysBeforeEvent);
-        Assert.Equal(new TimeOnly(9, 30), reminders[0].TimesBeforeEvent);
+        var reminder = Assert.Single(reminders);
+        Assert.Equal(15, reminder.MinutesBeforeEvent);
+        Assert.Equal(1, reminder.DaysBeforeEvent);
+        Assert.Equal(new TimeOnly(9, 30), reminder.TimesBeforeEvent);
     }
 
     /// <summary>To reminder info list empty times before event leaves times before event null.</summary>

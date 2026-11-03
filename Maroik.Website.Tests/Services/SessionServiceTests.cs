@@ -102,7 +102,7 @@ public class SessionServiceTests
     public async Task GetAccount_ReturnsNull_WhenSessionDataIsInvalidJson()
     {
         SetupContext();
-        byte[]? bytes = "not valid json {{{{"u8.ToArray();
+        byte[]? bytes = [.. "not valid json {{{{"u8];
         _session.Setup(s => s.TryGetValue(It.IsAny<string>(), out bytes)).Returns(true);
         var sut = CreateSut();
 
@@ -279,7 +279,7 @@ public class SessionServiceTests
     public async Task GetAccount_LogsAWarning_WhenTheStoredSessionIsNotValidJson()
     {
         SetupContext();
-        byte[]? bytes = "{not json secret-9f3a"u8.ToArray();
+        byte[]? bytes = [.. "{not json secret-9f3a"u8];
         _session.Setup(s => s.TryGetValue(It.IsAny<string>(), out bytes)).Returns(true);
 
         Assert.Null(await CreateSut().GetAccountAsync(TestContext.Current.CancellationToken));

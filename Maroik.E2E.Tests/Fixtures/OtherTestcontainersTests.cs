@@ -16,7 +16,7 @@ namespace Maroik.E2E.Tests.Fixtures;
 public sealed class OtherTestcontainersTests : IAsyncDisposable
 {
     /// <summary>A client of the same Docker daemon Testcontainers uses.</summary>
-    private readonly IDockerClient _docker = TestcontainersSettings.OS.DockerEndpointAuthConfig
+    private readonly DockerClient _docker = TestcontainersSettings.OS.DockerEndpointAuthConfig
         .GetDockerClientBuilder(ResourceReaper.DefaultSessionId).Build();
 
     /// <summary>Id of the container started by <see cref="StartOtherSessionContainerAsync"/>, removed on dispose.</summary>

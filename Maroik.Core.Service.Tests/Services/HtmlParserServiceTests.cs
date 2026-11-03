@@ -193,7 +193,7 @@ public class HtmlParserServiceTests
     public async Task TransformImageAttributes_PassesAndKeepsAProtectedAltValueExactly()
     {
         const string protectedAlt = "CfDJ8HTAFH7hn0tPj9LZyUduDPGx1XFZ7ozclO1fPW6E-VxIpDx7wiAkHWtmatuIc6nKb-BHOrEF5IkFem_FZTfR3KQw-_khgyuCgpLjCjdWWtHwCPW74M1wq6y5g_X-V3E2KZ8qD-PSsl1RS0HJdh_H7tMbofS4kjSPYiUZKaZ266WZXgfGxwxxkAIx553m5ZeXr_XAClEg_FeL_ggbVMHZMg4Um7bbU3d0LazJ0-MU0TLu";
-        string source = $"<p>text</p><p><img style=\"width: 50%;\" alt=\"{protectedAlt}\"></p>";
+        const string source = $"<p>text</p><p><img style=\"width: 50%;\" alt=\"{protectedAlt}\"></p>";
         List<string> alts = [];
 
         string sync = _sut.TransformImageAttributes(source, alt => { alts.Add(alt); return null; });

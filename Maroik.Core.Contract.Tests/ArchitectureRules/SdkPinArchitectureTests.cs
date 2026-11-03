@@ -40,9 +40,11 @@ public class SdkPinArchitectureTests
     public void EveryDockerfile_BuildsWithTheSdkGlobalJsonPins()
     {
         string? version = ReadGlobalJson().Version;
-        string[] dockerfiles = Directory.GetFiles(RepositoryPaths.Root, "Dockerfile", SearchOption.AllDirectories)
-            .Where(f => !RepositoryPaths.HasSegment(f, "bin") && !RepositoryPaths.HasSegment(f, "obj"))
-            .ToArray();
+        string[] dockerfiles =
+        [
+            .. Directory.GetFiles(RepositoryPaths.Root, "Dockerfile", SearchOption.AllDirectories)
+                .Where(f => !RepositoryPaths.HasSegment(f, "bin") && !RepositoryPaths.HasSegment(f, "obj")),
+        ];
 
         Assert.NotEmpty(dockerfiles);
         List<string> violations = [];

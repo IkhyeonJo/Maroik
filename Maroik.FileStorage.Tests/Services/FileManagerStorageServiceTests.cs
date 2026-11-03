@@ -27,7 +27,7 @@ public sealed class FileManagerStorageServiceTests : IDisposable
     private readonly Mock<IClamavClient> _clamav = new();
 
     /// <summary>The upload id these tests use.</summary>
-    private static readonly Guid UploadId = Guid.Parse("0f8fad5b-d9cb-469f-a165-70867728950e");
+    private static readonly Guid _uploadId = Guid.Parse("0f8fad5b-d9cb-469f-a165-70867728950e");
 
     /// <summary>Creates the storage root; the ClamAV mock answers Clean unless a test says otherwise.</summary>
     public FileManagerStorageServiceTests()
@@ -65,7 +65,7 @@ public sealed class FileManagerStorageServiceTests : IDisposable
 
     /// <summary>Appends <paramref name="bytes"/> at <paramref name="offset"/>.</summary>
     private Task<(string? Error, long Length)> AppendAsync(long offset, params byte[] bytes) =>
-        Sut.AppendChunkAsync(UploadId.ToString("D"), offset, new MemoryStream(bytes), TestContext.Current.CancellationToken);
+        Sut.AppendChunkAsync(_uploadId.ToString("D"), offset, new MemoryStream(bytes), TestContext.Current.CancellationToken);
 
     // -- AppendChunkAsync ---------------------------------------------------------
 
@@ -76,7 +76,7 @@ public sealed class FileManagerStorageServiceTests : IDisposable
         Assert.Equal((null, 3L), await AppendAsync(0, 1, 2, 3));
         Assert.Equal((null, 5L), await AppendAsync(3, 4, 5));
 
-        Assert.Equal([1, 2, 3, 4, 5], await File.ReadAllBytesAsync(Staging(UploadId), TestContext.Current.CancellationToken));
+        Assert.Equal([1, 2, 3, 4, 5], await File.ReadAllBytesAsync(Staging(_uploadId), TestContext.Current.CancellationToken));
     }
 
     /// <summary>A chunk whose offset is not the current length (a resend, a gap) is refused with the current length, and nothing is written.</summary>
@@ -87,8 +87,9 @@ public sealed class FileManagerStorageServiceTests : IDisposable
     {
         await AppendAsync(0, 1, 2, 3);
 
+        // ReSharper disable once UseUtf8StringLiteral -- these are bytes, not text.
         Assert.Equal((FileStorageRefusals.OffsetMismatch, 3L), await AppendAsync(offset, 9, 9));
-        Assert.Equal([1, 2, 3], await File.ReadAllBytesAsync(Staging(UploadId), TestContext.Current.CancellationToken));
+        Assert.Equal([1, 2, 3], await File.ReadAllBytesAsync(Staging(_uploadId), TestContext.Current.CancellationToken));
     }
 
     /// <summary>An upload id that is not a GUID (a path, a traversal) is refused before anything touches the disk.</summary>
@@ -107,12 +108,12 @@ public sealed class FileManagerStorageServiceTests : IDisposable
 
     // -- CompleteAsync ------------------------------------------------------------
 
-    /// <summary>The id <see cref="UploadId"/> as the requests carry it.</summary>
-    private static string Id => UploadId.ToString("D");
+    /// <summary>The id <see cref="_uploadId"/> as the requests carry it.</summary>
+    private static string Id => _uploadId.ToString("D");
 
-    /// <summary>Completes <see cref="UploadId"/> as declared <paramref name="expectedSize"/> bytes.</summary>
+    /// <summary>Completes <see cref="_uploadId"/> as declared <paramref name="expectedSize"/> bytes.</summary>
     private Task<(string? Error, bool Scanning)> CompleteAsync(long expectedSize, bool skipScan = false) =>
-        Sut.CompleteAsync(Id, expectedSize, skipScan, TestContext.Current.CancellationToken);
+        Sut.CompleteAsync(Id, expectedSize, skipScan);
 
     /// <summary>
     /// A complete upload of the declared size is not scanned in the request: its scan is queued, the answer is "scanning", and the
@@ -126,8 +127,8 @@ public sealed class FileManagerStorageServiceTests : IDisposable
         Assert.Equal((null, true), await CompleteAsync(3));
 
         Assert.True(_queue.IsPending(Id));
-        Assert.True(File.Exists(Staging(UploadId)));
-        Assert.False(File.Exists(Stored(UploadId)));
+        Assert.True(File.Exists(Staging(_uploadId)));
+        Assert.False(File.Exists(Stored(_uploadId)));
         _clamav.Verify(c => c.ScanWithClamavAsync(It.IsAny<Stream>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
@@ -143,8 +144,8 @@ public sealed class FileManagerStorageServiceTests : IDisposable
         Assert.Equal((null, false), await CompleteAsync(3, skipScan: true));
 
         Assert.False(_queue.IsPending(Id));
-        Assert.Equal([1, 2, 3], await File.ReadAllBytesAsync(Stored(UploadId), TestContext.Current.CancellationToken));
-        Assert.False(File.Exists(Staging(UploadId)));
+        Assert.Equal([1, 2, 3], await File.ReadAllBytesAsync(Stored(_uploadId), TestContext.Current.CancellationToken));
+        Assert.False(File.Exists(Staging(_uploadId)));
         Assert.Equal((null, false), await CompleteAsync(3, skipScan: true));
         _clamav.Verify(c => c.ScanWithClamavAsync(It.IsAny<Stream>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()), Times.Never);
     }
@@ -154,11 +155,11 @@ public sealed class FileManagerStorageServiceTests : IDisposable
     public async Task CompleteAsync_WithoutAScan_StoresAnEmptyFile_AndRefusesASizeMismatch()
     {
         Assert.Equal((null, false), await CompleteAsync(0, skipScan: true));
-        Assert.Empty(await File.ReadAllBytesAsync(Stored(UploadId), TestContext.Current.CancellationToken));
+        Assert.Empty(await File.ReadAllBytesAsync(Stored(_uploadId), TestContext.Current.CancellationToken));
 
         Guid other = Guid.NewGuid();
         await Sut.AppendChunkAsync(other.ToString("D"), 0, new MemoryStream([1, 2]), TestContext.Current.CancellationToken);
-        Assert.Equal((FileStorageRefusals.SizeMismatch, false), await Sut.CompleteAsync(other.ToString("D"), 3, true, TestContext.Current.CancellationToken));
+        Assert.Equal((FileStorageRefusals.SizeMismatch, false), await Sut.CompleteAsync(other.ToString("D"), 3, true));
         Assert.False(File.Exists(Stored(other)));
         Assert.False(File.Exists(Staging(other)));
     }
@@ -173,7 +174,7 @@ public sealed class FileManagerStorageServiceTests : IDisposable
         await CompleteAsync(3);
 
         Assert.Equal((null, true), await CompleteAsync(3, skipScan: true));
-        Assert.False(File.Exists(Stored(UploadId)));
+        Assert.False(File.Exists(Stored(_uploadId)));
     }
 
     /// <summary>A complete while the scan is pending answers "scanning" again and queues nothing more.</summary>
@@ -201,7 +202,7 @@ public sealed class FileManagerStorageServiceTests : IDisposable
         _queue.Finish(Id, null);
 
         Assert.Equal((null, false), await CompleteAsync(3));
-        Assert.Equal([1, 2, 3], await File.ReadAllBytesAsync(Stored(UploadId), TestContext.Current.CancellationToken));
+        Assert.Equal([1, 2, 3], await File.ReadAllBytesAsync(Stored(_uploadId), TestContext.Current.CancellationToken));
     }
 
     /// <summary>Once the scan refused the file, complete answers that refusal once.</summary>
@@ -212,7 +213,7 @@ public sealed class FileManagerStorageServiceTests : IDisposable
         await CompleteAsync(3);
         await _queue.DequeueAsync(TestContext.Current.CancellationToken);
         _queue.Finish(Id, FileStorageRefusals.Infected);
-        File.Delete(Staging(UploadId));
+        File.Delete(Staging(_uploadId));
 
         Assert.Equal((FileStorageRefusals.Infected, false), await CompleteAsync(3));
         Assert.Equal((FileStorageRefusals.SizeMismatch, false), await CompleteAsync(3));
@@ -230,7 +231,7 @@ public sealed class FileManagerStorageServiceTests : IDisposable
         var restarted = new FileManagerScanQueue();
         var service = new FileManagerStorageService(_clamav.Object, restarted, Options.Create(new FileStorageSetting { StorageRootPath = Root }));
 
-        Assert.Equal((null, true), await service.CompleteAsync(Id, 3, false, TestContext.Current.CancellationToken));
+        Assert.Equal((null, true), await service.CompleteAsync(Id, 3, false));
         Assert.True(restarted.IsPending(Id));
     }
 
@@ -240,7 +241,7 @@ public sealed class FileManagerStorageServiceTests : IDisposable
     {
         Assert.Equal((null, true), await CompleteAsync(0));
 
-        Assert.Empty(await File.ReadAllBytesAsync(Staging(UploadId), TestContext.Current.CancellationToken));
+        Assert.Empty(await File.ReadAllBytesAsync(Staging(_uploadId), TestContext.Current.CancellationToken));
     }
 
     /// <summary>A staging file of another size than declared is refused without a scan and deleted.</summary>
@@ -250,7 +251,7 @@ public sealed class FileManagerStorageServiceTests : IDisposable
         await AppendAsync(0, 1, 2, 3);
 
         Assert.Equal((FileStorageRefusals.SizeMismatch, false), await CompleteAsync(4));
-        Assert.False(File.Exists(Staging(UploadId)));
+        Assert.False(File.Exists(Staging(_uploadId)));
         Assert.False(_queue.IsPending(Id));
     }
 
@@ -258,20 +259,20 @@ public sealed class FileManagerStorageServiceTests : IDisposable
     [Fact]
     public async Task CompleteAsync_NeverOverwritesAStoredFile()
     {
-        Directory.CreateDirectory(Path.GetDirectoryName(Stored(UploadId))!);
-        await File.WriteAllBytesAsync(Stored(UploadId), [7], TestContext.Current.CancellationToken);
+        Directory.CreateDirectory(Path.GetDirectoryName(Stored(_uploadId))!);
+        await File.WriteAllBytesAsync(Stored(_uploadId), [7], TestContext.Current.CancellationToken);
         await AppendAsync(0, 1);
 
         Assert.Equal((FileStorageRefusals.InvalidUpload, false), await CompleteAsync(1));
-        Assert.Equal([7], await File.ReadAllBytesAsync(Stored(UploadId), TestContext.Current.CancellationToken));
-        Assert.False(File.Exists(Staging(UploadId)));
+        Assert.Equal([7], await File.ReadAllBytesAsync(Stored(_uploadId), TestContext.Current.CancellationToken));
+        Assert.False(File.Exists(Staging(_uploadId)));
     }
 
     /// <summary>An invalid upload id is refused.</summary>
     [Fact]
     public async Task CompleteAsync_RefusesAnUploadIdThatIsNotAGuid()
     {
-        Assert.Equal((FileStorageRefusals.InvalidUpload, false), await Sut.CompleteAsync("../x", 0, true, TestContext.Current.CancellationToken));
+        Assert.Equal((FileStorageRefusals.InvalidUpload, false), await Sut.CompleteAsync("../x", 0, true));
     }
 
     // -- ScanAsync ----------------------------------------------------------------
@@ -289,8 +290,8 @@ public sealed class FileManagerStorageServiceTests : IDisposable
 
         Assert.Null(await Sut.ScanAsync(Id, TestContext.Current.CancellationToken));
 
-        Assert.Equal([1, 2, 3], await File.ReadAllBytesAsync(Stored(UploadId), TestContext.Current.CancellationToken));
-        Assert.False(File.Exists(Staging(UploadId)));
+        Assert.Equal([1, 2, 3], await File.ReadAllBytesAsync(Stored(_uploadId), TestContext.Current.CancellationToken));
+        Assert.False(File.Exists(Staging(_uploadId)));
         Assert.Equal([1, 2, 3], Assert.Single(scanned));
         _clamav.Verify(c => c.ScanWithClamavAsync(It.IsAny<Stream>(), "clamav", 3310, FileManagerStorageService.ScanTimeout, It.IsAny<CancellationToken>()), Times.Once);
         Assert.True(FileManagerStorageService.ScanTimeout >= TimeSpan.FromMinutes(10));
@@ -310,8 +311,8 @@ public sealed class FileManagerStorageServiceTests : IDisposable
         await AppendAsync(0, 1, 2, 3);
 
         Assert.Equal(refusal, await Sut.ScanAsync(Id, TestContext.Current.CancellationToken));
-        Assert.False(File.Exists(Stored(UploadId)));
-        Assert.False(File.Exists(Staging(UploadId)));
+        Assert.False(File.Exists(Stored(_uploadId)));
+        Assert.False(File.Exists(Staging(_uploadId)));
     }
 
     /// <summary>The two "could not finish" refusals are told apart from each other by their text.</summary>
@@ -339,7 +340,7 @@ public sealed class FileManagerStorageServiceTests : IDisposable
         await aborted.CancelAsync();
 
         await Assert.ThrowsAnyAsync<OperationCanceledException>(() => Sut.ScanAsync(Id, aborted.Token));
-        Assert.False(File.Exists(Stored(UploadId)));
+        Assert.False(File.Exists(Stored(_uploadId)));
     }
 
     // -- Abort --------------------------------------------------------------------
@@ -351,7 +352,7 @@ public sealed class FileManagerStorageServiceTests : IDisposable
         await AppendAsync(0, 1, 2);
 
         Assert.True(Sut.Abort(Id));
-        Assert.False(File.Exists(Staging(UploadId)));
+        Assert.False(File.Exists(Staging(_uploadId)));
         Assert.True(Sut.Abort(Guid.NewGuid().ToString("D")));
         Assert.False(Sut.Abort("../x"));
     }
@@ -366,14 +367,14 @@ public sealed class FileManagerStorageServiceTests : IDisposable
         await AppendAsync(0, 1, 2);
         Assert.Equal((null, true), await CompleteAsync(2));
         (_, CancellationToken scanAborted) = await _queue.DequeueAsync(TestContext.Current.CancellationToken);
-        Directory.CreateDirectory(Path.GetDirectoryName(Stored(UploadId))!);
-        await File.WriteAllBytesAsync(Stored(UploadId), [1, 2, 3], TestContext.Current.CancellationToken);
+        Directory.CreateDirectory(Path.GetDirectoryName(Stored(_uploadId))!);
+        await File.WriteAllBytesAsync(Stored(_uploadId), [1, 2, 3], TestContext.Current.CancellationToken);
 
         Assert.True(Sut.Abort(Id));
 
         Assert.True(scanAborted.IsCancellationRequested);
-        Assert.False(File.Exists(Staging(UploadId)));
-        Assert.False(File.Exists(Stored(UploadId)));
+        Assert.False(File.Exists(Staging(_uploadId)));
+        Assert.False(File.Exists(Stored(_uploadId)));
     }
 
     // -- Delete -------------------------------------------------------------------
@@ -382,18 +383,18 @@ public sealed class FileManagerStorageServiceTests : IDisposable
     [Fact]
     public async Task Delete_RemovesAFileManagerFile()
     {
-        Directory.CreateDirectory(Path.GetDirectoryName(Stored(UploadId))!);
-        await File.WriteAllBytesAsync(Stored(UploadId), [1], TestContext.Current.CancellationToken);
+        Directory.CreateDirectory(Path.GetDirectoryName(Stored(_uploadId))!);
+        await File.WriteAllBytesAsync(Stored(_uploadId), [1], TestContext.Current.CancellationToken);
 
-        Assert.Null(Sut.Delete($"upload/FileManager/{UploadId:D}"));
-        Assert.False(File.Exists(Stored(UploadId)));
+        Assert.Null(Sut.Delete($"upload/FileManager/{_uploadId:D}"));
+        Assert.False(File.Exists(Stored(_uploadId)));
     }
 
     /// <summary>A missing file is reported as not found.</summary>
     [Fact]
     public void Delete_ReportsAMissingFile()
     {
-        Assert.Equal(FileStorageRefusals.FileNotFound, Sut.Delete($"upload/FileManager/{UploadId:D}"));
+        Assert.Equal(FileStorageRefusals.FileNotFound, Sut.Delete($"upload/FileManager/{_uploadId:D}"));
     }
 
     /// <summary>

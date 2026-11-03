@@ -179,7 +179,7 @@ public class FileClientTests
         var handler = new CapturingHandler();
         _httpClientFactory.InnerHandler = handler;
 
-        bool result = await CreateSut().UploadAsync("payload-bytes"u8.ToArray(), "application/zip", "upload/Forum/FreeForum/42/report.zip", "http://filestorage.local", TestContext.Current.CancellationToken);
+        bool result = await CreateSut().UploadAsync([.. "payload-bytes"u8], "application/zip", "upload/Forum/FreeForum/42/report.zip", "http://filestorage.local", TestContext.Current.CancellationToken);
 
         Assert.True(result);
         string body = Assert.IsType<string>(handler.LastRequestBody);

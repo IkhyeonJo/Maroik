@@ -1,3 +1,4 @@
+// ReSharper disable UnusedMember.Global -- the lanes are stored and localized by name (see below), never named in code one by one.
 namespace Maroik.Core.Domain.Kanbans;
 
 /// <summary>

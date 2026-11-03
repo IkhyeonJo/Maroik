@@ -1,3 +1,5 @@
+using System.Collections.Concurrent;
+using System.Runtime.CompilerServices;
 using Maroik.Core.Contract.Messages;
 using Maroik.FileStorage.Interfaces;
 using Maroik.FileStorage.Services;
@@ -88,28 +90,30 @@ public sealed class FileManagerScanWorkerTests : IAsyncDisposable
     [Fact]
     public async Task AtMostTheConcurrencyLimit_RunAtOnce()
     {
-        int running = 0;
-        int most = 0;
+        // A box, so the scans (in the mock's lambda) and the test read and change the one counter.
+        StrongBox<int> running = new(0);
+        // Every count a scan saw on starting, collected from the concurrent scans (a shared `most = Math.Max(...)` could lose one).
+        ConcurrentBag<int> seen = [];
         var release = new TaskCompletionSource();
         _storage.Setup(s => s.ScanAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).Returns(async () =>
         {
-            most = Math.Max(most, Interlocked.Increment(ref running));
+            seen.Add(Interlocked.Increment(ref running.Value));
             await release.Task;
-            Interlocked.Decrement(ref running);
-            return (string?)null;
+            Interlocked.Decrement(ref running.Value);
+            return null;
         });
         await StartAsync();
         string[] ids = [NewId(), NewId(), NewId()];
 
         foreach (string id in ids) _queue.TryEnqueue(id);
-        await EventuallyAsync(() => Volatile.Read(ref running) == FileManagerScanWorker.MaxConcurrentScans);
+        await EventuallyAsync(() => Volatile.Read(ref running.Value) == FileManagerScanWorker.MaxConcurrentScans);
         await Task.Delay(100, TestContext.Current.CancellationToken);
-        Assert.Equal(FileManagerScanWorker.MaxConcurrentScans, Volatile.Read(ref running));
+        Assert.Equal(FileManagerScanWorker.MaxConcurrentScans, Volatile.Read(ref running.Value));
 
         release.SetResult();
         await EventuallyAsync(() => ids.All(id => !_queue.IsPending(id)));
         Assert.Equal(2, FileManagerScanWorker.MaxConcurrentScans);
-        Assert.Equal(FileManagerScanWorker.MaxConcurrentScans, most);
+        Assert.Equal(FileManagerScanWorker.MaxConcurrentScans, seen.Max());
     }
 
     /// <summary>A scan that throws is logged at Error with the exception, ends the upload with a failure refusal, and the worker goes on.</summary>
@@ -142,7 +146,7 @@ public sealed class FileManagerScanWorkerTests : IAsyncDisposable
         {
             started.SetResult();
             await Task.Delay(Timeout.Infinite, ct);
-            return (string?)null;
+            return null;
         });
         await StartAsync();
 
@@ -166,7 +170,7 @@ public sealed class FileManagerScanWorkerTests : IAsyncDisposable
         {
             started.SetResult();
             await Task.Delay(Timeout.Infinite, ct);
-            return (string?)null;
+            return null;
         });
         await StartAsync();
         _queue.TryEnqueue(id);

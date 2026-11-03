@@ -67,7 +67,7 @@ public class FileManagerFlowTests(E2ESharedFixture fixture) : E2ETestBase(fixtur
 
         await page.Locator("#fileManagerFileInput").SetInputFilesAsync(
         [
-            new FilePayload { Name = "notes.txt", MimeType = "text/plain", Buffer = "hello"u8.ToArray() },
+            new FilePayload { Name = "notes.txt", MimeType = "text/plain", Buffer = [.. "hello"u8] },
             new FilePayload { Name = "logo.png", MimeType = "image/png", Buffer = _png },
         ]);
 
@@ -157,7 +157,7 @@ public class FileManagerFlowTests(E2ESharedFixture fixture) : E2ETestBase(fixtur
     {
         var (page, account) = await OpenAsync(quotaBytes: 0);
 
-        await page.Locator("#fileManagerFileInput").SetInputFilesAsync(new FilePayload { Name = "a.txt", MimeType = "text/plain", Buffer = "x"u8.ToArray() });
+        await page.Locator("#fileManagerFileInput").SetInputFilesAsync(new FilePayload { Name = "a.txt", MimeType = "text/plain", Buffer = [.. "x"u8] });
 
         await Assertions.Expect(page.Locator(".toast-error")).ToContainTextAsync("0.1GB 부족");
         Assert.Equal(0L, await Db.ScalarAsync<long>("""SELECT count(*) FROM "FileManagerNode" WHERE "AccountEmail" = @email""", ("email", account.Email)));
@@ -209,7 +209,7 @@ public class FileManagerFlowTests(E2ESharedFixture fixture) : E2ETestBase(fixtur
         await page.Locator("#fileManagerFileInput").SetInputFilesAsync(
         [
             new FilePayload { Name = "big.bin", MimeType = "application/octet-stream", Buffer = new byte[(16 * 1024 * 1024) + 10] },
-            new FilePayload { Name = "next.txt", MimeType = "text/plain", Buffer = "x"u8.ToArray() },
+            new FilePayload { Name = "next.txt", MimeType = "text/plain", Buffer = [.. "x"u8] },
         ]);
         await Assertions.Expect(page.Locator("#btnUploadCancel")).ToBeEnabledAsync();
         await page.Locator("#btnUploadCancel").ClickAsync();
@@ -238,7 +238,7 @@ public class FileManagerFlowTests(E2ESharedFixture fixture) : E2ETestBase(fixtur
     public async Task Download_ShowsItsProgress_AndClosesTheDialogOnceSaved()
     {
         var (page, _) = await OpenAsync();
-        await UploadAndListAsync(page, "notes.txt", "hello"u8.ToArray());
+        await UploadAndListAsync(page, "notes.txt", [.. "hello"u8]);
         var release = new TaskCompletionSource();
         await page.RouteAsync("**/FileManager/Download?*", async route =>
         {
@@ -269,7 +269,7 @@ public class FileManagerFlowTests(E2ESharedFixture fixture) : E2ETestBase(fixtur
     public async Task Download_Cancel_StopsIt_AndStaysOnThePage()
     {
         var (page, _) = await OpenAsync();
-        await UploadAndListAsync(page, "notes.txt", "hello"u8.ToArray());
+        await UploadAndListAsync(page, "notes.txt", [.. "hello"u8]);
         var downloads = 0;
         page.Download += (_, _) => downloads++;
         var never = new TaskCompletionSource();

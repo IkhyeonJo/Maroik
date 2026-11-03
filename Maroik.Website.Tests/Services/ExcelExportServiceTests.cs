@@ -767,8 +767,8 @@ public class ExcelExportServiceTests
 
         var rows = ReadTypedRows(_sut.CreateBudgetExcel(sheet, _localize));
 
-        Assert.Equal(["L:Item", "L:Currency", "L:Month1", "L:Month12", "L:Year total", "O", "Z"],
-            new[] { 0, 1, 2, 13, 14, 15, 26 }.Select(i => rows[0][i].Text));
+        int[] columns = [0, 1, 2, 13, 14, 15, 26];
+        Assert.Equal(["L:Item", "L:Currency", "L:Month1", "L:Month12", "L:Year total", "O", "Z"], columns.Select(i => rows[0][i].Text));
         Assert.Equal(27, rows[0].Count);
         Assert.Equal(["L:ConsumerSpending", "L:PinMoney", "Tax rate"], rows.Skip(1).Select(r => r[0].Text));
         Assert.Equal(3, rows.Count - 1);

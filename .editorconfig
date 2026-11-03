@@ -82,6 +82,8 @@ end_of_line = crlf
 [*.cs]
 # var preferences
 csharp_style_var_for_built_in_types = false:silent
+# A deconstruction writes var for the whole tuple (var (id, name) = ...), not a type per variable.
+resharper_suggest_var_or_type_deconstruction_declarations_highlighting = none
 csharp_style_var_when_type_is_apparent = true:silent
 csharp_style_var_elsewhere = true:silent
 # Expression-bodied members
@@ -298,6 +300,9 @@ dotnet_diagnostic.SYSLIB1045.severity = none
 # Test infrastructure creates and drops throwaway databases (CREATE DATABASE "test_<guid>" ... TEMPLATE ...): DDL takes
 # no parameters for identifiers, so that command text is necessarily built at run time. Production code still gets CA2100.
 dotnet_diagnostic.CA2100.severity = none
+# Assertion helpers (AssertRefused(result, code, ...)) exist to check their parameters, and ReSharper counts every Assert.*
+# as a precondition check, so it would report each parameter of every such helper.
+resharper_parameter_only_used_for_precondition_check_local_highlighting = none
 
 ##############################################
 # TypeScript / JavaScript                    #
@@ -366,10 +371,26 @@ trim_trailing_whitespace = false
 insert_final_newline = false
 max_line_length = off
 
+# Razor views: the same var preferences as [*.cs] (that section does not match .cshtml, so the views fell back to
+# ReSharper's own defaults and were told to use var where the code writes the type).
+[*.cshtml]
+csharp_style_var_for_built_in_types = false:silent
+csharp_style_var_when_type_is_apparent = true:silent
+csharp_style_var_elsewhere = true:silent
+
 # EF Core scaffolded/generated persistence models and DbContext. Mark them so Rider / ReSharper and
 # the Roslyn analyzers skip style inspections & cleanup for them, and don't touch their bytes.
 [Maroik.Core.PostgreSQL/**.cs]
 generated_code = true
+# generated_code does not silence these ReSharper inspections, and the scaffold output is left as EF Core writes it
+# (CLAUDE.md: "touch it only when the schema mapping itself changes").
+resharper_redundant_using_directive_highlighting = none
+resharper_partial_type_with_single_part_highlighting = none
+resharper_partial_method_with_single_part_highlighting = none
+resharper_property_can_be_made_init_only_global_highlighting = none
+resharper_class_with_virtual_members_never_inherited_global_highlighting = none
+resharper_class_never_instantiated_global_highlighting = none
+resharper_invocation_is_skipped_highlighting = none
 
 [*.{json,json5,jsonc}]
 indent_size = 2

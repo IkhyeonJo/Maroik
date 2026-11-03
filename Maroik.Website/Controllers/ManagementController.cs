@@ -76,7 +76,7 @@ public class ManagementController(
         string? loggedInAccountTimeZoneIanaId = loggedInAccount.TimeZoneIanaId;
         AccountResponse? tempAccount = await profileService.GetProfileAsync(loggedInAccount.RequireEmail(), HttpContext.RequestAborted);
 
-        return View(new ProfileOutputViewModel()
+        return View(new ProfileOutputViewModel
         {
             Email = tempAccount!.Email,
             AvatarImagePath = tempAccount.AvatarImagePath,

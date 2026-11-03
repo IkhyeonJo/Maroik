@@ -15,7 +15,7 @@ public class LogTemplatesTests
     [Fact]
     public void Console_KeepsAValueWithLineBreaksOnOneLine()
     {
-        const string forged = "upload/a.png\n[00:00:00 INF] Maroik: File uploaded: upload/b.png\r\u001b[31m";
+        const string forged = "upload/a.png\n[00:00:00 INF] Maroik: File uploaded: upload/b.png\r\e[31m";
 
         string rendered = Render(LogTemplates.Console, "File upload refused: {FilePath}", forged);
 

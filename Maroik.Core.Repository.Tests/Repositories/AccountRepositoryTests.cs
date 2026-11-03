@@ -373,7 +373,7 @@ public sealed class AccountRepositoryTests(DatabaseFixture database) : Repositor
             () => Sut.CreateAsync(NewDomainAccount(UniqueEmail("exact"), nickname), TestContext.Current.CancellationToken));
 
         var pg = Assert.IsType<Npgsql.PostgresException>(ex.InnerException);
-        Assert.Contains(pg.ConstraintName, new[] { "Account_Nickname_unique", "Account_unique_index_0" });
+        Assert.Contains(pg.ConstraintName, (string[])["Account_Nickname_unique", "Account_unique_index_0"]);
     }
 
     // -- UpdateEntityAsync ---------------------------------------------------

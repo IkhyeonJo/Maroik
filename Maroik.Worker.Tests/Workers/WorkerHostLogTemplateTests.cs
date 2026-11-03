@@ -14,7 +14,7 @@ public class WorkerHostLogTemplateTests
     [Fact]
     public void ConsoleOutputTemplate_KeepsAValueWithLineBreaksOnOneLine()
     {
-        const string forged = "a@b.com\n[00:00:00 INF] [x] Maroik: Email sent to admin@maroik.com\r\u001b[31m";
+        const string forged = "a@b.com\n[00:00:00 INF] [x] Maroik: Email sent to admin@maroik.com\r\e[31m";
 
         string rendered = Render(WorkerHost.ConsoleOutputTemplate, "Email send failed for {To}", forged);
 

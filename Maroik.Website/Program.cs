@@ -67,6 +67,7 @@ try
     var cfgDomainName = serverSetting.DomainName ?? "";
     // How visitors reach the site (Deploy.sh's choice): Cloudflare Tunnel, port forwarding behind Caddy, or no domain over plain
     // HTTP. It decides HTTPS / HSTS / redirects, the cookies and the trusted forwarded scheme below.
+    // ReSharper disable once UseDeconstruction -- the profile reads better whole (hosting.UsesHttps) than as six loose locals.
     var hosting = HostingProfile.Create(builder.Configuration["ServerSetting:HostingMode"], cfgDomainName);
     string cookiePrefix = hosting.CookiePrefix;
     var cfgSessionExpireMinutes = serverSetting.SessionExpireMinutes;
@@ -327,7 +328,7 @@ try
     app.Use(async (context, next) =>
     {
         context.Response.GetTypedHeaders().CacheControl =
-            new Microsoft.Net.Http.Headers.CacheControlHeaderValue()
+            new Microsoft.Net.Http.Headers.CacheControlHeaderValue
             {
                 //Public = true,
                 //MaxAge = TimeSpan.FromSeconds(10),

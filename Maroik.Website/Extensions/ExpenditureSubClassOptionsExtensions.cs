@@ -28,6 +28,7 @@ public static class ExpenditureSubClassOptionsExtensions
     /// <param name="html">The view's HTML helper (extension receiver; not otherwise used).</param>
     /// <param name="localizer">The calling view's localizer, used for each option's label.</param>
     /// <returns>The rendered option list, ready to place inside the subclass <c>&lt;select&gt;</c>.</returns>
+    // ReSharper disable once UnusedParameter.Global -- the receiver makes it callable as Html.X(...) from a view.
     public static IHtmlContent ExpenditureSubClassOptions(this IHtmlHelper html, IViewLocalizer localizer)
     {
         string defaultMainClass = ExpenditureClassPolicy.SubClassesByMainClass.Keys.First();

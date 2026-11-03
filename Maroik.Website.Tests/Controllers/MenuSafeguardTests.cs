@@ -59,7 +59,7 @@ public class MenuSafeguardTests
     /// GET of Management/Menu. If the two rules drift apart, the guard protects a route the filter no longer uses.
     /// </summary>
     [Theory]
-    [MemberData(nameof(Menus))]
+    [MemberData(nameof(Menus), DisableDiscoveryEnumeration = true)]
     public void TheSnapshot_AgreesWithTheNavigationMatcher(MenuCase menu)
     {
         var snapshot = new MenuSnapshot(

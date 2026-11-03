@@ -162,7 +162,7 @@ public class ImageValidatorServiceTests
     /// A <paramref name="width"/> x <paramref name="height"/> image whose left half is red and right half blue,
     /// carrying the given EXIF profile and encoded as <paramref name="format"/>.
     /// </summary>
-    private static byte[] EncodeWithExif(MagickFormat format, uint width, uint height, IExifProfile exif)
+    private static byte[] EncodeWithExif(MagickFormat format, uint width, uint height, ExifProfile exif)
     {
         using var image = new MagickImage(MagickColors.Red, width, height);
         new Drawables().FillColor(MagickColors.Blue).Rectangle(width / 2.0, 0, width, height).Draw(image);

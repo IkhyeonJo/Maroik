@@ -1,3 +1,4 @@
+// ReSharper disable DisposeOnUsingVariable -- the disposal tests call DisposeAsync themselves; the using stays as the CA2000 net for a failed assert.
 using Maroik.Core.Client.Clients;
 using Maroik.Core.Contract.Messages;
 using Microsoft.Extensions.Logging.Abstractions;

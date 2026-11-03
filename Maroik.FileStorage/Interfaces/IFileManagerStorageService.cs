@@ -22,7 +22,7 @@ public interface IFileManagerStorageService
     /// With <paramref name="skipScan"/> (the account's virus scan is off, decided by the Website) a whole staging file is moved there at
     /// once, unscanned, and the answer is "stored"; a scan already queued for the upload is still followed.
     /// </summary>
-    Task<(string? Error, bool Scanning)> CompleteAsync(string? uploadId, long expectedSize, bool skipScan, CancellationToken ct = default);
+    Task<(string? Error, bool Scanning)> CompleteAsync(string? uploadId, long expectedSize, bool skipScan);
 
     /// <summary>
     /// Scans the staging file of <paramref name="uploadId"/> with ClamAV and moves a clean file to <c>upload/FileManager/{uploadId}</c>.

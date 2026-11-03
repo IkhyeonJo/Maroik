@@ -1,3 +1,4 @@
+// ReSharper disable UseRawString -- quote-heavy patterns that end in a quote, which a one-line raw string cannot.
 using Maroik.Core.Domain.Accounts;
 using Maroik.Core.PostgreSQL.Contexts;
 using Maroik.Core.PostgreSQL.Models;

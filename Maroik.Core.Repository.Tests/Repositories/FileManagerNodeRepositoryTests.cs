@@ -132,7 +132,7 @@ public sealed class FileManagerNodeRepositoryTests(DatabaseFixture database) : R
 
         await Sut.DeleteByEmailAndIdsAsync(owner, [a, b, others], TestContext.Current.CancellationToken);
 
-        List<long> left = await Context.FileManagerNodes.AsNoTracking().Where(n => new[] { a, b, kept, others }.Contains(n.Id)).Select(n => n.Id).ToListAsync(TestContext.Current.CancellationToken);
+        List<long> left = await Context.FileManagerNodes.AsNoTracking().Where(n => new List<long> { a, b, kept, others }.Contains(n.Id)).Select(n => n.Id).ToListAsync(TestContext.Current.CancellationToken);
         Assert.Equal([kept, others], left.Order());
     }
 
