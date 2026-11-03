@@ -24,7 +24,7 @@ public sealed class DatabaseHealthCheck(ApplicationDbContext dbContext) : IHealt
         catch (Exception ex)
         {
             // Deliberately not logged: the failure is reported as this check's own result (with the
-            // exception attached), which the health-check middleware surfaces.
+            // exception attached), which the health check middleware surfaces.
             return HealthCheckResult.Unhealthy("Failed to connect to the database.", ex);
         }
     }
