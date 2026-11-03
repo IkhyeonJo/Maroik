@@ -8,7 +8,7 @@ namespace Maroik.Core.Domain.Tests.Calendars;
 public class CalendarEventTests
 {
     /// <summary>The fixed "current time" every domain call in this class receives.</summary>
-    private static readonly DateTime Now = new(2026, 7, 1, 12, 0, 0, DateTimeKind.Utc);
+    private static readonly DateTime _now = new(2026, 7, 1, 12, 0, 0, DateTimeKind.Utc);
 
     /// <summary>Start of the event built by <see cref="ValidEvent"/>.</summary>
     private static readonly DateTime _start = new(2025, 6, 1, 9, 0, 0, DateTimeKind.Utc);
@@ -25,7 +25,7 @@ public class CalendarEventTests
     [Fact]
     public void Create_ReturnsCalendarEvent_WhenValid()
     {
-        var result = CalendarEvent.Create(10, "Stand-up", null, false, _start, _end, "UTC", "UTC", null, null, Now);
+        var result = CalendarEvent.Create(10, "Stand-up", null, false, _start, _end, "UTC", "UTC", null, null, _now);
 
         Assert.False(result.IsError);
         Assert.Equal("Stand-up", result.Value.Title);
@@ -38,8 +38,8 @@ public class CalendarEventTests
     {
         string location = new('l', 255);
 
-        Assert.False(CalendarEvent.Create(10, "Stand-up", null, false, _start, _end, null, null, location, null, Now).IsError);
-        Assert.False(ValidEvent().Update("Team Meeting", null, false, _start, _end, null, null, location, null, Now).IsError);
+        Assert.False(CalendarEvent.Create(10, "Stand-up", null, false, _start, _end, null, null, location, null, _now).IsError);
+        Assert.False(ValidEvent().Update("Team Meeting", null, false, _start, _end, null, null, location, null, _now).IsError);
     }
 
     /// <summary>A location over 255 characters is a clean validation error on create and update.</summary>
@@ -48,8 +48,8 @@ public class CalendarEventTests
     {
         string location = new('l', 256);
 
-        var created = CalendarEvent.Create(10, "Stand-up", null, false, _start, _end, null, null, location, null, Now);
-        var updated = ValidEvent().Update("Team Meeting", null, false, _start, _end, null, null, location, null, Now);
+        var created = CalendarEvent.Create(10, "Stand-up", null, false, _start, _end, null, null, location, null, _now);
+        var updated = ValidEvent().Update("Team Meeting", null, false, _start, _end, null, null, location, null, _now);
 
         Assert.Equal("CalendarEvent.LocationTooLong", created.FirstError.Code);
         Assert.Equal("CalendarEvent.LocationTooLong", updated.FirstError.Code);
@@ -62,7 +62,7 @@ public class CalendarEventTests
     [InlineData("   ")]
     public void Create_ReturnsError_WhenTitleEmpty(string? title)
     {
-        var result = CalendarEvent.Create(10, title, null, false, _start, _end, null, null, null, null, Now);
+        var result = CalendarEvent.Create(10, title, null, false, _start, _end, null, null, null, null, _now);
 
         Assert.True(result.IsError);
         Assert.Equal("CalendarEvent.TitleEmpty", result.FirstError.Code);
@@ -72,7 +72,7 @@ public class CalendarEventTests
     [Fact]
     public void Create_ReturnsError_WhenTitleTooLong()
     {
-        var result = CalendarEvent.Create(10, new string('x', 101), null, false, _start, _end, null, null, null, null, Now);
+        var result = CalendarEvent.Create(10, new string('x', 101), null, false, _start, _end, null, null, null, null, _now);
 
         Assert.True(result.IsError);
         Assert.Equal("CalendarEvent.TitleTooLong", result.FirstError.Code);
@@ -82,7 +82,7 @@ public class CalendarEventTests
     [Fact]
     public void Create_ReturnsError_WhenDescriptionTooLong()
     {
-        var result = CalendarEvent.Create(10, "Title", new string('x', 16385), false, _start, _end, null, null, null, null, Now);
+        var result = CalendarEvent.Create(10, "Title", new string('x', 16385), false, _start, _end, null, null, null, null, _now);
 
         Assert.True(result.IsError);
         Assert.Equal("CalendarEvent.DescriptionTooLong", result.FirstError.Code);
@@ -92,7 +92,7 @@ public class CalendarEventTests
     [Fact]
     public void Create_ReturnsError_WhenEndBeforeStart_AndNotAllDay()
     {
-        var result = CalendarEvent.Create(10, "Title", null, false, _end, _start, null, null, null, null, Now);
+        var result = CalendarEvent.Create(10, "Title", null, false, _end, _start, null, null, null, null, _now);
 
         Assert.True(result.IsError);
         Assert.Equal("CalendarEvent.InvalidDateRange", result.FirstError.Code);
@@ -102,7 +102,7 @@ public class CalendarEventTests
     [Fact]
     public void Create_Succeeds_WhenEndBeforeStart_AndAllDay()
     {
-        var result = CalendarEvent.Create(10, "All Day", null, true, _end, _start, null, null, null, null, Now);
+        var result = CalendarEvent.Create(10, "All Day", null, true, _end, _start, null, null, null, null, _now);
 
         Assert.False(result.IsError);
     }
@@ -111,7 +111,7 @@ public class CalendarEventTests
     [Fact]
     public void Create_ReturnsError_WhenEndDateBeforeStartDate_AndAllDay()
     {
-        var result = CalendarEvent.Create(10, "All Day", null, true, _start, _start.AddDays(-1), null, null, null, null, Now);
+        var result = CalendarEvent.Create(10, "All Day", null, true, _start, _start.AddDays(-1), null, null, null, null, _now);
 
         Assert.True(result.IsError);
         Assert.Equal("CalendarEvent.InvalidDateRange", result.FirstError.Code);
@@ -121,7 +121,7 @@ public class CalendarEventTests
     [Fact]
     public void Create_ReturnsError_WhenTimeZoneIdInvalid()
     {
-        var result = CalendarEvent.Create(10, "Title", null, false, _start, _end, "Not/AZone", "UTC", null, null, Now);
+        var result = CalendarEvent.Create(10, "Title", null, false, _start, _end, "Not/AZone", "UTC", null, null, _now);
 
         Assert.True(result.IsError);
         Assert.Equal("CalendarEvent.InvalidTimeZone", result.FirstError.Code);
@@ -136,10 +136,10 @@ public class CalendarEventTests
     [Fact]
     public void Create_ReturnsError_WithLocalizableMetadata_WhenTimeZoneIdInvalid()
     {
-        var result = CalendarEvent.Create(10, "Title", null, false, _start, _end, "Not/AZone", "UTC", null, null, Now);
+        var result = CalendarEvent.Create(10, "Title", null, false, _start, _end, "Not/AZone", "UTC", null, null, _now);
 
-        Assert.Equal("'Not/AZone' is not a recognised time-zone ID.", result.FirstError.Description);
-        Assert.Equal("'{0}' is not a recognised time-zone ID.", result.FirstError.Metadata!["MessageTemplate"]);
+        Assert.Equal("'Not/AZone' is not a recognized time-zone ID.", result.FirstError.Description);
+        Assert.Equal("'{0}' is not a recognized time-zone ID.", result.FirstError.Metadata!["MessageTemplate"]);
         Assert.Equal(["Not/AZone"], (object[])result.FirstError.Metadata["MessageArgs"]);
     }
 
@@ -152,9 +152,9 @@ public class CalendarEventTests
     [Theory]
     [InlineData("Tentative")]
     [InlineData("busy")]
-    public void Create_ReturnsError_WhenStatusNotRecognised(string status)
+    public void Create_ReturnsError_WhenStatusNotRecognized(string status)
     {
-        var result = CalendarEvent.Create(10, "Title", null, false, _start, _end, null, null, null, status, Now);
+        var result = CalendarEvent.Create(10, "Title", null, false, _start, _end, null, null, null, status, _now);
 
         Assert.True(result.IsError);
         Assert.Equal("CalendarEvent.StatusInvalid", result.FirstError.Code);
@@ -167,7 +167,7 @@ public class CalendarEventTests
     [InlineData("   ")]
     public void Create_Succeeds_WhenStatusNullOrBlank(string? status)
     {
-        var result = CalendarEvent.Create(10, "Title", null, false, _start, _end, null, null, null, status, Now);
+        var result = CalendarEvent.Create(10, "Title", null, false, _start, _end, null, null, null, status, _now);
 
         Assert.False(result.IsError);
     }
@@ -181,7 +181,7 @@ public class CalendarEventTests
         var ev = ValidEvent();
         var newEnd = _end.AddHours(1);
 
-        var result = ev.Update("Updated Title", "desc", false, _start, newEnd, "Asia/Seoul", "Asia/Seoul", "Room 1", "Busy", Now);
+        var result = ev.Update("Updated Title", "desc", false, _start, newEnd, "Asia/Seoul", "Asia/Seoul", "Room 1", "Busy", _now);
 
         Assert.False(result.IsError);
         Assert.Equal("Updated Title", ev.Title);
@@ -194,19 +194,19 @@ public class CalendarEventTests
     {
         var ev = ValidEvent();
 
-        var result = ev.Update("Title", null, false, _end, _start, null, null, null, null, Now);
+        var result = ev.Update("Title", null, false, _end, _start, null, null, null, null, _now);
 
         Assert.True(result.IsError);
         Assert.Equal("CalendarEvent.InvalidDateRange", result.FirstError.Code);
     }
 
-    /// <summary>Regression: Update rejects a <c>Status</c> value outside <see cref="CalendarEventStatuses"/>'s known members (see <see cref="Create_ReturnsError_WhenStatusNotRecognised"/>).</summary>
+    /// <summary>Regression: Update rejects a <c>Status</c> value outside <see cref="CalendarEventStatuses"/>'s known members (see <see cref="Create_ReturnsError_WhenStatusNotRecognized"/>).</summary>
     [Fact]
-    public void Update_ReturnsError_WhenStatusNotRecognised()
+    public void Update_ReturnsError_WhenStatusNotRecognized()
     {
         var ev = ValidEvent();
 
-        var result = ev.Update("Title", null, false, _start, _end, null, null, null, "Tentative", Now);
+        var result = ev.Update("Title", null, false, _start, _end, null, null, null, "Tentative", _now);
 
         Assert.True(result.IsError);
         Assert.Equal("CalendarEvent.StatusInvalid", result.FirstError.Code);
@@ -218,7 +218,7 @@ public class CalendarEventTests
     [Fact]
     public void Update_ReturnsError_WhenTitleTooLong()
     {
-        var result = ValidEvent().Update(new string('x', 101), null, false, _start, _end, null, null, null, null, Now);
+        var result = ValidEvent().Update(new string('x', 101), null, false, _start, _end, null, null, null, null, _now);
 
         Assert.True(result.IsError);
         Assert.Equal("CalendarEvent.TitleTooLong", result.FirstError.Code);
@@ -228,7 +228,7 @@ public class CalendarEventTests
     [Fact]
     public void Update_ReturnsError_WhenDescriptionTooLong()
     {
-        var result = ValidEvent().Update("Title", new string('x', 16385), false, _start, _end, null, null, null, null, Now);
+        var result = ValidEvent().Update("Title", new string('x', 16385), false, _start, _end, null, null, null, null, _now);
 
         Assert.True(result.IsError);
         Assert.Equal("CalendarEvent.DescriptionTooLong", result.FirstError.Code);
@@ -248,13 +248,13 @@ public class CalendarEventTests
     {
         DateTime start = new(startYear, 1, 1), end = new(endYear, 12, 31);
 
-        var created = CalendarEvent.Create(1, "Title", null, true, start, end, null, null, null, null, Now);
-        var updated = ValidEvent().Update("Title", null, true, start, end, null, null, null, null, Now);
+        var created = CalendarEvent.Create(1, "Title", null, true, start, end, null, null, null, null, _now);
+        var updated = ValidEvent().Update("Title", null, true, start, end, null, null, null, null, _now);
 
         Assert.Equal((2, 9998), (CalendarEvent.MinYear, CalendarEvent.MaxYear));
         Assert.Equal("CalendarEvent.DateOutOfRange", created.FirstError.Code);
         Assert.Equal("Event dates must be between the years {0} and {1}.", created.FirstError.Metadata![Maroik.Core.Domain.Errors.DomainError.MessageTemplateMetadataKey]);
         Assert.Equal("CalendarEvent.DateOutOfRange", updated.FirstError.Code);
-        Assert.False(CalendarEvent.Create(1, "Title", null, true, new DateTime(2, 1, 1), new DateTime(9998, 12, 31), null, null, null, null, Now).IsError);
+        Assert.False(CalendarEvent.Create(1, "Title", null, true, new DateTime(2, 1, 1), new DateTime(9998, 12, 31), null, null, null, null, _now).IsError);
     }
 }

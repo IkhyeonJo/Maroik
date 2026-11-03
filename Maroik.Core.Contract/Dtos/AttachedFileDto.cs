@@ -13,7 +13,7 @@ public class AttachedFileDto
     /// <summary>MIME content type detected from the upload (e.g. "image/png", "application/zip").</summary>
     public string ContentType { get; init; } = "";
 
-    /// <summary>Sanitised original file name provided by the client.</summary>
+    /// <summary>Sanitized original file name provided by the client.</summary>
     public string FileName { get; init; } = "";
 
     /// <summary>File size in bytes.</summary>

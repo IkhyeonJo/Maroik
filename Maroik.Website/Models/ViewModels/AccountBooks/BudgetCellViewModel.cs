@@ -24,6 +24,6 @@ public sealed class BudgetCellViewModel
     /// <summary>For a budget cell with a budget, what remains as shown; empty otherwise.</summary>
     public string Remaining { get; init; } = "";
 
-    /// <summary>For a budget cell, its colour class (good, warn, bad, unbudgeted) or empty.</summary>
+    /// <summary>For a budget cell, its color class (good, warn, bad, unbudgeted) or empty.</summary>
     public string State { get; init; } = "";
 }

@@ -7,7 +7,7 @@ paths:
 
 # Logging — written and tested with the code, like TDD
 
-Logging is part of the behaviour, not decoration added afterwards. Every new or changed use case, endpoint, worker step or
+Logging is part of the behavior, not decoration added afterward. Every new or changed use case, endpoint, worker step or
 client call ships with its logging **and the test that proves it**, in the same change. The order is the TDD order:
 
 1. **Red.** Before the production code, write the test that asserts the log entry (level, message template / rendered text,

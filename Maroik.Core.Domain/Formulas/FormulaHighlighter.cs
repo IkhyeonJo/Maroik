@@ -1,8 +1,8 @@
 namespace Maroik.Core.Domain.Formulas;
 
 /// <summary>
-/// What the editor shows while a formula is typed (A1 form): each token's colour class, a colour index per distinct reference (the
-/// same reference written twice keeps its colour, a range is one reference, as in Excel) with the home-sheet cells it outlines, the
+/// What the editor shows while a formula is typed (A1 form): each token's color class, a color index per distinct reference (the
+/// same reference written twice keeps its color, a range is one reference, as in Excel) with the home-sheet cells it outlines, the
 /// partner of each parenthesis, and the problems with their spans. The client only paints this; the language lives here.
 /// </summary>
 public static class FormulaHighlighter
@@ -74,7 +74,7 @@ public static class FormulaHighlighter
         return new HighlightReference(index, Cell(Math.Min(c1, c2), Math.Min(r1, r2)), Cell(Math.Max(c1, c2), Math.Max(r1, r2)));
     }
 
-    /// <summary>A token's colour class.</summary>
+    /// <summary>A token's color class.</summary>
     private static string ClassOf(FormulaToken token) => token.Kind switch
     {
         FormulaTokenKind.Number => "number",

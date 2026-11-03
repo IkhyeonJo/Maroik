@@ -324,7 +324,7 @@ public sealed class BoardCommentRepositoryTests(DatabaseFixture database) : Repo
 
         var comment = BoardComment.Reconstitute(
             id: orm.Id, boardId: orm.BoardId, order: orm.Order, avatarImagePath: orm.AvatarImagePath,
-            writer: orm.Writer ?? "", content: orm.Content, created: orm.Created, deleted: true);
+            writer: orm.Writer, content: orm.Content, created: orm.Created, deleted: true);
 
         await Sut.UpdateEntityAsync(comment, TestContext.Current.CancellationToken);
         Context.ChangeTracker.Clear();

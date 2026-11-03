@@ -100,7 +100,7 @@ public class AccountBookControllerAssetTests(MaroikWebApplicationFactory factory
         var response = await _client.SendAsync(request, TestContext.Current.CancellationToken);
         string json = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
-        Assert.Contains("Asset category (item) is not a recognised value.", json, StringComparison.Ordinal);
+        Assert.Contains("Asset category (item) is not a recognized value.", json, StringComparison.Ordinal);
     }
 
     // -- CreateAsset / IsAssetExists: success path --------------------------------

@@ -88,7 +88,7 @@ public class PagerTests
         Assert.Equal(0, pager.TotalPages);
     }
 
-    /// <summary>The page-link window is centred ±2 pages around the current page when there is room on both sides.</summary>
+    /// <summary>The page-link window is centered ±2 pages around the current page when there is room on both sides.</summary>
     [Fact]
     public void Constructor_CentersWindow_AroundCurrentPage_WhenAwayFromBothEdges()
     {

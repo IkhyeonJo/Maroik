@@ -189,7 +189,7 @@
   <data name="'{0}' is an Email that already exists." xml:space="preserve">
     <value>'{0}'은(는) 이미 존재하는 이메일입니다.</value>
   </data>
-  <data name="'{0}' is not a recognised time-zone ID." xml:space="preserve">
+  <data name="'{0}' is not a recognized time-zone ID." xml:space="preserve">
     <value>'{0}'은(는) 인식할 수 없는 시간대 ID입니다.</value>
   </data>
   <data name="'{0}' is not a valid email address." xml:space="preserve">

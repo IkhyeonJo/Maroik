@@ -24,7 +24,7 @@ public sealed class FileManagerControllerTests(WebApplicationFactory<Program> ba
     private readonly string _base = Path.Combine(Path.GetTempPath(), "fmc-" + Guid.NewGuid().ToString("N"));
 
     /// <summary>The upload id these tests use.</summary>
-    private static readonly string UploadId = Guid.NewGuid().ToString("D");
+    private static readonly string _uploadId = Guid.NewGuid().ToString("D");
 
     /// <summary>The controller's captured log.</summary>
     private readonly FakeLogger<FileManagerController> _logger = new();
@@ -83,7 +83,7 @@ public sealed class FileManagerControllerTests(WebApplicationFactory<Program> ba
     {
         for (int accepted = 0; ; accepted++)
         {
-            HttpResponseMessage response = await PostAsync(client, "complete", ("uploadId", UploadId), ("expectedSize", expectedSize));
+            HttpResponseMessage response = await PostAsync(client, "complete", ("uploadId", _uploadId), ("expectedSize", expectedSize));
             if (response.StatusCode != HttpStatusCode.Accepted || accepted == 500)
                 return (response, accepted);
             response.Dispose();
@@ -103,8 +103,8 @@ public sealed class FileManagerControllerTests(WebApplicationFactory<Program> ba
     {
         using HttpClient client = Client();
 
-        using var first = await ChunkAsync(client, 0, [1, 2, 3], UploadId);
-        using var second = await ChunkAsync(client, 3, [4], UploadId);
+        using var first = await ChunkAsync(client, 0, [1, 2, 3], _uploadId);
+        using var second = await ChunkAsync(client, 3, [4], _uploadId);
         (HttpResponseMessage complete, int accepted) = await CompleteUntilDecidedAsync(client, "4");
         using HttpResponseMessage decided = complete;
 
@@ -113,9 +113,9 @@ public sealed class FileManagerControllerTests(WebApplicationFactory<Program> ba
         Assert.Equal("4", await second.Content.ReadAsStringAsync(TestContext.Current.CancellationToken));
         Assert.True(accepted >= 1);
         Assert.Equal(HttpStatusCode.OK, decided.StatusCode);
-        Assert.Equal([1, 2, 3, 4], await File.ReadAllBytesAsync(Path.Combine(_base, "upload", "FileManager", UploadId), TestContext.Current.CancellationToken));
+        Assert.Equal([1, 2, 3, 4], await File.ReadAllBytesAsync(Path.Combine(_base, "upload", "FileManager", _uploadId), TestContext.Current.CancellationToken));
         FakeLogRecord stored = Only(LogLevel.Information);
-        Assert.Equal($"File Manager upload {UploadId} stored (4 bytes). CorrelationId=corr-1", stored.Message);
+        Assert.Equal($"File Manager upload {_uploadId} stored (4 bytes). CorrelationId=corr-1", stored.Message);
     }
 
     /// <summary>
@@ -126,13 +126,13 @@ public sealed class FileManagerControllerTests(WebApplicationFactory<Program> ba
     public async Task Complete_WithoutAScan_StoresTheFileAtOnce_AndLogsAWarning()
     {
         using HttpClient client = Client(ClamavScanResult.Infected);
-        using var chunk = await ChunkAsync(client, 0, [1, 2], UploadId);
+        using var chunk = await ChunkAsync(client, 0, [1, 2], _uploadId);
 
-        using var response = await PostAsync(client, "complete", ("uploadId", UploadId), ("expectedSize", "2"), ("skipScan", "true"));
+        using var response = await PostAsync(client, "complete", ("uploadId", _uploadId), ("expectedSize", "2"), ("skipScan", "true"));
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        Assert.Equal([1, 2], await File.ReadAllBytesAsync(Path.Combine(_base, "upload", "FileManager", UploadId), TestContext.Current.CancellationToken));
-        Assert.Equal($"File Manager upload {UploadId} stored without a virus scan (2 bytes). CorrelationId=corr-1", Only(LogLevel.Warning).Message);
+        Assert.Equal([1, 2], await File.ReadAllBytesAsync(Path.Combine(_base, "upload", "FileManager", _uploadId), TestContext.Current.CancellationToken));
+        Assert.Equal($"File Manager upload {_uploadId} stored without a virus scan (2 bytes). CorrelationId=corr-1", Only(LogLevel.Warning).Message);
         Assert.DoesNotContain(_logger.Collector.GetSnapshot(), r => r.Level == LogLevel.Information);
     }
 
@@ -146,10 +146,10 @@ public sealed class FileManagerControllerTests(WebApplicationFactory<Program> ba
     {
         var scanDone = new TaskCompletionSource();
         using HttpClient client = Client(scanDone: scanDone.Task);
-        using var chunk = await ChunkAsync(client, 0, [1, 2], UploadId);
+        using var chunk = await ChunkAsync(client, 0, [1, 2], _uploadId);
 
-        using var first = await PostAsync(client, "complete", ("uploadId", UploadId), ("expectedSize", "2")).WaitAsync(TimeSpan.FromSeconds(10), TestContext.Current.CancellationToken);
-        using var again = await PostAsync(client, "complete", ("uploadId", UploadId), ("expectedSize", "2")).WaitAsync(TimeSpan.FromSeconds(10), TestContext.Current.CancellationToken);
+        using var first = await PostAsync(client, "complete", ("uploadId", _uploadId), ("expectedSize", "2")).WaitAsync(TimeSpan.FromSeconds(10), TestContext.Current.CancellationToken);
+        using var again = await PostAsync(client, "complete", ("uploadId", _uploadId), ("expectedSize", "2")).WaitAsync(TimeSpan.FromSeconds(10), TestContext.Current.CancellationToken);
         scanDone.SetResult();
         (HttpResponseMessage complete, _) = await CompleteUntilDecidedAsync(client, "2");
         using HttpResponseMessage decided = complete;
@@ -157,7 +157,7 @@ public sealed class FileManagerControllerTests(WebApplicationFactory<Program> ba
         Assert.Equal(HttpStatusCode.Accepted, first.StatusCode);
         Assert.Equal(HttpStatusCode.Accepted, again.StatusCode);
         Assert.Equal(HttpStatusCode.OK, decided.StatusCode);
-        Assert.Equal([1, 2], await File.ReadAllBytesAsync(Path.Combine(_base, "upload", "FileManager", UploadId), TestContext.Current.CancellationToken));
+        Assert.Equal([1, 2], await File.ReadAllBytesAsync(Path.Combine(_base, "upload", "FileManager", _uploadId), TestContext.Current.CancellationToken));
     }
 
     /// <summary>A chunk at the wrong offset is a conflict, logged at Warning.</summary>
@@ -165,13 +165,13 @@ public sealed class FileManagerControllerTests(WebApplicationFactory<Program> ba
     public async Task Chunk_AtTheWrongOffset_IsAConflict()
     {
         using HttpClient client = Client();
-        using var first = await ChunkAsync(client, 0, [1], UploadId);
+        using var first = await ChunkAsync(client, 0, [1], _uploadId);
 
-        using var response = await ChunkAsync(client, 5, [2], UploadId);
+        using var response = await ChunkAsync(client, 5, [2], _uploadId);
 
         Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
         Assert.Equal(FileStorageRefusals.OffsetMismatch, await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken));
-        Assert.Contains($"File Manager chunk refused: {FileStorageRefusals.OffsetMismatch}. UploadId={UploadId} Offset=5", Only(LogLevel.Warning).Message, StringComparison.Ordinal);
+        Assert.Contains($"File Manager chunk refused: {FileStorageRefusals.OffsetMismatch}. UploadId={_uploadId} Offset=5", Only(LogLevel.Warning).Message, StringComparison.Ordinal);
     }
 
     /// <summary>A chunk naming an invalid upload id, or carrying no file part, is a bad request.</summary>
@@ -181,7 +181,7 @@ public sealed class FileManagerControllerTests(WebApplicationFactory<Program> ba
         using HttpClient client = Client();
 
         using var badId = await ChunkAsync(client, 0, [1], "../x");
-        using var noFile = await PostAsync(client, "chunk", ("uploadId", UploadId), ("offset", "0"));
+        using var noFile = await PostAsync(client, "chunk", ("uploadId", _uploadId), ("offset", "0"));
 
         Assert.Equal(HttpStatusCode.BadRequest, badId.StatusCode);
         Assert.Equal(FileStorageRefusals.InvalidUpload, await badId.Content.ReadAsStringAsync(TestContext.Current.CancellationToken));
@@ -199,14 +199,14 @@ public sealed class FileManagerControllerTests(WebApplicationFactory<Program> ba
     public async Task Complete_RefusesAnUnsafeFile(ClamavScanResult scan, string refusal, LogLevel level)
     {
         using HttpClient client = Client(scan);
-        using var chunk = await ChunkAsync(client, 0, [1], UploadId);
+        using var chunk = await ChunkAsync(client, 0, [1], _uploadId);
 
         (HttpResponseMessage complete, _) = await CompleteUntilDecidedAsync(client, "1");
         using HttpResponseMessage response = complete;
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
         Assert.Equal(refusal, await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken));
-        Assert.Equal($"File Manager upload refused: {refusal}. UploadId={UploadId} CorrelationId=corr-1", Only(level).Message);
+        Assert.Equal($"File Manager upload refused: {refusal}. UploadId={_uploadId} CorrelationId=corr-1", Only(level).Message);
     }
 
     /// <summary>Abort answers OK for a valid id and drops its staging file.</summary>
@@ -214,13 +214,13 @@ public sealed class FileManagerControllerTests(WebApplicationFactory<Program> ba
     public async Task Abort_DropsTheStagingFile()
     {
         using HttpClient client = Client();
-        using var chunk = await ChunkAsync(client, 0, [1], UploadId);
+        using var chunk = await ChunkAsync(client, 0, [1], _uploadId);
 
-        using var response = await PostAsync(client, "abort", ("uploadId", UploadId));
+        using var response = await PostAsync(client, "abort", ("uploadId", _uploadId));
         using var invalid = await PostAsync(client, "abort", ("uploadId", "x"));
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        Assert.False(File.Exists(Path.Combine(_base, "upload", "FileManager", ".staging", UploadId)));
+        Assert.False(File.Exists(Path.Combine(_base, "upload", "FileManager", ".staging", _uploadId)));
         Assert.Equal(HttpStatusCode.BadRequest, invalid.StatusCode);
     }
 
@@ -229,37 +229,37 @@ public sealed class FileManagerControllerTests(WebApplicationFactory<Program> ba
     public async Task Delete_RemovesOnlyAFileManagerFile()
     {
         using HttpClient client = Client();
-        string stored = Path.Combine(_base, "upload", "FileManager", UploadId);
+        string stored = Path.Combine(_base, "upload", "FileManager", _uploadId);
         Directory.CreateDirectory(Path.GetDirectoryName(stored)!);
         await File.WriteAllBytesAsync(stored, [1], TestContext.Current.CancellationToken);
 
-        using var deleted = await PostAsync(client, "delete", ("filePath", $"upload/FileManager/{UploadId}"));
-        using var missing = await PostAsync(client, "delete", ("filePath", $"upload/FileManager/{UploadId}"));
+        using var deleted = await PostAsync(client, "delete", ("filePath", $"upload/FileManager/{_uploadId}"));
+        using var missing = await PostAsync(client, "delete", ("filePath", $"upload/FileManager/{_uploadId}"));
         using var refused = await PostAsync(client, "delete", ("filePath", "upload/Forum/a.zip"));
 
         Assert.Equal(HttpStatusCode.OK, deleted.StatusCode);
         Assert.False(File.Exists(stored));
         Assert.Equal(HttpStatusCode.NotFound, missing.StatusCode);
         Assert.Equal(HttpStatusCode.BadRequest, refused.StatusCode);
-        Assert.Contains(_logger.Collector.GetSnapshot(), r => r.Level == LogLevel.Information && r.Message == $"File Manager file deleted: upload/FileManager/{UploadId}. CorrelationId=corr-1");
-        Assert.Contains(_logger.Collector.GetSnapshot(), r => r.Level == LogLevel.Warning && r.Message == $"File Manager delete refused: {FileStorageRefusals.NotAFileManagerFile}. FilePath=upload/Forum/a.zip CorrelationId=corr-1");
+        Assert.Contains(_logger.Collector.GetSnapshot(), r => r.Level == LogLevel.Information && r.Message == $"File Manager file deleted: upload/FileManager/{_uploadId}. CorrelationId=corr-1");
+        Assert.Contains(_logger.Collector.GetSnapshot(), r => r is { Level: LogLevel.Warning, Message: $"File Manager delete refused: {FileStorageRefusals.NotAFileManagerFile}. FilePath=upload/Forum/a.zip CorrelationId=corr-1" });
     }
 
     /// <summary>A failure inside the service is a bad request with a fixed text (never the exception's), logged at Error with the exception.</summary>
     [Fact]
     public async Task AServiceFailure_IsLoggedWithTheException_AndNotLeaked()
     {
-        var service = new Mock<Maroik.FileStorage.Interfaces.IFileManagerStorageService>();
+        var service = new Mock<Interfaces.IFileManagerStorageService>();
         service.Setup(s => s.CompleteAsync(It.IsAny<string?>(), It.IsAny<long>(), It.IsAny<bool>(), It.IsAny<CancellationToken>())).ThrowsAsync(new IOException("disk-secret"));
         var factory = baseFactory.WithWebHostBuilder(b => b.ConfigureServices(services =>
         {
-            foreach (var d in services.Where(d => d.ServiceType == typeof(Maroik.FileStorage.Interfaces.IFileManagerStorageService)).ToList()) services.Remove(d);
+            foreach (var d in services.Where(d => d.ServiceType == typeof(Interfaces.IFileManagerStorageService)).ToList()) services.Remove(d);
             services.AddScoped(_ => service.Object);
             services.AddSingleton<ILogger<FileManagerController>>(_logger);
         }));
         using HttpClient client = factory.CreateClient();
 
-        using var response = await PostAsync(client, "complete", ("uploadId", UploadId), ("expectedSize", "1"));
+        using var response = await PostAsync(client, "complete", ("uploadId", _uploadId), ("expectedSize", "1"));
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
         Assert.DoesNotContain("disk-secret", await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken), StringComparison.Ordinal);

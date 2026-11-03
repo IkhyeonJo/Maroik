@@ -39,7 +39,7 @@ public sealed class TimeZoneId : ValueObject
         catch (Exception ex) when (ex is TimeZoneNotFoundException or InvalidTimeZoneException)
         {
             // Expected input, not a fault: an unknown ID is a validation error (the domain never logs).
-            return DomainError.Validation("TimeZoneId.Invalid", "'{0}' is not a recognised time-zone ID.", value);
+            return DomainError.Validation("TimeZoneId.Invalid", "'{0}' is not a recognized time-zone ID.", value);
         }
 
         return new TimeZoneId(value);

@@ -9,7 +9,7 @@ namespace Maroik.Core.Domain.Calendars;
 public static class ReminderDeliveryPolicy
 {
     /// <summary>How late a reminder may still be sent.</summary>
-    public static readonly TimeSpan MaxLateness = TimeSpan.FromHours(1);
+    private static readonly TimeSpan MaxLateness = TimeSpan.FromHours(1);
 
     /// <summary>
     /// Null when the reminder due at <paramref name="fireAtUtc"/> is to be sent to <paramref name="owner"/> at

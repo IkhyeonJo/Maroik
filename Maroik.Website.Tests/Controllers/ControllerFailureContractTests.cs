@@ -402,7 +402,7 @@ public class ControllerFailureContractTests(MaroikWebApplicationFactory factory)
             .. BodyEndpoints.Where(e => e.Url.StartsWith("/Kanban/", StringComparison.Ordinal))
                 .Select(e => (e.Url, (Func<HttpRequestMessage>)(() => e.Build(session)))),
             .. _endpoints.Where(e => e.Url.StartsWith("/Kanban/", StringComparison.Ordinal))
-                .Select(e => (e.Url, (Func<HttpRequestMessage>)(() => session.BuildJsonPostRequest(e.Url, null)))),
+                .Select(e => (e.Url, (Func<HttpRequestMessage>)(() => session.BuildJsonPostRequest(e.Url)))),
         ];
 
         List<string> failures = [];
@@ -444,7 +444,7 @@ public class ControllerFailureContractTests(MaroikWebApplicationFactory factory)
             .. BodyEndpoints.Where(e => e.Url.StartsWith("/Forum/", StringComparison.Ordinal))
                 .Select(e => (e.Url, (Func<HttpRequestMessage>)(() => e.Build(session)))),
             .. _endpoints.Where(e => e.Url.StartsWith("/Forum/", StringComparison.Ordinal) && !e.Url.Contains("Download", StringComparison.Ordinal))
-                .Select(e => (e.Url, (Func<HttpRequestMessage>)(() => session.BuildJsonPostRequest(e.Url, null)))),
+                .Select(e => (e.Url, (Func<HttpRequestMessage>)(() => session.BuildJsonPostRequest(e.Url)))),
             .. new[] { "/Forum/FreeForum?method=detail&boardId=1", "/Forum/FreeForum?method=edit&boardId=1" }
                 .Select(url => (url, (Func<HttpRequestMessage>)(() =>
                 {

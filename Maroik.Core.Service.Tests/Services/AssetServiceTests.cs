@@ -25,9 +25,9 @@ public class AssetServiceTests
     private readonly FakeLogger<AssetService> _logger = new();
 
     /// <summary>The fixed "current time" of these tests.</summary>
-    private static readonly DateTime Now = new(2026, 7, 1, 12, 0, 0, DateTimeKind.Utc);
-    /// <summary>The clock the service under test reads, stopped at <see cref="Now"/>.</summary>
-    private readonly FakeTimeProvider _time = new(new DateTimeOffset(Now));
+    private static readonly DateTime _now = new(2026, 7, 1, 12, 0, 0, DateTimeKind.Utc);
+    /// <summary>The clock the service under test reads, stopped at <see cref="_now"/>.</summary>
+    private readonly FakeTimeProvider _time = new(new DateTimeOffset(_now));
 
     /// <summary>The service under test over the mocked dependencies.</summary>
     private AssetService CreateSut() => new(_assetRepo.Object, _unitOfWork.Object, _logger, _time);
@@ -539,7 +539,7 @@ public class AssetServiceTests
 
         Assert.Equal(ServiceErrorType.Validation, result.ErrorType);
         Assert.Equal("Asset.ItemInvalid", result.ErrorCode);
-        Assert.Equal("Asset category (item) is not a recognised value.", result.ErrorKey);
+        Assert.Equal("Asset category (item) is not a recognized value.", result.ErrorKey);
     }
 
     /// <summary>The duplicate check looks up the requested product name; an existing one is the "already exists" Conflict.</summary>
@@ -548,7 +548,7 @@ public class AssetServiceTests
     {
         _assetRepo.Setup(r => r.FindByEmailAndProductNameAsync(Email, "MyBank", It.IsAny<CancellationToken>())).ReturnsAsync(MakeAsset("MyBank"));
 
-        ServiceResult result = await CreateSut().CreateAsync(Email, ValidRequest("MyBank"), TestContext.Current.CancellationToken);
+        ServiceResult result = await CreateSut().CreateAsync(Email, ValidRequest(), TestContext.Current.CancellationToken);
 
         AssertDuplicate(result);
         _assetRepo.Verify(r => r.CreateAsync(It.IsAny<Asset>(), It.IsAny<CancellationToken>()), Times.Never);
@@ -574,7 +574,7 @@ public class AssetServiceTests
         var thrown = new InvalidOperationException("boom");
         _assetRepo.Setup(r => r.CreateAsync(It.IsAny<Asset>(), It.IsAny<CancellationToken>())).ThrowsAsync(thrown);
 
-        await CreateSut().CreateAsync(Email, ValidRequest("MyBank"), TestContext.Current.CancellationToken);
+        await CreateSut().CreateAsync(Email, ValidRequest(), TestContext.Current.CancellationToken);
 
         AssertLoggedFailure("Failed to create asset", "MyBank", thrown);
     }
@@ -586,7 +586,7 @@ public class AssetServiceTests
         SetupFindAsset(MakeAsset("MyBank"));
         _assetRepo.Setup(r => r.UpdateAssetWithProductNameAsync(It.IsAny<Asset>(), "MyBank", It.IsAny<CancellationToken>())).ReturnsAsync(1);
 
-        ServiceResult result = await CreateSut().UpdateAsync(Email, ValidRequest("MyBank"), "MyBank", TestContext.Current.CancellationToken);
+        ServiceResult result = await CreateSut().UpdateAsync(Email, ValidRequest(), "MyBank", TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
         _unitOfWork.Verify(u => u.BeginAsync(null, It.IsAny<CancellationToken>()), Times.Once);
@@ -604,7 +604,7 @@ public class AssetServiceTests
         ServiceResult result = await CreateSut().UpdateAsync(Email, request, "MyBank", TestContext.Current.CancellationToken);
 
         Assert.Equal("Asset.ItemInvalid", result.ErrorCode);
-        Assert.Equal("Asset category (item) is not a recognised value.", result.ErrorKey);
+        Assert.Equal("Asset category (item) is not a recognized value.", result.ErrorKey);
     }
 
     /// <summary>An unknown original product name on update is the "asset not found" NotFound.</summary>
@@ -634,7 +634,7 @@ public class AssetServiceTests
         SetupFindAsset(MakeAsset("MyBank"));
         _assetRepo.Setup(r => r.UpdateAssetWithProductNameAsync(It.IsAny<Asset>(), "MyBank", It.IsAny<CancellationToken>())).ReturnsAsync(0);
 
-        ServiceResult result = await CreateSut().UpdateAsync(Email, ValidRequest("MyBank"), "MyBank", TestContext.Current.CancellationToken);
+        ServiceResult result = await CreateSut().UpdateAsync(Email, ValidRequest(), "MyBank", TestContext.Current.CancellationToken);
 
         Assert.Equal(ServiceErrorType.Failure, result.ErrorType);
         Assert.Equal("Asset.UpdateFailed", result.ErrorCode);
@@ -682,7 +682,7 @@ public class AssetServiceTests
         var thrown = new InvalidOperationException("boom");
         _assetRepo.Setup(r => r.UpdateAssetWithProductNameAsync(It.IsAny<Asset>(), It.IsAny<string>(), It.IsAny<CancellationToken>())).ThrowsAsync(thrown);
 
-        await CreateSut().UpdateAsync(Email, ValidRequest("MyBank"), "MyBank", TestContext.Current.CancellationToken);
+        await CreateSut().UpdateAsync(Email, ValidRequest(), "MyBank", TestContext.Current.CancellationToken);
 
         AssertLoggedFailure("Failed to update asset", "MyBank", thrown);
     }

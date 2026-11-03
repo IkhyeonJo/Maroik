@@ -279,7 +279,7 @@ public sealed class Account : AggregateRoot<string>
     }
 
     // ------------------------------------------------------------------------
-    // Domain behaviours
+    // Domain behaviors
     // ------------------------------------------------------------------------
 
     /// <summary>

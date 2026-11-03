@@ -244,7 +244,7 @@ public class FinanceReadEndpointsTests(MaroikWebApplicationFactory factory)
         Assert.DoesNotContain("MineBeta-IG", searched, StringComparison.Ordinal);
     }
 
-    /// <summary>The expenditure grid lists the caller's rows and honours the whole-row search.</summary>
+    /// <summary>The expenditure grid lists the caller's rows and honors the whole-row search.</summary>
     [Fact]
     public async Task ExpenditureGrid_ListsTheCallersRows_AndTheSearchNarrowsThem()
     {
@@ -281,7 +281,7 @@ public class FinanceReadEndpointsTests(MaroikWebApplicationFactory factory)
         Assert.Contains("AssetGridBeta-AG", searched, StringComparison.Ordinal);
     }
 
-    /// <summary>The fixed-income and fixed-expenditure grids list the caller's schedules and honour the whole-row search.</summary>
+    /// <summary>The fixed-income and fixed-expenditure grids list the caller's schedules and honor the whole-row search.</summary>
     [Fact]
     public async Task FixedGrids_ListTheCallersSchedules_AndTheSearchNarrowsThem()
     {

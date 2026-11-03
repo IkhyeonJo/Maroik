@@ -23,7 +23,7 @@ public sealed class OtherTestcontainersTests : IAsyncDisposable
     private string? _containerId;
 
     /// <summary>
-    /// Starts a long-sleeping container labelled as belonging to another Testcontainers session. Uses an image every
+    /// Starts a long-sleeping container labeled as belonging to another Testcontainers session. Uses an image every
     /// Testcontainers run here has already pulled (the database image).
     /// </summary>
     private async Task StartOtherSessionContainerAsync()

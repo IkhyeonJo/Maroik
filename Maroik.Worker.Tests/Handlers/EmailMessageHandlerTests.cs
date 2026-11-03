@@ -79,7 +79,7 @@ public class EmailMessageHandlerTests
         _accountMailStatusService.Verify(
             s => s.ClearMailSendFailedAsync("user@example.com", It.IsAny<CancellationToken>()),
             Times.Once);
-        Assert.Single(_logger.Collector.GetSnapshot(), r => r.Level == LogLevel.Information && r.Message == "Email sent to user@example.com");
+        Assert.Single(_logger.Collector.GetSnapshot(), r => r is { Level: LogLevel.Information, Message: "Email sent to user@example.com" });
     }
 
     /// <summary>Verifies that <c>HandleAsync</c> marks the account as FailToMailSent when SMTP fails.</summary>
@@ -104,7 +104,7 @@ public class EmailMessageHandlerTests
             s => s.ClearMailSendFailedAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()),
             Times.Never);
         Assert.Single(_logger.Collector.GetSnapshot(),
-            r => r.Level == LogLevel.Warning && r.Message == "SMTP send failed for user@example.com: SMTP connection refused");
+            r => r is { Level: LogLevel.Warning, Message: "SMTP send failed for user@example.com: SMTP connection refused" });
         Assert.Equal("SMTP send failed for user@example.com: SMTP connection refused", thrown.Message);
     }
 

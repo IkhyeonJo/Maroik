@@ -26,14 +26,14 @@ export function describeLayoutScript(area: "admin" | "user" | "anonymous"): void
     /** Fires jQuery's global `ajaxComplete` for a request of `type` (no type when omitted). */
     const complete = (h: SiteHandle, type?: string) => h.$(h.win.document).trigger("ajaxComplete", [{}, type === undefined ? {} : { type }]);
 
-    describe(`${area}/_Layout — shared layout behaviour`, () => {
+    describe(`${area}/_Layout — shared layout behavior`, () => {
         it("an unhandled AJAX error sends the visitor to the public dashboard (session expiry recovery)", () => {
             const h = load();
             h.$(h.win.document).trigger("ajaxError");
             expect(h.navigations.at(-1)).toBe("/Dashboard/AnonymousIndex");
         });
 
-        it("a request the page aborted on purpose (a cancelled download) is not a failure: the visitor stays", () => {
+        it("a request the page aborted on purpose (a canceled download) is not a failure: the visitor stays", () => {
             const h = load();
             const before = h.navigations.length;
             h.$(h.win.document).trigger("ajaxError", [{}, {}, "abort"]);
@@ -54,7 +54,7 @@ export function describeLayoutScript(area: "admin" | "user" | "anonymous"): void
         });
 
         if (area !== "anonymous") {
-            it("publishes escapeHtml, which neutralises every HTML-significant character", () => {
+            it("publishes escapeHtml, which neutralizes every HTML-significant character", () => {
                 const h = load();
                 expect(h.win.escapeHtml(`<div class="test" data-value='a&b'>text</div>`))
                     .toBe("&lt;div class=&quot;test&quot; data-value=&#39;a&amp;b&#39;&gt;text&lt;/div&gt;");

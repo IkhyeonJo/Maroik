@@ -4,7 +4,7 @@ namespace Maroik.Core.Domain.Tests.Formulas;
 
 /// <summary>
 /// Unit tests for <see cref="FormulaLexer"/>: Excel formula text to tokens with their spans. The lexer never throws; text it cannot
-/// read becomes an error token at the exact span, so the editor can colour and underline a formula that is still being typed.
+/// read becomes an error token at the exact span, so the editor can color and underline a formula that is still being typed.
 /// </summary>
 public class FormulaLexerTests
 {

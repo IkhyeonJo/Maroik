@@ -8,7 +8,7 @@ namespace Maroik.Core.Service.Tests.Services;
 /// <summary>
 /// Unit tests for <see cref="DataProtectionService"/>, run against a real (in-memory) Data Protection key ring
 /// (<see cref="EphemeralDataProtectionProvider"/>) rather than a mock, so the round trip, the tamper detection and
-/// the purpose isolation are the framework's actual behaviour.
+/// the purpose isolation are the framework's actual behavior.
 /// </summary>
 public class DataProtectionServiceTests
 {

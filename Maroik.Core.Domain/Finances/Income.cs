@@ -183,7 +183,7 @@ public sealed class Income : AggregateRoot<long>
     }
 
     // ------------------------------------------------------------------------
-    // Domain behaviours
+    // Domain behaviors
     // ------------------------------------------------------------------------
 
     /// <summary>Updates all editable fields of this income record.</summary>
@@ -218,5 +218,5 @@ public sealed class Income : AggregateRoot<long>
     }
 
     /// <summary>What this income does to asset balances: it deposits <see cref="Amount"/> into <see cref="DepositMyAssetProductName"/>.</summary>
-    public IReadOnlyList<BalanceMovement> BalanceMovements() => [new BalanceMovement(DepositMyAssetProductName, Amount, IsDeposit: true)];
+    public IReadOnlyList<BalanceMovement> BalanceMovements() => [new(DepositMyAssetProductName, Amount, IsDeposit: true)];
 }

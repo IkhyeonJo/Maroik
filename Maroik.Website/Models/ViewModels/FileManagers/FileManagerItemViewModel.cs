@@ -25,7 +25,7 @@ public class FileManagerItemViewModel
     /// <summary>The last change in the user's time zone, "yyyy-MM-dd HH:mm".</summary>
     public string Modified { get; set; } = "";
 
-    /// <summary>The Font Awesome classes of its icon (file type colours).</summary>
+    /// <summary>The Font Awesome classes of its icon (file type colors).</summary>
     public string Icon { get; set; } = "";
 
     /// <summary>Whether a Preview action is offered (decided by the server).</summary>

@@ -97,5 +97,5 @@ The code has no `#pragma warning disable`.
 - Tests: multipart bodies are built with the per-project `Fixtures/MultipartForm` helper (`Of`, `AddText`, `AddFile`),
   never `new StringContent(...)` / `new ByteArrayContent(...)` added inline; a helper that sends a request takes a
   `Func<...>` and disposes what it builds (`ErrorOf`, `Send`).
-- A leak fix with observable behaviour gets a regression test like any bug fix (`FileClientTests.EveryCall_DisposesTheHttpClientItCreated`,
+- A leak fix with observable behavior gets a regression test like any bug fix (`FileClientTests.EveryCall_DisposesTheHttpClientItCreated`,
   `FileControllerTests.Download_ClosesTheFile_WhenItFailsAfterOpeningIt`); where nothing is observable, the build error is the red step.

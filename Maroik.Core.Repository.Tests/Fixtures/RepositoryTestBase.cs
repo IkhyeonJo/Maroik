@@ -56,7 +56,7 @@ public abstract class RepositoryTestBase : IClassFixture<DatabaseFixture>, IAsyn
     {
         List<string> existing = await Context.Accounts.AsNoTracking()
             .Where(a => ((IEnumerable<string>)emails).Contains(a.Email))
-            .Select(a => a.Email!)
+            .Select(a => a.Email)
             .ToListAsync();
 
         List<OrmAccount> toAdd = [.. emails.Distinct()
@@ -142,7 +142,7 @@ public abstract class RepositoryTestBase : IClassFixture<DatabaseFixture>, IAsyn
 
         List<string> existing = await Context.Assets.AsNoTracking()
             .Where(a => a.AccountEmail == accountEmail && ((IEnumerable<string>)names).Contains(a.ProductName))
-            .Select(a => a.ProductName!)
+            .Select(a => a.ProductName)
             .ToListAsync();
 
         List<OrmAsset> toAdd = [.. names.Where(n => !existing.Contains(n)).Select(n => new OrmAsset

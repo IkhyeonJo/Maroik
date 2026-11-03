@@ -79,7 +79,7 @@ export function describeGridCrudScript(c: GridCrudConfig): void {
     /** The body of the delete request for `id`. */
     const deleteBody = (id: unknown) => ({ [c.rowKey]: id });
 
-    describe(`${c.area}/${c.feature}/${c.page} — shared grid CRUD behaviour`, () => {
+    describe(`${c.area}/${c.feature}/${c.page} — shared grid CRUD behavior`, () => {
         // ---- selection -----------------------------------------------------------------------------
 
         it("rowclick highlights only the row whose key matches, and a later click moves the highlight", () => {

@@ -18,7 +18,7 @@ internal sealed class FakeSmtpServer : IAsyncDisposable
 {
     /// <summary>Loopback listener on an OS-assigned port.</summary>
     private readonly TcpListener _listener;
-    /// <summary>Signalled on dispose to stop the accept loop.</summary>
+    /// <summary>Signaled on dispose to stop the accept loop.</summary>
     private readonly CancellationTokenSource _stop;
     /// <summary>The running accept loop.</summary>
     private readonly Task _acceptLoop;
@@ -94,13 +94,13 @@ internal sealed class FakeSmtpServer : IAsyncDisposable
         catch (Exception) when (_stop.IsCancellationRequested)
         {
             // Shutting down: DisposeAsync signals the stop, then closes the listener while this loop may be anywhere, so the accept
-            // ends however that race falls — cancelled, on a disposed or not-listening listener (InvalidOperationException), or as a
+            // ends however that race falls — canceled, on a disposed or not-listening listener (InvalidOperationException), or as a
             // SocketException ("Operation canceled" / "Invalid argument") when closing the socket beats the token. Before the stop,
             // any exception still fails the dispose (FakeSmtpServerTests).
         }
     }
 
-    /// <summary>Speaks a minimal SMTP dialogue on one connection (greeting, EHLO, STARTTLS when a certificate is set, AUTH, MAIL/RCPT/DATA, QUIT), recording what it receives.</summary>
+    /// <summary>Speaks a minimal SMTP dialog on one connection (greeting, EHLO, STARTTLS when a certificate is set, AUTH, MAIL/RCPT/DATA, QUIT), recording what it receives.</summary>
     private async Task HandleSessionAsync(TcpClient client)
     {
         using (client)

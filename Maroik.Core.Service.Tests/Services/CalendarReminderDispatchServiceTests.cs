@@ -21,7 +21,7 @@ namespace Maroik.Core.Service.Tests.Services;
 public class CalendarReminderDispatchServiceTests
 {
     /// <summary>"Now": 2026-11-02 08:30 UTC (17:30 in Seoul).</summary>
-    private static readonly DateTime Now = new(2026, 11, 2, 8, 30, 0, DateTimeKind.Utc);
+    private static readonly DateTime _now = new(2026, 11, 2, 8, 30, 0, DateTimeKind.Utc);
 
     private readonly Mock<ICalendarEventReminderRepository> _reminders = new();
     private readonly Mock<ICalendarEventRepository> _events = new();
@@ -50,28 +50,27 @@ public class CalendarReminderDispatchServiceTests
     private CalendarReminderDispatchService Sut() => new(_reminders.Object, _events.Object, _calendars.Object, _accounts.Object,
         _publisher.Object, _mailClient.Object, _unitOfWork.Object,
         Options.Create(new ServerSetting { DomainName = "https://www.maroik.com/", DemoAccountEmail = "demo@maroik.com" }),
-        _logger, new FakeTimeProvider(new DateTimeOffset(Now)));
+        _logger, new FakeTimeProvider(new DateTimeOffset(_now)));
 
     /// <summary>Queues reminder <paramref name="id"/> (due at <paramref name="fireAt"/>) of event 41 in calendar 7, owned by <paramref name="owner"/>.</summary>
-    private CalendarEventReminder GivenDue(long id, Account? owner, CalendarEvent? calendarEvent = null, DateTime? fireAt = null)
+    private void GivenDue(long id, Account? owner, CalendarEvent? calendarEvent = null, DateTime? fireAt = null)
     {
-        var reminder = CalendarEventReminder.Reconstitute(id, 41, "Email", 30, null, null, null, null, fireAt ?? Now, null);
-        _reminders.SetupSequence(r => r.LockDueAsync(Now, 1, It.IsAny<CancellationToken>())).ReturnsAsync([reminder]).ReturnsAsync([]);
+        var reminder = CalendarEventReminder.Reconstitute(id, 41, "Email", 30, null, null, null, null, fireAt ?? _now, null);
+        _reminders.SetupSequence(r => r.LockDueAsync(_now, 1, It.IsAny<CancellationToken>())).ReturnsAsync([reminder]).ReturnsAsync([]);
         _events.Setup(e => e.FindByIdAsync(41, It.IsAny<CancellationToken>())).ReturnsAsync(calendarEvent ?? TimedEvent());
         _calendars.Setup(c => c.FindByIdAsync(7, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Calendar.Reconstitute(7, "owner@example.com", "Home & Work", null, "Asia/Seoul", "#3788d8", Now, Now));
+            .ReturnsAsync(Calendar.Reconstitute(7, "owner@example.com", "Home & Work", null, "Asia/Seoul", "#3788d8", _now, _now));
         _accounts.Setup(a => a.FindByEmailAsync("owner@example.com", It.IsAny<CancellationToken>())).ReturnsAsync(owner);
-        return reminder;
     }
 
     /// <summary>An account in Seoul.</summary>
     private static Account Owner(bool locked = false, string role = Role.User) =>
         Account.Reconstitute("owner@example.com", "hash", "Owner", null, role, "Asia/Seoul", null, locked, 0, true, true, null, null,
-            Now, Now, null, false, "stamp", false);
+            _now, _now, null, false, "stamp", false);
 
     /// <summary>Event 41, 09:00–10:00 UTC (18:00–19:00 in Seoul) on 2026-11-02, at "Room 2".</summary>
     private static CalendarEvent TimedEvent() => CalendarEvent.Reconstitute(41, 7, "Dentist", null, false,
-        new DateTime(2026, 11, 2, 9, 0, 0), new DateTime(2026, 11, 2, 10, 0, 0), "UTC", "UTC", "Room 2", "Busy", null, Now, Now);
+        new DateTime(2026, 11, 2, 9, 0, 0), new DateTime(2026, 11, 2, 10, 0, 0), "UTC", "UTC", "Room 2", "Busy", null, _now, _now);
 
     /// <summary>A due reminder is e-mailed to the owner (in the owner's time zone), marked handled and committed, and logged.</summary>
     [Fact]
@@ -86,7 +85,7 @@ public class CalendarReminderDispatchServiceTests
         Assert.Equal(("owner@example.com", "[Maroik] Dentist — 2026-11-02 18:00 (Asia/Seoul)"), (mail.ToEmail, mail.Subject));
         Assert.Equal(new CalendarReminderMail("Dentist", "2026-11-02 18:00 – 19:00 (Asia/Seoul)", "Room 2", "Home & Work", "Calendar/UserIndex")
             + " @ https://www.maroik.com/", mail.Body);
-        Assert.Equal(Now, Assert.Single(_saved).HandledAt);
+        Assert.Equal(_now, Assert.Single(_saved).HandledAt);
         _unitOfWork.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Once);
         _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once); // the empty second look
         FakeLogRecord log = Assert.Single(_logger.Collector.GetSnapshot());
@@ -98,7 +97,7 @@ public class CalendarReminderDispatchServiceTests
     public async Task AnAllDayEvent_ShowsItsDates_AndAnAdministratorGetsTheAdminPage()
     {
         GivenDue(4, Owner(role: Role.Admin), CalendarEvent.Reconstitute(41, 7, "Trip", null, true,
-            new DateTime(2026, 11, 3), new DateTime(2026, 11, 5), null, null, null, "Busy", null, Now, Now));
+            new DateTime(2026, 11, 3), new DateTime(2026, 11, 5), null, null, null, "Busy", null, _now, _now));
 
         await Sut().DispatchDueAsync(10, TestContext.Current.CancellationToken);
 
@@ -118,7 +117,7 @@ public class CalendarReminderDispatchServiceTests
 
         Assert.Equal(1, handled);
         Assert.Empty(_published);
-        Assert.Equal(Now, Assert.Single(_saved).HandledAt);
+        Assert.Equal(_now, Assert.Single(_saved).HandledAt);
         FakeLogRecord log = Assert.Single(_logger.Collector.GetSnapshot());
         Assert.Equal((LogLevel.Information, "Skipped calendar reminder 5 of event 41: the owner's account is locked"), (log.Level, log.Message));
     }
@@ -167,8 +166,8 @@ public class CalendarReminderDispatchServiceTests
         Assert.Empty(_published);
 
         GivenDue(7, Owner());
-        _reminders.Setup(r => r.LockDueAsync(Now, 1, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(() => [CalendarEventReminder.Reconstitute(7, 41, "Email", 30, null, null, null, null, Now, null)]);
+        _reminders.Setup(r => r.LockDueAsync(_now, 1, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(() => [CalendarEventReminder.Reconstitute(7, 41, "Email", 30, null, null, null, null, _now, null)]);
 
         Assert.Equal(2, await Sut().DispatchDueAsync(2, TestContext.Current.CancellationToken));
         Assert.Equal(2, _published.Count);

@@ -5,14 +5,14 @@ namespace Maroik.Core.Domain.Tests.Boards;
 public class BoardEditTests
 {
     /// <summary>The fixed "current time" every domain call in this class receives.</summary>
-    private static readonly DateTime Now = new(2026, 7, 1, 12, 0, 0, DateTimeKind.Utc);
+    private static readonly DateTime _now = new(2026, 7, 1, 12, 0, 0, DateTimeKind.Utc);
 
     /// <summary>The instant the stored post was last updated.</summary>
-    private static readonly DateTime Before = Now.AddDays(-1);
+    private static readonly DateTime _before = _now.AddDays(-1);
 
     /// <summary>A stored post by "Alice" of the given type, locked or not.</summary>
-    private static Domain.Boards.Board PostOf(bool locked = false, string type = BoardTypes.FreeForum) =>
-        Domain.Boards.Board.Reconstitute(1, type, "Title", "Body", "Alice", Before, Before, 0, false, locked, false);
+    private static Board PostOf(bool locked = false, string type = BoardTypes.FreeForum) =>
+        Board.Reconstitute(1, type, "Title", "Body", "Alice", _before, _before, 0, false, locked, false);
 
     /// <summary>The author edits the title and content and sets the lock as asked.</summary>
     [Theory]
@@ -22,13 +22,13 @@ public class BoardEditTests
     {
         var post = PostOf(wasLocked);
 
-        var result = post.EditBy("Alice", isAdmin: false, "New title", "New body", locked, Now);
+        var result = post.EditBy("Alice", isAdmin: false, "New title", "New body", locked, _now);
 
         Assert.Equal(BoardEdit.ContentEdited, result.Value);
         Assert.Equal("New title", post.Title);
         Assert.Equal("New body", post.Content);
         Assert.Equal(locked, post.Locked);
-        Assert.Equal(Now, post.Updated);
+        Assert.Equal(_now, post.Updated);
     }
 
     /// <summary>An author's edit the post rejects is returned as that error, leaving the lock as it was.</summary>
@@ -37,7 +37,7 @@ public class BoardEditTests
     {
         var post = PostOf(locked: true);
 
-        var result = post.EditBy("Alice", isAdmin: false, " ", "New body", locked: false, Now);
+        var result = post.EditBy("Alice", isAdmin: false, " ", "New body", locked: false, _now);
 
         Assert.Equal("Board.TitleEmpty", result.FirstError.Code);
         Assert.True(post.Locked);
@@ -49,13 +49,13 @@ public class BoardEditTests
     {
         var post = PostOf(locked: true);
 
-        var result = post.EditBy("Admin", isAdmin: true, "New title", "New body", locked: false, Now);
+        var result = post.EditBy("Admin", isAdmin: true, "New title", "New body", locked: false, _now);
 
         Assert.Equal(BoardEdit.LockCleared, result.Value);
         Assert.False(post.Locked);
         Assert.Equal("Title", post.Title);
         Assert.Equal("Body", post.Content);
-        Assert.Equal(Now, post.Updated);
+        Assert.Equal(_now, post.Updated);
     }
 
     /// <summary>
@@ -71,11 +71,11 @@ public class BoardEditTests
     {
         var post = PostOf(wasLocked, type);
 
-        var result = post.EditBy(nickname, isAdmin, "New title", "New body", locked, Now);
+        var result = post.EditBy(nickname, isAdmin, "New title", "New body", locked, _now);
 
         Assert.Equal(BoardEdit.Refused, result.Value);
         Assert.Equal("Title", post.Title);
         Assert.Equal(wasLocked, post.Locked);
-        Assert.Equal(Before, post.Updated);
+        Assert.Equal(_before, post.Updated);
     }
 }

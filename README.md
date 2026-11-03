@@ -191,7 +191,7 @@ Maroik is a modern web application built with ASP.NET Core MVC, featuring a comp
 - One spreadsheet per year and kind (income / expenditure): a line per class, sub-class and currency, subtotals and
   totals, 30 free rows, columns A..Z (B..M months, N the year total, O..Z free)
 - Excel-compatible formulas (`=SUM(B2:B13)`, `=ACTUAL(...)`, references to other sheets and last year's sheet), with a
-  formula bar that colours references, matches parentheses and suggests functions
+  formula bar that colors references, matches parentheses and suggests functions
 - Budget, actual and remaining views: actuals are the month's real income / expenditure records in the owner's time zone
 - Spreadsheet editing: range selection, copy / paste, fill down / right, undo / redo, carry-over from last year
 - Inputs are stored under stable row keys, so adding or removing a line never breaks a formula; a removed line shows
@@ -224,7 +224,7 @@ Maroik is a modern web application built with ASP.NET Core MVC, featuring a comp
 - **Deterministic time.** Domain methods take the current time as a `DateTime utcNow` argument; each use case reads `TimeProvider` once and passes the same instant everywhere, so `Created == Updated` on creation and token expiry is tested at its exact boundaries with `FakeTimeProvider`.
 - **Rich domain model.** Value objects (`Email`, `Money`, `CurrencyCode`, `AccountRole`, …) replace primitive strings; admin actions are intent-revealing aggregate operations (`ChangeRole`, `Lock`/`Unlock`, `ForceConfirmEmail`/`RevokeEmailConfirmation`, `AcceptServiceTerms`/`RevokeServiceTerms`, `SoftDelete`/`Restore`, `AdminResetPassword`) instead of a field-overwriting update.
 - **Use-case DTOs.** Self-registration, admin account creation and admin account update each have their own request type, so a registration form can never carry a role, lock or confirmation flag.
-- **Test-first development.** Every change starts with a failing test, including the log entries it must write; real PostgreSQL and RabbitMQ run in Testcontainers instead of mocks wherever the behaviour depends on them.
+- **Test-first development.** Every change starts with a failing test, including the log entries it must write; real PostgreSQL and RabbitMQ run in Testcontainers instead of mocks wherever the behavior depends on them.
 - **A formula engine of its own.** The budget sheets' Excel-compatible language is a lexer, a recursive-descent parser,
   a binder, a tree-walking evaluator and a dependency graph (Tarjan / Kahn) in the Domain project. User text is never
   compiled to code: it can only build a closed set of nodes and call the `FormulaFunctions` catalog.
@@ -429,11 +429,11 @@ generic error instead of failing half-way through a handler.
 
 ## Testing Strategy
 
-The goal is that a test fails whenever the behaviour it describes breaks — not that lines are merely executed.
+The goal is that a test fails whenever the behavior it describes breaks — not that lines are merely executed.
 
 - **Test-first.** Every change starts with a failing test, a bug fix with a regression test that fails on the old
   code, and the log entries a use case must write are asserted like any other result.
-- **Real dependencies where the behaviour depends on them.** Repositories run against a real PostgreSQL 17 loaded
+- **Real dependencies where the behavior depends on them.** Repositories run against a real PostgreSQL 17 loaded
   with the production schema and seed data (Testcontainers, one throwaway database per test class); messaging against
   a real RabbitMQ 4; mail against an in-process SMTP server; controllers through `WebApplicationFactory` against a real
   database; and the whole site in a real browser with Playwright.

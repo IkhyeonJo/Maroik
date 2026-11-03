@@ -120,7 +120,7 @@ public sealed class PostgresContainerFixture : IAsyncLifetime
         string path = Path.Combine(
             dir.FullName, InitScriptRelativePath.Replace('/', Path.DirectorySeparatorChar));
 
-        return !File.Exists(path) ? throw new FileNotFoundException($"Seed script not found at expected location.", path) : path;
+        return !File.Exists(path) ? throw new FileNotFoundException("Seed script not found at expected location.", path) : path;
 
     }
 }

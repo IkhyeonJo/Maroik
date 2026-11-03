@@ -9,7 +9,7 @@ namespace Maroik.Website.Extensions;
 public static class MaturityDateExtensions
 {
     /// <summary>The maturity date's wire format.</summary>
-    public const string Format = "yyyy-MM-dd";
+    private const string Format = "yyyy-MM-dd";
 
     extension(string? value)
     {

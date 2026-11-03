@@ -33,7 +33,7 @@ public static class BudgetMapper
     };
 
     /// <summary>A value.</summary>
-    public static BudgetValueResponse ToResponse(FormulaValue value) => value switch
+    private static BudgetValueResponse ToResponse(FormulaValue value) => value switch
     {
         NumberValue n => new BudgetValueResponse { Kind = "Number", Number = n.Value },
         TextValue t => new BudgetValueResponse { Kind = "Text", Text = t.Value },

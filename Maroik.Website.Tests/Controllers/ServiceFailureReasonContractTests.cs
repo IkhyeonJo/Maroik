@@ -223,7 +223,7 @@ public class ServiceFailureReasonContractTests(MaroikWebApplicationFactory facto
     [Fact]
     public async Task MenuDeletes_ReportTheServiceReason()
     {
-        using WebApplicationFactory<Program> host = factory.WithWebHostBuilder(b => b.ConfigureTestServices(services =>
+        await using WebApplicationFactory<Program> host = factory.WithWebHostBuilder(b => b.ConfigureTestServices(services =>
         {
             services.RemoveAll<IMenuService>();
             services.AddScoped<Maroik.Core.Service.Services.MenuService>();

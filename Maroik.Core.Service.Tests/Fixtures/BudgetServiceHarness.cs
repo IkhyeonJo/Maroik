@@ -36,31 +36,31 @@ internal sealed class BudgetServiceHarness
     public Mock<IAccountRepository> Accounts { get; } = new();
 
     /// <summary>The asset repository.</summary>
-    public Mock<IAssetRepository> Assets { get; } = new();
+    private Mock<IAssetRepository> Assets { get; } = new();
 
     /// <summary>The income repository.</summary>
-    public Mock<IIncomeRepository> Incomes { get; } = new();
+    private Mock<IIncomeRepository> Incomes { get; } = new();
 
     /// <summary>The expenditure repository.</summary>
-    public Mock<IExpenditureRepository> Expenditures { get; } = new();
+    private Mock<IExpenditureRepository> Expenditures { get; } = new();
 
     /// <summary>The unit of work.</summary>
-    public Mock<IUnitOfWork> UnitOfWork { get; } = new();
+    private Mock<IUnitOfWork> UnitOfWork { get; } = new();
 
     /// <summary>The captured log.</summary>
     public FakeLogger<BudgetService> Logger { get; } = new();
 
     /// <summary>The stopped clock.</summary>
-    public FakeTimeProvider Time { get; } = new(new DateTimeOffset(Now));
+    private FakeTimeProvider Time { get; } = new(new DateTimeOffset(Now));
 
     /// <summary>The expenditure records the repository answers with.</summary>
-    public List<Expenditure> Spent { get; } = [];
+    private List<Expenditure> Spent { get; } = [];
 
     /// <summary>Wires the mocks.</summary>
     public BudgetServiceHarness()
     {
         Sheets = new InMemoryBudgetSheetRepository(Lines);
-        Account account = Domain.Accounts.Account.Reconstitute(Email, "hash", "User", null, "User", "UTC", "KRW", false, 0, true, true, null, null, Now, Now, null, false, "stamp", false);
+        Account account = Account.Reconstitute(Email, "hash", "User", null, "User", "UTC", "KRW", false, 0, true, true, null, null, Now, Now, null, false, "stamp", false);
         Accounts.Setup(a => a.FindByEmailAsync(Email, It.IsAny<CancellationToken>())).ReturnsAsync(account);
         Accounts.Setup(a => a.FindByEmailForUpdateAsync(Email, It.IsAny<CancellationToken>())).ReturnsAsync(account);
         Assets.Setup(a => a.GetByAccountEmailAsync(Email, It.IsAny<CancellationToken>()))

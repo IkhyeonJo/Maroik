@@ -16,12 +16,12 @@ public sealed class FileManagerUploadSweepScheduler(IServiceScopeFactory scopes,
     public const int MaxAccountsPerRun = 100;
 
     /// <summary>How often the abandoned uploads are looked for.</summary>
-    private static readonly TimeSpan Interval = TimeSpan.FromHours(1);
+    private static readonly TimeSpan _interval = TimeSpan.FromHours(1);
 
     /// <inheritdoc />
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        using var timer = new PeriodicTimer(Interval, timeProvider);
+        using var timer = new PeriodicTimer(_interval, timeProvider);
         do
         {
             try

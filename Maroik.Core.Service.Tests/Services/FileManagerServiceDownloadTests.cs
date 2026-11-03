@@ -1,4 +1,3 @@
-using System.Text;
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Service.Services;
 using Microsoft.Extensions.Logging;
@@ -18,7 +17,7 @@ public class FileManagerServiceDownloadTests
     private readonly H _h = new();
 
     /// <summary>The leading bytes of a PNG.</summary>
-    private static readonly byte[] Png = [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, 0, 0, 0, 0, 1, 2];
+    private static readonly byte[] _png = [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, 0, 0, 0, 0, 1, 2];
 
     /// <summary>A file opens as a stream from file storage, under its name.</summary>
     [Fact]
@@ -67,14 +66,14 @@ public class FileManagerServiceDownloadTests
     [Fact]
     public async Task OpenPreviewAsync_AnswersTheImage_WithTheProvenContentType()
     {
-        long id = _h.File("photo.jpg", size: Png.Length);
-        _h.Files.Setup(f => f.DownloadAsync(_h.Node(id).StoragePath!, H.BaseUrl, It.IsAny<CancellationToken>())).ReturnsAsync(Png);
+        long id = _h.File("photo.jpg", size: _png.Length);
+        _h.Files.Setup(f => f.DownloadAsync(_h.Node(id).StoragePath!, H.BaseUrl, It.IsAny<CancellationToken>())).ReturnsAsync(_png);
 
         var (result, preview) = await _h.Sut.OpenPreviewAsync(H.Email, id, TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
         Assert.Equal("image/png", preview!.ContentType);
-        Assert.Equal(Png, preview.Bytes);
+        Assert.Equal(_png, preview.Bytes);
     }
 
     /// <summary>A type with no preview (SVG, PDF) or an image over 100 MB is refused without fetching it.</summary>
@@ -98,7 +97,7 @@ public class FileManagerServiceDownloadTests
     public async Task OpenPreviewAsync_RefusesAFileWhoseBytesAreNotAnImage()
     {
         long id = _h.File("trick.png");
-        _h.Files.Setup(f => f.DownloadAsync(_h.Node(id).StoragePath!, H.BaseUrl, It.IsAny<CancellationToken>())).ReturnsAsync(Encoding.ASCII.GetBytes("<html><script>alert(1)</script>"));
+        _h.Files.Setup(f => f.DownloadAsync(_h.Node(id).StoragePath!, H.BaseUrl, It.IsAny<CancellationToken>())).ReturnsAsync("<html><script>alert(1)</script>"u8.ToArray());
 
         Assert.Equal(ServiceErrorKeys.FileManagerNoPreview, (await _h.Sut.OpenPreviewAsync(H.Email, id, TestContext.Current.CancellationToken)).Result.ErrorKey);
     }

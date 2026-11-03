@@ -85,7 +85,7 @@ public sealed class BoardWriterForeignKeyTests(DatabaseFixture database) : Repos
         Assert.Equal((newNickname, newNickname), await WritersOfAsync(boardId));
     }
 
-    /// <summary>An account that registers the released nickname afterwards is not the writer of the earlier posts and comments.</summary>
+    /// <summary>An account that registers the released nickname afterward is not the writer of the earlier posts and comments.</summary>
     [Fact]
     public async Task AnAccountTakingTheOldNickname_DoesNotBecomeTheWriterOfTheEarlierPosts()
     {

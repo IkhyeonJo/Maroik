@@ -91,7 +91,7 @@ public class LoggingRuleArchitectureTests
                 .Where(tree => tree.FilePath.StartsWith("Maroik.Core.Repository" + Path.DirectorySeparatorChar, StringComparison.Ordinal))
                 .SelectMany(tree => tree.GetRoot().DescendantNodes().OfType<IdentifierNameSyntax>()
                     .Where(name => name.Identifier.ValueText is "ILogger" or "ILoggerFactory" or "Log")
-                    .Select(name => Where(name))),
+                    .Select(Where)),
         ];
 
         Assert.Empty(loggers);
@@ -166,7 +166,7 @@ public class LoggingRuleArchitectureTests
     private static IEnumerable<string> SilentCatches(SyntaxTree tree) =>
         tree.GetRoot().DescendantNodes().OfType<CatchClauseSyntax>()
             .Where(c => !Throws(c.Block) && !LogCalls(c.Block).Any() && !HasComment(c))
-            .Select(c => Where(c));
+            .Select(Where);
 
     /// <summary>
     /// Catches that neither throw nor log, catch everything (no exception type, or <c>Exception</c> itself, with no
@@ -177,7 +177,7 @@ public class LoggingRuleArchitectureTests
             .Where(c => !Throws(c.Block) && !LogCalls(c.Block).Any())
             .Where(c => c.Filter == null && (c.Declaration == null || c.Declaration.Type.ToString() is "Exception" or "System.Exception"))
             .Where(c => !UsesTheException(c))
-            .Select(c => Where(c));
+            .Select(Where);
 
     /// <summary>True when <paramref name="catchClause"/> names its exception and its block uses that variable.</summary>
     private static bool UsesTheException(CatchClauseSyntax catchClause) =>

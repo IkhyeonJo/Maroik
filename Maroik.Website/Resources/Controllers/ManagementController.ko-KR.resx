@@ -306,7 +306,7 @@
   <data name="Invalid image file" xml:space="preserve">
     <value>유효하지 않은 이미지 파일입니다</value>
   </data>
-  <data name="'{0}' is not a recognised time-zone ID." xml:space="preserve">
+  <data name="'{0}' is not a recognized time-zone ID." xml:space="preserve">
     <value>'{0}'은(는) 인식할 수 없는 시간대 ID입니다.</value>
   </data>
   <data name="'{0}' is not a valid email address." xml:space="preserve">
@@ -327,7 +327,7 @@
   <data name="Board type cannot be empty." xml:space="preserve">
     <value>게시판 유형은 비워둘 수 없습니다.</value>
   </data>
-  <data name="Board type is not a recognised value." xml:space="preserve">
+  <data name="Board type is not a recognized value." xml:space="preserve">
     <value>게시판 유형이 인식할 수 없는 값입니다.</value>
   </data>
   <data name="Cannot add a comment to a deleted post." xml:space="preserve">

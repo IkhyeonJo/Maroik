@@ -129,7 +129,7 @@
     function WriteUploadFile(obj: HTMLInputElement, errorMessage: string) {
         const chosenFile = obj.files?.[0];
         if (chosenFile === undefined) {
-            // The picker was cancelled: the input is empty, so nothing may be sent.
+            // The picker was canceled: the input is empty, so nothing may be sent.
             writeUploadedFile = undefined;
             return undefined;
         }
@@ -148,7 +148,7 @@
     function EditUploadFile(obj: HTMLInputElement, errorMessage: string) {
         const chosenFile = obj.files?.[0];
         if (chosenFile === undefined) {
-            // The picker was cancelled: the input is empty, so nothing may be sent.
+            // The picker was canceled: the input is empty, so nothing may be sent.
             editUploadedFile = undefined;
             return undefined;
         }

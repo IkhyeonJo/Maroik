@@ -141,8 +141,8 @@ public class FileManagerServiceWriteTests
         ServiceResult result = await _h.Sut.MoveAsync(H.Email, [folder, file], target, TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
-        Assert.Equal((long?)target, _h.Node(folder).ParentId);
-        Assert.Equal((long?)target, _h.Node(file).ParentId);
+        Assert.Equal(target, _h.Node(folder).ParentId);
+        Assert.Equal(target, _h.Node(file).ParentId);
         _h.AssertAccountLocked();
         _h.AssertCommitted();
     }
@@ -181,7 +181,7 @@ public class FileManagerServiceWriteTests
         Assert.Equal(["a.txt"], taken.ErrorArgs);
         Assert.Equal(ServiceErrorKeys.FileManagerNameTaken, together.ErrorKey);
         Assert.Null(_h.Node(file).ParentId);
-        Assert.Equal((long?)other, _h.Node(twin).ParentId);
+        Assert.Equal(other, _h.Node(twin).ParentId);
     }
 
     /// <summary>An item already in the target stays where it is (no conflict with itself).</summary>
@@ -192,7 +192,7 @@ public class FileManagerServiceWriteTests
         long file = _h.File("a.txt", target);
 
         Assert.True((await _h.Sut.MoveAsync(H.Email, [file], target, TestContext.Current.CancellationToken)).Success);
-        Assert.Equal((long?)target, _h.Node(file).ParentId);
+        Assert.Equal(target, _h.Node(file).ParentId);
     }
 
     /// <summary>A target that is not the account's folder (another account's, a file, missing) and an item the account does not own are "not found".</summary>
@@ -207,7 +207,7 @@ public class FileManagerServiceWriteTests
         Assert.Equal(ServiceErrorKeys.FileManagerItemNotFound, (await _h.Sut.MoveAsync(H.Email, [file], notAFolder, TestContext.Current.CancellationToken)).ErrorKey);
         Assert.Equal(ServiceErrorKeys.FileManagerItemNotFound, (await _h.Sut.MoveAsync(H.Email, [file], theirs, TestContext.Current.CancellationToken)).ErrorKey);
         Assert.Equal(ServiceErrorKeys.FileManagerItemNotFound, (await _h.Sut.MoveAsync(H.Email, [theirFile], null, TestContext.Current.CancellationToken)).ErrorKey);
-        Assert.Equal((long?)null, _h.Node(theirFile).ParentId);
+        Assert.Null(_h.Node(theirFile).ParentId);
     }
 
     // -- DeleteAsync ---------------------------------------------------------------
@@ -240,7 +240,7 @@ public class FileManagerServiceWriteTests
         Assert.Equal(new[] { aPath, cPath }.Order(StringComparer.Ordinal), order.Skip(1).Order(StringComparer.Ordinal));
         _h.Files.Verify(f => f.AbortFileManagerUploadAsync(uploadId, H.BaseUrl, It.IsAny<CancellationToken>()), Times.Once);
         _h.AssertAccountLocked();
-        Assert.Contains(_h.Logger.Collector.GetSnapshot(), r => r.Level == LogLevel.Information && r.Message == $"File Manager: {H.Email} deleted 2 item(s) (4 node(s), 3 stored file(s))");
+        Assert.Contains(_h.Logger.Collector.GetSnapshot(), r => r is { Level: LogLevel.Information, Message: $"File Manager: {H.Email} deleted 2 item(s) (4 node(s), 3 stored file(s))" });
     }
 
     /// <summary>A stored file that cannot be deleted is left as an orphan: the delete still succeeds for the user and a warning names it.</summary>
@@ -285,7 +285,7 @@ public class FileManagerServiceWriteTests
         Assert.Equal(ServiceErrorType.Failure, result.ErrorType);
         Assert.Equal(ServiceResult.TemporaryErrorKey, result.ErrorKey);
         _h.UnitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
-        Assert.Contains(_h.Logger.Collector.GetSnapshot(), r => r.Level == LogLevel.Error && r.Exception?.Message == "db down");
+        Assert.Contains(_h.Logger.Collector.GetSnapshot(), r => r is { Level: LogLevel.Error, Exception.Message: "db down" });
         _h.Files.Verify(f => f.DeleteFileManagerFileAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 }

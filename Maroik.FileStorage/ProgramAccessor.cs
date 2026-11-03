@@ -9,4 +9,4 @@ namespace Maroik.FileStorage;
 /// </summary>
 // ReSharper disable once PartialTypeWithSinglePart
 // ReSharper disable once ClassNeverInstantiated.Global
-public partial class Program { }
+public partial class Program;

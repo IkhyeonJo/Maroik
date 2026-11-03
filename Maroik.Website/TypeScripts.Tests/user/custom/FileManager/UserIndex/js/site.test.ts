@@ -1080,7 +1080,7 @@ describe("FileManager/UserIndex — the less common paths", () => {
     });
 });
 
-describe("FileManager/UserIndex — cancelling an upload", () => {
+describe("FileManager/UserIndex — canceling an upload", () => {
     it("the cancel button is on while a batch runs and off once it ends", async () => {
         const { h } = await load();
         pick(h, "fileManagerFileInput", [file("a.txt")]);
@@ -1095,7 +1095,7 @@ describe("FileManager/UserIndex — cancelling an upload", () => {
         expect(h.$("#btnUploadCancel").prop("disabled")).toBe(true);
     });
 
-    it("cancelling aborts the file being sent before its next chunk and does not start the rest", async () => {
+    it("canceling aborts the file being sent before its next chunk and does not start the rest", async () => {
         const { h } = await load();
         pick(h, "fileManagerFileInput", [file("a.txt", 3), file("b.txt"), file("c.txt")]);
         await flush();
@@ -1134,7 +1134,7 @@ describe("FileManager/UserIndex — cancelling an upload", () => {
         expect(callsTo(h, "/FileManager/UploadChunk")).toHaveLength(1);
     });
 
-    it("a cancelled batch does not cancel the next one", async () => {
+    it("a canceled batch does not cancel the next one", async () => {
         const { h } = await load();
         pick(h, "fileManagerFileInput", [file("a.txt")]);
         await flush();

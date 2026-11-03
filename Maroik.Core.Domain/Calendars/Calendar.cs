@@ -16,7 +16,7 @@ namespace Maroik.Core.Domain.Calendars;
 public sealed class Calendar : AggregateRoot<long>
 {
     /// <summary>Email of the account that owns this calendar.</summary>
-    public Email AccountEmail { get; private set; }
+    public Email AccountEmail { get; }
 
     /// <summary>Calendar display name (e.g. "Work", "Personal").</summary>
     public string Name { get; private set; }
@@ -138,7 +138,7 @@ public sealed class Calendar : AggregateRoot<long>
     }
 
     // ------------------------------------------------------------------------
-    // Domain behaviours
+    // Domain behaviors
     // ------------------------------------------------------------------------
 
     /// <summary>Whether the account <paramref name="accountEmail"/> owns this calendar.</summary>

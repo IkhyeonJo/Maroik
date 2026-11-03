@@ -377,10 +377,10 @@ public class MailClientTests
     /// mismatch refused with one naming the errors, and a clean certificate passes silently.
     /// </summary>
     [Theory]
-    [InlineData(System.Net.Security.SslPolicyErrors.RemoteCertificateChainErrors, true, "Accepting an untrusted SMTP server certificate for relay.example because SmtpSsl is disabled for this relay")]
-    [InlineData(System.Net.Security.SslPolicyErrors.RemoteCertificateNameMismatch, false, "Rejecting the SMTP server certificate for relay.example: RemoteCertificateNameMismatch")]
-    [InlineData(System.Net.Security.SslPolicyErrors.None, true, null)]
-    public void AcceptRelaxedCertificate_DecidesAndLogsTheCertificateProblem(System.Net.Security.SslPolicyErrors errors, bool accepted, string? warning)
+    [InlineData(SslPolicyErrors.RemoteCertificateChainErrors, true, "Accepting an untrusted SMTP server certificate for relay.example because SmtpSsl is disabled for this relay")]
+    [InlineData(SslPolicyErrors.RemoteCertificateNameMismatch, false, "Rejecting the SMTP server certificate for relay.example: RemoteCertificateNameMismatch")]
+    [InlineData(SslPolicyErrors.None, true, null)]
+    public void AcceptRelaxedCertificate_DecidesAndLogsTheCertificateProblem(SslPolicyErrors errors, bool accepted, string? warning)
     {
         var logger = new RecordingLogger();
 

@@ -4,12 +4,12 @@
  *
  *   • The grid (column letters A..Z, row numbers) is drawn from the sheet the server sends: every row with its label and which of its
  *     columns can be edited, every cell with its input, its value as shown and — for a budget cell — its actual total, what remains and
- *     its colour. The Budget / Actual / Remaining switch only chooses which of those texts a budget cell shows.
- *   • The formula bar (CodeMirror) shows the active cell's input. While a formula is typed, the server colours it (PreviewBudgetCell):
+ *     its color. The Budget / Actual / Remaining switch only chooses which of those texts a budget cell shows.
+ *   • The formula bar (CodeMirror) shows the active cell's input. While a formula is typed, the server colors it (PreviewBudgetCell):
  *     the page paints its tokens, underlines its problems, outlines the referenced cells and shows the value it would have. While a
  *     formula waits for a reference, clicking a cell (Shift for a range) or the arrows insert it (Excel's point mode); a function name
  *     being typed offers the server's function list with its argument hints.
- *   • Keyboard: arrows (Shift extends), Enter / Tab (Shift backwards), F2 or typing to edit, Escape, Delete, Ctrl+C / Ctrl+V (paste),
+ *   • Keyboard: arrows (Shift extends), Enter / Tab (Shift backward), F2 or typing to edit, Escape, Delete, Ctrl+C / Ctrl+V (paste),
  *     Ctrl+D / Ctrl+R (fill down / right), Ctrl+Z / Ctrl+Y (undo / redo for this page).
  *   • Each committed edit is saved at once (SetBudgetCells); paste and fill go to CopyBudgetCells, which moves the formulas' relative
  *     references; either reply lists the cells whose value changed, and only those are redrawn.
@@ -89,8 +89,8 @@
     const COLUMNS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
     /** The characters after which a formula waits for a reference (Excel's point mode). */
     const WAITS_FOR_REFERENCE = /[=+\-*/^&(,:<>]$/;
-    /** Reference colours cycle through this many classes. */
-    const REFERENCE_COLOURS = 8;
+    /** Reference colors cycle through this many classes. */
+    const REFERENCE_COLORS = 8;
 
     // -- State ------------------------------------------------------------------------
 
@@ -297,7 +297,7 @@
         const r = rowAt(position.row);
         if (!r) return;
         const $td = tdOf(address);
-        const kept = ["budget-selected", "budget-active", "budget-copied", ...Array.from({ length: REFERENCE_COLOURS }, (_, i) => `budget-ref-${i}`)]
+        const kept = ["budget-selected", "budget-active", "budget-copied", ...Array.from({ length: REFERENCE_COLORS }, (_, i) => `budget-ref-${i}`)]
             .filter((c) => $td.hasClass(c));
         PaintCell($td, r, position.col);
         $td.addClass(kept.join(" "));
@@ -389,7 +389,7 @@
         editor.focus();
     }
 
-    /** Leaves the edit: the cell and the formula bar show the stored input again, the colouring is cleared. */
+    /** Leaves the edit: the cell and the formula bar show the stored input again, the coloring is cleared. */
     function EndEdit(current: Editing) {
         const address = current.address;
         editing = null;
@@ -397,7 +397,7 @@
         clearTimeout(previewTimer);
         previewSeq++;
         CloseSuggestions();
-        ClearColouring();
+        ClearColoring();
         tdOf(address).removeClass("budget-editing");
         RepaintCell(address);
         ShowActive();
@@ -535,20 +535,20 @@
         PointAt(current, addressOf(moved), false);
     }
 
-    /** After the text changed: mirror it into the cell, offer functions, ask for the colouring. */
+    /** After the text changed: mirror it into the cell, offer functions, ask for the coloring. */
     function OnEdited(current: Editing) {
         tdOf(current.address).text(editor.getValue());
         UpdateSuggestions();
         SchedulePreview(current.address);
     }
 
-    /** Asks for the colouring of the formula after a short pause; a value that is not a formula has none. */
+    /** Asks for the coloring of the formula after a short pause; a value that is not a formula has none. */
     function SchedulePreview(address: string) {
         clearTimeout(previewTimer);
         const value = editor.getValue();
         if (!value.startsWith("=")) {
             previewSeq++;
-            ClearColouring();
+            ClearColoring();
             return;
         }
 
@@ -562,13 +562,13 @@
         }, 150);
     }
 
-    /** Paints the server's colouring: token classes, reference colours and outlines, problems, the value. */
+    /** Paints the server's coloring: token classes, reference colors and outlines, problems, the value. */
     function PaintPreview(preview: Preview) {
-        ClearColouring();
+        ClearColoring();
         lastTokens = preview.tokens;
         for (const t of preview.tokens) {
-            const colour = t.reference >= 0 ? ` cm-budget-ref-${t.reference % REFERENCE_COLOURS}` : "";
-            editor.markText(at(t.start), at(t.start + t.length), { className: `cm-budget-${t.class}${colour}` });
+            const color = t.reference >= 0 ? ` cm-budget-ref-${t.reference % REFERENCE_COLORS}` : "";
+            editor.markText(at(t.start), at(t.start + t.length), { className: `cm-budget-${t.class}${color}` });
         }
         for (const p of preview.problems) {
             // A zero-length problem ("something is missing here") marks the character before it.
@@ -581,17 +581,17 @@
             if (r.topLeft === "") continue;
             const a = positionOf(r.topLeft);
             const b = positionOf(r.bottomRight);
-            for (const address of addressesOf(a.row, a.col, b.row, b.col)) tdOf(address).addClass(`budget-ref-${r.index % REFERENCE_COLOURS}`);
+            for (const address of addressesOf(a.row, a.col, b.row, b.col)) tdOf(address).addClass(`budget-ref-${r.index % REFERENCE_COLORS}`);
         }
         $previewValue.text(preview.value);
     }
 
     /** Removes every mark, outline and problem of the formula bar. */
-    function ClearColouring() {
+    function ClearColoring() {
         for (const mark of editor.getAllMarks()) mark.clear();
         parenMarks = [];
         lastTokens = [];
-        for (let i = 0; i < REFERENCE_COLOURS; i++) $grid.find(`td.budget-ref-${i}`).removeClass(`budget-ref-${i}`);
+        for (let i = 0; i < REFERENCE_COLORS; i++) $grid.find(`td.budget-ref-${i}`).removeClass(`budget-ref-${i}`);
         $problems.empty();
         $previewValue.text("");
     }

@@ -420,7 +420,7 @@
     function CreateCalendarEventUploadedFile(obj: HTMLInputElement, errorMessage: string) {
         const chosenFile = obj.files?.[0];
         if (chosenFile === undefined) {
-            // The picker was cancelled: the input is empty, so nothing may be sent.
+            // The picker was canceled: the input is empty, so nothing may be sent.
             createCalendarEventUploadedFile = undefined;
             return undefined;
         }
@@ -439,7 +439,7 @@
     function EditCalendarEventUploadedFile(obj: HTMLInputElement, errorMessage: string) {
         const chosenFile = obj.files?.[0];
         if (chosenFile === undefined) {
-            // The picker was cancelled: the input is empty, so nothing may be sent.
+            // The picker was canceled: the input is empty, so nothing may be sent.
             editCalendarEventUploadedFile = undefined;
             return undefined;
         }

@@ -24,7 +24,7 @@ public class MenuOutputViewModel
     [Display(Name = "Name")]
     public string? Name { get; set; }
 
-    /// <summary>Localised display label shown in the navigation sidebar.</summary>
+    /// <summary>Localized display label shown in the navigation sidebar.</summary>
     [Required(ErrorMessage = "Please enter DisplayName")]
     [Display(Name = "DisplayName")]
     public string? DisplayName { get; set; }

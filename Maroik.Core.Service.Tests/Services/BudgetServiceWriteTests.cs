@@ -18,10 +18,10 @@ public class BudgetServiceWriteTests
     private readonly BudgetServiceHarness _h = new();
 
     /// <summary>Meal / eat-out in KRW.</summary>
-    private static readonly BudgetLine Meal = BudgetLine.Create(BudgetKind.Expenditure, "ConsumerSpending", "MealOrEatOutExpenses", "KRW").Value;
+    private static readonly BudgetLine _meal = BudgetLine.Create(BudgetKind.Expenditure, "ConsumerSpending", "MealOrEatOutExpenses", "KRW").Value;
 
     /// <summary>Pin money in USD.</summary>
-    private static readonly BudgetLine Pin = BudgetLine.Create(BudgetKind.Expenditure, "ConsumerSpending", "PinMoney", "USD").Value;
+    private static readonly BudgetLine _pin = BudgetLine.Create(BudgetKind.Expenditure, "ConsumerSpending", "PinMoney", "USD").Value;
 
     /// <summary>The first edit of a sheet stores the sheet with its default lines (account row locked), then the edit (sheet row locked).</summary>
     [Fact]
@@ -35,7 +35,7 @@ public class BudgetServiceWriteTests
         Assert.Equal(8, _h.Lines.All.Count);
         BudgetSheetCell cell = Assert.Single(_h.Cells.All);
         Assert.Equal(("L.RegularIncome.LaborIncome.4B5257", "B", "3000000"), (cell.RowKey, cell.Column, cell.Input));
-        Assert.Contains(edit!.Changed, c => c.Address == "B2" && c.Value.Number == 3000000m);
+        Assert.Contains(edit!.Changed, c => c is { Address: "B2", Value.Number: 3000000m });
         Assert.Equal(1, edit.Written);
         _h.Accounts.Verify(a => a.FindByEmailForUpdateAsync(H.Email, It.IsAny<CancellationToken>()), Times.Once);
         Assert.Equal([(H.Email, BudgetKind.Income, 2026)], _h.Sheets.Locks);
@@ -46,15 +46,15 @@ public class BudgetServiceWriteTests
     [Fact]
     public async Task EditAsync_ChangesAddsAndDeletesInputs()
     {
-        long id = _h.Sheet(BudgetKind.Expenditure, 2026, H.Email, Meal);
-        _h.Cell(id, Meal.Key, "B", "1");
-        _h.Cell(id, Meal.Key, "C", "2");
+        long id = _h.Sheet(BudgetKind.Expenditure, 2026, H.Email, _meal);
+        _h.Cell(id, _meal.Key, "B", "1");
+        _h.Cell(id, _meal.Key, "C", "2");
 
         var (result, _) = await _h.Sut.EditAsync(H.Email, BudgetKind.Expenditure, 2026, "UTC",
             [new BudgetCellEdit("B2", "10"), new BudgetCellEdit("C2", ""), new BudgetCellEdit("D2", "=B2*2"), new BudgetCellEdit("E2", "")], TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
-        Assert.Equal([("B", "10", H.Now), ("D", $"=B{{{Meal.Key}}}*2", H.Now)], _h.Cells.All.OrderBy(c => c.Column, StringComparer.Ordinal).Select(c => (c.Column, c.Input, c.Updated)));
+        Assert.Equal([("B", "10", H.Now), ("D", $"=B{{{_meal.Key}}}*2", H.Now)], _h.Cells.All.OrderBy(c => c.Column, StringComparer.Ordinal).Select(c => (c.Column, c.Input, c.Updated)));
         Assert.Equal(H.Now, _h.Sheets.All.Single().Updated);
         _h.Accounts.Verify(a => a.FindByEmailForUpdateAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
         _h.AssertTransactions(1, 1);
@@ -64,7 +64,7 @@ public class BudgetServiceWriteTests
     [Fact]
     public async Task EditAsync_RefusesABadInput()
     {
-        _h.Sheet(BudgetKind.Expenditure, 2026, H.Email, Meal);
+        _h.Sheet(BudgetKind.Expenditure, 2026, H.Email, _meal);
 
         var (result, edit) = await _h.Sut.EditAsync(H.Email, BudgetKind.Expenditure, 2026, "UTC", [new BudgetCellEdit("B2", "lunch")], TestContext.Current.CancellationToken);
 
@@ -78,7 +78,7 @@ public class BudgetServiceWriteTests
     [Fact]
     public async Task EditAsync_LogsAndRollsBackAFailure()
     {
-        _h.Sheet(BudgetKind.Expenditure, 2026, H.Email, Meal);
+        _h.Sheet(BudgetKind.Expenditure, 2026, H.Email, _meal);
         var boom = new InvalidOperationException("db down");
         _h.Cells.FailWrites = boom;
 
@@ -111,8 +111,8 @@ public class BudgetServiceWriteTests
     public async Task EditAsync_UsesASheetCreatedMeanwhile()
     {
         _h.Accounts.Setup(a => a.FindByEmailForUpdateAsync(H.Email, It.IsAny<CancellationToken>()))
-            .Callback(() => _h.Sheet(BudgetKind.Income, 2026, H.Email))
-            .ReturnsAsync((Maroik.Core.Domain.Accounts.Account?)null);
+            .Callback(() => _h.Sheet(BudgetKind.Income, 2026))
+            .ReturnsAsync((Domain.Accounts.Account?)null);
 
         var (result, _) = await _h.Sut.EditAsync(H.Email, BudgetKind.Income, 2026, "UTC", [new BudgetCellEdit("B6", "1")], TestContext.Current.CancellationToken);
 
@@ -125,14 +125,14 @@ public class BudgetServiceWriteTests
     [Fact]
     public async Task CopyAsync_StoresTheMovedFormulas()
     {
-        long id = _h.Sheet(BudgetKind.Expenditure, 2026, H.Email, Meal);
-        _h.Cell(id, Meal.Key, "C", $"=B{{{Meal.Key}}}+1");
+        long id = _h.Sheet(BudgetKind.Expenditure, 2026, H.Email, _meal);
+        _h.Cell(id, _meal.Key, "C", $"=B{{{_meal.Key}}}+1");
 
         var (result, edit) = await _h.Sut.CopyAsync(H.Email, BudgetKind.Expenditure, 2026, "UTC", "C2", "D2:E2", TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
         Assert.Equal(2, edit!.Written);
-        Assert.Equal([$"=B{{{Meal.Key}}}+1", $"=C{{{Meal.Key}}}+1", $"=D{{{Meal.Key}}}+1"], _h.Cells.All.OrderBy(c => c.Column, StringComparer.Ordinal).Select(c => c.Input));
+        Assert.Equal([$"=B{{{_meal.Key}}}+1", $"=C{{{_meal.Key}}}+1", $"=D{{{_meal.Key}}}+1"], _h.Cells.All.OrderBy(c => c.Column, StringComparer.Ordinal).Select(c => c.Input));
         _h.AssertTransactions(1, 1);
     }
 
@@ -140,7 +140,7 @@ public class BudgetServiceWriteTests
     [Fact]
     public async Task CopyAsync_RefusesABadPaste()
     {
-        _h.Sheet(BudgetKind.Expenditure, 2026, H.Email, Meal);
+        _h.Sheet(BudgetKind.Expenditure, 2026, H.Email, _meal);
 
         var (result, _) = await _h.Sut.CopyAsync(H.Email, BudgetKind.Expenditure, 2026, "UTC", "B2", "N2", TestContext.Current.CancellationToken);
 
@@ -152,8 +152,8 @@ public class BudgetServiceWriteTests
     [Fact]
     public async Task CopyAsync_LogsAFailure()
     {
-        long id = _h.Sheet(BudgetKind.Expenditure, 2026, H.Email, Meal);
-        _h.Cell(id, Meal.Key, "B", "1");
+        long id = _h.Sheet(BudgetKind.Expenditure, 2026, H.Email, _meal);
+        _h.Cell(id, _meal.Key, "B", "1");
         _h.Cells.FailWrites = new InvalidOperationException("db down");
 
         var (result, _) = await _h.Sut.CopyAsync(H.Email, BudgetKind.Expenditure, 2026, "UTC", "B2", "C2", TestContext.Current.CancellationToken);
@@ -166,13 +166,13 @@ public class BudgetServiceWriteTests
     [Fact]
     public async Task AddLineAsync_AddsTheLine()
     {
-        _h.Sheet(BudgetKind.Expenditure, 2026, H.Email, Meal);
+        _h.Sheet(BudgetKind.Expenditure, 2026, H.Email, _meal);
 
         var (result, sheet) = await _h.Sut.AddLineAsync(H.Email, BudgetKind.Expenditure, 2026, "UTC", "ConsumerSpending", "PinMoney", "usd", TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
-        Assert.Equal([Meal, Pin], _h.Lines.All.Select(l => l.Line).OrderBy(l => l.SubClass, StringComparer.Ordinal));
-        Assert.Contains(sheet!.Rows, r => r.SubClass == "PinMoney" && r.Currency == "USD");
+        Assert.Equal([_meal, _pin], _h.Lines.All.Select(l => l.Line).OrderBy(l => l.SubClass, StringComparer.Ordinal));
+        Assert.Contains(sheet!.Rows, r => r is { SubClass: "PinMoney", Currency: "USD" });
         _h.AssertTransactions(1, 1);
     }
 
@@ -180,7 +180,7 @@ public class BudgetServiceWriteTests
     [Fact]
     public async Task AddLineAsync_RefusesDuplicatesAndBadLines()
     {
-        _h.Sheet(BudgetKind.Expenditure, 2026, H.Email, Meal);
+        _h.Sheet(BudgetKind.Expenditure, 2026, H.Email, _meal);
 
         var (duplicate, _) = await _h.Sut.AddLineAsync(H.Email, BudgetKind.Expenditure, 2026, "UTC", "ConsumerSpending", "MealOrEatOutExpenses", "KRW", TestContext.Current.CancellationToken);
         var (bad, _) = await _h.Sut.AddLineAsync(H.Email, BudgetKind.Expenditure, 2026, "UTC", "RegularIncome", "LaborIncome", "KRW", TestContext.Current.CancellationToken);
@@ -214,7 +214,7 @@ public class BudgetServiceWriteTests
     [Fact]
     public async Task AddLineAsync_RefusesALine_ThatMakesTheFormulasReadTooManyCells()
     {
-        long id = _h.Sheet(BudgetKind.Expenditure, 2026, H.Email, Meal);
+        long id = _h.Sheet(BudgetKind.Expenditure, 2026, H.Email, _meal);
         foreach (char column in "OPQRSTUVWXY")
             _h.Cell(id, "F.1", column.ToString(), "=SUM(A{H.ConsumerSpending}:Z{F.30})");
 
@@ -240,14 +240,14 @@ public class BudgetServiceWriteTests
     [Fact]
     public async Task RemoveLineAsync_RemovesTheLineAndItsInputs()
     {
-        long id = _h.Sheet(BudgetKind.Expenditure, 2026, H.Email, Meal, Pin);
-        _h.Cell(id, Meal.Key, "B", "1");
+        long id = _h.Sheet(BudgetKind.Expenditure, 2026, H.Email, _meal, _pin);
+        _h.Cell(id, _meal.Key, "B", "1");
         _h.Cell(id, "F.1", "B", "2");
 
         var (result, sheet) = await _h.Sut.RemoveLineAsync(H.Email, BudgetKind.Expenditure, 2026, "UTC", "ConsumerSpending", "MealOrEatOutExpenses", "KRW", TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
-        Assert.Equal([Pin], _h.Lines.All.Select(l => l.Line));
+        Assert.Equal([_pin], _h.Lines.All.Select(l => l.Line));
         Assert.Equal(["F.1"], _h.Cells.All.Select(c => c.RowKey));
         Assert.DoesNotContain(sheet!.Rows, r => r.SubClass == "MealOrEatOutExpenses");
         _h.AssertTransactions(1, 1);
@@ -257,7 +257,7 @@ public class BudgetServiceWriteTests
     [Fact]
     public async Task RemoveLineAsync_RefusesAMissingLine()
     {
-        _h.Sheet(BudgetKind.Expenditure, 2026, H.Email, Meal);
+        _h.Sheet(BudgetKind.Expenditure, 2026, H.Email, _meal);
 
         var (missing, _) = await _h.Sut.RemoveLineAsync(H.Email, BudgetKind.Expenditure, 2026, "UTC", "ConsumerSpending", "PinMoney", "USD", TestContext.Current.CancellationToken);
         var (noSheet, _) = await _h.Sut.RemoveLineAsync(H.Email, BudgetKind.Income, 2026, "UTC", "RegularIncome", "LaborIncome", "KRW", TestContext.Current.CancellationToken);
@@ -271,7 +271,7 @@ public class BudgetServiceWriteTests
     [Fact]
     public async Task RemoveLineAsync_LogsAFailure()
     {
-        _h.Sheet(BudgetKind.Expenditure, 2026, H.Email, Meal);
+        _h.Sheet(BudgetKind.Expenditure, 2026, H.Email, _meal);
         _h.Cells.FailWrites = new InvalidOperationException("db down");
 
         var (result, _) = await _h.Sut.RemoveLineAsync(H.Email, BudgetKind.Expenditure, 2026, "UTC", "ConsumerSpending", "MealOrEatOutExpenses", "KRW", TestContext.Current.CancellationToken);
@@ -285,11 +285,11 @@ public class BudgetServiceWriteTests
     [Fact]
     public async Task CarryOverAsync_FillsFromLastYear()
     {
-        long last = _h.Sheet(BudgetKind.Expenditure, 2025, H.Email, Meal);
-        _h.Cell(last, Meal.Key, "B", "500");
-        _h.Cell(last, Meal.Key, "C", "600");
-        long now = _h.Sheet(BudgetKind.Expenditure, 2026, H.Email, Meal);
-        _h.Cell(now, Meal.Key, "C", "9");
+        long last = _h.Sheet(BudgetKind.Expenditure, 2025, H.Email, _meal);
+        _h.Cell(last, _meal.Key, "B", "500");
+        _h.Cell(last, _meal.Key, "C", "600");
+        long now = _h.Sheet(BudgetKind.Expenditure, 2026, H.Email, _meal);
+        _h.Cell(now, _meal.Key, "C", "9");
 
         var (result, sheet, copied) = await _h.Sut.CarryOverAsync(H.Email, BudgetKind.Expenditure, 2026, "UTC", TestContext.Current.CancellationToken);
 
@@ -304,9 +304,9 @@ public class BudgetServiceWriteTests
     [Fact]
     public async Task CarryOverAsync_LogsAFailure()
     {
-        long last = _h.Sheet(BudgetKind.Expenditure, 2025, H.Email, Meal);
-        _h.Cell(last, Meal.Key, "B", "500");
-        _h.Sheet(BudgetKind.Expenditure, 2026, H.Email, Meal);
+        long last = _h.Sheet(BudgetKind.Expenditure, 2025, H.Email, _meal);
+        _h.Cell(last, _meal.Key, "B", "500");
+        _h.Sheet(BudgetKind.Expenditure, 2026, H.Email, _meal);
         _h.Cells.FailWrites = new InvalidOperationException("db down");
 
         var (result, _, _) = await _h.Sut.CarryOverAsync(H.Email, BudgetKind.Expenditure, 2026, "UTC", TestContext.Current.CancellationToken);

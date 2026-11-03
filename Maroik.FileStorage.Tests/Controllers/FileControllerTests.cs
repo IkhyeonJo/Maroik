@@ -390,7 +390,7 @@ public class FileControllerTests(WebApplicationFactory<Program> baseFactory)
         {
             var controller = new Maroik.FileStorage.Controllers.FileController(
                 Mock.Of<IFileValidationService>(),
-                Microsoft.Extensions.Options.Options.Create(new Maroik.FileStorage.Settings.FileStorageSetting { StorageRootPath = Path.GetTempPath() }),
+                Microsoft.Extensions.Options.Options.Create(new Settings.FileStorageSetting { StorageRootPath = Path.GetTempPath() }),
                 Microsoft.Extensions.Logging.Abstractions.NullLogger<Maroik.FileStorage.Controllers.FileController>.Instance);
 
             var result = controller.Download(tempPath);
@@ -442,7 +442,7 @@ public class FileControllerTests(WebApplicationFactory<Program> baseFactory)
         {
             var controller = new Maroik.FileStorage.Controllers.FileController(
                 Mock.Of<IFileValidationService>(),
-                Microsoft.Extensions.Options.Options.Create(new Maroik.FileStorage.Settings.FileStorageSetting { StorageRootPath = Path.GetTempPath() }),
+                Microsoft.Extensions.Options.Options.Create(new Settings.FileStorageSetting { StorageRootPath = Path.GetTempPath() }),
                 new ThrowOnDownloadedLogger());
 
             var result = controller.Download(tempPath);
@@ -461,7 +461,7 @@ public class FileControllerTests(WebApplicationFactory<Program> baseFactory)
     /// <summary>The controller under test over <paramref name="validation"/>, the temp folder as storage root, and <paramref name="logger"/>.</summary>
     private static Maroik.FileStorage.Controllers.FileController ControllerWith(IFileValidationService validation, Microsoft.Extensions.Logging.Testing.FakeLogger<Maroik.FileStorage.Controllers.FileController> logger) =>
         new(validation,
-            Microsoft.Extensions.Options.Options.Create(new Maroik.FileStorage.Settings.FileStorageSetting { StorageRootPath = Path.GetTempPath() }),
+            Microsoft.Extensions.Options.Options.Create(new Settings.FileStorageSetting { StorageRootPath = Path.GetTempPath() }),
             logger);
 
     /// <summary>An unexpected failure while saving is answered with a generic refusal and logged as an error with the path, correlation id and exception.</summary>

@@ -3,7 +3,7 @@ namespace Maroik.Core.Contract.Dtos;
 /// <summary>What the editor shows for an input being typed.</summary>
 public sealed class BudgetPreviewResponse
 {
-    /// <summary>The coloured tokens.</summary>
+    /// <summary>The colored tokens.</summary>
     public List<BudgetTokenResponse> Tokens { get; init; } = [];
 
     /// <summary>The distinct references.</summary>

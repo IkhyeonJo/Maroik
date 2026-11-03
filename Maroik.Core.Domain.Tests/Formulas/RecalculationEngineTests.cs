@@ -51,7 +51,7 @@ public class RecalculationEngineTests
     public void Recalculate_EvaluatesOnlyTheReachedCells()
     {
         int reads = 0;
-        RecalculationEngine engine = Engine(a => { reads++; return 1m; }, ("A1", "5"), ("B1", "=A1+1"), ("C1", "=ACTUAL(Z1)"));
+        RecalculationEngine engine = Engine(_ => { reads++; return 1m; }, ("A1", "5"), ("B1", "=A1+1"), ("C1", "=ACTUAL(Z1)"));
         reads = 0;
 
         engine.Define(At("A1"), Def("6"));

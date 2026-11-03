@@ -6,6 +6,6 @@ namespace Maroik.Website.Constants;
 /// </summary>
 internal static class SessionKeys
 {
-    /// <summary>Session key holding the serialised <c>AccountResponse</c> for the logged-in user.</summary>
+    /// <summary>Session key holding the serialized <c>AccountResponse</c> for the logged-in user.</summary>
     internal const string Account = "Account";
 }

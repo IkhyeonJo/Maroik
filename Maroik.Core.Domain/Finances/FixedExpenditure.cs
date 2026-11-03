@@ -235,7 +235,7 @@ public sealed class FixedExpenditure : AggregateRoot<long>
     }
 
     // ------------------------------------------------------------------------
-    // Domain behaviours
+    // Domain behaviors
     // ------------------------------------------------------------------------
 
     /// <summary>Sets the "always notify" (<see cref="Unpunctuality"/>) flag.</summary>

@@ -30,7 +30,7 @@ public class ForumFlowTests(E2ESharedFixture fixture) : E2ETestBase(fixture)
         var page = await NewPageAsync();
         await GotoAsync(page, "/Forum/FreeForum");
 
-        // The forum list view renders an <h3 class="card-title"> with the localised "Free Forum" text
+        // The forum list view renders an <h3 class="card-title"> with the localized "Free Forum" text
         var heading = page.Locator("h3.card-title");
         await Assertions.Expect(heading).ToBeVisibleAsync();
     }

@@ -8,11 +8,11 @@ namespace Maroik.Core.Domain.Tests.Finances;
 public class AssetUsagePolicyTests
 {
     /// <summary>The fixed "current time" the test assets are stamped with.</summary>
-    private static readonly DateTime Now = new(2026, 7, 1, 12, 0, 0, DateTimeKind.Utc);
+    private static readonly DateTime _now = new(2026, 7, 1, 12, 0, 0, DateTimeKind.Utc);
 
     /// <summary>An asset of the test account, active unless <paramref name="deleted"/>.</summary>
     private static Asset AssetOf(string name = "Wallet", string currency = "KRW", bool deleted = false)
-        => Asset.Reconstitute(name, "user@example.com", "CashAsset", 1000m, currency, null, deleted, Now, Now);
+        => Asset.Reconstitute(name, "user@example.com", "CashAsset", 1000m, currency, null, deleted, _now, _now);
 
     /// <summary>
     /// A check's refusal, after asserting it agrees with the check's result: a passed check leaves no refusal behind

@@ -88,7 +88,7 @@ public class FormulaBinderTests
         FormulaDiagnostic error = Assert.Single(bound.Errors);
         Assert.Equal("Formula.ArgumentCount", error.Error.Code);
         Assert.Equal("{0} takes {1} to {2} arguments.", error.Error.Metadata![Maroik.Core.Domain.Errors.DomainError.MessageTemplateMetadataKey]);
-        Assert.Equal(new object[] { name, min, max }, (object[])error.Error.Metadata![Maroik.Core.Domain.Errors.DomainError.MessageArgsMetadataKey]);
+        Assert.Equal([name, min, max], (object[])error.Error.Metadata![Maroik.Core.Domain.Errors.DomainError.MessageArgsMetadataKey]);
         Assert.False(bound.CanSave);
     }
 

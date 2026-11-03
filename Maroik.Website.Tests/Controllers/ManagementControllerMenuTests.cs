@@ -74,7 +74,7 @@ public class ManagementControllerMenuTests(MaroikWebApplicationFactory factory)
 
         Assert.Equal(System.Net.HttpStatusCode.OK, response.StatusCode);
         foreach (string id in new[] { "createCategoryOrder", "createSubcategoryOrder", "editCategoryOrder", "editSubCategoryOrder" })
-            Assert.Matches($"<input[^>]*min=\"{Maroik.Core.Domain.Menus.MenuFieldPolicy.MinOrder}\"[^>]*id=\"{id}\"", html);
+            Assert.Matches($"<input[^>]*min=\"{Core.Domain.Menus.MenuFieldPolicy.MinOrder}\"[^>]*id=\"{id}\"", html);
     }
 
     // -- CreateCategory: role gating --------------------------------------------
@@ -307,8 +307,8 @@ public class ManagementControllerMenuTests(MaroikWebApplicationFactory factory)
 
         using var deleteRequest = admin.BuildJsonPostRequest("/Management/DeleteSubCategory", new
         {
-            Id = (int)menu.Id, CategoryId = menu.CategoryId, Name = menu.Name, DisplayName = menu.DisplayName,
-            IconPath = menu.IconPath, Controller = "", Action = menu.Action, Role = menu.Role, Order = menu.Order
+            Id = (int)menu.Id, menu.CategoryId, menu.Name, menu.DisplayName,
+            menu.IconPath, Controller = "", menu.Action, menu.Role, menu.Order
         });
         var response = await _client.SendAsync(deleteRequest, TestContext.Current.CancellationToken);
         string json = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);

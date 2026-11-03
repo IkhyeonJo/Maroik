@@ -400,11 +400,11 @@ public class ForumController(
                     Boards = [.. boardResponses.Select(ToRow)],
                     LoggedInAccount = loggedInAccountForQuery,
                     LoggedInAccountTimeZoneIanaId = loggedInAccountForQuery.TimeZoneIanaId ?? "",
-                    ViewerSeesLocalTime = loggedInAccountForQuery.SeesLocalTime()
+                    ViewerSeesLocalTime = loggedInAccountForQuery.SeesLocalTime(),
+                    SelectedSearchType = searchType,
+                    TypedSearchText = searchText
                 };
 
-                freeForumOutputViewModel.SelectedSearchType = searchType;
-                freeForumOutputViewModel.TypedSearchText = searchText;
                 return View(freeForumOutputViewModel);
 
                 BoardListRowViewModel ToRow(BoardResponse board) => board.ToListRow(

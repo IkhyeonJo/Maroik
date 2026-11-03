@@ -126,7 +126,7 @@ public sealed class BoardRepositoryTests(DatabaseFixture database) : RepositoryT
 
         var board = Board.Reconstitute(
             id: seeded[0].Id, type: BoardTypes.FreeForum, title: "Updated Title", content: "Updated content",
-            writer: seeded[0].Writer!, created: seeded[0].Created, updated: DateTime.UtcNow,
+            writer: seeded[0].Writer, created: seeded[0].Created, updated: DateTime.UtcNow,
             view: seeded[0].View, deleted: false, locked: false, noticed: false);
 
         await Sut.UpdateEntityAsync(board, TestContext.Current.CancellationToken);
@@ -144,8 +144,8 @@ public sealed class BoardRepositoryTests(DatabaseFixture database) : RepositoryT
         OrmBoard[] seeded = await SeedAsync(MakeBoard("Post to Delete"));
 
         var board = Board.Reconstitute(
-            id: seeded[0].Id, type: seeded[0].Type!, title: seeded[0].Title!, content: seeded[0].Content,
-            writer: seeded[0].Writer!, created: seeded[0].Created, updated: DateTime.UtcNow,
+            id: seeded[0].Id, type: seeded[0].Type, title: seeded[0].Title, content: seeded[0].Content,
+            writer: seeded[0].Writer, created: seeded[0].Created, updated: DateTime.UtcNow,
             view: seeded[0].View, deleted: true, locked: seeded[0].Locked, noticed: seeded[0].Noticed);
 
         await Sut.UpdateEntityAsync(board, TestContext.Current.CancellationToken);

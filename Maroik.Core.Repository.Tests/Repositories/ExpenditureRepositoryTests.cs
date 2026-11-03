@@ -37,7 +37,7 @@ public sealed class ExpenditureRepositoryTests(DatabaseFixture database) : Repos
     /// <summary>Ensures each owner account and every referenced asset exist, then inserts <paramref name="expenditures"/>, saves, and clears the change tracker.</summary>
     private async Task SeedAsync(params OrmExpenditure[] expenditures)
     {
-        foreach (var group in expenditures.GroupBy(e => e.AccountEmail!))
+        foreach (var group in expenditures.GroupBy(e => e.AccountEmail))
             await EnsureAssetsAsync(group.Key, [.. group.SelectMany(e => new[] { e.PaymentMethod, e.MyDepositAsset })]);
 
         await Context.Expenditures.AddRangeAsync(expenditures);

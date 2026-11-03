@@ -37,7 +37,7 @@ public sealed class FixedIncomeRepositoryTests(DatabaseFixture database) : Repos
     /// <summary>Ensures each owner account and every referenced asset exist, then inserts <paramref name="items"/>, saves, and clears the change tracker.</summary>
     private async Task SeedAsync(params OrmFixedIncome[] items)
     {
-        foreach (var group in items.GroupBy(i => i.AccountEmail!))
+        foreach (var group in items.GroupBy(i => i.AccountEmail))
             await EnsureAssetsAsync(group.Key, [.. group.Select(i => i.DepositMyAssetProductName)]);
 
         await Context.FixedIncomes.AddRangeAsync(items);

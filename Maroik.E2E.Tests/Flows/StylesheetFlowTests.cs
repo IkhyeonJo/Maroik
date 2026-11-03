@@ -39,14 +39,14 @@ public class StylesheetFlowTests(E2ESharedFixture fixture) : E2ETestBase(fixture
     }
 
     /// <summary>
-    /// Every role's layout centres its Bootstrap modals vertically: an inline-block dialog next to a full-height
+    /// Every role's layout centers its Bootstrap modals vertically: an inline-block dialog next to a full-height
     /// inline-block <c>::before</c> (<c>{role}/custom/_Layout/css/site.css</c>).
     /// </summary>
     [Theory]
     [InlineData("Anonymous", "/Calendar/AnonymousIndex")]
     [InlineData("User", "/Calendar/UserIndex")]
     [InlineData("Admin", "/Calendar/AdminIndex")]
-    public async Task Layout_CentresModalsVertically(string role, string path)
+    public async Task Layout_CentersModalsVertically(string role, string path)
     {
         IPage page = await OpenAsync(role, path);
 
@@ -60,9 +60,9 @@ public class StylesheetFlowTests(E2ESharedFixture fixture) : E2ETestBase(fixture
         Assert.Equal("left", await StyleAsync(page, ".modal-dialog", "text-align"));
     }
 
-    /// <summary>The account pages' own layout centres the modal box the same way (<c>anonymous/custom/_AdminlteBlank/css/site.css</c>).</summary>
+    /// <summary>The account pages' own layout centers the modal box the same way (<c>anonymous/custom/_AdminlteBlank/css/site.css</c>).</summary>
     [Fact]
-    public async Task AccountPages_CentreTheirModals()
+    public async Task AccountPages_CenterTheirModals()
     {
         IPage page = await OpenAsync("Anonymous", "/Account/Login");
 
@@ -131,7 +131,7 @@ public class StylesheetFlowTests(E2ESharedFixture fixture) : E2ETestBase(fixture
         Assert.Equal("anywhere", await StyleAsync(page, ".kanban-card-title", "overflow-wrap"));
 
         // The card modal takes Bootstrap's full dialog width instead of shrinking to its content (the layout makes every
-        // .modal-dialog inline-block to centre it), and its Delete / Save buttons keep a gap between them.
+        // .modal-dialog inline-block to center it), and its Delete / Save buttons keep a gap between them.
         await page.Locator(".kanban-card-item").First.ClickAsync();
         await Assertions.Expect(page.Locator("#kanbanCardModal")).ToBeVisibleAsync();
         Assert.Equal("500px", await StyleAsync(page, "#kanbanCardModal .modal-dialog", "width"));

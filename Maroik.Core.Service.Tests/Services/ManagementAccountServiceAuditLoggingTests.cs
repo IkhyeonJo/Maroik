@@ -39,9 +39,9 @@ public class ManagementAccountServiceAuditLoggingTests
         _accountRepo.Setup(r => r.FindActiveAdminsForUpdateAsync(It.IsAny<CancellationToken>())).ReturnsAsync([]);
 
     /// <summary>The fixed "current time" of these tests.</summary>
-    private static readonly DateTime Now = new(2026, 7, 1, 12, 0, 0, DateTimeKind.Utc);
-    /// <summary>The clock the service under test reads, stopped at <see cref="Now"/>.</summary>
-    private readonly FakeTimeProvider _time = new(new DateTimeOffset(Now));
+    private static readonly DateTime _now = new(2026, 7, 1, 12, 0, 0, DateTimeKind.Utc);
+    /// <summary>The clock the service under test reads, stopped at <see cref="_now"/>.</summary>
+    private readonly FakeTimeProvider _time = new(new DateTimeOffset(_now));
 
     /// <summary>The service under test over the mocked dependencies and the capturing logger.</summary>
     private ManagementAccountService CreateSut() => new(_accountRepo.Object, _passwordService.Object, _unitOfWork.Object, _logger, _time);

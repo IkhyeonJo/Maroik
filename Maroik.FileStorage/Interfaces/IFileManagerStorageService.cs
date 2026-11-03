@@ -17,7 +17,7 @@ public interface IFileManagerStorageService
     /// <summary>
     /// Completes the upload, and is asked again until it is decided (the scan runs in the background, <see cref="IFileManagerScanQueue"/>):
     /// a staging file of <paramref name="expectedSize"/> bytes gets its scan queued, and while it is queued or running the answer is
-    /// "scanning"; afterwards it is "stored" (the file is in <c>upload/FileManager/{uploadId}</c>) or the scan's refusal, answered once.
+    /// "scanning"; afterward it is "stored" (the file is in <c>upload/FileManager/{uploadId}</c>) or the scan's refusal, answered once.
     /// Returns no error and <c>Scanning</c> true while scanning, no error and false when stored, or the refusal.
     /// With <paramref name="skipScan"/> (the account's virus scan is off, decided by the Website) a whole staging file is moved there at
     /// once, unscanned, and the answer is "stored"; a scan already queued for the upload is still followed.
@@ -27,7 +27,7 @@ public interface IFileManagerStorageService
     /// <summary>
     /// Scans the staging file of <paramref name="uploadId"/> with ClamAV and moves a clean file to <c>upload/FileManager/{uploadId}</c>.
     /// Returns null when stored, or the refusal (the staging file is then deleted). Throws <see cref="OperationCanceledException"/>
-    /// without storing anything when <paramref name="ct"/> is cancelled (the upload was aborted, or the service stops).
+    /// without storing anything when <paramref name="ct"/> is canceled (the upload was aborted, or the service stops).
     /// </summary>
     Task<string?> ScanAsync(string uploadId, CancellationToken ct);
 

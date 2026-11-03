@@ -8,7 +8,6 @@
     it asks about a file's virus scan is rendered from the domain policy; the server checks every file (there is no size limit).
 *@
 @using Maroik.Core.Domain.FileManagers
-@using Maroik.Core.Domain.Primitives
 
 @Html.Hidden("scanPollMilliseconds", FileManagerUploadPolicy.ScanPollMilliseconds)
 @Html.Hidden("maxScanWaitMilliseconds", FileManagerUploadPolicy.MaxScanWaitMilliseconds)

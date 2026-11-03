@@ -8,7 +8,7 @@ namespace Maroik.Core.Service.Tests.Mappers;
 public class KanbanCardMapperTests
 {
     /// <summary>The fixed "current time" of these tests.</summary>
-    private static readonly DateTime Now = new(2026, 5, 24, 12, 0, 0, DateTimeKind.Utc);
+    private static readonly DateTime _now = new(2026, 5, 24, 12, 0, 0, DateTimeKind.Utc);
 
     /// <summary>To response maps every field.</summary>
     [Fact]
@@ -18,7 +18,7 @@ public class KanbanCardMapperTests
         var updated = new DateTime(2026, 1, 2, 2, 0, 0, DateTimeKind.Utc);
         KanbanCard card = KanbanCard.Reconstitute(50, "frank@example.com", "InProgress", "Title", "Body", new DateOnly(2026, 6, 1), created, updated);
 
-        KanbanCardResponse response = KanbanCardMapper.ToResponse(card, Now, "UTC");
+        KanbanCardResponse response = KanbanCardMapper.ToResponse(card, _now, "UTC");
 
         Assert.Equal(50, response.Id);
         Assert.Equal("InProgress", response.Lane);
@@ -36,18 +36,18 @@ public class KanbanCardMapperTests
     [InlineData(2026, 5, 24, false)]
     public void ToResponse_SetsOverdue_FromTheDueState(int year, int month, int day, bool expected)
     {
-        KanbanCard card = KanbanCard.Reconstitute(1, "frank@example.com", "ToDo", "Title", null, new DateOnly(year, month, day), Now, Now);
+        KanbanCard card = KanbanCard.Reconstitute(1, "frank@example.com", "ToDo", "Title", null, new DateOnly(year, month, day), _now, _now);
 
-        Assert.Equal(expected, KanbanCardMapper.ToResponse(card, Now, "UTC").Overdue);
+        Assert.Equal(expected, KanbanCardMapper.ToResponse(card, _now, "UTC").Overdue);
     }
 
     /// <summary>A card without a due date is never overdue.</summary>
     [Fact]
     public void ToResponse_IsNotOverdue_WithoutADueDate()
     {
-        KanbanCard card = KanbanCard.Reconstitute(1, "frank@example.com", "ToDo", "Title", null, null, Now, Now);
+        KanbanCard card = KanbanCard.Reconstitute(1, "frank@example.com", "ToDo", "Title", null, null, _now, _now);
 
-        KanbanCardResponse response = KanbanCardMapper.ToResponse(card, Now, "UTC");
+        KanbanCardResponse response = KanbanCardMapper.ToResponse(card, _now, "UTC");
 
         Assert.Null(response.DueDate);
         Assert.False(response.Overdue);

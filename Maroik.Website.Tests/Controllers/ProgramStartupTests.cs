@@ -83,7 +83,7 @@ public class ProgramStartupTests(MaroikWebApplicationFactory factory)
     [Fact]
     public async Task Startup_BacksTheDistributedCacheWithTheSharedValkeyMultiplexer()
     {
-        using var factory1 = factory.WithWebHostBuilder(b => b.UseSetting("ConnectionStrings:Valkey", "localhost:6379,abortConnect=false"));
+        await using var factory1 = factory.WithWebHostBuilder(b => b.UseSetting("ConnectionStrings:Valkey", "localhost:6379,abortConnect=false"));
         using HttpClient client = factory1.CreateClient();
 
         RedisCacheOptions options = factory1.Services.GetRequiredService<IOptions<RedisCacheOptions>>().Value;

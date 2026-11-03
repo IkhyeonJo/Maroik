@@ -30,7 +30,7 @@ public class CalendarBoundaryTests
     private static ErrorOr.ErrorOr<CalendarEvent> Event(string title = "t", string? description = null, string? location = null, string? status = null) =>
         CalendarEvent.Create(1, title, description, false, _start, _start.AddHours(1), "UTC", "UTC", location, status, Now);
 
-    /// <summary>Verifies that <c>Reassign</c> sets the new calendar and recurrence IDs and does not move <c>Updated</c> backwards.</summary>
+    /// <summary>Verifies that <c>Reassign</c> sets the new calendar and recurrence IDs and does not move <c>Updated</c> backward.</summary>
     [Fact]
     public void CalendarEvent_Reassign_MovesTheEventAndTouchesUpdated()
     {
@@ -138,7 +138,7 @@ public class CalendarBoundaryTests
         ErrorAssert.Validation(Event(location: Text(ShortTextPolicy.MaxLength + 1)), "CalendarEvent.LocationTooLong",
             "Event location must be {0} characters or fewer.", ShortTextPolicy.MaxLength);
         ErrorAssert.Validation(Event(title: " "), "CalendarEvent.TitleEmpty", "Event title cannot be empty.");
-        ErrorAssert.Validation(Event(status: "nonsense"), "CalendarEvent.StatusInvalid", "Event status is not a recognised value.");
+        ErrorAssert.Validation(Event(status: "nonsense"), "CalendarEvent.StatusInvalid", "Event status is not a recognized value.");
     }
 
     /// <summary>Verifies the title / description / location length limits, the empty title and the unknown status on <c>CalendarEvent.Update</c>.</summary>
@@ -159,7 +159,7 @@ public class CalendarBoundaryTests
         ErrorAssert.Validation(ev.Update(" ", null, false, _start, _start.AddHours(1), "UTC", "UTC", null, null, Now),
             "CalendarEvent.TitleEmpty", "Event title cannot be empty.");
         ErrorAssert.Validation(ev.Update("t", null, false, _start, _start.AddHours(1), "UTC", "UTC", null, "nonsense", Now),
-            "CalendarEvent.StatusInvalid", "Event status is not a recognised value.");
+            "CalendarEvent.StatusInvalid", "Event status is not a recognized value.");
     }
 
     /// <summary>Verifies that a zero-length event is valid and an end one minute before the start is refused.</summary>

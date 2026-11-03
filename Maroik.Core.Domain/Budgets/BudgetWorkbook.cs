@@ -10,7 +10,7 @@ namespace Maroik.Core.Domain.Budgets;
 /// <see cref="RecalculationEngine"/>, so a formula can read any loaded sheet and an edit reaches its dependents on every sheet.
 /// It shows a sheet (<see cref="View"/>) with each budget cell against the actuals, and turns what the user does — typing
 /// (<see cref="Edit"/>), paste / fill (<see cref="Copy"/>), carrying last year over (<see cref="CarryOver"/>) — into the inputs to
-/// store and the cells whose value changed. <see cref="Preview"/> colours an input being typed and shows the value it would have.
+/// store and the cells whose value changed. <see cref="Preview"/> colors an input being typed and shows the value it would have.
 /// <para>
 /// A budget cell's value is its budget only as a number from 0 to <see cref="FinanceAmountPolicy.MaxAbsoluteAmount"/>, rounded to
 /// <see cref="FinanceAmountPolicy.MaxDecimalPlaces"/> decimals; a negative or larger number is #NUM!, and what its readers see too.
@@ -78,7 +78,7 @@ public sealed class BudgetWorkbook
     private readonly RecalculationEngine _engine;
 
     /// <summary>The columns A..Z.</summary>
-    private static readonly IReadOnlyList<string> Columns = [.. Enumerable.Range(1, BudgetSheetLayout.ColumnCount).Select(FormulaColumns.Letters)];
+    private static readonly IReadOnlyList<string> _columns = [.. Enumerable.Range(1, BudgetSheetLayout.ColumnCount).Select(FormulaColumns.Letters)];
 
     /// <summary>Loads <paramref name="sheets"/> with <paramref name="actuals"/> and calculates them.</summary>
     public BudgetWorkbook(IEnumerable<BudgetSheetData> sheets, BudgetActuals actuals)
@@ -104,7 +104,7 @@ public sealed class BudgetWorkbook
             }
 
             foreach (BudgetRow row in sheet.Layout.Rows)
-                foreach (string column in Columns)
+                foreach (string column in _columns)
                     if (sheet.Layout.ComputedFormula(row.Key, column) is { } formula)
                         _engine.Define(new CellAddress(sheet.Name, row.Key, column), BudgetCellInput.Define(formula, sheet.Scope));
         }
@@ -149,7 +149,7 @@ public sealed class BudgetWorkbook
         Sheet sheet = _sheets[BudgetSheetName.Format(kind, year)];
         List<BudgetCellView> cells = [];
         foreach (BudgetRow row in sheet.Layout.Rows)
-            foreach (string column in Columns)
+            foreach (string column in _columns)
             {
                 var key = new BudgetCellKey(row.Key, column);
                 if (sheet.Inputs.ContainsKey(key) || sheet.Layout.Role(row.Key, column) is BudgetCellRole.Budget or BudgetCellRole.Computed)
@@ -307,7 +307,7 @@ public sealed class BudgetWorkbook
     }
 
     /// <summary>
-    /// The colouring of <paramref name="input"/> being typed into <paramref name="address"/>, and — for a formula that can be saved —
+    /// The coloring of <paramref name="input"/> being typed into <paramref name="address"/>, and — for a formula that can be saved —
     /// the value it would have there (#CYCLE! when it would read its own cell), without changing anything.
     /// </summary>
     public BudgetFormulaPreview Preview(BudgetKind kind, int year, string address, string input)
@@ -335,7 +335,7 @@ public sealed class BudgetWorkbook
 
         List<BudgetCellEdit> edits = [];
         foreach (BudgetRow row in sheet.Layout.Rows.Where(r => r.Kind == BudgetRowKind.Line && last.Layout.LineOf(r.Key) is not null))
-            foreach (string column in Columns.Where(c => BudgetSheetLayout.MonthOf(c) is not null))
+            foreach (string column in _columns.Where(c => BudgetSheetLayout.MonthOf(c) is not null))
             {
                 var key = new BudgetCellKey(row.Key, column);
                 if (!sheet.Inputs.ContainsKey(key) && last.Inputs.TryGetValue(key, out string? input))

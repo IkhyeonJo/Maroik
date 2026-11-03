@@ -320,7 +320,7 @@ export function describeCalendarCommon(c: CalendarCommon): void {
     describe(`${label} — my calendars`, () => {
         const labels = (h: Handle) => h.$("#myCalendars > label").map((_, l) => l.id).get();
 
-        it("creating a calendar appends an escaped, coloured entry in name order and toasts", () => {
+        it("creating a calendar appends an escaped, colored entry in name order and toasts", () => {
             const h = build();
             spyModal(h);
             h.$("#createCalendarName").val("Beta");
@@ -414,7 +414,7 @@ export function describeCalendarCommon(c: CalendarCommon): void {
             }
         });
 
-        it("saving an edit updates the entry's name and colour, recolours its events, keeps the list sorted and toasts", () => {
+        it("saving an edit updates the entry's name and color, recolors its events, keeps the list sorted and toasts", () => {
             const h = build({ my: [evt(1, 1)] });
             vi.useFakeTimers(); // after build: loadSite manages its own fake timers while it evaluates the script
             try {
@@ -756,7 +756,7 @@ export function describeCalendarCommon(c: CalendarCommon): void {
             expect(sentFile(h, which).file).not.toBeInstanceOf(h.win.File);
         });
 
-        it.each(["create", "edit"])("%s: cancelling the file picker drops the file chosen before — nothing is sent", (which) => {
+        it.each(["create", "edit"])("%s: canceling the file picker drops the file chosen before — nothing is sent", (which) => {
             const h = ready(which);
             choose(h, which, { size: 10, name: "first.zip" });
             choose(h, which, null);

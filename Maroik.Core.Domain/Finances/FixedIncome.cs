@@ -218,7 +218,7 @@ public sealed class FixedIncome : AggregateRoot<long>
     }
 
     // ------------------------------------------------------------------------
-    // Domain behaviours
+    // Domain behaviors
     // ------------------------------------------------------------------------
 
     /// <summary>Sets the "always notify" (<see cref="Unpunctuality"/>) flag.</summary>

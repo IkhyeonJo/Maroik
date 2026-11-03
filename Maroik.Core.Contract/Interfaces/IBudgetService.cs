@@ -13,7 +13,7 @@ public interface IBudgetService
     /// <summary>The account's sheet of a kind and year (a sheet not stored yet is shown with its default lines).</summary>
     Task<(ServiceResult Result, BudgetSheetResponse? Sheet)> GetSheetAsync(string accountEmail, BudgetKind kind, int year, string timeZoneIanaId, CancellationToken ct = default);
 
-    /// <summary>The colouring of an input being typed into a cell and the value it would have; nothing is stored.</summary>
+    /// <summary>The coloring of an input being typed into a cell and the value it would have; nothing is stored.</summary>
     Task<(ServiceResult Result, BudgetPreviewResponse? Preview)> PreviewAsync(string accountEmail, BudgetKind kind, int year, string timeZoneIanaId, string address, string input, CancellationToken ct = default);
 
     /// <summary>Stores typed edits of cells and returns the cells whose value changed.</summary>

@@ -37,7 +37,7 @@ public static partial class FinanceAmountPolicy
     public static ErrorOr<Success> ValidateWithinRange(decimal amount)
     {
         if (decimal.Abs(amount) > MaxAbsoluteAmount)
-            return DomainError.Validation("Finance.AmountOutOfRange", "Amount must not exceed {0}.", MaxAbsoluteAmount.ToString("N4", System.Globalization.CultureInfo.InvariantCulture));
+            return DomainError.Validation("Finance.AmountOutOfRange", "Amount must not exceed {0}.", MaxAbsoluteAmount.ToString("N4", CultureInfo.InvariantCulture));
 
         return Result.Success;
     }

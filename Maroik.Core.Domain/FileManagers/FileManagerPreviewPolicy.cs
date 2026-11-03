@@ -11,7 +11,7 @@ public static class FileManagerPreviewPolicy
     public const long MaxPreviewBytes = 100L * 1024 * 1024;
 
     /// <summary>The number of leading bytes <see cref="ContentTypeOf"/> needs to tell the formats apart.</summary>
-    public const int HeaderBytes = 12;
+    private const int HeaderBytes = 12;
 
     /// <summary>The previewable extensions (lower-case).</summary>
     private static readonly HashSet<string> _extensions = new(StringComparer.Ordinal) { ".png", ".jpg", ".jpeg", ".gif", ".webp" };

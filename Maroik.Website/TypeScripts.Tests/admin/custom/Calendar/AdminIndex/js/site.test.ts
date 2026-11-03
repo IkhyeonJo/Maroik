@@ -317,7 +317,7 @@ describeCalendarExtras({ label: "admin/Calendar/AdminIndex", build });
 describeEventLayout({ label: "admin/Calendar/AdminIndex", build: () => build(), popups: [{ calendarType: "My", id: "#calendarEventPopup" }] });
 
 describe("admin/Calendar/AdminIndex — events on the grid", () => {
-    it("seeds the grid with the admin's own events, coloured by their calendar", () => {
+    it("seeds the grid with the admin's own events, colored by their calendar", () => {
         const h = build({ my: [evt(1, 1), evt(2, 3)] });
         const cal = firstCalendar(h);
         expect(cal.addEvent.mock.calls.map((c) => [c[0]["id"], c[0]["title"], c[0]["backgroundColor"], c[0].extendedProps["calendarId"]])).toEqual([

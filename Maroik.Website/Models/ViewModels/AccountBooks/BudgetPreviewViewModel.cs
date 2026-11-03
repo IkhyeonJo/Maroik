@@ -1,6 +1,6 @@
 namespace Maroik.Website.Models.ViewModels.AccountBooks;
 
-/// <summary>The formula bar's colouring, outlines, problems and the value the input would have.</summary>
+/// <summary>The formula bar's coloring, outlines, problems and the value the input would have.</summary>
 public sealed class BudgetPreviewViewModel
 {
     /// <summary>The tokens.</summary>

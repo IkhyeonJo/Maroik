@@ -1,6 +1,6 @@
 namespace Maroik.Core.Domain.Formulas;
 
-/// <summary>What a token of a formula is; the editor colours tokens by kind.</summary>
+/// <summary>What a token of a formula is; the editor colors tokens by kind.</summary>
 public enum FormulaTokenKind
 {
     /// <summary>A number literal (12, 1.5, 1E3).</summary>

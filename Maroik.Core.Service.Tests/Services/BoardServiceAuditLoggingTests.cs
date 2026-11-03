@@ -44,9 +44,9 @@ public class BoardServiceAuditLoggingTests
     }
 
     /// <summary>The fixed "current time" of these tests.</summary>
-    private static readonly DateTime Now = new(2026, 7, 1, 12, 0, 0, DateTimeKind.Utc);
-    /// <summary>The clock the service under test reads, stopped at <see cref="Now"/>.</summary>
-    private readonly FakeTimeProvider _time = new(new DateTimeOffset(Now));
+    private static readonly DateTime _now = new(2026, 7, 1, 12, 0, 0, DateTimeKind.Utc);
+    /// <summary>The clock the service under test reads, stopped at <see cref="_now"/>.</summary>
+    private readonly FakeTimeProvider _time = new(new DateTimeOffset(_now));
 
     /// <summary>The service under test over the mocked dependencies and the capturing logger.</summary>
     private BoardService CreateSut() => new(_boardRepo.Object, _attachedFileRepo.Object, _commentRepo.Object,

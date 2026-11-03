@@ -23,6 +23,6 @@ empty table: insert under keys unique to the test (`RepositoryTestBase.UniqueEma
 / `Unique`, or `EnsureAccountsAsync` / `EnsureAssetsAsync` / `InsertCalendarAsync` /
 `InsertCalendarEventAsync` for FK parents, and `EnsureNicknamesAsync` for a `Board` / `BoardComment`
 `Writer`, which `Board_fk_0` / `BoardComment_fk_1` point at `Account.Nickname`) and scope "list/count" assertions to the
-rows or account the test itself created. Real CHECK / FK / composite-PK behaviour is
+rows or account the test itself created. Real CHECK / FK / composite-PK behavior is
 now exercised (e.g. `FixedIncome_DepositDayMonth_check`,
 `CalendarEventReminder_Method_check`, `Board_Type_check`).

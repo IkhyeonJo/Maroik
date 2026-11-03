@@ -246,7 +246,7 @@ public abstract class ModelMatchesSchemaTests(SchemaDatabaseFixture database)
         List<string> real = [];
         while (await reader.ReadAsync(Ct)) real.Add($"{reader.GetString(0)}.{reader.GetString(1)}({reader.GetString(2)})");
 
-        HashSet<string> modelled =
+        HashSet<string> modeled =
         [
             .. from e in db.Model.GetEntityTypes()
                let store = StoreObjectIdentifier.Table(e.GetTableName()!, e.GetSchema())
@@ -254,7 +254,7 @@ public abstract class ModelMatchesSchemaTests(SchemaDatabaseFixture database)
                where i.IsUnique
                select $"{e.GetTableName()}.{i.GetDatabaseName()}({string.Join(',', i.Properties.Select(p => p.GetColumnName(store)!))})"
         ];
-        List<string> missing = [.. real.Where(key => !modelled.Contains(key))];
+        List<string> missing = [.. real.Where(key => !modeled.Contains(key))];
 
         Assert.True(missing.Count == 0, "unique indexes in the database but not in the model: " + string.Join(", ", missing));
     }
@@ -322,13 +322,13 @@ public abstract class ModelMatchesSchemaTests(SchemaDatabaseFixture database)
         while (await reader.ReadAsync(Ct))
             real.Add($"{reader.GetString(0).Trim('"')}({reader.GetString(2)})->{reader.GetString(1).Trim('"')}");
 
-        HashSet<string> modelled =
+        HashSet<string> modeled =
         [
             .. from fk in db.Model.GetEntityTypes().SelectMany(e => e.GetForeignKeys())
                let store = StoreObjectIdentifier.Table(fk.DeclaringEntityType.GetTableName()!, fk.DeclaringEntityType.GetSchema())
                select $"{fk.DeclaringEntityType.GetTableName()}({string.Join(',', fk.Properties.Select(p => p.GetColumnName(store)!))})->{fk.PrincipalEntityType.GetTableName()}"
         ];
-        List<string> missing = [.. real.Where(key => !modelled.Contains(key))];
+        List<string> missing = [.. real.Where(key => !modeled.Contains(key))];
 
         Assert.True(missing.Count == 0, "foreign keys in the database but not in the model: " + string.Join("; ", missing));
     }

@@ -154,9 +154,9 @@ public class AccountBookControllerBudgetTests(MaroikWebApplicationFactory factor
         Assert.Empty(StoredInputs(email, "Income", 2026));
     }
 
-    /// <summary>The preview colours the input, localizes its problems and shows the value it would have.</summary>
+    /// <summary>The preview colors the input, localizes its problems and shows the value it would have.</summary>
     [Fact]
-    public async Task PreviewBudgetCell_ColoursAndCalculates()
+    public async Task PreviewBudgetCell_ColorsAndCalculates()
     {
         var (session, _) = await LoginAsync();
         await PostAsync(session, "/AccountBook/SetBudgetCells", new { Kind = "Income", Year = 2026, Edits = new[] { new { Address = "B2", Input = "100" } } });

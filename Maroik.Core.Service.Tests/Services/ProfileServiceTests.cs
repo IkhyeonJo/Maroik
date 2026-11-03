@@ -41,9 +41,9 @@ public class ProfileServiceTests
         Options.Create(new ServerSetting { FileStorageBaseUrl = "http://localhost:5001" });
 
     /// <summary>The fixed "current time" of these tests.</summary>
-    private static readonly DateTime Now = new(2026, 7, 1, 12, 0, 0, DateTimeKind.Utc);
-    /// <summary>The clock the service under test reads, stopped at <see cref="Now"/>.</summary>
-    private readonly FakeTimeProvider _time = new(new DateTimeOffset(Now));
+    private static readonly DateTime _now = new(2026, 7, 1, 12, 0, 0, DateTimeKind.Utc);
+    /// <summary>The clock the service under test reads, stopped at <see cref="_now"/>.</summary>
+    private readonly FakeTimeProvider _time = new(new DateTimeOffset(_now));
 
     /// <summary>The service under test over the mocked dependencies.</summary>
     private ProfileService CreateSut() => new(
@@ -420,7 +420,7 @@ public class ProfileServiceTests
     public async Task UpdatePasswordAsync_PersistsClearedResetPasswordToken()
     {
         var account = ActiveAccount();
-        Assert.False(account.RequestPasswordReset(GuidToken.Generate(Now), Now).IsError);
+        Assert.False(account.RequestPasswordReset(GuidToken.Generate(_now), _now).IsError);
         _accountRepo.Setup(r => r.FindByEmailForUpdateAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(account);
         _passwordService.Setup(p => p.VerifyPassword("oldpass", account.HashedPassword)).Returns(true);
         _passwordService.Setup(p => p.HashPassword("NewPass1!")).Returns("$2a$13$newhash");

@@ -10,7 +10,7 @@ namespace Maroik.Website.Tests.Controllers;
 /// <summary>
 /// The main-class drop-downs of the income / expenditure forms (one-off and fixed, create and edit) offer exactly
 /// <see cref="IncomeClassPolicy.MainClasses"/> / <see cref="ExpenditureClassPolicy.MainClasses"/>, in that order, each
-/// labelled through the page's resx, with the first one pre-selected — the class list lives in the Domain policy, not
+/// labeled through the page's resx, with the first one pre-selected — the class list lives in the Domain policy, not
 /// in the view.
 /// </summary>
 [Collection("Website Integration")]
@@ -36,10 +36,10 @@ public class FinanceMainClassOptionsTests(MaroikWebApplicationFactory factory)
         { "/Notice/FixedExpenditure", "editFixedExpenditureMainClass", false },
     };
 
-    /// <summary>The select offers the policy's main classes in order, labelled in Korean, the first selected.</summary>
+    /// <summary>The select offers the policy's main classes in order, labeled in Korean, the first selected.</summary>
     [Theory]
     [MemberData(nameof(Selects))]
-    public async Task MainClassSelect_OffersThePolicysMainClasses(string url, string selectId, bool income)
+    public async Task MainClassSelect_OffersThePolicyMainClasses(string url, string selectId, bool income)
     {
         using HttpClient client = factory.CreateClient(new WebApplicationFactoryClientOptions
         {

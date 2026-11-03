@@ -311,7 +311,7 @@ public class AttachmentContentServiceTests
     [Fact]
     public async Task OpenFileAsync_ReturnsNullAndLogsTheFailure_WhenTheFileCannotBeOpened()
     {
-        var logger = new Microsoft.Extensions.Logging.Testing.FakeLogger<AttachmentContentService>();
+        var logger = new FakeLogger<AttachmentContentService>();
         var failure = new HttpRequestException("404");
         _fileClient.Setup(f => f.OpenReadAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>())).ThrowsAsync(failure);
         var sut = new AttachmentContentService(_fileClient.Object, _dataProtection.Object, _imageValidator.Object, _htmlSanitizer.Object,
@@ -320,7 +320,7 @@ public class AttachmentContentServiceTests
         Assert.Null(await sut.OpenFileAsync("upload/a.zip", TestContext.Current.CancellationToken));
 
         var record = Assert.Single(logger.Collector.GetSnapshot());
-        Assert.Equal(Microsoft.Extensions.Logging.LogLevel.Error, record.Level);
+        Assert.Equal(LogLevel.Error, record.Level);
         Assert.Contains("upload/a.zip", record.Message, StringComparison.Ordinal);
         Assert.Same(failure, record.Exception);
     }

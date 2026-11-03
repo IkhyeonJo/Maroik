@@ -1,5 +1,5 @@
 /* The Income Budget / Expenditure Budget sheet (Views/AccountBook/Budget.cshtml): a spreadsheet grid with a formula bar.
-   The site is always in AdminLTE's dark mode, so the colours are picked for a dark background. */
+   The site is always in AdminLTE's dark mode, so the colors are picked for a dark background. */
 
 :root {
     --budget-line: rgba(255, 255, 255, 0.12);
@@ -9,7 +9,7 @@
     --budget-active: #007bff;
     --budget-editing: #ffc107;
     --budget-copied: #17a2b8;
-    /* Reference colours, as Excel cycles them; the formula bar's reference tokens use the same ones. */
+    /* Reference colors, as Excel cycles them; the formula bar's reference tokens use the same ones. */
     --budget-ref-0: #4fc1ff;
     --budget-ref-1: #e06c75;
     --budget-ref-2: #98c379;
@@ -240,7 +240,7 @@
     & .budget-ref-7 { box-shadow: inset 0 0 0 2px var(--budget-ref-7); }
 }
 
-/* The formula bar's colouring (the server's token classes). */
+/* The formula bar's coloring (the server's token classes). */
 .cm-budget-function { color: #4fc1ff; font-weight: 600; }
 .cm-budget-unknown-function,
 .cm-budget-name,

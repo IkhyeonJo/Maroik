@@ -440,7 +440,7 @@ public class EmailConsumerWorkerTests
     /// Startup declares the dead-letter queue BEFORE the main queue (so the main queue's dead-letter
     /// policy has somewhere to route), with the exact arguments the Website publisher uses (a mismatch
     /// makes whichever side declares second fail with PRECONDITION_FAILED), caps unacked deliveries, and
-    /// consumes with manual acknowledgements.
+    /// consumes with manual acknowledgments.
     /// </summary>
     [Fact]
     public async Task StartAsync_DeclaresDeadLetterQueueFirst_SetsPrefetch_AndConsumesWithManualAck()
@@ -578,7 +578,7 @@ public class EmailConsumerWorkerTests
         broker.Factory.Verify(f => f.CreateConnectionAsync(It.IsAny<CancellationToken>()), Times.Once);
         return;
 
-        // The topology setup is where shutdown arrives: the host's token is cancelled, and the call fails as cancelled.
+        // The topology setup is where shutdown arrives: the host's token is canceled, and the call fails as canceled.
         async Task<QueueDeclareOk> CancelThenThrowAsync()
         {
             await cts.CancelAsync();
@@ -604,9 +604,9 @@ public class EmailConsumerWorkerTests
         broker.Connection.Verify(c => c.DisposeAsync(), Times.Once);
     }
 
-    /// <summary>A failure cancelling the consumer during shutdown is logged, not thrown: the channel and connection are still released.</summary>
+    /// <summary>A failure canceling the consumer during shutdown is logged, not thrown: the channel and connection are still released.</summary>
     [Fact]
-    public async Task StopAsync_StillDisposesEverything_WhenCancellingTheConsumerFails()
+    public async Task StopAsync_StillDisposesEverything_WhenCancelingTheConsumerFails()
     {
         var broker = new BrokerFixture();
         broker.Channel.Setup(c => c.BasicCancelAsync(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))

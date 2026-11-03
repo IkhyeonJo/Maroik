@@ -117,7 +117,7 @@
                         <div class="float-right">
                             @if (Model.BoardOutputViewModel.CanModify)
                             {
-                                <button id="btnFreeForumModify" type="button" class="btn btn-primary" data-link="@Url.Action("FreeForum", "Forum", new { method = "edit", boardId = (long)Model.DetailBoardId, page = Model.DetailCurrentPage })">@Localizer["Modify"].Value</button>
+                                <button id="btnFreeForumModify" type="button" class="btn btn-primary" data-link="@Url.Action("FreeForum", "Forum", new { method = "edit", boardId = Model.DetailBoardId, page = Model.DetailCurrentPage })">@Localizer["Modify"].Value</button>
                             }
                             @if (Model.BoardOutputViewModel.CanDelete)
                             {

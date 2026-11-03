@@ -15,7 +15,7 @@ public class FileManagerFlowTests(E2ESharedFixture fixture) : E2ETestBase(fixtur
     private const long Gb = 1024L * 1024 * 1024;
 
     /// <summary>The leading bytes of a PNG (enough for the server to prove the format).</summary>
-    private static readonly byte[] Png = [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, 0, 0, 0, 13, 0x49, 0x48, 0x44, 0x52];
+    private static readonly byte[] _png = [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, 0, 0, 0, 13, 0x49, 0x48, 0x44, 0x52];
 
     /// <summary>A signed-in User with <paramref name="quotaBytes"/> of quota, on the File Manager page.</summary>
     private async Task<(IPage Page, SeededAccount Account)> OpenAsync(long quotaBytes = Gb)
@@ -68,7 +68,7 @@ public class FileManagerFlowTests(E2ESharedFixture fixture) : E2ETestBase(fixtur
         await page.Locator("#fileManagerFileInput").SetInputFilesAsync(
         [
             new FilePayload { Name = "notes.txt", MimeType = "text/plain", Buffer = "hello"u8.ToArray() },
-            new FilePayload { Name = "logo.png", MimeType = "image/png", Buffer = Png },
+            new FilePayload { Name = "logo.png", MimeType = "image/png", Buffer = _png },
         ]);
 
         await Assertions.Expect(page.Locator("#uploadResults li")).ToHaveCountAsync(2);
@@ -168,7 +168,7 @@ public class FileManagerFlowTests(E2ESharedFixture fixture) : E2ETestBase(fixtur
     public async Task ListView_RenamesPreviewsAndDeletes()
     {
         var (page, account) = await OpenAsync();
-        await page.Locator("#fileManagerFileInput").SetInputFilesAsync(new FilePayload { Name = "logo.png", MimeType = "image/png", Buffer = Png });
+        await page.Locator("#fileManagerFileInput").SetInputFilesAsync(new FilePayload { Name = "logo.png", MimeType = "image/png", Buffer = _png });
         await Assertions.Expect(page.Locator("#btnUploadClose")).ToBeEnabledAsync();
         await page.Locator("#btnUploadClose").ClickAsync();
         await page.Locator("#btnListView").ClickAsync();
@@ -193,7 +193,7 @@ public class FileManagerFlowTests(E2ESharedFixture fixture) : E2ETestBase(fixtur
 
     /// <summary>
     /// Cancel stops a batch: the file being sent is aborted before its next chunk (nothing of it is kept) and the files after it are
-    /// not started; both are listed as cancelled. The first chunk's reply is held back until Cancel was clicked, so the test does not race.
+    /// not started; both are listed as canceled. The first chunk's reply is held back until Cancel was clicked, so the test does not race.
     /// </summary>
     [Fact]
     public async Task Cancel_StopsTheUpload()

@@ -23,7 +23,7 @@ public static class OtherTestcontainers
     public const string SessionIdLabel = "org.testcontainers.session-id";
 
     /// <summary>
-    /// Returns <see langword="true"/> once no running container labelled <see cref="Label"/> belongs to a session
+    /// Returns <see langword="true"/> once no running container labeled <see cref="Label"/> belongs to a session
     /// other than <paramref name="ownSessionId"/>, or <see langword="false"/> when some are still running after
     /// <paramref name="timeout"/>.
     /// </summary>

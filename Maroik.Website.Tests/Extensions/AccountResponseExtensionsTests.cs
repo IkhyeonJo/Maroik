@@ -49,7 +49,7 @@ public class AccountResponseExtensionsTests
             _ => () => { account.AvatarImagePath = null; return account.RequireAvatarImagePath(); },
         };
 
-        var ex = Assert.Throws<InvalidOperationException>(() => read());
+        var ex = Assert.Throws<InvalidOperationException>(read);
         Assert.Contains(field, ex.Message, StringComparison.Ordinal);
     }
 }

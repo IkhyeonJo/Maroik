@@ -57,9 +57,9 @@ public class AccountServiceTests
         _passwordService.Setup(p => p.VerifyPassword(ConfirmPassword, It.IsAny<string>())).Returns(true);
 
     /// <summary>The fixed "current time" of these tests.</summary>
-    private static readonly DateTime Now = new(2026, 7, 1, 12, 0, 0, DateTimeKind.Utc);
-    /// <summary>The clock the service under test reads, stopped at <see cref="Now"/>.</summary>
-    private readonly FakeTimeProvider _time = new(new DateTimeOffset(Now));
+    private static readonly DateTime _now = new(2026, 7, 1, 12, 0, 0, DateTimeKind.Utc);
+    /// <summary>The clock the service under test reads, stopped at <see cref="_now"/>.</summary>
+    private readonly FakeTimeProvider _time = new(new DateTimeOffset(_now));
 
     /// <summary>The service under test over the mocked dependencies.</summary>
     private AccountService CreateSut() => new(
@@ -347,7 +347,7 @@ public class AccountServiceTests
 
         Assert.True(result.Success);
         Assert.NotNull(mailed);
-        Assert.True(GuidToken.IsTokenAlive(mailed, Now));
+        Assert.True(GuidToken.IsTokenAlive(mailed, _now));
         Assert.Equal(GuidToken.Hash(mailed), created?.RegistrationToken);
         _accountRepo.Verify(r => r.UpdateRegistrationTokenAsync(
             "new@example.com", GuidToken.Hash(mailed), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()), Times.Once);
@@ -637,7 +637,7 @@ public class AccountServiceTests
     [Fact]
     public async Task RegisterAsync_ResendsConfirmationEmail_WhenAccountExistsButNotConfirmed()
     {
-        string token = GuidToken.Generate(Now);
+        string token = GuidToken.Generate(_now);
         var existing = ActiveAccount(emailConfirmed: false, registrationToken: GuidToken.Hash(token));
         SetupUnconfirmedAccountForRegister(existing, lockedRead: existing);
         _dataProtection.Setup(r => r.Protect(ProtectedValue.MailToken, It.IsAny<string>())).Returns("enc-token");
@@ -758,7 +758,7 @@ public class AccountServiceTests
     [Fact]
     public async Task ConfirmEmailAsync_ReturnsInvalidToken_WhenAccountNotFound()
     {
-        string freshToken = GuidToken.Generate(Now);
+        string freshToken = GuidToken.Generate(_now);
         _dataProtection.Setup(r => r.Unprotect(ProtectedValue.MailToken, "enc")).Returns(freshToken);
         _accountRepo.Setup(r => r.FindByRegistrationTokenAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync((Account?)null);
         var sut = CreateSut();
@@ -789,7 +789,7 @@ public class AccountServiceTests
     [Fact]
     public async Task ConfirmEmailAsync_ConfirmsAccount_WhenTokenIsValid()
     {
-        string freshToken = GuidToken.Generate(Now);
+        string freshToken = GuidToken.Generate(_now);
         var account = ActiveAccount(emailConfirmed: false, registrationToken: GuidToken.Hash(freshToken));
         _dataProtection.Setup(r => r.Unprotect(ProtectedValue.MailToken, "enc")).Returns(freshToken);
         _accountRepo.Setup(r => r.FindByRegistrationTokenAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(account);
@@ -818,7 +818,7 @@ public class AccountServiceTests
     [Fact]
     public async Task ConfirmEmailAsync_ReturnsInvalidTokenNotCreated_WhenAccountVanishesBeforeWrite()
     {
-        string freshToken = GuidToken.Generate(Now);
+        string freshToken = GuidToken.Generate(_now);
         var account = ActiveAccount(emailConfirmed: false, registrationToken: GuidToken.Hash(freshToken));
         _dataProtection.Setup(r => r.Unprotect(ProtectedValue.MailToken, "enc")).Returns(freshToken);
         _accountRepo.Setup(r => r.FindByRegistrationTokenAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(account);
@@ -843,7 +843,7 @@ public class AccountServiceTests
     [Fact]
     public async Task ConfirmEmailAsync_DoesNotUseFullRowUpdate_WhenTokenIsValid()
     {
-        string freshToken = GuidToken.Generate(Now);
+        string freshToken = GuidToken.Generate(_now);
         var account = ActiveAccount(emailConfirmed: false, registrationToken: GuidToken.Hash(freshToken));
         _dataProtection.Setup(r => r.Unprotect(ProtectedValue.MailToken, "enc")).Returns(freshToken);
         _accountRepo.Setup(r => r.FindByRegistrationTokenAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(account);
@@ -862,7 +862,7 @@ public class AccountServiceTests
     [Fact]
     public async Task ConfirmEmailAsync_ReturnsNotCreated_WhenAccountAlreadyConfirmed()
     {
-        string freshToken = GuidToken.Generate(Now);
+        string freshToken = GuidToken.Generate(_now);
         var account = ActiveAccount(emailConfirmed: true);
         _dataProtection.Setup(r => r.Unprotect(ProtectedValue.MailToken, "enc")).Returns(freshToken);
         _accountRepo.Setup(r => r.FindByRegistrationTokenAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(account);
@@ -977,7 +977,7 @@ public class AccountServiceTests
         Assert.True(await CreateSut().ForgotPasswordAsync(account.Email.Value, _emailTemplate, TestContext.Current.CancellationToken));
 
         Assert.NotNull(mailed);
-        Assert.True(GuidToken.IsTokenAlive(mailed, Now));
+        Assert.True(GuidToken.IsTokenAlive(mailed, _now));
         _accountRepo.Verify(r => r.UpdateResetPasswordTokenAsync(
             account.Email.Value, GuidToken.Hash(mailed), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()), Times.Once);
     }
@@ -1038,7 +1038,7 @@ public class AccountServiceTests
     [Fact]
     public async Task ValidateResetPasswordTokenAsync_ReturnsToken_WhenValid()
     {
-        string freshToken = GuidToken.Generate(Now);
+        string freshToken = GuidToken.Generate(_now);
         _dataProtection.Setup(r => r.Unprotect(ProtectedValue.MailToken, "enc")).Returns(freshToken);
         _accountRepo.Setup(r => r.FindByResetPasswordTokenAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(ActiveAccount());
@@ -1083,7 +1083,7 @@ public class AccountServiceTests
     [Fact]
     public async Task ResetPasswordAsync_UpdatesPasswordAndUnlocksAccount_WhenValid()
     {
-        string freshToken = GuidToken.Generate(Now);
+        string freshToken = GuidToken.Generate(_now);
         var account = ActiveAccount(locked: true, loginAttempt: 3, resetPasswordToken: GuidToken.Hash(freshToken));
         _dataProtection.Setup(r => r.Unprotect(ProtectedValue.MailToken, "enc")).Returns(freshToken);
         _accountRepo.Setup(r => r.FindByResetPasswordTokenAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(account);
@@ -1109,7 +1109,7 @@ public class AccountServiceTests
     [Fact]
     public async Task ResetPasswordAsync_ReturnsTheAccountToSignIn_WithItsNewSecurityStamp()
     {
-        string freshToken = GuidToken.Generate(Now);
+        string freshToken = GuidToken.Generate(_now);
         var account = ActiveAccount(email: "reset@example.com", locked: true, loginAttempt: 3, resetPasswordToken: GuidToken.Hash(freshToken));
         string oldStamp = account.SecurityStamp;
         _dataProtection.Setup(r => r.Unprotect(ProtectedValue.MailToken, "enc")).Returns(freshToken);
@@ -1136,7 +1136,7 @@ public class AccountServiceTests
     [Fact]
     public async Task ResetPasswordAsync_ReturnsNoAccountToSignIn_WhenTheServiceTermsAreNotAccepted()
     {
-        string freshToken = GuidToken.Generate(Now);
+        string freshToken = GuidToken.Generate(_now);
         var account = ActiveAccount(agreedServiceTerms: false, resetPasswordToken: GuidToken.Hash(freshToken));
         _dataProtection.Setup(r => r.Unprotect(ProtectedValue.MailToken, "enc")).Returns(freshToken);
         _accountRepo.Setup(r => r.FindByResetPasswordTokenAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(account);
@@ -1296,7 +1296,7 @@ public class AccountServiceTests
         Assert.True(result.Success);
         Assert.NotNull(mailed);
         Assert.NotEqual(expired, mailed);
-        Assert.True(GuidToken.IsTokenAlive(mailed, Now));
+        Assert.True(GuidToken.IsTokenAlive(mailed, _now));
         _accountRepo.Verify(r => r.UpdateRegistrationTokenAsync(
             existing.Email.Value, GuidToken.Hash(mailed), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()), Times.AtLeastOnce);
     }
@@ -1305,7 +1305,7 @@ public class AccountServiceTests
     [Fact]
     public async Task RegisterAsync_Unconfirmed_RollsBackAndRethrows_WhenPersistingTheReplacementFails()
     {
-        var existing = ActiveAccount(emailConfirmed: false, registrationToken: GuidToken.Generate(Now));
+        var existing = ActiveAccount(emailConfirmed: false, registrationToken: GuidToken.Generate(_now));
         SetupUnconfirmedAccountForRegister(existing, lockedRead: existing);
         _accountRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new InvalidOperationException("db down"));
@@ -1325,7 +1325,7 @@ public class AccountServiceTests
     [Fact]
     public async Task RegisterAsync_Unconfirmed_ReplacesTheEarlierRegistrantsCredentials()
     {
-        string squatterToken = GuidToken.Generate(Now);
+        string squatterToken = GuidToken.Generate(_now);
         var existing = ActiveAccount(emailConfirmed: false, registrationToken: GuidToken.Hash(squatterToken)); // nickname "User", time zone "UTC"
         SetupUnconfirmedAccountForRegister(existing, lockedRead: existing);
         _dataProtection.Setup(r => r.Protect(ProtectedValue.MailToken, It.IsAny<string>())).Returns("enc-token");
@@ -1354,7 +1354,7 @@ public class AccountServiceTests
     [Fact]
     public async Task RegisterAsync_Unconfirmed_ReturnsNicknameConflict_WhenAnotherAccountHoldsTheNickname()
     {
-        var existing = ActiveAccount(emailConfirmed: false, registrationToken: GuidToken.Generate(Now));
+        var existing = ActiveAccount(emailConfirmed: false, registrationToken: GuidToken.Generate(_now));
         SetupUnconfirmedAccountForRegister(existing, lockedRead: existing);
         _accountRepo.Setup(r => r.NicknameExistsIgnoreCaseAsync("Taken", It.IsAny<CancellationToken>())).ReturnsAsync(true);
 
@@ -1375,7 +1375,7 @@ public class AccountServiceTests
     [Fact]
     public async Task RegisterAsync_Unconfirmed_KeepsItsOwnNickname_WithoutAConflictCheck()
     {
-        var existing = ActiveAccount(emailConfirmed: false, registrationToken: GuidToken.Generate(Now)); // nickname "User"
+        var existing = ActiveAccount(emailConfirmed: false, registrationToken: GuidToken.Generate(_now)); // nickname "User"
         SetupUnconfirmedAccountForRegister(existing, lockedRead: existing);
         _accountRepo.Setup(r => r.NicknameExistsIgnoreCaseAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(true);
         _dataProtection.Setup(r => r.Protect(ProtectedValue.MailToken, It.IsAny<string>())).Returns("enc-token");
@@ -1392,7 +1392,7 @@ public class AccountServiceTests
     [Fact]
     public async Task RegisterAsync_Unconfirmed_ReturnsNicknameConflict_WhenTheUniqueIndexRacesAtCommit()
     {
-        var existing = ActiveAccount(emailConfirmed: false, registrationToken: GuidToken.Generate(Now));
+        var existing = ActiveAccount(emailConfirmed: false, registrationToken: GuidToken.Generate(_now));
         SetupUnconfirmedAccountForRegister(existing, lockedRead: existing);
         _unitOfWork.Setup(u => u.CommitAsync(It.IsAny<CancellationToken>()))
             .ThrowsAsync(new Exception("duplicate key", new Exception("23505: duplicate key value violates unique constraint \"Account_unique_index_0\"")));
@@ -1413,7 +1413,7 @@ public class AccountServiceTests
     [Fact]
     public async Task RegisterAsync_Unconfirmed_RollsBackWithTheDomainError_WhenTheTimeZoneIsUnknown()
     {
-        var existing = ActiveAccount(emailConfirmed: false, registrationToken: GuidToken.Generate(Now));
+        var existing = ActiveAccount(emailConfirmed: false, registrationToken: GuidToken.Generate(_now));
         SetupUnconfirmedAccountForRegister(existing, lockedRead: existing);
         RegisterAccountRequest request = NewRegistration();
         request.TimeZoneIanaId = "Not/AZone";
@@ -1421,7 +1421,7 @@ public class AccountServiceTests
         RegisterResult result = await CreateSut().RegisterAsync(request, _emailTemplate, TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
-        Assert.Equal("'{0}' is not a recognised time-zone ID.", result.ErrorKey);
+        Assert.Equal("'{0}' is not a recognized time-zone ID.", result.ErrorKey);
         _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
         _unitOfWork.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Never);
         _accountRepo.Verify(r => r.UpdateEntityAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>()), Times.Never);
@@ -1434,7 +1434,7 @@ public class AccountServiceTests
     [InlineData("admin", "PlainPass1!")]
     public async Task RegisterAsync_Unconfirmed_RefusesInvalidInput_BeforeHashingOrLocking(string nickname, string password)
     {
-        var existing = ActiveAccount(emailConfirmed: false, registrationToken: GuidToken.Generate(Now));
+        var existing = ActiveAccount(emailConfirmed: false, registrationToken: GuidToken.Generate(_now));
         SetupUnconfirmedAccountForRegister(existing, lockedRead: existing);
 
         RegisterResult result = await CreateSut().RegisterAsync(NewRegistration(nickname, password), _emailTemplate, TestContext.Current.CancellationToken);
@@ -1508,7 +1508,7 @@ public class AccountServiceTests
     [InlineData(false)]
     public async Task ResendConfirmationEmailAsync_MailsAFreshToken_AndStoresOnlyItsHash(bool storedTokenIsLive)
     {
-        string stored = storedTokenIsLive ? GuidToken.Generate(Now) : BuildExpiredToken();
+        string stored = storedTokenIsLive ? GuidToken.Generate(_now) : BuildExpiredToken();
         var account = ActiveAccount(emailConfirmed: false, registrationToken: GuidToken.Hash(stored));
         SetupUnconfirmedAccountForRegister(account, lockedRead: account);
         string? mailed = null;
@@ -1522,7 +1522,7 @@ public class AccountServiceTests
         Assert.True(result.RepeatEmailSend);
         Assert.NotNull(mailed);
         Assert.NotEqual(stored, mailed);
-        Assert.True(GuidToken.IsTokenAlive(mailed, Now));
+        Assert.True(GuidToken.IsTokenAlive(mailed, _now));
         _accountRepo.Verify(r => r.UpdateRegistrationTokenAsync(
             account.Email.Value, GuidToken.Hash(mailed), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()), Times.AtLeastOnce);
         _accountRepo.Verify(r => r.UpdateRegistrationTokenAsync(
@@ -1533,7 +1533,7 @@ public class AccountServiceTests
     [Fact]
     public async Task ResendConfirmationEmailAsync_RollsBackAndRethrows_WhenPersistingTheTokenFails()
     {
-        var account = ActiveAccount(emailConfirmed: false, registrationToken: GuidToken.Generate(Now));
+        var account = ActiveAccount(emailConfirmed: false, registrationToken: GuidToken.Generate(_now));
         SetupUnconfirmedAccountForRegister(account, lockedRead: account);
         _accountRepo.Setup(r => r.UpdateRegistrationTokenAsync(It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new InvalidOperationException("db down"));
@@ -1565,7 +1565,7 @@ public class AccountServiceTests
     [Fact]
     public async Task ResendConfirmationEmailAsync_ReportsStatusError_WhenTheFinalStatusWriteFails()
     {
-        var account = ActiveAccount(emailConfirmed: false, registrationToken: GuidToken.Generate(Now));
+        var account = ActiveAccount(emailConfirmed: false, registrationToken: GuidToken.Generate(_now));
         SetupUnconfirmedAccountForRegister(account, lockedRead: account);
         _dataProtection.Setup(r => r.Protect(ProtectedValue.MailToken, It.IsAny<string>())).Returns("enc-token");
         SetupMailSuccess();
@@ -1582,7 +1582,7 @@ public class AccountServiceTests
     [Fact]
     public async Task ResendConfirmationEmailAsync_ReportsSendFailure_EvenWhenRecordingTheFailureAlsoFails()
     {
-        var account = ActiveAccount(emailConfirmed: false, registrationToken: GuidToken.Generate(Now));
+        var account = ActiveAccount(emailConfirmed: false, registrationToken: GuidToken.Generate(_now));
         SetupUnconfirmedAccountForRegister(account, lockedRead: account);
         _dataProtection.Setup(r => r.Protect(ProtectedValue.MailToken, It.IsAny<string>())).Returns("enc-token");
         SetupMailFailure();
@@ -1604,7 +1604,7 @@ public class AccountServiceTests
     [Fact]
     public async Task ConfirmEmailAsync_ReturnsWrongPassword_AndConfirmsNothing_WhenThePasswordDoesNotMatch()
     {
-        string token = GuidToken.Generate(Now);
+        string token = GuidToken.Generate(_now);
         var account = ActiveAccount(emailConfirmed: false, registrationToken: GuidToken.Hash(token));
         SetupConfirmLookup(account, account, token);
         _passwordService.Setup(p => p.VerifyPassword("Not-The-Password1!", account.HashedPassword)).Returns(false);
@@ -1625,7 +1625,7 @@ public class AccountServiceTests
     [Fact]
     public async Task ConfirmEmailAsync_ChecksThePasswordAgainstTheLockedRow()
     {
-        string token = GuidToken.Generate(Now);
+        string token = GuidToken.Generate(_now);
         var account = ActiveAccount(emailConfirmed: false, registrationToken: GuidToken.Hash(token));
         SetupConfirmLookup(account, account, token);
         _accountRepo.Setup(r => r.UpdateEmailConfirmationAsync(
@@ -1644,7 +1644,7 @@ public class AccountServiceTests
     [Fact]
     public async Task ValidateRegistrationTokenAsync_ReturnsTheTokenForTheForm_WhenTheLinkIsLive()
     {
-        string token = GuidToken.Generate(Now);
+        string token = GuidToken.Generate(_now);
         _dataProtection.Setup(r => r.Unprotect(ProtectedValue.MailToken, "enc")).Returns(token);
         _accountRepo.Setup(r => r.FindByRegistrationTokenAsync(GuidToken.Hash(token), It.IsAny<CancellationToken>()))
             .ReturnsAsync(ActiveAccount(emailConfirmed: false, registrationToken: GuidToken.Hash(token)));
@@ -1664,7 +1664,7 @@ public class AccountServiceTests
     [InlineData("expired")]
     public async Task ValidateRegistrationTokenAsync_ReturnsInvalidToken_WhenTheLinkIsDead(string kind)
     {
-        string token = kind == "expired" ? BuildExpiredToken() : GuidToken.Generate(Now);
+        string token = kind == "expired" ? BuildExpiredToken() : GuidToken.Generate(_now);
         if (kind == "undecryptable")
             _dataProtection.Setup(r => r.Unprotect(ProtectedValue.MailToken, "enc")).Throws(new FormatException("bad cipher"));
         else
@@ -1693,7 +1693,7 @@ public class AccountServiceTests
     [Fact]
     public async Task ConfirmEmailAsync_ReturnsInvalidTokenNotCreated_WhenTheRowVanishesUnderTheLock()
     {
-        string token = GuidToken.Generate(Now);
+        string token = GuidToken.Generate(_now);
         SetupConfirmLookup(ActiveAccount(emailConfirmed: false, registrationToken: GuidToken.Hash(token)), locked: null, token);
 
         ConfirmEmailResult result = await CreateSut().ConfirmEmailAsync("enc", ConfirmPassword, TestContext.Current.CancellationToken);
@@ -1710,9 +1710,9 @@ public class AccountServiceTests
     [Fact]
     public async Task ConfirmEmailAsync_ReturnsInvalidToken_WhenTheTokenWasSupersededUnderTheLock()
     {
-        string token = GuidToken.Generate(Now);
+        string token = GuidToken.Generate(_now);
         var stale = ActiveAccount(emailConfirmed: false, registrationToken: GuidToken.Hash(token));
-        var superseded = ActiveAccount(emailConfirmed: false, registrationToken: GuidToken.Generate(Now));
+        var superseded = ActiveAccount(emailConfirmed: false, registrationToken: GuidToken.Generate(_now));
         SetupConfirmLookup(stale, superseded, token);
 
         ConfirmEmailResult result = await CreateSut().ConfirmEmailAsync("enc", ConfirmPassword, TestContext.Current.CancellationToken);
@@ -1728,7 +1728,7 @@ public class AccountServiceTests
     [Fact]
     public async Task ConfirmEmailAsync_RollsBack_WhenWritingTheAlreadyConfirmedMessageFails()
     {
-        string token = GuidToken.Generate(Now);
+        string token = GuidToken.Generate(_now);
         var found = ActiveAccount(emailConfirmed: false, registrationToken: GuidToken.Hash(token));
         SetupConfirmLookup(found, ActiveAccount(emailConfirmed: true), token);
         _accountRepo.Setup(r => r.UpdateMessageAsync(It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
@@ -1746,7 +1746,7 @@ public class AccountServiceTests
     [Fact]
     public async Task ConfirmEmailAsync_ReturnsErrorKey_WhenTheConfirmationWriteThrows()
     {
-        string token = GuidToken.Generate(Now);
+        string token = GuidToken.Generate(_now);
         var account = ActiveAccount(emailConfirmed: false, registrationToken: GuidToken.Hash(token));
         SetupConfirmLookup(account, account, token);
         _accountRepo.Setup(r => r.UpdateEmailConfirmationAsync(
@@ -1765,7 +1765,7 @@ public class AccountServiceTests
     [Fact]
     public async Task ConfirmEmailAsync_RollsBackAndRethrows_WhenTheLockedReadThrows()
     {
-        string token = GuidToken.Generate(Now);
+        string token = GuidToken.Generate(_now);
         _dataProtection.Setup(r => r.Unprotect(ProtectedValue.MailToken, "enc")).Returns(token);
         _accountRepo.Setup(r => r.FindByRegistrationTokenAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(ActiveAccount(emailConfirmed: false, registrationToken: GuidToken.Hash(token)));
@@ -1811,7 +1811,7 @@ public class AccountServiceTests
     [Fact]
     public async Task ResetPasswordAsync_ReturnsPolicyViolation_AndDoesNotHash_WhenPasswordIsTooWeak()
     {
-        string token = GuidToken.Generate(Now);
+        string token = GuidToken.Generate(_now);
         var account = ActiveAccount(resetPasswordToken: GuidToken.Hash(token));
         _dataProtection.Setup(r => r.Unprotect(ProtectedValue.MailToken, "enc")).Returns(token);
         _accountRepo.Setup(r => r.FindByResetPasswordTokenAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(account);
@@ -1829,7 +1829,7 @@ public class AccountServiceTests
     [InlineData(true)]
     public async Task ResetPasswordAsync_ReturnsInvalid_WhenTheLockedRowIsMissingOrDeleted(bool rowExistsButDeleted)
     {
-        string token = GuidToken.Generate(Now);
+        string token = GuidToken.Generate(_now);
         var found = ActiveAccount(resetPasswordToken: GuidToken.Hash(token));
         _dataProtection.Setup(r => r.Unprotect(ProtectedValue.MailToken, "enc")).Returns(token);
         _accountRepo.Setup(r => r.FindByResetPasswordTokenAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(found);
@@ -1848,7 +1848,7 @@ public class AccountServiceTests
     [Fact]
     public async Task ResetPasswordAsync_ReturnsInvalid_WhenTheTokenWasConsumedConcurrently()
     {
-        string token = GuidToken.Generate(Now);
+        string token = GuidToken.Generate(_now);
         var found = ActiveAccount(resetPasswordToken: GuidToken.Hash(token));
         var consumed = ActiveAccount(resetPasswordToken: null);
         _dataProtection.Setup(r => r.Unprotect(ProtectedValue.MailToken, "enc")).Returns(token);
@@ -1866,7 +1866,7 @@ public class AccountServiceTests
     [Fact]
     public async Task ResetPasswordAsync_RollsBackAndReportsFailure_WhenTheWriteThrows()
     {
-        string token = GuidToken.Generate(Now);
+        string token = GuidToken.Generate(_now);
         var account = ActiveAccount(resetPasswordToken: GuidToken.Hash(token));
         _dataProtection.Setup(r => r.Unprotect(ProtectedValue.MailToken, "enc")).Returns(token);
         _accountRepo.Setup(r => r.FindByResetPasswordTokenAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(account);
@@ -1907,8 +1907,8 @@ public class AccountServiceTests
 
     // -- Private helpers ------------------------------------------------------
 
-    /// <summary>A token minted 25 hours before <see cref="Now"/>, past its 24h validity window.</summary>
-    private static string BuildExpiredToken() => GuidToken.Generate(Now.AddHours(-25));
+    /// <summary>A token minted 25 hours before <see cref="_now"/>, past its 24h validity window.</summary>
+    private static string BuildExpiredToken() => GuidToken.Generate(_now.AddHours(-25));
 
     // -- Login transaction, reset/confirmation flows, account messages and logging -------------
 
@@ -1922,7 +1922,7 @@ public class AccountServiceTests
     /// <summary>Arranges a confirmed account whose live reset token <c>"enc"</c> decrypts to; returns the account.</summary>
     private Account GivenAResettableAccount(bool locked = false)
     {
-        string token = GuidToken.Generate(Now);
+        string token = GuidToken.Generate(_now);
         Account account = ActiveAccount(locked: locked, loginAttempt: locked ? 5 : 0, resetPasswordToken: GuidToken.Hash(token));
         _dataProtection.Setup(r => r.Unprotect(ProtectedValue.MailToken, "enc")).Returns(token);
         _accountRepo.Setup(r => r.FindByResetPasswordTokenAsync(GuidToken.Hash(token), It.IsAny<CancellationToken>())).ReturnsAsync(account);
@@ -1953,7 +1953,7 @@ public class AccountServiceTests
     {
         await CreateSut().LoginAsync("ghost@example.com", "any", TestContext.Current.CancellationToken);
 
-        _accountRepo.Verify(r => r.UpdateMessageAsync("ghost@example.com", null, Now, It.IsAny<CancellationToken>()), Times.Once);
+        _accountRepo.Verify(r => r.UpdateMessageAsync("ghost@example.com", null, _now, It.IsAny<CancellationToken>()), Times.Once);
         _unitOfWork.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -2062,7 +2062,7 @@ public class AccountServiceTests
     [Fact]
     public async Task ValidateResetPasswordTokenAsync_ReportsADeadLink_WhenNoAccountHoldsTheToken()
     {
-        _dataProtection.Setup(r => r.Unprotect(ProtectedValue.MailToken, "enc")).Returns(GuidToken.Generate(Now));
+        _dataProtection.Setup(r => r.Unprotect(ProtectedValue.MailToken, "enc")).Returns(GuidToken.Generate(_now));
 
         ResetPasswordValidationResult result = await CreateSut().ValidateResetPasswordTokenAsync("enc", TestContext.Current.CancellationToken);
 
@@ -2089,7 +2089,7 @@ public class AccountServiceTests
     [InlineData(false, false)]
     public async Task ResetPasswordAsync_RefusesALiveTokenOfADeletedOrUnconfirmedAccount(bool deleted, bool emailConfirmed)
     {
-        string token = GuidToken.Generate(Now);
+        string token = GuidToken.Generate(_now);
         _dataProtection.Setup(r => r.Unprotect(ProtectedValue.MailToken, "enc")).Returns(token);
         _accountRepo.Setup(r => r.FindByResetPasswordTokenAsync(GuidToken.Hash(token), It.IsAny<CancellationToken>()))
             .ReturnsAsync(ActiveAccount(deleted: deleted, emailConfirmed: emailConfirmed, resetPasswordToken: GuidToken.Hash(token)));
@@ -2173,7 +2173,7 @@ public class AccountServiceTests
     /// <summary>Arranges a resend for an unconfirmed account with a live token; returns the account.</summary>
     private Account GivenAResendableAccount()
     {
-        Account account = ActiveAccount(emailConfirmed: false, registrationToken: GuidToken.Generate(Now));
+        Account account = ActiveAccount(emailConfirmed: false, registrationToken: GuidToken.Generate(_now));
         SetupUnconfirmedAccountForRegister(account, lockedRead: account);
         _dataProtection.Setup(r => r.Protect(ProtectedValue.MailToken, It.IsAny<string>())).Returns("enc-token");
         return account;

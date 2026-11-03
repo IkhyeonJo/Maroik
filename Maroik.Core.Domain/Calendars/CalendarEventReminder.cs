@@ -20,19 +20,19 @@ public sealed class CalendarEventReminder : AggregateRoot<long>
     public string Method { get; private set; }
 
     /// <summary>Minutes before the event to send the reminder.</summary>
-    public long? MinutesBeforeEvent { get; private set; }
+    public long? MinutesBeforeEvent { get; }
 
     /// <summary>Hours before the event to send the reminder.</summary>
-    public long? HoursBeforeEvent { get; private set; }
+    public long? HoursBeforeEvent { get; }
 
     /// <summary>Days before the event to send the reminder.</summary>
-    public long? DaysBeforeEvent { get; private set; }
+    public long? DaysBeforeEvent { get; }
 
     /// <summary>Weeks before the event to send the reminder.</summary>
-    public long? WeeksBeforeEvent { get; private set; }
+    public long? WeeksBeforeEvent { get; }
 
     /// <summary>Time-of-day at which the reminder fires on the target day (all-day events).</summary>
-    public TimeOnly? TimesBeforeEvent { get; private set; }
+    public TimeOnly? TimesBeforeEvent { get; }
 
     /// <summary>When the reminder is due (UTC), worked out by <see cref="ReminderSchedule"/> when it is saved.</summary>
     public DateTime FireAtUtc { get; private set; }

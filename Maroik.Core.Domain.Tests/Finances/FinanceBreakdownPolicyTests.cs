@@ -80,7 +80,7 @@ public class FinanceBreakdownPolicyTests
     /// without a matching dashboard property.
     /// </summary>
     [Fact]
-    public void Compute_CountsUnrecognisedSubClass_InTotal()
+    public void Compute_CountsUnrecognizedSubClass_InTotal()
     {
         var result = FinanceBreakdownPolicy.Compute([
             ("LaborIncome", 50m),

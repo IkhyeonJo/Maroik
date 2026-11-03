@@ -105,7 +105,7 @@ public class ManagementControllerProfileTests(MaroikWebApplicationFactory factor
     /// beside the time-zone form; an accepted change shows nothing there.
     /// </summary>
     [Theory]
-    [InlineData("Not/ARealZone", "&#x27;Not/ARealZone&#x27; is not a recognised time-zone ID.")]
+    [InlineData("Not/ARealZone", "&#x27;Not/ARealZone&#x27; is not a recognized time-zone ID.")]
     [InlineData("Asia/Seoul", null)]
     public async Task UpdateProfileTimeZone_ShowsWhyTheChangeWasRefused_OnTheProfilePage(string timeZone, string? expectedError)
     {

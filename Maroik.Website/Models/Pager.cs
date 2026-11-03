@@ -33,7 +33,7 @@ public class Pager
     /// <summary>
     /// Calculates pagination values for the given total item count and current page.
     /// The visible page-link window always shows at most 5 consecutive page numbers
-    /// centred around <paramref name="page"/>.
+    /// centered around <paramref name="page"/>.
     /// </summary>
     /// <param name="totalItems">Total number of records to paginate.</param>
     /// <param name="page">The currently requested page number (1-based).</param>

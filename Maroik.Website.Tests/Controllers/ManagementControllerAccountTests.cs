@@ -105,7 +105,7 @@ public class ManagementControllerAccountTests(MaroikWebApplicationFactory factor
 
         var response = await _client.SendAsync(request, TestContext.Current.CancellationToken);
         var json = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
-        using var doc = System.Text.Json.JsonDocument.Parse(json);
+        using var doc = JsonDocument.Parse(json);
 
         Assert.Equal(System.Net.HttpStatusCode.OK, response.StatusCode);
         // Email.Create (Core) message, not a controller-local string. Asserts the full exact text —
@@ -283,7 +283,7 @@ public class ManagementControllerAccountTests(MaroikWebApplicationFactory factor
         });
         var response = await _client.SendAsync(secondRequest, TestContext.Current.CancellationToken);
         string json = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
-        using var doc = System.Text.Json.JsonDocument.Parse(json);
+        using var doc = JsonDocument.Parse(json);
 
         Assert.Equal(
             $"'{sharedNickname}' is a Nickname that already exists. Please enter another Nickname.",

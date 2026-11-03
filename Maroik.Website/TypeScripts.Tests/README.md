@@ -50,7 +50,7 @@ TypeScripts.Tests/
   _common/
     harness.ts            loadSite() + fixture helpers + jsdom stubs   (test infra, no source counterpart)
     vitest.setup.ts       runs once before each test file
-    *Suite.ts             behaviour shared by several scripts (see "Shared suites")
+    *Suite.ts             behavior shared by several scripts (see "Shared suites")
     noExplicitAny.test.ts no `any`, no `x as T` / `x!` in TypeScripts/ or this tree
     toolkitSuite.ts       the _Layout scripts' runtime-check toolkit (window.check, onReply, fieldValue, …)
     viewContract.test.ts  every localized text a script reads is rendered by its view

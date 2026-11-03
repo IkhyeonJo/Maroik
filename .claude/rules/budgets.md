@@ -32,7 +32,7 @@ that specific change. Check every candidate review finding in this area against 
   text exponentially (three 1,000-character cells reached billions of characters and exhausted the web process's memory).
   The evaluator evaluates every operand once (since 2026-11-02): re-evaluating it to return its error or value (`%`, `ABS`, `NOT`,
   `IFERROR`, `COUNT`) doubled the work per nesting level, so a 26-character `="a"%%…` ran for hours in one preview request.
-- The formula bar's colouring is computed by the server on every pause in typing (`PreviewBudgetCell`); the client only paints
+- The formula bar's coloring is computed by the server on every pause in typing (`PreviewBudgetCell`); the client only paints
   it. The round trip is accepted; do not move the lexer / parser into `site.ts`.
 - A budget cell's value is its budget only as a number from 0 to `FinanceAmountPolicy.MaxAbsoluteAmount`, rounded to 4 decimals;
   otherwise `#NUM!`. Actuals are the real income / expenditure records of the month in the owner's time zone, by currency label

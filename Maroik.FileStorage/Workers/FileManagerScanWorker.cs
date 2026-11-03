@@ -60,7 +60,7 @@ public sealed class FileManagerScanWorker(IFileManagerScanQueue queue, IServiceS
         {
             // The upload was aborted (its files are already dropped) or the service is stopping (the staging file stays for the next
             // complete): neither is a failure, and no outcome is recorded.
-            logger.LogInformation("File Manager scan of {UploadId} was cancelled", uploadId);
+            logger.LogInformation("File Manager scan of {UploadId} was canceled", uploadId);
             queue.Finish(uploadId, null);
             return;
         }

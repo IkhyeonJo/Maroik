@@ -90,7 +90,7 @@ public class FileManagerViewModelMapperTests
 
         FileManagerFolderViewModel vm = folder.ToViewModel("UTC", "My Drive");
 
-        Assert.Equal((long?)2, vm.FolderId);
+        Assert.Equal(2, vm.FolderId);
         Assert.Equal([(1L, "A"), (2L, "B")], vm.Breadcrumb.Select(c => (c.Id, c.Name)));
         Assert.Equal(["x.txt", "y.txt"], vm.Items.Select(i => i.Name));
     }

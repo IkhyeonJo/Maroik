@@ -86,20 +86,8 @@ public sealed class FakeFileClient : IFileClient
     /// <summary>How many File Manager completions answer <see cref="FileUploadResult.Scanning"/> before one is decided; defaults to none.</summary>
     public int FileManagerScanningAnswers { get; set; }
 
-    /// <summary>When true every File Manager delete fails, as an unreachable file-storage service would.</summary>
-    public bool FailFileManagerDeletes { get; set; }
-
-    /// <summary>Every File Manager path a caller asked to delete (in order).</summary>
-    public List<string> DeletedPaths { get; } = [];
-
-    /// <summary>Every File Manager upload a caller aborted (in order).</summary>
-    public List<Guid> AbortedUploads { get; } = [];
-
     /// <summary>Every File Manager upload a caller completed with the virus scan skipped (in order).</summary>
     public List<Guid> CompletedWithoutAScan { get; } = [];
-
-    /// <summary>Whether bytes are being received for <paramref name="uploadId"/>.</summary>
-    public bool IsStaging(Guid uploadId) => _staging.ContainsKey(uploadId);
 
     /// <inheritdoc />
     public async Task<long?> AppendFileManagerChunkAsync(Guid uploadId, long offset, Stream chunk, string fileStorageBaseUrl, CancellationToken ct = default)
@@ -143,14 +131,12 @@ public sealed class FakeFileClient : IFileClient
     public Task<bool> AbortFileManagerUploadAsync(Guid uploadId, string fileStorageBaseUrl, CancellationToken ct = default)
     {
         _staging.TryRemove(uploadId, out _);
-        lock (AbortedUploads) AbortedUploads.Add(uploadId);
         return Task.FromResult(true);
     }
 
     /// <inheritdoc />
     public Task<bool> DeleteFileManagerFileAsync(string storagePath, string fileStorageBaseUrl, CancellationToken ct = default)
     {
-        lock (DeletedPaths) DeletedPaths.Add(storagePath);
-        return Task.FromResult(!FailFileManagerDeletes && _files.TryRemove(storagePath, out _));
+        return Task.FromResult(_files.TryRemove(storagePath, out _));
     }
 }

@@ -188,7 +188,7 @@ public class ExpenditureClassPolicyTests
 
     /// <summary>MainClasses names exactly the main classes the taxonomy recognizes, so a form never offers one Validate rejects.</summary>
     [Fact]
-    public void MainClasses_MatchesTheTaxonomysKeys()
+    public void MainClasses_MatchesTheTaxonomyKeys()
     {
         Assert.Equal(ExpenditureClassPolicy.SubClassesByMainClass.Keys.Order(), ExpenditureClassPolicy.MainClasses.Order());
     }

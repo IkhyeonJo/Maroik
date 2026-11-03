@@ -330,7 +330,7 @@ public sealed class FileManagerStorageServiceTests : IDisposable
         _clamav.Verify(c => c.ScanWithClamavAsync(It.IsAny<Stream>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
-    /// <summary>A scan whose upload was aborted meanwhile stores nothing and ends cancelled.</summary>
+    /// <summary>A scan whose upload was aborted meanwhile stores nothing and ends canceled.</summary>
     [Fact]
     public async Task ScanAsync_StoresNothing_WhenTheUploadWasAborted()
     {

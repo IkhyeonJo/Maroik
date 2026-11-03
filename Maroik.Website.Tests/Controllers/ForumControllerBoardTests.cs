@@ -262,7 +262,7 @@ public class ForumControllerBoardTests(MaroikWebApplicationFactory factory)
         Assert.False(db.Boards.Single(b => b.Id == boardId).Deleted);
     }
 
-    /// <summary>Delete board admin can delete anyones board.</summary>
+    /// <summary>Delete board admin can delete anyone's board.</summary>
     [Fact]
     public async Task DeleteBoard_Admin_CanDeleteAnyonesBoard()
     {

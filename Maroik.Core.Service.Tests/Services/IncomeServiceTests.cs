@@ -27,9 +27,9 @@ public class IncomeServiceTests
     private readonly FakeLogger<IncomeService> _logger = new();
 
     /// <summary>The fixed "current time" of these tests.</summary>
-    private static readonly DateTime Now = new(2026, 7, 1, 12, 0, 0, DateTimeKind.Utc);
-    /// <summary>The clock the service under test reads, stopped at <see cref="Now"/>.</summary>
-    private readonly FakeTimeProvider _time = new(new DateTimeOffset(Now));
+    private static readonly DateTime _now = new(2026, 7, 1, 12, 0, 0, DateTimeKind.Utc);
+    /// <summary>The clock the service under test reads, stopped at <see cref="_now"/>.</summary>
+    private readonly FakeTimeProvider _time = new(new DateTimeOffset(_now));
 
     /// <summary>The service under test over the mocked dependencies.</summary>
     private IncomeService CreateSut() => new(
@@ -802,7 +802,7 @@ public class IncomeServiceTests
     [Fact]
     public async Task UpdateAsync_RecordsTheNewAssetsCurrency_WhenTheIncomeMovesToAnAssetInAnotherCurrency()
     {
-        GivenExistingIncome(MakeIncome(1, "SavingsAccount", 100m));
+        GivenExistingIncome(MakeIncome(1));
         GivenAssets(MakeAsset("SavingsAccount"), MakeAsset("DollarAccount", amount: 0m, currency: "USD"));
         Income? stored = null;
         _incomeRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<Income>(), It.IsAny<CancellationToken>()))

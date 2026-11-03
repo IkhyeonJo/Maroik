@@ -21,10 +21,8 @@ public class DashboardControllerCultureCookieTests
     public void CultureManagement_SetsNoSecureFlagOfItsOwn()
     {
         using var controller = new DashboardController(Mock.Of<IDashboardService>(), Mock.Of<IProfileService>(),
-            new FakeLogger<DashboardController>(), new FakeTimeProvider(new DateTimeOffset(2026, 11, 2, 0, 0, 0, TimeSpan.Zero)))
-        {
-            ControllerContext = new ControllerContext { HttpContext = new DefaultHttpContext { Request = { Scheme = "http" } } }
-        };
+            new FakeLogger<DashboardController>(), new FakeTimeProvider(new DateTimeOffset(2026, 11, 2, 0, 0, 0, TimeSpan.Zero)));
+        controller.ControllerContext = new ControllerContext { HttpContext = new DefaultHttpContext { Request = { Scheme = "http" } } };
 
         controller.CultureManagement(new LoginInputViewModel { Culture = "ko-KR" });
 

@@ -9,7 +9,7 @@ namespace Maroik.Website.Mappers;
 
 /// <summary>
 /// Turns the budget DTOs into what the Income Budget / Expenditure Budget page draws: localized row labels, values in the finance grids'
-/// amount format (<see cref="AmountDisplay.Format"/>), each budget cell's colour (by the sheet's kind: an expenditure over its budget is
+/// amount format (<see cref="AmountDisplay.Format"/>), each budget cell's color (by the sheet's kind: an expenditure over its budget is
 /// bad, an income under its budget a warning), and the formula bar's problems localized. Presentation only: the numbers and states
 /// come from the domain.
 /// </summary>
@@ -29,14 +29,14 @@ public static class BudgetViewModelMapper
             .ToDictionary(c => c, localize, StringComparer.Ordinal),
         Currencies = [.. assets.Select(a => a.MonetaryUnit).OfType<string>().Distinct(StringComparer.Ordinal)],
         ColumnCaptions = Enumerable.Range(0, BudgetSheetLayout.ColumnCount).Select(i => ((char)('A' + i)).ToString())
-            .Select(column => (column, key: BudgetSheetLayout.MonthOf(column) is { } month ? MonthKeys[month - 1]
+            .Select(column => (column, key: BudgetSheetLayout.MonthOf(column) is { } month ? _monthKeys[month - 1]
                 : column == BudgetSheetLayout.YearColumn ? "Year total" : null))
             .Where(c => c.key is not null)
             .ToDictionary(c => c.column, c => localize(c.key!), StringComparer.Ordinal),
     };
 
     /// <summary>The resx keys of the month columns' captions, January first.</summary>
-    private static readonly string[] MonthKeys =
+    private static readonly string[] _monthKeys =
         ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
     /// <summary>A value as the grid shows it: a number in the amount format, any other value as its text, empty as nothing.</summary>
@@ -81,7 +81,7 @@ public static class BudgetViewModelMapper
         })],
     };
 
-    /// <summary>A cell ready to draw; <paramref name="kind"/> decides a budget cell's colour.</summary>
+    /// <summary>A cell ready to draw; <paramref name="kind"/> decides a budget cell's color.</summary>
     public static BudgetCellViewModel ToViewModel(this BudgetCellResponse cell, string kind) => new()
     {
         Address = cell.Address,

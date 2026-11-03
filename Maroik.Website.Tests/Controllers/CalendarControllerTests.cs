@@ -33,7 +33,7 @@ public class CalendarControllerTests(MaroikWebApplicationFactory factory)
         var response = await _client.GetAsync("/Calendar/AnonymousIndex", TestContext.Current.CancellationToken);
         string html = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
-        Assert.Matches($"id=\"minLeadTimeBeforeEvent\"[^>]*value=\"{Maroik.Core.Domain.Calendars.CalendarReminderPolicy.MinLeadTimeBeforeEvent}\"", html);
+        Assert.Matches($"id=\"minLeadTimeBeforeEvent\"[^>]*value=\"{Core.Domain.Calendars.CalendarReminderPolicy.MinLeadTimeBeforeEvent}\"", html);
     }
 
     // -- UploadImageFile: validation only ------------------------------------------------

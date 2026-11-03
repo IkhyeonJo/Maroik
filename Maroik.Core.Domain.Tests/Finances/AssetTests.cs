@@ -10,7 +10,7 @@ namespace Maroik.Core.Domain.Tests.Finances;
 public class AssetTests
 {
     /// <summary>The fixed "current time" every domain call in this class receives.</summary>
-    private static readonly DateTime Now = new(2026, 7, 1, 12, 0, 0, DateTimeKind.Utc);
+    private static readonly DateTime _now = new(2026, 7, 1, 12, 0, 0, DateTimeKind.Utc);
 
     /// <summary>Creates a valid asset; each argument can be overridden per test.</summary>
     private static Asset ValidAsset(
@@ -19,7 +19,7 @@ public class AssetTests
         string item = "FreeDepositAndWithdrawal",
         decimal amount = 1000m,
         string currency = "KRW")
-        => Asset.Create(productName, email, item, amount, currency, Now).Value;
+        => Asset.Create(productName, email, item, amount, currency, _now).Value;
 
     // -- Create ---------------------------------------------------------------
 
@@ -29,19 +29,19 @@ public class AssetTests
     {
         var asset = ValidAsset();
 
-        Assert.Equal(Now, asset.Created);
+        Assert.Equal(_now, asset.Created);
         Assert.Equal(asset.Created, asset.Updated);
 
-        Assert.False(asset.Deposit(Money.Create(1m, "KRW").Value, Now.AddMinutes(5)).IsError);
-        Assert.Equal(Now, asset.Created);
-        Assert.Equal(Now.AddMinutes(5), asset.Updated);
+        Assert.False(asset.Deposit(Money.Create(1m, "KRW").Value, _now.AddMinutes(5)).IsError);
+        Assert.Equal(_now, asset.Created);
+        Assert.Equal(_now.AddMinutes(5), asset.Updated);
     }
 
     /// <summary>Create returns asset, when valid.</summary>
     [Fact]
     public void Create_ReturnsAsset_WhenValid()
     {
-        var result = Asset.Create("Savings", "user@example.com", "FreeDepositAndWithdrawal", 5000m, "KRW", Now);
+        var result = Asset.Create("Savings", "user@example.com", "FreeDepositAndWithdrawal", 5000m, "KRW", _now);
 
         Assert.False(result.IsError);
         Assert.Equal("Savings", result.Value.ProductName);
@@ -55,7 +55,7 @@ public class AssetTests
     [InlineData("   ")]
     public void Create_ReturnsError_WhenProductNameEmpty(string? name)
     {
-        var result = Asset.Create(name, "user@example.com", "FreeDepositAndWithdrawal", 0m, "KRW", Now);
+        var result = Asset.Create(name, "user@example.com", "FreeDepositAndWithdrawal", 0m, "KRW", _now);
 
         Assert.True(result.IsError);
         Assert.Equal("Asset.ProductNameEmpty", result.FirstError.Code);
@@ -68,7 +68,7 @@ public class AssetTests
     [InlineData("   ")]
     public void Create_ReturnsError_WhenItemEmpty(string? item)
     {
-        var result = Asset.Create("Savings", "user@example.com", item, 0m, "KRW", Now);
+        var result = Asset.Create("Savings", "user@example.com", item, 0m, "KRW", _now);
 
         Assert.True(result.IsError);
         Assert.Equal("Asset.ItemEmpty", result.FirstError.Code);
@@ -84,9 +84,9 @@ public class AssetTests
     [InlineData("Deposit")]
     [InlineData("Stock")]
     [InlineData("freeDepositAndWithdrawal")]
-    public void Create_ReturnsError_WhenItemNotRecognised(string item)
+    public void Create_ReturnsError_WhenItemNotRecognized(string item)
     {
-        var result = Asset.Create("Savings", "user@example.com", item, 0m, "KRW", Now);
+        var result = Asset.Create("Savings", "user@example.com", item, 0m, "KRW", _now);
 
         Assert.True(result.IsError);
         Assert.Equal("Asset.ItemInvalid", result.FirstError.Code);
@@ -96,7 +96,7 @@ public class AssetTests
     [Fact]
     public void Create_ReturnsError_WhenEmailInvalid()
     {
-        var result = Asset.Create("Savings", "bademail", "FreeDepositAndWithdrawal", 0m, "KRW", Now);
+        var result = Asset.Create("Savings", "bademail", "FreeDepositAndWithdrawal", 0m, "KRW", _now);
 
         Assert.True(result.IsError);
     }
@@ -105,7 +105,7 @@ public class AssetTests
     [Fact]
     public void Create_ReturnsError_WhenCurrencyEmpty()
     {
-        var result = Asset.Create("Savings", "user@example.com", "FreeDepositAndWithdrawal", 0m, null, Now);
+        var result = Asset.Create("Savings", "user@example.com", "FreeDepositAndWithdrawal", 0m, null, _now);
 
         Assert.True(result.IsError);
         Assert.Equal("Money.CurrencyEmpty", result.FirstError.Code);
@@ -119,7 +119,7 @@ public class AssetTests
     {
         var asset = ValidAsset(amount: 1000m);
 
-        asset.Deposit(Money.Create(500m, "KRW").Value, Now);
+        asset.Deposit(Money.Create(500m, "KRW").Value, _now);
 
         Assert.Equal(1500m, asset.Balance.Amount);
     }
@@ -130,7 +130,7 @@ public class AssetTests
     {
         var asset = ValidAsset(amount: 1000m);
 
-        asset.Withdraw(Money.Create(300m, "KRW").Value, Now);
+        asset.Withdraw(Money.Create(300m, "KRW").Value, _now);
 
         Assert.Equal(700m, asset.Balance.Amount);
     }
@@ -145,7 +145,7 @@ public class AssetTests
     {
         var asset = ValidAsset(amount: FinanceAmountPolicy.MaxAbsoluteAmount);
 
-        var result = asset.Deposit(Money.Create(0.01m, "KRW").Value, Now);
+        var result = asset.Deposit(Money.Create(0.01m, "KRW").Value, _now);
 
         Assert.True(result.IsError);
         Assert.Equal("Finance.AmountOutOfRange", result.FirstError.Code);
@@ -158,7 +158,7 @@ public class AssetTests
     {
         var asset = ValidAsset(amount: -FinanceAmountPolicy.MaxAbsoluteAmount);
 
-        var result = asset.Withdraw(Money.Create(0.01m, "KRW").Value, Now);
+        var result = asset.Withdraw(Money.Create(0.01m, "KRW").Value, _now);
 
         Assert.True(result.IsError);
         Assert.Equal("Finance.AmountOutOfRange", result.FirstError.Code);
@@ -171,7 +171,7 @@ public class AssetTests
     {
         var asset = ValidAsset(amount: FinanceAmountPolicy.MaxAbsoluteAmount - 1m);
 
-        var result = asset.Deposit(Money.Create(1m, "KRW").Value, Now);
+        var result = asset.Deposit(Money.Create(1m, "KRW").Value, _now);
 
         Assert.False(result.IsError);
         Assert.Equal(FinanceAmountPolicy.MaxAbsoluteAmount, asset.Balance.Amount);
@@ -183,7 +183,7 @@ public class AssetTests
     {
         var asset = ValidAsset(amount: 1000m, currency: "KRW");
 
-        var result = asset.Deposit(Money.Create(500m, "USD").Value, Now);
+        var result = asset.Deposit(Money.Create(500m, "USD").Value, _now);
 
         Assert.True(result.IsError);
         Assert.Equal("Asset.CurrencyMismatch", result.FirstError.Code);
@@ -196,7 +196,7 @@ public class AssetTests
     {
         var asset = ValidAsset(amount: 1000m, currency: "KRW");
 
-        var result = asset.Withdraw(Money.Create(300m, "USD").Value, Now);
+        var result = asset.Withdraw(Money.Create(300m, "USD").Value, _now);
 
         Assert.True(result.IsError);
         Assert.Equal("Asset.CurrencyMismatch", result.FirstError.Code);
@@ -211,7 +211,7 @@ public class AssetTests
     {
         var asset = ValidAsset();
 
-        var result = asset.Update("New Name", "InvestmentAsset", 2000m, "KRW", "memo", false, Now);
+        var result = asset.Update("New Name", "InvestmentAsset", 2000m, "KRW", "memo", false, _now);
 
         Assert.False(result.IsError);
         Assert.Equal("New Name", asset.ProductName);
@@ -225,7 +225,7 @@ public class AssetTests
     {
         var asset = ValidAsset();
 
-        var result = asset.Update("", "FreeDepositAndWithdrawal", 0m, "KRW", null, false, Now);
+        var result = asset.Update("", "FreeDepositAndWithdrawal", 0m, "KRW", null, false, _now);
 
         Assert.True(result.IsError);
         Assert.Equal("Asset.ProductNameEmpty", result.FirstError.Code);
@@ -239,19 +239,19 @@ public class AssetTests
     {
         var asset = ValidAsset();
 
-        var result = asset.Update("Name", "", 0m, "KRW", null, false, Now);
+        var result = asset.Update("Name", "", 0m, "KRW", null, false, _now);
 
         Assert.True(result.IsError);
         Assert.Equal("Asset.ItemEmpty", result.FirstError.Code);
     }
 
-    /// <summary>Regression: Update rejects an <c>Item</c> value outside <see cref="AssetItemType"/>'s known members (see <see cref="Create_ReturnsError_WhenItemNotRecognised"/>).</summary>
+    /// <summary>Regression: Update rejects an <c>Item</c> value outside <see cref="AssetItemType"/>'s known members (see <see cref="Create_ReturnsError_WhenItemNotRecognized"/>).</summary>
     [Fact]
-    public void Update_ReturnsError_WhenItemNotRecognised()
+    public void Update_ReturnsError_WhenItemNotRecognized()
     {
         var asset = ValidAsset();
 
-        var result = asset.Update("Name", "Stock", 1000m, "KRW", null, false, Now);
+        var result = asset.Update("Name", "Stock", 1000m, "KRW", null, false, _now);
 
         Assert.True(result.IsError);
         Assert.Equal("Asset.ItemInvalid", result.FirstError.Code);
@@ -264,7 +264,7 @@ public class AssetTests
         var asset = ValidAsset();
         string originalCurrency = asset.Balance.Currency.Value;
 
-        var result = asset.Update("Name", "FreeDepositAndWithdrawal", 1000m, "", null, false, Now);
+        var result = asset.Update("Name", "FreeDepositAndWithdrawal", 1000m, "", null, false, _now);
 
         Assert.True(result.IsError);
         Assert.Equal("Money.CurrencyEmpty", result.FirstError.Code);
@@ -279,7 +279,7 @@ public class AssetTests
     {
         var asset = ValidAsset();
 
-        asset.SoftDelete(Now);
+        asset.SoftDelete(_now);
 
         Assert.True(asset.Deleted);
     }

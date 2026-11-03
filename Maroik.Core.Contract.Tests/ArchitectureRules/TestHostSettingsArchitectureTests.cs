@@ -15,7 +15,7 @@ public class TestHostSettingsArchitectureTests
     private static readonly string _websiteFactory =
         Path.Combine(RepositoryPaths.Root, "Maroik.Website.Tests", "Fixtures", "MaroikWebApplicationFactory.cs");
 
-    private static readonly string _e2eFactory =
+    private static readonly string _e2EFactory =
         Path.Combine(RepositoryPaths.Root, "Maroik.E2E.Tests", "Fixtures", "PlaywrightWebApplicationFactory.cs");
 
     /// <summary>Every key both factories set to a literal has the same value in both.</summary>
@@ -23,13 +23,13 @@ public class TestHostSettingsArchitectureTests
     public void TheTwoTestHosts_GiveTheirSharedSettingsTheSameValues()
     {
         Dictionary<string, string> website = LiteralSettings(File.ReadAllText(_websiteFactory));
-        Dictionary<string, string> e2e = LiteralSettings(File.ReadAllText(_e2eFactory));
+        Dictionary<string, string> endToEnd = LiteralSettings(File.ReadAllText(_e2EFactory));
 
         List<string> differing =
         [
-            .. website.Keys.Intersect(e2e.Keys, StringComparer.Ordinal).Order(StringComparer.Ordinal)
-                .Where(key => !string.Equals(website[key], e2e[key], StringComparison.Ordinal))
-                .Select(key => $"{key}: \"{website[key]}\" vs \"{e2e[key]}\"")
+            .. website.Keys.Intersect(endToEnd.Keys, StringComparer.Ordinal).Order(StringComparer.Ordinal)
+                .Where(key => !string.Equals(website[key], endToEnd[key], StringComparison.Ordinal))
+                .Select(key => $"{key}: \"{website[key]}\" vs \"{endToEnd[key]}\"")
         ];
 
         Assert.Empty(differing);
@@ -40,12 +40,12 @@ public class TestHostSettingsArchitectureTests
     public void TheTwoTestHosts_ShareTheCoreSettings()
     {
         Dictionary<string, string> website = LiteralSettings(File.ReadAllText(_websiteFactory));
-        Dictionary<string, string> e2e = LiteralSettings(File.ReadAllText(_e2eFactory));
+        Dictionary<string, string> endToEnd = LiteralSettings(File.ReadAllText(_e2EFactory));
 
         foreach (string key in new[] { "ServerSetting:DomainName", "ServerSetting:SessionExpireMinutes", "ServerSetting:MaxLoginAttempt", "ConnectionStrings:Valkey" })
         {
             Assert.True(website.ContainsKey(key), $"MaroikWebApplicationFactory does not set {key}");
-            Assert.True(e2e.ContainsKey(key), $"PlaywrightWebApplicationFactory does not set {key}");
+            Assert.True(endToEnd.ContainsKey(key), $"PlaywrightWebApplicationFactory does not set {key}");
         }
     }
 

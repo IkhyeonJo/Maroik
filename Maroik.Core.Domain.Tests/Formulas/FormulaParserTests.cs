@@ -101,7 +101,7 @@ public class FormulaParserTests
         Assert.Equal((5, 5), (call.Arguments[0].Span.Start, call.Arguments[0].Span.Length));
     }
 
-    /// <summary>The tokens of the formula (for the editor's colouring) include the leading "=".</summary>
+    /// <summary>The tokens of the formula (for the editor's coloring) include the leading "=".</summary>
     [Fact]
     public void TheTokens_IncludeTheEqualsSign()
     {

@@ -53,9 +53,9 @@ public class BoardServiceTests
     }
 
     /// <summary>The fixed "current time" of these tests.</summary>
-    private static readonly DateTime Now = new(2026, 7, 1, 12, 0, 0, DateTimeKind.Utc);
-    /// <summary>The clock the service under test reads, stopped at <see cref="Now"/>.</summary>
-    private readonly FakeTimeProvider _time = new(new DateTimeOffset(Now));
+    private static readonly DateTime _now = new(2026, 7, 1, 12, 0, 0, DateTimeKind.Utc);
+    /// <summary>The clock the service under test reads, stopped at <see cref="_now"/>.</summary>
+    private readonly FakeTimeProvider _time = new(new DateTimeOffset(_now));
 
     /// <summary>The service under test over the mocked dependencies.</summary>
     private BoardService CreateSut() => new(
@@ -273,8 +273,8 @@ public class BoardServiceTests
             new BoardRequest { Type = BoardTypes.FreeForum, Title = "Test Title", Writer = "Alice", Locked = true }, false, null, TestContext.Current.CancellationToken);
 
         Assert.NotNull(written);
-        Assert.Equal(Now, written.Created);
-        Assert.Equal(Now, written.Updated);
+        Assert.Equal(_now, written.Created);
+        Assert.Equal(_now, written.Updated);
     }
 
     /// <summary>Verifies that <c>WriteBoardAsync</c> returns success with attachment.</summary>

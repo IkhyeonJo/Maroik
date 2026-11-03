@@ -166,7 +166,7 @@ const otherEvent = (o: Record<string, unknown> = {}) => ({
 });
 
 describe("Calendar/AnonymousIndex — seeded and refreshed events", () => {
-    it("seeds the calendar with every server-rendered event, typed as 'Other' and coloured", () => {
+    it("seeds the calendar with every server-rendered event, typed as 'Other' and colored", () => {
         const h = load([seededEvent(1), seededEvent(2)]);
         const cal = firstCalendar(h);
         expect(cal.addEvent).toHaveBeenCalledTimes(2);

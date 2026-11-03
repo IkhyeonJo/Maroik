@@ -306,8 +306,8 @@
   <data name="Invalid image file" xml:space="preserve">
     <value>Invalid image file</value>
   </data>
-  <data name="'{0}' is not a recognised time-zone ID." xml:space="preserve">
-    <value>'{0}' is not a recognised time-zone ID.</value>
+  <data name="'{0}' is not a recognized time-zone ID." xml:space="preserve">
+    <value>'{0}' is not a recognized time-zone ID.</value>
   </data>
   <data name="'{0}' is not a valid email address." xml:space="preserve">
     <value>'{0}' is not a valid email address.</value>
@@ -327,8 +327,8 @@
   <data name="Board type cannot be empty." xml:space="preserve">
     <value>Board type cannot be empty.</value>
   </data>
-  <data name="Board type is not a recognised value." xml:space="preserve">
-    <value>Board type is not a recognised value.</value>
+  <data name="Board type is not a recognized value." xml:space="preserve">
+    <value>Board type is not a recognized value.</value>
   </data>
   <data name="Cannot add a comment to a deleted post." xml:space="preserve">
     <value>Cannot add a comment to a deleted post.</value>

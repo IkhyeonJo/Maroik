@@ -5,7 +5,7 @@ namespace Maroik.E2E.Tests.Flows;
 
 /// <summary>
 /// End-to-end tests for the budget sheet (<c>/AccountBook/IncomeBudget</c>) as a signed-in User, in a real browser against the real website:
-/// the grid drawn with the default lines, typing a budget, a formula coloured while it is typed, fill right, the Remaining view against an
+/// the grid drawn with the default lines, typing a budget, a formula colored while it is typed, fill right, the Remaining view against an
 /// actual income record, and the Excel download. The account owns one KRW asset, so its sheet starts with one KRW line per income class:
 /// 1 Regular income, 2 Labor, 3 Business, 4 Pension, 5 Financial, 6 Rental, 7 Other, 8 subtotal, 9 Irregular income, 10 Labor, 11 Other,
 /// 12 subtotal, 13 total, 14.. free rows.
@@ -80,9 +80,9 @@ public class BudgetFlowTests(E2ESharedFixture fixture) : E2ETestBase(fixture)
             """SELECT c."Input" FROM "BudgetSheetCell" c JOIN "BudgetSheet" s ON s."Id" = c."SheetId" WHERE s."AccountEmail" = @email AND c."Column" = 'B'""", ("email", account.Email)));
     }
 
-    /// <summary>A formula is coloured while it is typed (the reference and its outlined cell share a colour) and calculates when saved.</summary>
+    /// <summary>A formula is colored while it is typed (the reference and its outlined cell share a color) and calculates when saved.</summary>
     [Fact]
-    public async Task AFormula_IsColouredWhileTyped_AndCalculates()
+    public async Task AFormula_IsColoredWhileTyped_AndCalculates()
     {
         var (page, _) = await OpenAsync();
         await EnterAsync(page, "B2", "100");
@@ -132,7 +132,7 @@ public class BudgetFlowTests(E2ESharedFixture fixture) : E2ETestBase(fixture)
         await Assertions.Expect(page.Locator(".budget-formula-input .CodeMirror")).ToContainTextAsync("=D2*2");
     }
 
-    /// <summary>The Remaining view compares the month's budget with the month's recorded income (under the budget: a warning colour).</summary>
+    /// <summary>The Remaining view compares the month's budget with the month's recorded income (under the budget: a warning color).</summary>
     [Fact]
     public async Task TheRemainingView_ComparesWithTheRecords()
     {

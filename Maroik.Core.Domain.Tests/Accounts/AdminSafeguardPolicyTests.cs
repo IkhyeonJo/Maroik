@@ -42,7 +42,7 @@ public class AdminSafeguardPolicyTests
     public void Of_ReadsRoleLockAndDeleteFromTheAccount()
     {
         DateTime now = new(2026, 10, 10, 0, 0, 0, DateTimeKind.Utc);
-        var account = Domain.Accounts.Account.Create("admin@example.com", "hashed", "Boss", AccountRole.Admin, "UTC",
+        var account = Account.Create("admin@example.com", "hashed", "Boss", AccountRole.Admin, "UTC",
             CurrencyCode.Create("KRW").Value, registrationToken: null, agreedServiceTerms: true, now).Value;
 
         Assert.Equal(new AdminStanding(true, false, false), AdminStanding.Of(account));

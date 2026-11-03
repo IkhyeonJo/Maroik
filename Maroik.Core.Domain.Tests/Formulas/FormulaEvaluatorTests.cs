@@ -93,7 +93,7 @@ public class FormulaEvaluatorTests
     public void EachOperand_IsEvaluatedOnce(string input, string b1, string expected)
     {
         int reads = 0;
-        var context = new FormulaContext(address =>
+        var context = new FormulaContext(_ =>
         {
             reads++;
             return T(b1);

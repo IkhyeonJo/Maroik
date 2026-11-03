@@ -186,7 +186,7 @@
   <data name="The calendar shared has been successfully updated." xml:space="preserve">
     <value>공유 달력이 성공적으로 수정되었습니다.</value>
   </data>
-  <data name="'{0}' is not a recognised time-zone ID." xml:space="preserve">
+  <data name="'{0}' is not a recognized time-zone ID." xml:space="preserve">
     <value>'{0}'은(는) 인식할 수 없는 시간대 ID입니다.</value>
   </data>
   <data name="'{0}' is not a valid email address." xml:space="preserve">
@@ -222,7 +222,7 @@
   <data name="Event title must be {0} characters or fewer." xml:space="preserve">
     <value>이벤트 제목은 {0}자 이하여야 합니다.</value>
   </data>
-  <data name="Event status is not a recognised value." xml:space="preserve">
+  <data name="Event status is not a recognized value." xml:space="preserve">
     <value>이벤트 상태가 인식할 수 없는 값입니다.</value>
   </data>
   <data name="Exactly one lead-time field (minutes/hours/days/weeks) must be set." xml:space="preserve">

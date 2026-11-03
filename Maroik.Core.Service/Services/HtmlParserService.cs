@@ -53,7 +53,7 @@ public class HtmlParserService : IHtmlParserService
         return (body.InnerHtml, imgTags.Count > 0);
 
         // Runs patchFactory for one <img>'s alt value once a gate slot is free, releasing the slot
-        // afterwards, so no more than MaxConcurrentPatchFetches fetches are ever in flight.
+        // afterward, so no more than MaxConcurrentPatchFetches fetches are ever in flight.
         async Task<HtmlImgPatch?> FetchPatchAsync(IElement imgTag)
         {
             // ReSharper disable once AccessToDisposedClosure

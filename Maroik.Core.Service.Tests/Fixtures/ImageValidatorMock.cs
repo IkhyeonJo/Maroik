@@ -5,7 +5,7 @@ using Moq;
 namespace Maroik.Core.Service.Tests.Fixtures;
 
 /// <summary>
-/// An <see cref="IImageValidatorService"/> mock whose <c>StripMetadata</c> hands the bytes back unchanged, labelled
+/// An <see cref="IImageValidatorService"/> mock whose <c>StripMetadata</c> hands the bytes back unchanged, labeled
 /// the way the real validator labels them — PNG when they start with the PNG signature, JPEG otherwise — so a test
 /// that is not about re-encoding still gets a usable result. A test may override it with its own setup.
 /// </summary>

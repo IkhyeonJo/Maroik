@@ -14,7 +14,7 @@ namespace Maroik.Website.Tests.Mappers;
 /// </summary>
 public sealed class InvariantDateFormatTests : IDisposable
 {
-    /// <summary>The culture the test process ran under, restored afterwards.</summary>
+    /// <summary>The culture the test process ran under, restored afterward.</summary>
     private readonly CultureInfo _original = CultureInfo.CurrentCulture;
 
     /// <summary>Runs every test under th-TH.</summary>
@@ -69,7 +69,7 @@ public sealed class InvariantDateFormatTests : IDisposable
     [Fact]
     public void KanbanDueDates_AreGregorianIsoDates()
     {
-        List<KanbanLaneResponse> board = [new KanbanLaneResponse { Lane = "ToDo", Cards = [new KanbanCardResponse { Title = "t", DueDate = new DateOnly(2025, 6, 15) }] }];
+        List<KanbanLaneResponse> board = [new() { Lane = "ToDo", Cards = [new KanbanCardResponse { Title = "t", DueDate = new DateOnly(2025, 6, 15) }] }];
 
         KanbanBoardViewModel vm = board.ToViewModel();
 

@@ -19,7 +19,7 @@ public sealed class FileManagerNodeRepositoryTests(DatabaseFixture database) : R
     private FileManagerNodeRepository Sut => new(Context);
 
     /// <summary>The fixed time of the nodes these tests create.</summary>
-    private static readonly DateTime Now = new(2026, 5, 24, 12, 0, 0, DateTimeKind.Utc);
+    private static readonly DateTime _now = new(2026, 5, 24, 12, 0, 0, DateTimeKind.Utc);
 
     /// <summary>Saves <paramref name="node"/> through the repository and returns its stored id.</summary>
     private async Task<long> SaveAsync(FileManagerNode node)
@@ -34,13 +34,13 @@ public sealed class FileManagerNodeRepositoryTests(DatabaseFixture database) : R
 
     /// <summary>A folder of <paramref name="email"/>.</summary>
     private Task<long> FolderAsync(string email, string name, long? parentId = null) =>
-        SaveAsync(FileManagerNode.CreateFolder(email, parentId, name, Now).Value);
+        SaveAsync(FileManagerNode.CreateFolder(email, parentId, name, _now).Value);
 
     /// <summary>A file of <paramref name="email"/> (finished unless <paramref name="uploading"/>).</summary>
     private Task<long> FileAsync(string email, string name, long? parentId = null, bool uploading = false, long size = 10)
     {
-        FileManagerNode file = FileManagerNode.StartUpload(email, parentId, name, size, Guid.NewGuid(), Now, scanDisabled: false).Value;
-        if (!uploading) file.CompleteUpload(Now);
+        FileManagerNode file = FileManagerNode.StartUpload(email, parentId, name, size, Guid.NewGuid(), _now, scanDisabled: false).Value;
+        if (!uploading) file.CompleteUpload(_now);
         return SaveAsync(file);
     }
 
@@ -52,13 +52,13 @@ public sealed class FileManagerNodeRepositoryTests(DatabaseFixture database) : R
     {
         string email = UniqueEmail();
         long folderId = await FolderAsync(email, "Design");
-        FileManagerNode upload = FileManagerNode.StartUpload(email, folderId, "logo.png", 1234, Guid.Parse("8f1e9c0a-1b2c-4d5e-8f70-112233445566"), Now, scanDisabled: false).Value;
+        FileManagerNode upload = FileManagerNode.StartUpload(email, folderId, "logo.png", 1234, Guid.Parse("8f1e9c0a-1b2c-4d5e-8f70-112233445566"), _now, scanDisabled: false).Value;
         long fileId = await SaveAsync(upload);
 
         List<FileManagerNode> nodes = await Sut.GetByAccountEmailAsync(email, TestContext.Current.CancellationToken);
 
         FileManagerNode folder = Assert.Single(nodes, n => n.Id == folderId);
-        Assert.Equal((email, (long?)null, "Design", true, 0L, (string?)null, false, Now, Now),
+        Assert.Equal((email, (long?)null, "Design", true, 0L, (string?)null, false, _now, _now),
             (folder.AccountEmail.Value, folder.ParentId, folder.Name, folder.IsFolder, folder.Size, folder.StoragePath, folder.Uploading, folder.Created, folder.Updated));
         FileManagerNode file = Assert.Single(nodes, n => n.Id == fileId);
         Assert.Equal(((long?)folderId, "logo.png", false, 1234L, "upload/FileManager/8f1e9c0a-1b2c-4d5e-8f70-112233445566", true),
@@ -106,15 +106,15 @@ public sealed class FileManagerNodeRepositoryTests(DatabaseFixture database) : R
         long target = await FolderAsync(email, "Target");
         long fileId = await FileAsync(email, "old.txt", uploading: true);
         FileManagerNode file = (await Sut.FindByEmailAndIdAsync(email, fileId, TestContext.Current.CancellationToken))!;
-        Assert.False(file.Rename("new.txt", Now.AddHours(1)).IsError);
-        Assert.False(file.MoveTo(target, [target], Now.AddHours(1)).IsError);
-        file.CompleteUpload(Now.AddHours(1));
+        Assert.False(file.Rename("new.txt", _now.AddHours(1)).IsError);
+        Assert.False(file.MoveTo(target, [target], _now.AddHours(1)).IsError);
+        file.CompleteUpload(_now.AddHours(1));
 
         await Sut.UpdateEntityAsync(file, TestContext.Current.CancellationToken);
         Context.ChangeTracker.Clear();
 
         OrmFileManagerNode row = await Context.FileManagerNodes.AsNoTracking().SingleAsync(n => n.Id == fileId, TestContext.Current.CancellationToken);
-        Assert.Equal(("new.txt", (long?)target, false, Now.AddHours(1)), (row.Name, row.ParentId, row.Uploading, row.Updated));
+        Assert.Equal(("new.txt", (long?)target, false, _now.AddHours(1)), (row.Name, row.ParentId, row.Uploading, row.Updated));
     }
 
     // -- DeleteByEmailAndIdsAsync -----------------------------------------------------
@@ -169,12 +169,12 @@ public sealed class FileManagerNodeRepositoryTests(DatabaseFixture database) : R
         long upload = await FileAsync(owner, "a.bin", uploading: true);
         long finished = await FileAsync(owner, "b.bin");
         long theirs = await FileAsync(other, "c.bin", uploading: true);
-        DateTime later = Now.AddMinutes(30);
+        DateTime later = _now.AddMinutes(30);
 
         foreach (long id in new[] { upload, finished, theirs })
             await Sut.RecordUploadActivityAsync(owner, id, later, TestContext.Current.CancellationToken);
 
-        Assert.Equal((later, Now, Now), (await UpdatedOfAsync(upload), await UpdatedOfAsync(finished), await UpdatedOfAsync(theirs)));
+        Assert.Equal((later, _now, _now), (await UpdatedOfAsync(upload), await UpdatedOfAsync(finished), await UpdatedOfAsync(theirs)));
     }
 
     /// <summary>
@@ -221,7 +221,7 @@ public sealed class FileManagerNodeRepositoryTests(DatabaseFixture database) : R
     private static OrmFileManagerNode Row(string email, string name, bool isFolder, string? storagePath, long? parentId = null, bool uploading = false, long size = 0) => new()
     {
         AccountEmail = email, Name = name, IsFolder = isFolder, StoragePath = storagePath, ParentId = parentId, Uploading = uploading, Size = size,
-        Created = Now, Updated = Now,
+        Created = _now, Updated = _now,
     };
 
     /// <summary>Two finished nodes of the same name in the same folder are refused — at the root too (NULLS NOT DISTINCT).</summary>

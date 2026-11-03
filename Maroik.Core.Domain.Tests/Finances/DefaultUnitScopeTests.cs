@@ -5,19 +5,19 @@ namespace Maroik.Core.Domain.Tests.Finances;
 public class DefaultUnitScopeTests
 {
     /// <summary>The fixed "current time" the test rows are stamped with.</summary>
-    private static readonly DateTime Now = new(2026, 7, 1, 12, 0, 0, DateTimeKind.Utc);
+    private static readonly DateTime _now = new(2026, 7, 1, 12, 0, 0, DateTimeKind.Utc);
 
     /// <summary>An asset of the test account.</summary>
     private static Asset AssetOf(string name, string currency, bool deleted = false) =>
-        Asset.Reconstitute(name, "user@example.com", "CashAsset", 1000m, currency, null, deleted, Now, Now);
+        Asset.Reconstitute(name, "user@example.com", "CashAsset", 1000m, currency, null, deleted, _now, _now);
 
     /// <summary>An income deposited into <paramref name="asset"/>.</summary>
     private static Income IncomeInto(string asset) =>
-        Income.Reconstitute(1, "user@example.com", "RegularIncome", "LaborIncome", null, 10m, "KRW", asset, null, Now, Now);
+        Income.Reconstitute(1, "user@example.com", "RegularIncome", "LaborIncome", null, 10m, "KRW", asset, null, _now, _now);
 
     /// <summary>An expenditure paid from <paramref name="asset"/>.</summary>
     private static Expenditure ExpenditureFrom(string asset) =>
-        Expenditure.Reconstitute(1, "user@example.com", "ConsumerSpending", "MealOrEatOutExpenses", null, 10m, "KRW", asset, null, null, Now, Now);
+        Expenditure.Reconstitute(1, "user@example.com", "ConsumerSpending", "MealOrEatOutExpenses", null, 10m, "KRW", asset, null, null, _now, _now);
 
     /// <summary>The scope over a KRW bank, a USD broker and a deleted KRW wallet.</summary>
     private static DefaultUnitScope KrwScope() =>

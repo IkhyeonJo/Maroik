@@ -36,7 +36,7 @@ These are public or deliberate, so they are not vulnerabilities:
 - Services that are reachable only on the internal Docker network (for example `Maroik.FileStorage`) carrying no
   app-level authentication: the network boundary is their security boundary. A way to reach one from outside **is** in
   scope.
-- The other behaviours recorded as intended design in `CLAUDE.md` and `.claude/rules/`, unless you show a concrete
+- The other behaviors recorded as intended design in `CLAUDE.md` and `.claude/rules/`, unless you show a concrete
   exploit the rationale there does not account for.
 - Missing hardening with no demonstrated impact (version banners, best-practice headers alone, rate limits on read-only
   pages).

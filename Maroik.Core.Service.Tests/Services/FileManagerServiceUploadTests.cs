@@ -179,7 +179,7 @@ public class FileManagerServiceUploadTests
         Assert.NotNull(_h.Nodes.Get(fresh));
         Assert.NotEqual(Guid.Empty, start.UploadId);
         _h.Files.Verify(f => f.AbortFileManagerUploadAsync(staleId, H.BaseUrl, It.IsAny<CancellationToken>()), Times.Once);
-        Assert.Contains(_h.Logger.Collector.GetSnapshot(), r => r.Level == LogLevel.Information && r.Message == $"File Manager: removed 1 abandoned upload(s) of {H.Email}");
+        Assert.Contains(_h.Logger.Collector.GetSnapshot(), r => r is { Level: LogLevel.Information, Message: $"File Manager: removed 1 abandoned upload(s) of {H.Email}" });
     }
 
     /// <summary>An invalid name, a file too large to scan (the account may not keep it) and a folder the account does not own are refused.</summary>
@@ -203,14 +203,14 @@ public class FileManagerServiceUploadTests
     [InlineData(false, true)]
     public async Task BeginUploadAsync_StartsAFileTooLargeToScan_WhenTheAccountsScanIsOff(bool scanDisabled, bool? scanDisabledUnderLock)
     {
-        const long Size = 50L * H.Gb;
+        const long size = 50L * H.Gb;
         _h.QuotaBytes = 100 * H.Gb;
         _h.ScanDisabled = scanDisabled;
         _h.ScanDisabledUnderLock = scanDisabledUnderLock;
 
-        FileManagerUploadStart start = await StartAsync(Upload("backup.iso", Size));
+        FileManagerUploadStart start = await StartAsync(Upload("backup.iso", size));
 
-        Assert.Equal(Size, Assert.Single(_h.Nodes.All, n => n.StorageId == start.UploadId).Size);
+        Assert.Equal(size, Assert.Single(_h.Nodes.All, n => n.StorageId == start.UploadId).Size);
     }
 
     /// <summary>With the scan on (as the locked row sees it) such a file is refused before anything is stored.</summary>

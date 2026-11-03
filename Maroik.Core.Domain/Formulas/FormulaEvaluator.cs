@@ -22,13 +22,13 @@ public static class FormulaEvaluator
         formula.CanSave ? new Run(formula, context).Scalar(formula.Syntax.Root) : new ErrorValue(FormulaErrorKind.Value);
 
     /// <summary>#VALUE!.</summary>
-    private static readonly ErrorValue ValueError = new(FormulaErrorKind.Value);
+    private static readonly ErrorValue _valueError = new(FormulaErrorKind.Value);
 
     /// <summary>#NUM!.</summary>
-    private static readonly ErrorValue NumError = new(FormulaErrorKind.Num);
+    private static readonly ErrorValue _numError = new(FormulaErrorKind.Num);
 
     /// <summary>#DIV/0!.</summary>
-    private static readonly ErrorValue DivideError = new(FormulaErrorKind.DivideByZero);
+    private static readonly ErrorValue _divideError = new(FormulaErrorKind.DivideByZero);
 
     /// <summary>A value as a number, or the error it becomes (Excel's coercion).</summary>
     private static FormulaValue ToNumber(FormulaValue value) => value switch
@@ -36,7 +36,7 @@ public static class FormulaEvaluator
         NumberValue => value,
         BooleanValue b => new NumberValue(b.Value ? 1 : 0),
         EmptyValue => new NumberValue(0),
-        TextValue t => decimal.TryParse(t.Value.Trim(), NumberStyles.Float, CultureInfo.InvariantCulture, out decimal n) ? new NumberValue(n) : ValueError,
+        TextValue t => decimal.TryParse(t.Value.Trim(), NumberStyles.Float, CultureInfo.InvariantCulture, out decimal n) ? new NumberValue(n) : _valueError,
         _ => value,
     };
 
@@ -48,7 +48,7 @@ public static class FormulaEvaluator
         EmptyValue => new BooleanValue(false),
         TextValue t when t.Value.Equals("TRUE", StringComparison.OrdinalIgnoreCase) => new BooleanValue(true),
         TextValue t when t.Value.Equals("FALSE", StringComparison.OrdinalIgnoreCase) => new BooleanValue(false),
-        TextValue => ValueError,
+        TextValue => _valueError,
         _ => value,
     };
 
@@ -75,7 +75,7 @@ public static class FormulaEvaluator
         catch (OverflowException)
         {
             // A result too large for a decimal is Excel's #NUM!: a value of the cell, not a failure.
-            return NumError;
+            return _numError;
         }
     }
 
@@ -96,7 +96,7 @@ public static class FormulaEvaluator
             PercentNode p => Percent(p.Operand),
             BinaryNode b => Binary(b),
             CallNode c => Call(c),
-            _ => ValueError,
+            _ => _valueError,
         };
 
         // Each operand is evaluated once and its value reused: evaluating it again to return its error (or its value) doubled the
@@ -135,7 +135,7 @@ public static class FormulaEvaluator
         {
             BoundTarget target = formula.Targets[node];
             if (target.Error is { } error) return new ErrorValue(error);
-            return target.IsRange ? ValueError : context.ValueOf(target.Cells[0]);
+            return target.IsRange ? _valueError : context.ValueOf(target.Cells[0]);
         }
 
         /// <summary>Prefix "-" negates a number; prefix "+" leaves the value as it is (as Excel).</summary>
@@ -159,7 +159,7 @@ public static class FormulaEvaluator
                     if (r is ErrorValue) return r;
                     string a = ((TextValue)l).Value, b = ((TextValue)r).Value;
                     // Measured before the text is built, so an over-long result is never allocated.
-                    return a.Length + b.Length > MaxTextLength ? ValueError : new TextValue(a + b);
+                    return a.Length + b.Length > MaxTextLength ? _valueError : new TextValue(a + b);
                 }
                 case "=" or "<>" or "<" or ">" or "<=" or ">=":
                     return Compare(node.Operator, left, right);
@@ -173,7 +173,7 @@ public static class FormulaEvaluator
                         "+" => Checked(() => a.Value + b.Value),
                         "-" => Checked(() => a.Value - b.Value),
                         "*" => Checked(() => a.Value * b.Value),
-                        "/" => b.Value == 0 ? DivideError : Checked(() => a.Value / b.Value),
+                        "/" => b.Value == 0 ? _divideError : Checked(() => a.Value / b.Value),
                         _ => Power(a.Value, b.Value),
                     };
                 }
@@ -183,8 +183,8 @@ public static class FormulaEvaluator
         /// <summary>"^": exact for whole exponents, double precision otherwise; 0^0 and a negative base with a fraction are #NUM!.</summary>
         private static FormulaValue Power(decimal number, decimal exponent)
         {
-            if (number == 0 && exponent == 0) return NumError;
-            if (number == 0 && exponent < 0) return DivideError;
+            if (number == 0 && exponent == 0) return _numError;
+            if (number == 0 && exponent < 0) return _divideError;
             if (exponent == decimal.Truncate(exponent) && Math.Abs(exponent) <= 1000)
             {
                 FormulaValue power = Checked(() =>
@@ -201,12 +201,12 @@ public static class FormulaEvaluator
                 if (exponent >= 0 || power is not NumberValue p) return power;
                 // A non-zero base whose power underflowed to 0 (0.5^200 is below a decimal's 1E-28) has a reciprocal too large
                 // for a decimal: #NUM!, as an overflow. Dividing by that 0 would throw instead of giving the cell a value.
-                return p.Value == 0 ? NumError : Checked(() => 1 / p.Value);
+                return p.Value == 0 ? _numError : Checked(() => 1 / p.Value);
             }
 
-            if (number < 0) return NumError;
+            if (number < 0) return _numError;
             double value = Math.Pow((double)number, (double)exponent);
-            return double.IsFinite(value) && Math.Abs(value) < (double)decimal.MaxValue ? new NumberValue((decimal)value) : NumError;
+            return double.IsFinite(value) && Math.Abs(value) < (double)decimal.MaxValue ? new NumberValue((decimal)value) : _numError;
         }
 
         /// <summary>A comparison with Excel's ordering: number &lt; text &lt; boolean; an empty side takes the other side's type.</summary>
@@ -267,7 +267,7 @@ public static class FormulaEvaluator
                 {
                     var (error, numbers) = Numbers(args);
                     if (error is not null) return error;
-                    return numbers.Count == 0 ? DivideError : Checked(() => numbers.Aggregate(0m, (a, b) => a + b) / numbers.Count);
+                    return numbers.Count == 0 ? _divideError : Checked(() => numbers.Aggregate(0m, (a, b) => a + b) / numbers.Count);
                 }
                 case "MIN":
                 {
@@ -393,19 +393,19 @@ public static class FormulaEvaluator
                 values.Add(direct.Value);
             }
 
-            if (values.Count == 0) return ValueError;
+            if (values.Count == 0) return _valueError;
             return new BooleanValue(all ? values.All(v => v) : values.Any(v => v));
         }
 
         /// <summary>ACTUAL: the sum of the actual totals behind the budget cells the argument names.</summary>
         private FormulaValue Actual(FormulaNode arg)
         {
-            if (TargetOf(arg) is not { } target) return ValueError;
+            if (TargetOf(arg) is not { } target) return _valueError;
             if (target.Error is { } refError) return new ErrorValue(refError);
             decimal total = 0;
             foreach (CellAddress cell in target.Cells)
             {
-                if (context.ActualOf(cell) is not { } actual) return ValueError;
+                if (context.ActualOf(cell) is not { } actual) return _valueError;
                 total += actual;
             }
 

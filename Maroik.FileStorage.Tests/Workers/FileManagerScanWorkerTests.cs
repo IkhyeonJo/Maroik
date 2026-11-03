@@ -132,9 +132,9 @@ public sealed class FileManagerScanWorkerTests : IAsyncDisposable
         Assert.Equal("disk", error.Exception?.Message);
     }
 
-    /// <summary>A scan whose upload is aborted is cancelled, logged at Information, and leaves no refusal.</summary>
+    /// <summary>A scan whose upload is aborted is canceled, logged at Information, and leaves no refusal.</summary>
     [Fact]
-    public async Task AnAbortedScan_IsCancelled_AndLeavesNoRefusal()
+    public async Task AnAbortedScan_IsCanceled_AndLeavesNoRefusal()
     {
         string id = NewId();
         var started = new TaskCompletionSource();
@@ -152,7 +152,7 @@ public sealed class FileManagerScanWorkerTests : IAsyncDisposable
         await EventuallyAsync(() => !_queue.IsPending(id));
 
         Assert.Null(_queue.TakeRefusal(id));
-        Assert.Contains(_logger.Collector.GetSnapshot(), r => r.Level == LogLevel.Information && r.Message == $"File Manager scan of {id} was cancelled");
+        Assert.Contains(_logger.Collector.GetSnapshot(), r => r.Level == LogLevel.Information && r.Message == $"File Manager scan of {id} was canceled");
         Assert.DoesNotContain(_logger.Collector.GetSnapshot(), r => r.Level == LogLevel.Error);
     }
 
@@ -174,7 +174,7 @@ public sealed class FileManagerScanWorkerTests : IAsyncDisposable
 
         await _worker.StopAsync(TestContext.Current.CancellationToken);
 
-        Assert.Contains(_logger.Collector.GetSnapshot(), r => r.Level == LogLevel.Information && r.Message == $"File Manager scan of {id} was cancelled");
+        Assert.Contains(_logger.Collector.GetSnapshot(), r => r.Level == LogLevel.Information && r.Message == $"File Manager scan of {id} was canceled");
         Assert.DoesNotContain(_logger.Collector.GetSnapshot(), r => r.Level == LogLevel.Error);
     }
 }

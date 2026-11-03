@@ -33,7 +33,7 @@ public sealed class CalendarRepositoryTests(DatabaseFixture database) : Reposito
     /// <summary>Ensures each owner account exists, then inserts <paramref name="calendars"/>, saves, and clears the change tracker.</summary>
     private async Task SeedAsync(params OrmCalendar[] calendars)
     {
-        await EnsureAccountsAsync([.. calendars.Select(c => c.AccountEmail!)]);
+        await EnsureAccountsAsync([.. calendars.Select(c => c.AccountEmail)]);
         await Context.Calendars.AddRangeAsync(calendars);
         await Context.SaveChangesAsync();
         Context.ChangeTracker.Clear();
@@ -173,7 +173,7 @@ public sealed class CalendarRepositoryTests(DatabaseFixture database) : Reposito
 
     /// <summary>PostgreSQL enforces <c>Calendar_HtmlColorCode_check</c> — a malformed color throws (InMemory did not).</summary>
     [Fact]
-    public async Task CreateAsync_Throws_WhenColourCodeIsMalformed()
+    public async Task CreateAsync_Throws_WhenColorCodeIsMalformed()
     {
         string alice = UniqueEmail("alice");
         await EnsureAccountsAsync(alice);

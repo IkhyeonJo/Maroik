@@ -14,10 +14,10 @@ public class DomainErrorTests
     [Fact]
     public void Validation_DescriptionIsTheFormattedMessage()
     {
-        Error error = DomainError.Validation("TimeZoneId.Invalid", "'{0}' is not a recognised time-zone ID.", "bogus/zone");
+        Error error = DomainError.Validation("TimeZoneId.Invalid", "'{0}' is not a recognized time-zone ID.", "bogus/zone");
 
         Assert.Equal("TimeZoneId.Invalid", error.Code);
-        Assert.Equal("'bogus/zone' is not a recognised time-zone ID.", error.Description);
+        Assert.Equal("'bogus/zone' is not a recognized time-zone ID.", error.Description);
         Assert.Equal(ErrorType.Validation, error.Type);
     }
 

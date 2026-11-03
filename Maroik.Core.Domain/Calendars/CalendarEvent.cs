@@ -185,7 +185,7 @@ public sealed class CalendarEvent : AggregateRoot<long>
             return DomainError.Validation("CalendarEvent.LocationTooLong", "Event location must be {0} characters or fewer.", ShortTextPolicy.MaxLength);
 
         if (!string.IsNullOrWhiteSpace(status) && !CalendarEventStatuses.IsKnown(status))
-            return DomainError.Validation("CalendarEvent.StatusInvalid", "Event status is not a recognised value.");
+            return DomainError.Validation("CalendarEvent.StatusInvalid", "Event status is not a recognized value.");
 
         var timesResult = ValidateDatesAndZones(allDay, startDate, endDate, startTz, endTz);
         if (timesResult.IsError) return timesResult.Errors;
@@ -215,14 +215,14 @@ public sealed class CalendarEvent : AggregateRoot<long>
         foreach (string? tz in new[] { startTz, endTz })
         {
             if (!string.IsNullOrWhiteSpace(tz) && TimeZoneId.Create(tz).IsError)
-                return DomainError.Validation("CalendarEvent.InvalidTimeZone", "'{0}' is not a recognised time-zone ID.", tz);
+                return DomainError.Validation("CalendarEvent.InvalidTimeZone", "'{0}' is not a recognized time-zone ID.", tz);
         }
 
         return Result.Success;
     }
 
     // ------------------------------------------------------------------------
-    // Domain behaviours
+    // Domain behaviors
     // ------------------------------------------------------------------------
 
     /// <summary>Re-assigns the event to a different calendar or changes its recurrence rule.</summary>
@@ -261,7 +261,7 @@ public sealed class CalendarEvent : AggregateRoot<long>
             return DomainError.Validation("CalendarEvent.LocationTooLong", "Event location must be {0} characters or fewer.", ShortTextPolicy.MaxLength);
 
         if (!string.IsNullOrWhiteSpace(status) && !CalendarEventStatuses.IsKnown(status))
-            return DomainError.Validation("CalendarEvent.StatusInvalid", "Event status is not a recognised value.");
+            return DomainError.Validation("CalendarEvent.StatusInvalid", "Event status is not a recognized value.");
 
         var timesResult = ValidateDatesAndZones(allDay, startDate, endDate, startTz, endTz);
         if (timesResult.IsError) return timesResult.Errors;

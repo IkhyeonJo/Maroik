@@ -1,7 +1,7 @@
 // ReSharper disable UnusedMember.Global
 namespace Maroik.Core.Domain.Finances;
 
-/// <summary>Recognised asset category values for the <see cref="Asset"/> aggregate.</summary>
+/// <summary>Recognized asset category values for the <see cref="Asset"/> aggregate.</summary>
 public enum AssetItemType
 {
     /// <summary>Freely accessible deposit/withdrawal account (e.g. a standard bank current account).</summary>

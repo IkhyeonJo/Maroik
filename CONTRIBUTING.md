@@ -36,7 +36,7 @@ CI (`.github/workflows/ci-cd.yml`, on pull requests into `main`) runs the same s
 
 ## What is left to you
 
-- **Test first.** New and changed behaviour starts with a failing test, and a bug fix with a regression test that fails
+- **Test first.** New and changed behavior starts with a failing test, and a bug fix with a regression test that fails
   on the current code (see "Strict TDD" in `CLAUDE.md`).
 - **Business logic lives in `Maroik.Core.*`**, never in `.cshtml` views or `site.ts` (`.claude/rules/frontend-no-business-logic.md`).
 - **Edit the `.ts`, never the generated `wwwroot/**/site.js`.**

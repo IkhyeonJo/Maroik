@@ -228,7 +228,7 @@ public class BudgetWorkbookTests
         Assert.Equal("Budget.CellUnknown", workbook.Copy(BudgetKind.Expenditure, 2026, "B2", "C2:C999").FirstError.Code);
     }
 
-    /// <summary>The preview colours the typed formula and shows the value it would have, #CYCLE! when it reads its own cell.</summary>
+    /// <summary>The preview colors the typed formula and shows the value it would have, #CYCLE! when it reads its own cell.</summary>
     [Fact]
     public void ThePreview_ShowsTheValue()
     {

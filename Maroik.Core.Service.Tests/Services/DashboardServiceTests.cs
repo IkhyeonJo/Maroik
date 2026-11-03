@@ -33,9 +33,9 @@ public class DashboardServiceTests
     private readonly Mock<IFixedExpenditureRepository> _fixedExpenditureRepo = new();
 
     /// <summary>The fixed "current time" of these tests.</summary>
-    private static readonly DateTime Now = new(2026, 7, 1, 12, 0, 0, DateTimeKind.Utc);
-    /// <summary>The clock the service under test reads, stopped at <see cref="Now"/>.</summary>
-    private readonly FakeTimeProvider _time = new(new DateTimeOffset(Now));
+    private static readonly DateTime _now = new(2026, 7, 1, 12, 0, 0, DateTimeKind.Utc);
+    /// <summary>The clock the service under test reads, stopped at <see cref="_now"/>.</summary>
+    private readonly FakeTimeProvider _time = new(new DateTimeOffset(_now));
 
     /// <summary>The service under test over the mocked dependencies, with <paramref name="settings"/> or defaults.</summary>
     private DashboardService CreateSut(ServerSetting? settings = null) => new(
@@ -184,8 +184,8 @@ public class DashboardServiceTests
 
         DashboardDto summary = await sut.GetSummaryAsync(email, "bad", "bad", "UTC", TestContext.Current.CancellationToken);
 
-        Assert.Equal(Now.Year, summary.SelectedYear);
-        Assert.Equal(Now.Month, summary.SelectedMonth);
+        Assert.Equal(_now.Year, summary.SelectedYear);
+        Assert.Equal(_now.Month, summary.SelectedMonth);
     }
 
     /// <summary>
@@ -208,7 +208,7 @@ public class DashboardServiceTests
         DashboardDto summary = await sut.GetSummaryAsync(email, "2025", "13", "UTC", TestContext.Current.CancellationToken);
 
         Assert.Equal(2025, summary.SelectedYear);
-        Assert.Equal(Now.Month, summary.SelectedMonth);
+        Assert.Equal(_now.Month, summary.SelectedMonth);
     }
 
     /// <summary>Verifies that <c>GetSummaryAsync</c> sets default monetary unit when account has none but assets exist.</summary>
@@ -468,7 +468,7 @@ public class DashboardServiceTests
     /// excluded from every bucket -- neither crashing the lookup nor leaking into an unrelated class.
     /// </summary>
     [Fact]
-    public async Task GetSummaryAsync_IncomeWithUnrecognisedMainClass_IsExcludedFromEveryBucket()
+    public async Task GetSummaryAsync_IncomeWithUnrecognizedMainClass_IsExcludedFromEveryBucket()
     {
         const string email = "user@example.com";
         _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(MakeAccount(unit: "KRW"));
@@ -543,7 +543,7 @@ public class DashboardServiceTests
     public async Task GetNoticeCountsAsync_CountsExpiredItems_WhenMaturityDateIsPast()
     {
         const string email = "user@example.com";
-        var pastDate = Now.Date.AddDays(-10);
+        var pastDate = _now.Date.AddDays(-10);
 
         _fixedIncomeRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(
         [
@@ -1015,7 +1015,7 @@ public class DashboardServiceTests
     {
         _fixedIncomeRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([]);
         _fixedExpenditureRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync([FixedExpenditureDue(Now.AddYears(1))]); // due 1 January; "today" is 1 July
+            .ReturnsAsync([FixedExpenditureDue(_now.AddYears(1))]); // due 1 January; "today" is 1 July
 
         NotificationDto counts = await CreateSut().GetNoticeCountsAsync("user@example.com", 7, "UTC", TestContext.Current.CancellationToken);
 

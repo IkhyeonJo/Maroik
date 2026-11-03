@@ -37,7 +37,7 @@ public class FileManagerServiceBrowseTests
         Assert.Equal(["Documents", "Work"], drive.Folders.Select(f => f.Name));
         FileManagerItemResponse documents = drive.Folders[0];
         Assert.Equal((docs, (long?)null, true, 2), (documents.Id, documents.ParentId, documents.IsFolder, documents.ItemCount));
-        Assert.Equal((long?)docs, drive.Folders[1].ParentId);
+        Assert.Equal(docs, drive.Folders[1].ParentId);
         Assert.Equal(1, drive.Folders[1].ItemCount);
     }
 
@@ -76,7 +76,7 @@ public class FileManagerServiceBrowseTests
 
         var (_, folder) = await _h.Sut.GetFolderAsync(H.Email, design, TestContext.Current.CancellationToken);
 
-        Assert.Equal((long?)design, folder!.FolderId);
+        Assert.Equal(design, folder!.FolderId);
         Assert.Equal([(docs, "Documents"), (design, "Design")], folder.Breadcrumb.Select(c => (c.Id, c.Name)));
         FileManagerItemResponse logo = Assert.Single(folder.Items, i => i.Name == "logo.png");
         Assert.Equal((2048L, H.Now, true, (long?)design), (logo.Size, logo.Updated, logo.Previewable, logo.ParentId));

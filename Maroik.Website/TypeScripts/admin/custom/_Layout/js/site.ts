@@ -259,7 +259,7 @@
     // an HTML page that does not parse as the expected JSON),
     // move the user to the public dashboard instead of leaving them on a page
     // whose data never loaded.
-    // A request the page itself aborted (a cancelled File Manager download) is not a failure.
+    // A request the page itself aborted (a canceled File Manager download) is not a failure.
     $(document).off("ajaxError._Layout").on("ajaxError._Layout", function(_event: unknown, _request: unknown, _settings: unknown, thrownError: unknown) {
         if (thrownError === "abort") return;
         window.location.href = "/Dashboard/AnonymousIndex";

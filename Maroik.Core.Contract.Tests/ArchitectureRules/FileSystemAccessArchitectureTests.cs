@@ -156,7 +156,7 @@ public class FileSystemAccessArchitectureTests
     [
         .. tree.GetRoot().DescendantNodes().OfType<MethodDeclarationSyntax>()
             .Where(m => m.ParameterList.Parameters.Any(p => p.Type?.ToString() is "string" or "string?")
-                        || !m.ParameterList.Parameters.Any(p => p.Type?.ToString() == "StoragePath"))
+                        || m.ParameterList.Parameters.All(p => p.Type?.ToString() != "StoragePath"))
             .Select(m => m.Identifier.ValueText),
     ];
 

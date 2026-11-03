@@ -37,9 +37,9 @@ public class ManagementAccountServiceTests
         _accountRepo.Setup(r => r.FindActiveAdminsForUpdateAsync(It.IsAny<CancellationToken>())).ReturnsAsync([]);
 
     /// <summary>The fixed "current time" of these tests.</summary>
-    private static readonly DateTime Now = new(2026, 7, 1, 12, 0, 0, DateTimeKind.Utc);
-    /// <summary>The clock the service under test reads, stopped at <see cref="Now"/>.</summary>
-    private readonly FakeTimeProvider _time = new(new DateTimeOffset(Now));
+    private static readonly DateTime _now = new(2026, 7, 1, 12, 0, 0, DateTimeKind.Utc);
+    /// <summary>The clock the service under test reads, stopped at <see cref="_now"/>.</summary>
+    private readonly FakeTimeProvider _time = new(new DateTimeOffset(_now));
 
     /// <summary>The service under test over the mocked dependencies.</summary>
     private ManagementAccountService CreateSut() => new(
@@ -96,7 +96,7 @@ public class ManagementAccountServiceTests
     /// reset token shown on the admin screen hands the account to whoever sees it, and a hash is material
     /// for an offline cracking attempt.
     /// </summary>
-    private static readonly string[] SecretColumns = ["HashedPassword", "RegistrationToken", "ResetPasswordToken"];
+    private static readonly string[] _secretColumns = ["HashedPassword", "RegistrationToken", "ResetPasswordToken"];
 
     /// <summary>The admin grid's rows (all accounts) carry no password hash and no registration / reset token.</summary>
     [Fact]
@@ -106,7 +106,7 @@ public class ManagementAccountServiceTests
 
         var row = Assert.Single(await CreateSut().GetAllAccountsAsync(TestContext.Current.CancellationToken));
 
-        Assert.All(SecretColumns, name => Assert.Null(row.GetType().GetProperty(name)));
+        Assert.All(_secretColumns, name => Assert.Null(row.GetType().GetProperty(name)));
     }
 
     // -- GetAccountByEmailAsync -----------------------------------------------
@@ -138,7 +138,7 @@ public class ManagementAccountServiceTests
 
         Assert.NotNull(result);
         Assert.Equal(account.Email.Value, result.Email);
-        Assert.All(SecretColumns, name => Assert.Null(result.GetType().GetProperty(name)));
+        Assert.All(_secretColumns, name => Assert.Null(result.GetType().GetProperty(name)));
     }
 
     // -- CreateAccountAsync ---------------------------------------------------
@@ -623,7 +623,7 @@ public class ManagementAccountServiceTests
         var row = Assert.Single(await CreateSut().SearchAccountsAsync("needle", TestContext.Current.CancellationToken));
 
         Assert.Equal("found@example.com", row.Email);
-        Assert.All(SecretColumns, name => Assert.Null(row.GetType().GetProperty(name)));
+        Assert.All(_secretColumns, name => Assert.Null(row.GetType().GetProperty(name)));
     }
 
     // -- CreateAccountAsync: validation and failures ---------------------------------

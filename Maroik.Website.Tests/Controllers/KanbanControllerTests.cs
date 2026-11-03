@@ -150,11 +150,11 @@ public class KanbanControllerTests(MaroikWebApplicationFactory factory)
     }
 
     /// <summary>
-    /// The due date is shown as yyyy-MM-dd: grey for today or later, red once it has passed (decided by the server), and nothing for a
+    /// The due date is shown as yyyy-MM-dd: gray for today or later, red once it has passed (decided by the server), and nothing for a
     /// card without one.
     /// </summary>
     [Fact]
-    public async Task UserIndex_ShowsTheDueDate_GreyOrRed()
+    public async Task UserIndex_ShowsTheDueDate_GrayOrRed()
     {
         var session = await LoginAsync("kanban-due@test.com");
         SeedCard("kanban-due@test.com", "ToDo", "Future card", dueDate: new DateOnly(2999, 5, 28));

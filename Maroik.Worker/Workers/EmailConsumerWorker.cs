@@ -399,7 +399,7 @@ public sealed class EmailConsumerWorker(
             if (!_inFlight.IsEmpty)
             {
                 logger.LogWarning(
-                    "Shutdown drain deadline reached with {Count} message(s) still in flight; cancelling in-progress send(s)",
+                    "Shutdown drain deadline reached with {Count} message(s) still in flight; canceling in-progress send(s)",
                     _inFlight.Count);
                 await _sendCts.CancelAsync();
 

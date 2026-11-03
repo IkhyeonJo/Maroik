@@ -61,7 +61,7 @@ public sealed class FileManagerScanQueueTests
         Assert.Null(queue.TakeRefusal(UploadId));
     }
 
-    /// <summary>Cancelling a pending upload cancels the token its scan runs with, and the refusal it then finishes with is not kept.</summary>
+    /// <summary>Canceling a pending upload cancels the token its scan runs with, and the refusal it then finishes with is not kept.</summary>
     [Fact]
     public async Task Cancel_CancelsTheScan_AndItsRefusalIsNotKept()
     {
@@ -77,7 +77,7 @@ public sealed class FileManagerScanQueueTests
         Assert.Null(queue.TakeRefusal(UploadId));
     }
 
-    /// <summary>Cancelling forgets a refusal that was already kept; cancelling an unknown upload does nothing.</summary>
+    /// <summary>Canceling forgets a refusal that was already kept; canceling an unknown upload does nothing.</summary>
     [Fact]
     public async Task Cancel_ForgetsAKeptRefusal()
     {

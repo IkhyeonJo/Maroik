@@ -9,7 +9,7 @@ public enum KanbanDueState
     /// <summary>The card has no due date: nothing is shown.</summary>
     None,
 
-    /// <summary>The due date is today or later: the date in small grey text.</summary>
+    /// <summary>The due date is today or later: the date in small gray text.</summary>
     Upcoming,
 
     /// <summary>The due date has passed: the date in red text.</summary>

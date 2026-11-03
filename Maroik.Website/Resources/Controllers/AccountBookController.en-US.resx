@@ -177,8 +177,8 @@
   <data name="Input is invalid" xml:space="preserve">
     <value>Input is invalid</value>
   </data>
-  <data name="Asset category (item) is not a recognised value." xml:space="preserve">
-    <value>Asset category (item) is not a recognised value.</value>
+  <data name="Asset category (item) is not a recognized value." xml:space="preserve">
+    <value>Asset category (item) is not a recognized value.</value>
   </data>
   <data name="InsuranceAsset" xml:space="preserve">
     <value>InsuranceAsset</value>

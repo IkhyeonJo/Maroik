@@ -240,7 +240,7 @@
 
     // -- Drive and folders ------------------------------------------------------------------
 
-    /** The tree nodes of the drive: the root ("My Drive") and every folder, each labelled with its item count (escaped: jsTree renders HTML). */
+    /** The tree nodes of the drive: the root ("My Drive") and every folder, each labeled with its item count (escaped: jsTree renders HTML). */
     function treeNodes(rootItemCount: number, folders: Item[]): JsTreeNodeData[] {
         return [
             { id: "root", parent: "#", text: escapeHtml(`${text.myDrive} (${rootItemCount})`), state: { opened: true } },
@@ -507,16 +507,16 @@
     /** Whether the download dialog has finished opening (Bootstrap ignores a hide while it is still fading in). */
     let downloadModalShown = false;
     /** True once Cancel was clicked in the download dialog. */
-    let downloadCancelled = false;
+    let downloadCanceled = false;
     /** Aborts the file being fetched. */
     let abortDownload: () => void = () => undefined;
 
     /** Downloads files one at a time in the download dialog, its bar filling as each file's bytes arrive; Cancel stops the batch. */
     async function DownloadFiles(files: { id: number; name: string; bytes: number }[]) {
-        downloadCancelled = false;
+        downloadCanceled = false;
         $downloadModal.modal("show");
         for (const [index, file] of files.entries()) {
-            if (downloadCancelled) break;
+            if (downloadCanceled) break;
             $downloadProgressText.text(format(text.preparingDownload, index + 1, files.length, file.name));
             $downloadProgressBar.css("width", "0%");
             const request = postForBlob(`/FileManager/Download?id=${file.id}`, (loaded) =>
@@ -641,8 +641,8 @@
         return new Promise((resolve) => setTimeout(resolve, milliseconds));
     }
 
-    /** True once the running batch was cancelled: the file being sent is aborted before its next chunk, the rest are not started. */
-    let cancelled = false;
+    /** True once the running batch was canceled: the file being sent is aborted before its next chunk, the rest are not started. */
+    let canceled = false;
 
     /**
      * Uploads one file: starts it (with the batch's remembered conflict answer, if any), asks on a name conflict and sends its chunks;
@@ -671,7 +671,7 @@
         if (started.conflict) return fail(format(text.conflict, entry.file.name));
 
         for (let offset = 0; offset < entry.file.size; offset += started.chunkBytes) {
-            if (cancelled) {
+            if (canceled) {
                 await post("/FileManager/AbortUpload", { UploadId: started.uploadId }, doneReply);
                 return { error: null, skipped: true, choice: choice, applyToAll: applyToAll, scan: null };
             }
@@ -702,9 +702,9 @@
             if (!done.result) return outcome(done.error);
             if (!done.scanning) return outcome(null);
             await wait(scanPollMilliseconds);
-            if (cancelled || Date.now() >= deadline) {
+            if (canceled || Date.now() >= deadline) {
                 await post("/FileManager/AbortUpload", { UploadId: uploadId }, doneReply);
-                return cancelled ? outcome(null, true) : outcome(text.temporaryError);
+                return canceled ? outcome(null, true) : outcome(text.temporaryError);
             }
         }
     }
@@ -724,7 +724,7 @@
 
         $uploadResults.empty();
         $uploadProgressBar.css("width", "0%");
-        cancelled = false;
+        canceled = false;
         $btnUploadClose.prop("disabled", true);
         $btnUploadCancel.prop("disabled", false);
         $uploadModal.modal("show");
@@ -761,7 +761,7 @@
         let settled = 0;
         let waiting = false;
         for (const [index, entry] of entries.entries()) {
-            if (cancelled) {
+            if (canceled) {
                 skipped++;
                 report(entry.file.name, text.canceled, false);
                 continue;
@@ -801,7 +801,7 @@
         function count(entry: UploadEntry, outcome: FileOutcome, $line: JQuery) {
             if (outcome.skipped) {
                 skipped++;
-                settle($line, entry.file.name, cancelled ? text.canceled : text.skipped, false);
+                settle($line, entry.file.name, canceled ? text.canceled : text.skipped, false);
             } else if (outcome.error === null) {
                 uploaded++;
                 settle($line, entry.file.name, text.uploaded, false);
@@ -996,7 +996,7 @@
     });
 
     $btnUploadCancel.on("click", function() {
-        cancelled = true;
+        canceled = true;
         $btnUploadCancel.prop("disabled", true);
     });
     $("#btnUploadFiles").on("click", () => $fileInput.trigger("click"));
@@ -1068,7 +1068,7 @@
     $("#btnDeleteSelected").on("click", () => ConfirmDelete([...selected]));
     $downloadModal.on("shown.bs.modal", () => { downloadModalShown = true; }).on("hidden.bs.modal", () => { downloadModalShown = false; });
     $btnDownloadCancel.on("click", function() {
-        downloadCancelled = true;
+        downloadCanceled = true;
         abortDownload();
     });
     $previewModal.on("hidden.bs.modal", function() {

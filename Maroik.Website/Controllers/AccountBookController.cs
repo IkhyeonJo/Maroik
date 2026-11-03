@@ -696,7 +696,7 @@ public class AccountBookController(
         }
     }
 
-    /// <summary>The formula bar's colouring and preview of an input being typed (nothing is stored).</summary>
+    /// <summary>The formula bar's coloring and preview of an input being typed (nothing is stored).</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.User)]

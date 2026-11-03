@@ -134,7 +134,7 @@ function isCalendarOptions(value: unknown): value is CapturedCalendarOptions {
         && (fields.get("stickyHeaderDates") === undefined || typeof fields.get("stickyHeaderDates") === "boolean");
 }
 
-/** Whether `value` is a doughnut config with the data, colours and tooltip callback the Dashboard tests read. */
+/** Whether `value` is a doughnut config with the data, colors and tooltip callback the Dashboard tests read. */
 function isChartConfig(value: unknown): value is CapturedChartConfig {
     const fields = fieldsOf(value);
     const data = fieldsOf(fields?.get("data"));

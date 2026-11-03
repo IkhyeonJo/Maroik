@@ -3,7 +3,7 @@ namespace Maroik.Core.Client.Tests.Fixtures;
 /// <summary>
 /// The fake SMTP server shuts down cleanly however its accept loop is caught by the shutdown. <c>DisposeAsync</c> signals the stop
 /// and closes the listener while the loop may be anywhere: not yet at the accept (it then meets a closed listener —
-/// "Not listening"), or inside it (the pending accept ends cancelled, or — when closing the socket wins the race with the token,
+/// "Not listening"), or inside it (the pending accept ends canceled, or — when closing the socket wins the race with the token,
 /// as seen on CI — as a <c>SocketException</c> "Operation canceled"). Each of those is the shutdown, not a failure of the test
 /// that used the server (<c>MailClientTests.SendMailAsync_ReturnsAGenericFailure_WhenTheServerIsUnreachable</c> failed on CI that
 /// way, 2026-11-02).

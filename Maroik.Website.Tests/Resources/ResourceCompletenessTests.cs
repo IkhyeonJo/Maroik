@@ -154,11 +154,11 @@ public class ResourceCompletenessTests
     /// </summary>
     private static HashSet<string> StoredAccountMessages()
     {
-        var messages = typeof(Maroik.Core.Domain.Accounts.AccountMessage).GetFields(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static)
+        var messages = typeof(Core.Domain.Accounts.AccountMessage).GetFields(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static)
             .Select(field => field.GetCustomAttributes(typeof(System.ComponentModel.DescriptionAttribute), false)
                 .OfType<System.ComponentModel.DescriptionAttribute>().Single().Description)
             .ToHashSet(StringComparer.Ordinal);
-        var lockMessage = typeof(Maroik.Core.Domain.Accounts.Account).GetField("AccountLockedMessage", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+        var lockMessage = typeof(Core.Domain.Accounts.Account).GetField("AccountLockedMessage", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
         Assert.NotNull(lockMessage);
         messages.Add(Assert.IsType<string>(lockMessage.GetRawConstantValue()));
         return messages;
@@ -188,7 +188,7 @@ public class ResourceCompletenessTests
     /// </summary>
     private static HashSet<string> DynamicViewKeys()
     {
-        var keys = typeof(Maroik.Core.Domain.Accounts.PasswordPolicy).Assembly.GetTypes()
+        var keys = typeof(Core.Domain.Accounts.PasswordPolicy).Assembly.GetTypes()
             .Where(type => type.IsEnum)
             .SelectMany(Enum.GetNames)
             .ToHashSet(StringComparer.Ordinal);
@@ -275,8 +275,8 @@ public class ResourceCompletenessTests
         [
             .. new[]
             {
-                typeof(Maroik.Core.Domain.Accounts.PasswordPolicy).Assembly,
-                typeof(Maroik.Core.Contract.Dtos.ServiceErrorKeys).Assembly,
+                typeof(Core.Domain.Accounts.PasswordPolicy).Assembly,
+                typeof(Core.Contract.Dtos.ServiceErrorKeys).Assembly,
                 typeof(Maroik.Website.Models.ViewModels.Accounts.LoginInputViewModel).Assembly,
             }.SelectMany(assembly => assembly.GetTypes())
         ];

@@ -17,7 +17,7 @@ namespace Maroik.Website.Tests.Services;
 /// <summary>
 /// Unit tests for <see cref="SessionService"/>.
 /// <see cref="IHttpContextAccessor"/> and <see cref="ISession"/> are replaced with Moq mocks.
-/// Verifies that <c>SetAccount</c> serialises an <see cref="Maroik.Core.Contract.Dtos.AccountResponse"/>
+/// Verifies that <c>SetAccount</c> serializes an <see cref="Maroik.Core.Contract.Dtos.AccountResponse"/>
 /// to JSON and that <c>GetAccountAsync</c> correctly deserializes it back.
 /// </summary>
 public class SessionServiceTests
@@ -102,7 +102,7 @@ public class SessionServiceTests
     public async Task GetAccount_ReturnsNull_WhenSessionDataIsInvalidJson()
     {
         SetupContext();
-        byte[]? bytes = System.Text.Encoding.UTF8.GetBytes("not valid json {{{{");
+        byte[]? bytes = "not valid json {{{{"u8.ToArray();
         _session.Setup(s => s.TryGetValue(It.IsAny<string>(), out bytes)).Returns(true);
         var sut = CreateSut();
 
@@ -136,7 +136,7 @@ public class SessionServiceTests
     /// </summary>
     private sealed class SyncReadFailsCache(IDistributedCache inner) : IDistributedCache
     {
-        public byte[]? Get(string key) => throw new TimeoutException("synchronous session read timed out");
+        public byte[] Get(string key) => throw new TimeoutException("synchronous session read timed out");
         public Task<byte[]?> GetAsync(string key, CancellationToken token = default) => inner.GetAsync(key, token);
         public void Set(string key, byte[] value, DistributedCacheEntryOptions options) => inner.Set(key, value, options);
         public Task SetAsync(string key, byte[] value, DistributedCacheEntryOptions options, CancellationToken token = default) =>
@@ -150,7 +150,7 @@ public class SessionServiceTests
     /// <summary>A session store that is down: every read fails.</summary>
     private sealed class UnreachableCache(IDistributedCache inner) : IDistributedCache
     {
-        public byte[]? Get(string key) => throw new TimeoutException("session store unreachable");
+        public byte[] Get(string key) => throw new TimeoutException("session store unreachable");
         public Task<byte[]?> GetAsync(string key, CancellationToken token = default) =>
             Task.FromException<byte[]?>(new TimeoutException("session store unreachable"));
         public void Set(string key, byte[] value, DistributedCacheEntryOptions options) => inner.Set(key, value, options);
@@ -279,7 +279,7 @@ public class SessionServiceTests
     public async Task GetAccount_LogsAWarning_WhenTheStoredSessionIsNotValidJson()
     {
         SetupContext();
-        byte[]? bytes = System.Text.Encoding.UTF8.GetBytes("{not json secret-9f3a");
+        byte[]? bytes = "{not json secret-9f3a"u8.ToArray();
         _session.Setup(s => s.TryGetValue(It.IsAny<string>(), out bytes)).Returns(true);
 
         Assert.Null(await CreateSut().GetAccountAsync(TestContext.Current.CancellationToken));

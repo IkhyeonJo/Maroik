@@ -77,8 +77,8 @@ disagree.
 - **Read "Intended design" before starting any review** — the items above and every `.claude/rules/` file of an
   area the review touches (a whole-repo review reads them all) — and check every candidate finding against it before
   reporting.
-- **Intended design and the tests decide.** A behaviour listed there, or pinned by a test, is intended — leave it and do
-  not raise it. Anything else is judged on its own merits; when it is unclear whether a behaviour is deliberate, look for
+- **Intended design and the tests decide.** A behavior listed there, or pinned by a test, is intended — leave it and do
+  not raise it. Anything else is judged on its own merits; when it is unclear whether a behavior is deliberate, look for
   the reason first (`git log -S` / `git blame`, the rationale comments) and ask before calling it a bug.
 - Items listed under "Intended design" stay closed; re-raise one only if its premise changes (for example
   `Maroik.FileStorage` becomes reachable from outside the internal network).
@@ -87,10 +87,10 @@ disagree.
 
 All new and changed code is written test-first. This is a hard rule, not a preference:
 
-1. **Red.** Write the test that describes the behaviour *before* the production code. Run it and watch it fail, for the
-   right reason (the behaviour is missing — not a compile error or a typo in the test).
+1. **Red.** Write the test that describes the behavior *before* the production code. Run it and watch it fail, for the
+   right reason (the behavior is missing — not a compile error or a typo in the test).
 2. **Green.** Write the least production code that makes it pass. Nothing the tests do not demand.
-3. **Refactor.** Clean up with the tests green. Behaviour changes need a new failing test first.
+3. **Refactor.** Clean up with the tests green. Behavior changes need a new failing test first.
 4. **A bug fix starts with a regression test** that fails on the current code. Revert the fix and confirm the test fails again
    (a test that passes without the fix proves nothing).
 
@@ -102,7 +102,7 @@ Consequences that apply to every change — C# under `Maroik.Core.*` / `Maroik.W
   a reason to keep untested code: prove them reachable with a test, or remove them.
 - **Tests must be able to fail.** No tests that only assert "does not throw", that pass regardless of the code, or that mock away
   the thing under test. Assert the concrete result (value, status code, message, persisted row, request body, DOM).
-- **Prefer real collaborators over mocks** where the behaviour is about PostgreSQL, RabbitMQ, SMTP or HTTP: use the
+- **Prefer real collaborators over mocks** where the behavior is about PostgreSQL, RabbitMQ, SMTP or HTTP: use the
   Testcontainers / in-process fakes already in the test projects (see "Tests that need Docker").
 - **Do not lower a gate to make a change pass.** The bar is line >= 80 % / branch >= 65 % coverage, the architecture tests, and the
   client-script tests against freshly compiled `wwwroot/**/site.js`. A change that needs an exemption gets a discussion, not a quiet skip.

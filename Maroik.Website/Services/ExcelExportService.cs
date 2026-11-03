@@ -338,7 +338,7 @@ public class ExcelExportService(TimeProvider timeProvider) : IExcelExportService
     }
 
     /// <summary>The resx keys of the month column headers of a budget export (January .. December).</summary>
-    private static readonly string[] BudgetMonthKeys =
+    private static readonly string[] _budgetMonthKeys =
         ["Month1", "Month2", "Month3", "Month4", "Month5", "Month6", "Month7", "Month8", "Month9", "Month10", "Month11", "Month12"];
 
     /// <inheritdoc />
@@ -347,13 +347,13 @@ public class ExcelExportService(TimeProvider timeProvider) : IExcelExportService
         // Columns A..Z of the sheet: A is the label (split here into label and currency), B..M the months, N the year total, O..Z free.
         string[] columns = [.. Enumerable.Range(0, 26).Select(i => ((char)('A' + i)).ToString())];
         var headers = new List<string> { localize("Item"), localize("Currency") };
-        headers.AddRange(BudgetMonthKeys.Select(localize));
+        headers.AddRange(_budgetMonthKeys.Select(localize));
         headers.Add(localize("Year total"));
         headers.AddRange(columns.Skip(14));
 
         Dictionary<string, BudgetValueResponse> values = sheet.Cells.ToDictionary(c => c.Address, c => c.Value, StringComparer.Ordinal);
-        BudgetSheetViewModel labelled = sheet.ToViewModel(localize);
-        var rows = labelled.Rows.Select(row =>
+        BudgetSheetViewModel labeled = sheet.ToViewModel(localize);
+        var rows = labeled.Rows.Select(row =>
         {
             string number = row.Number.ToString(CultureInfo.InvariantCulture);
             XlsxCell Value(string column) => values.TryGetValue(column + number, out BudgetValueResponse? value)

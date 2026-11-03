@@ -5,7 +5,7 @@ namespace Maroik.Core.Domain.Formulas;
 /// <summary>
 /// Turns Excel formula text into tokens with their spans. It never throws: text it cannot read becomes an
 /// <see cref="FormulaTokenKind.Error"/> token at the exact span with the reason, and reading goes on after it, so the editor can
-/// colour and underline a formula that is still being typed.
+/// color and underline a formula that is still being typed.
 /// <para>
 /// A word is classified by what follows it, as Excel does: before "(" it is a function, before "!" a sheet prefix; otherwise a
 /// cell reference when it has the shape of one (letters then digits, with optional "$"), TRUE / FALSE, or a plain name. In the
@@ -16,14 +16,14 @@ namespace Maroik.Core.Domain.Formulas;
 public static class FormulaLexer
 {
     /// <summary>The error literals, longest first so a prefix never wins.</summary>
-    private static readonly (string Text, FormulaErrorKind Kind)[] ErrorLiterals =
+    private static readonly (string Text, FormulaErrorKind Kind)[] _errorLiterals =
     [
         ("#DIV/0!", FormulaErrorKind.DivideByZero), ("#VALUE!", FormulaErrorKind.Value), ("#CYCLE!", FormulaErrorKind.Cycle),
         ("#NAME?", FormulaErrorKind.Name), ("#REF!", FormulaErrorKind.Ref), ("#NUM!", FormulaErrorKind.Num), ("#N/A", FormulaErrorKind.NotAvailable),
     ];
 
     /// <summary>The text Excel shows for an error value (#REF!, #DIV/0!, ...).</summary>
-    public static string ErrorText(FormulaErrorKind kind) => ErrorLiterals.First(e => e.Kind == kind).Text;
+    public static string ErrorText(FormulaErrorKind kind) => _errorLiterals.First(e => e.Kind == kind).Text;
 
     /// <summary>
     /// The tokens of <paramref name="input"/> from index <paramref name="start"/> (1 for a formula after its "="); spans are absolute
@@ -112,7 +112,7 @@ public static class FormulaLexer
     /// <summary>An error literal such as #REF!; an unknown "#" word is an error token.</summary>
     private static FormulaToken ReadErrorLiteral(string input, ref int i)
     {
-        foreach (var (text, kind) in ErrorLiterals)
+        foreach (var (text, kind) in _errorLiterals)
         {
             if (string.Compare(input, i, text, 0, text.Length, StringComparison.OrdinalIgnoreCase) == 0)
             {

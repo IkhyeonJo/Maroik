@@ -257,11 +257,11 @@ Where the typings themselves are wrong, `global.d.ts` corrects them instead of a
 (a `beforeShow` may return nothing), `JQueryUI.Datepicker._clearDate`, `FormData.append` (stringifies non-Blob
 values), `val(null)`, `Array.isArray` / `Object.entries` (answer `unknown`, not `any`).
 
-The checks changed behaviour only where the old code went on with a value it did not have: a missing element or
+The checks changed behavior only where the old code went on with a value it did not have: a missing element or
 attribute now throws at the read instead of sending `undefined`, a reply of the wrong shape shows the generic
 error instead of failing half-way through the handler, an account without assets no longer asks for the amount
 label of "undefined", and an attachment without an extension no longer shows its name followed by "null". The
-other changes to the compiled `site.js` are behaviour-neutral: `data: null` is no longer passed to `$.ajax`,
+other changes to the compiled `site.js` are behavior-neutral: `data: null` is no longer passed to `$.ajax`,
 event ids go to FullCalendar as `String(item.Id)` (it converts them anyway), `isNaN(Number(value))`, the
 deposit-day lists read the integer from `maxDepositDayByMonth` directly, and explicit `return undefined;` where a
 handler returned `false` on another path.

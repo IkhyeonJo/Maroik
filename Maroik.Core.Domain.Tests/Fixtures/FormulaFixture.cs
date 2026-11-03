@@ -9,12 +9,12 @@ namespace Maroik.Core.Domain.Tests.Fixtures;
 internal static class FormulaFixture
 {
     /// <summary>The row keys of every sheet.</summary>
-    private static readonly IReadOnlyList<string> Rows = [.. Enumerable.Range(1, 10).Select(n => $"R{n}")];
+    private static readonly IReadOnlyList<string> _rows = [.. Enumerable.Range(1, 10).Select(n => $"R{n}")];
 
     /// <summary>The scope a formula of sheet S is bound in.</summary>
     public static FormulaScope Scope { get; } = new("S",
         name => name.Equals("S", StringComparison.OrdinalIgnoreCase) ? "S" : name.Equals("T", StringComparison.OrdinalIgnoreCase) ? "T" : null,
-        _ => Rows, 26);
+        _ => _rows, 26);
 
     /// <summary>The address of A1 text such as "B2" or "T!C3".</summary>
     public static CellAddress At(string a1)

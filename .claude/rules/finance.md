@@ -31,7 +31,7 @@ that specific change. Check every candidate review finding in this area against 
   (`Math.Abs`).
 - The dashboard's first year (`StartYear`) is found from the account's earliest income / expenditure by loading
   them all.
-- `FixedSchedulePolicy.IsNoticed`'s behaviour around the year end and 29 February is accepted as it is.
+- `FixedSchedulePolicy.IsNoticed`'s behavior around the year end and 29 February is accepted as it is.
 - Amounts are shown with every decimal place the `numeric(20,4)` columns store: the finance grids use
   `AmountDisplay.GridFormat` (`#,0.####`, trailing zeros dropped) and the dashboard tooltips read
   `FinanceAmountPolicy.MaxDecimalPlaces` from `#amountMaxDecimalPlaces`. The currency is a free-text label, so there is

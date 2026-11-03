@@ -131,7 +131,7 @@ public sealed class Board : AggregateRoot<long>
         // in the service layer interpolates this value into a file-storage path, and otherwise the DB
         // Board_Type_check constraint would be the only thing rejecting anything else.
         if (!BoardTypes.IsKnown(type))
-            return DomainError.Validation("Board.TypeInvalid", "Board type is not a recognised value.");
+            return DomainError.Validation("Board.TypeInvalid", "Board type is not a recognized value.");
 
         if (string.IsNullOrWhiteSpace(title))
             return DomainError.Validation("Board.TitleEmpty", "Post title cannot be empty.");
@@ -150,7 +150,7 @@ public sealed class Board : AggregateRoot<long>
     }
 
     // ------------------------------------------------------------------------
-    // Domain behaviours
+    // Domain behaviors
     // ------------------------------------------------------------------------
 
     /// <summary>Updates the post title and content.</summary>

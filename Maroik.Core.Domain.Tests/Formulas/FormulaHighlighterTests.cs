@@ -4,8 +4,8 @@ using static Maroik.Core.Domain.Tests.Fixtures.FormulaFixture;
 namespace Maroik.Core.Domain.Tests.Formulas;
 
 /// <summary>
-/// Unit tests for <see cref="FormulaHighlighter"/>: what the editor colours while a formula is typed — every token's class, each
-/// distinct reference's colour index and the cells it outlines, the partner of each parenthesis, and the problems with their spans.
+/// Unit tests for <see cref="FormulaHighlighter"/>: what the editor colors while a formula is typed — every token's class, each
+/// distinct reference's color index and the cells it outlines, the partner of each parenthesis, and the problems with their spans.
 /// </summary>
 public class FormulaHighlighterTests
 {
@@ -19,9 +19,9 @@ public class FormulaHighlighterTests
             "unknown-function", "paren", "name", "paren", "operator", "error-literal", "error"], highlight.Tokens.Select(t => t.Class));
     }
 
-    /// <summary>Each distinct reference gets the next colour; the same reference written again keeps its colour; a range is one reference.</summary>
+    /// <summary>Each distinct reference gets the next color; the same reference written again keeps its color; a range is one reference.</summary>
     [Fact]
-    public void References_GetColoursInOrder()
+    public void References_GetColorsInOrder()
     {
         FormulaHighlight highlight = FormulaHighlighter.Highlight("=B2+C3:D4*b2+T!B2", Scope);
 

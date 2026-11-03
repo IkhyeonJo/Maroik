@@ -7,7 +7,7 @@
  *     in the lane it was created in (the server keeps the stored lane whatever is sent).
  *   • Delete asks for confirmation (`#confirmDeleteKanbanCardModal`) first.
  *   • After every successful write the board partial is fetched again (the AJAX form of the page's own GET) and swapped
- *     into `#kanbanBoard`, so lane order, card order and the overdue colour stay the server's decisions.
+ *     into `#kanbanBoard`, so lane order, card order and the overdue color stay the server's decisions.
  *
  * The title / description length limits are `maxlength` attributes the view renders from TitledContentPolicy; the title's
  * "required" check is the form's unobtrusive validation. Both are UX mirrors — authoritative in KanbanCard (server).
@@ -63,7 +63,7 @@
         $kanbanCardModal.modal("show");
     }
 
-    /** Re-fetches the board partial and swaps it in (lane / card order and overdue colours are the server's). */
+    /** Re-fetches the board partial and swaps it in (lane / card order and overdue colors are the server's). */
     function ReloadBoard() {
         $.ajax({
             url: "/Kanban/UserIndex",

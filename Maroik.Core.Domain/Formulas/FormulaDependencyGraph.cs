@@ -114,8 +114,8 @@ public sealed class FormulaDependencyGraph
                 {
                     CellAddress precedent = edges.Current;
                     if (!subset.Contains(precedent)) continue;
-                    if (!index.ContainsKey(precedent)) Visit(precedent);
-                    else if (onStack.Contains(precedent)) low[cell] = Math.Min(low[cell], index[precedent]);
+                    if (!index.TryGetValue(precedent, out int precedentIndex)) Visit(precedent);
+                    else if (onStack.Contains(precedent)) low[cell] = Math.Min(low[cell], precedentIndex);
                     continue;
                 }
 

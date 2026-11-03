@@ -10,13 +10,13 @@ namespace Maroik.Core.Domain.Tests.Accounts;
 public class GuidTokenTests
 {
     /// <summary>The fixed "current time" the tests check tokens against.</summary>
-    private static readonly DateTime Now = new(2026, 7, 1, 12, 0, 0, DateTimeKind.Utc);
+    private static readonly DateTime _now = new(2026, 7, 1, 12, 0, 0, DateTimeKind.Utc);
 
     /// <summary>Verifies that <c>Generate</c> returns non-empty base64 string.</summary>
     [Fact]
     public void Generate_ReturnsNonEmptyBase64String()
     {
-        string token = GuidToken.Generate(Now);
+        string token = GuidToken.Generate(_now);
 
         Assert.NotNull(token);
         Assert.NotEmpty(token);
@@ -29,8 +29,8 @@ public class GuidTokenTests
     [Fact]
     public void Generate_ProducesUniqueTokensOnEachCall()
     {
-        string token1 = GuidToken.Generate(Now);
-        string token2 = GuidToken.Generate(Now);
+        string token1 = GuidToken.Generate(_now);
+        string token2 = GuidToken.Generate(_now);
 
         Assert.NotEqual(token1, token2);
     }
@@ -39,15 +39,15 @@ public class GuidTokenTests
     [Fact]
     public void Generate_EmbedsTheGivenTime()
     {
-        string token = GuidToken.Generate(Now);
+        string token = GuidToken.Generate(_now);
 
-        Assert.Equal(Now, DateTime.FromBinary(BitConverter.ToInt64(Convert.FromBase64String(token), 0)));
+        Assert.Equal(_now, DateTime.FromBinary(BitConverter.ToInt64(Convert.FromBase64String(token), 0)));
     }
 
     /// <summary>A fresh token is alive.</summary>
     [Fact]
     public void IsTokenAlive_ReturnsTrue_ForFreshToken()
-        => Assert.True(GuidToken.IsTokenAlive(GuidToken.Generate(Now), Now));
+        => Assert.True(GuidToken.IsTokenAlive(GuidToken.Generate(_now), _now));
 
     /// <summary>The 24-hour window at its edges: just before, exactly at, and just after 24 hours.</summary>
     [Theory]
@@ -56,8 +56,8 @@ public class GuidTokenTests
     [InlineData(1, false)]  // one tick past 24 h
     public void IsTokenAlive_AtTheTwentyFourHourEdge(long ticksPastTheWindow, bool expected)
     {
-        string token = GuidToken.Generate(Now);
-        DateTime checkedAt = Now.AddHours(24).AddTicks(ticksPastTheWindow);
+        string token = GuidToken.Generate(_now);
+        DateTime checkedAt = _now.AddHours(24).AddTicks(ticksPastTheWindow);
 
         Assert.Equal(expected, GuidToken.IsTokenAlive(token, checkedAt));
     }
@@ -68,16 +68,16 @@ public class GuidTokenTests
     [InlineData(5 * 60 + 1, false)]
     public void IsTokenAlive_AllowsFiveMinutesOfClockSkew(int secondsInTheFuture, bool expected)
     {
-        string token = GuidToken.Generate(Now.AddSeconds(secondsInTheFuture));
+        string token = GuidToken.Generate(_now.AddSeconds(secondsInTheFuture));
 
-        Assert.Equal(expected, GuidToken.IsTokenAlive(token, Now));
+        Assert.Equal(expected, GuidToken.IsTokenAlive(token, _now));
     }
 
     /// <summary>Verifies that <c>IsTokenAlive</c> returns false, not an exception, for non-Base64 input.</summary>
     [Fact]
     public void IsTokenAlive_ReturnsFalse_ForNonBase64Token()
     {
-        Assert.False(GuidToken.IsTokenAlive("not-valid-base64!!", Now));
+        Assert.False(GuidToken.IsTokenAlive("not-valid-base64!!", _now));
     }
 
     /// <summary>Verifies that <c>IsTokenAlive</c> returns false, not an exception, for a too-short token.</summary>
@@ -86,7 +86,7 @@ public class GuidTokenTests
     {
         string tooShort = Convert.ToBase64String([1, 2, 3]);
 
-        Assert.False(GuidToken.IsTokenAlive(tooShort, Now));
+        Assert.False(GuidToken.IsTokenAlive(tooShort, _now));
     }
 
     /// <summary>The stored form of a token is its SHA-256 digest as lowercase hex (the FIPS 180-2 "abc" test vector).</summary>
@@ -98,11 +98,11 @@ public class GuidTokenTests
     [Fact]
     public void Hash_IsDeterministic_AndNotTheTokenItself()
     {
-        string token = GuidToken.Generate(Now);
+        string token = GuidToken.Generate(_now);
 
         Assert.Equal(GuidToken.Hash(token), GuidToken.Hash(token));
         Assert.NotEqual(token, GuidToken.Hash(token));
-        Assert.NotEqual(GuidToken.Hash(token), GuidToken.Hash(GuidToken.Generate(Now)));
+        Assert.NotEqual(GuidToken.Hash(token), GuidToken.Hash(GuidToken.Generate(_now)));
     }
 
     /// <summary>
@@ -112,9 +112,9 @@ public class GuidTokenTests
     [Fact]
     public void IsTokenAlive_ReadsAnEightByteToken_AndRefusesSevenBytes()
     {
-        byte[] stamp = BitConverter.GetBytes(Now.ToBinary());
+        byte[] stamp = BitConverter.GetBytes(_now.ToBinary());
 
-        Assert.True(GuidToken.IsTokenAlive(Convert.ToBase64String(stamp), Now));
-        Assert.False(GuidToken.IsTokenAlive(Convert.ToBase64String(stamp[..7]), Now));
+        Assert.True(GuidToken.IsTokenAlive(Convert.ToBase64String(stamp), _now));
+        Assert.False(GuidToken.IsTokenAlive(Convert.ToBase64String(stamp[..7]), _now));
     }
 }

@@ -29,7 +29,7 @@ public class MailClient(ILogger<MailClient> logger) : IMailClient
         $"{(domainName).TrimEnd('/')}/{relativePath.TrimStart('/')}";
 
     /// <summary>
-    /// The centred HTML block shared by the confirmation and reset-password mails. Everything interpolated into the markup is
+    /// The centered HTML block shared by the confirmation and reset-password mails. Everything interpolated into the markup is
     /// HTML-encoded (the texts come from resx files and the link from configuration today, but nothing here should be able to
     /// turn into markup — or break out of the <c>href</c> attribute — if that ever stops being true).
     /// </summary>
@@ -109,7 +109,7 @@ public class MailClient(ILogger<MailClient> logger) : IMailClient
         // URL-encode the token so special characters survive in the query string
         string url = BuildUrl(domainName, $"Account/ConfirmEmail?registrationToken={Uri.EscapeDataString(registrationToken)}");
 
-        // Return a centred HTML block containing the confirmation link
+        // Return a centered HTML block containing the confirmation link
         return BuildLinkBody(title, content0, content1, url);
     }
 
@@ -119,7 +119,7 @@ public class MailClient(ILogger<MailClient> logger) : IMailClient
         // URL-encode the token so special characters survive in the query string
         string url = BuildUrl(domainName, $"Account/ResetPassword?resetPasswordToken={Uri.EscapeDataString(resetPasswordToken)}");
 
-        // Return a centred HTML block containing the password-reset link
+        // Return a centered HTML block containing the password-reset link
         return BuildLinkBody(title, content0, content1, url);
     }
 

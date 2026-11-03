@@ -115,12 +115,12 @@ public class ServiceResultTests
     [Fact]
     public void FromError_WithLocalizationMetadata_SurfacesTemplateAndArgs()
     {
-        Error error = DomainError.Validation("TimeZoneId.Invalid", "'{0}' is not a recognised time-zone ID.", "Mars/OlympusMons");
+        Error error = DomainError.Validation("TimeZoneId.Invalid", "'{0}' is not a recognized time-zone ID.", "Mars/OlympusMons");
 
         var result = ServiceResult.FromError(error);
 
         Assert.Equal("TimeZoneId.Invalid", result.ErrorCode);
-        Assert.Equal("'{0}' is not a recognised time-zone ID.", result.ErrorKey);
+        Assert.Equal("'{0}' is not a recognized time-zone ID.", result.ErrorKey);
         Assert.Equal(["Mars/OlympusMons"], result.ErrorArgs);
     }
 }

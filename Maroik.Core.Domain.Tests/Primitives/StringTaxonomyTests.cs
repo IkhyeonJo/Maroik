@@ -12,7 +12,7 @@ public class StringTaxonomyTests
     [Fact]
     public void All_ReturnsEveryConstructedValue()
     {
-        var taxonomy = new StringTaxonomy(["A", "B", "C"]);
+        var taxonomy = new StringTaxonomy("A", "B", "C");
 
         Assert.Equal(new HashSet<string> { "A", "B", "C" }, taxonomy.All);
     }
@@ -23,7 +23,7 @@ public class StringTaxonomyTests
     [InlineData("B")]
     public void IsKnown_KnownValue_ReturnsTrue(string value)
     {
-        var taxonomy = new StringTaxonomy(["A", "B"]);
+        var taxonomy = new StringTaxonomy("A", "B");
 
         Assert.True(taxonomy.IsKnown(value));
     }
@@ -32,7 +32,7 @@ public class StringTaxonomyTests
     [Fact]
     public void IsKnown_UnknownValue_ReturnsFalse()
     {
-        var taxonomy = new StringTaxonomy(["A", "B"]);
+        var taxonomy = new StringTaxonomy("A", "B");
 
         Assert.False(taxonomy.IsKnown("C"));
     }
@@ -41,7 +41,7 @@ public class StringTaxonomyTests
     [Fact]
     public void IsKnown_Null_ReturnsFalse()
     {
-        var taxonomy = new StringTaxonomy(["A", "B"]);
+        var taxonomy = new StringTaxonomy("A", "B");
 
         Assert.False(taxonomy.IsKnown(null));
     }
@@ -50,7 +50,7 @@ public class StringTaxonomyTests
     [Fact]
     public void IsKnown_DifferentCase_ReturnsFalse()
     {
-        var taxonomy = new StringTaxonomy(["Busy"]);
+        var taxonomy = new StringTaxonomy("Busy");
 
         Assert.False(taxonomy.IsKnown("busy"));
     }

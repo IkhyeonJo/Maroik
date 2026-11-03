@@ -7,7 +7,7 @@ namespace Maroik.Website.Tests.Mappers;
 
 /// <summary>
 /// Unit tests for <see cref="BudgetViewModelMapper"/>: the budget DTOs turned into what the page draws — localized row labels, values in
-/// the amount format, each budget cell's colour by kind and state, localized formula problems — and the page's own model.
+/// the amount format, each budget cell's color by kind and state, localized formula problems — and the page's own model.
 /// </summary>
 public class BudgetViewModelMapperTests
 {
@@ -65,7 +65,7 @@ public class BudgetViewModelMapperTests
         Assert.Equal("", BudgetViewModelMapper.Display(new BudgetValueResponse { Kind = "Empty" }));
     }
 
-    /// <summary>A budget cell carries its actual and remaining amounts and its colour: for expenditure over is bad, for income under is a warning.</summary>
+    /// <summary>A budget cell carries its actual and remaining amounts and its color: for expenditure over is bad, for income under is a warning.</summary>
     [Theory]
     [InlineData("Expenditure", "Under", "good")]
     [InlineData("Expenditure", "Reached", "warn")]
@@ -76,7 +76,7 @@ public class BudgetViewModelMapperTests
     [InlineData("Income", "Unbudgeted", "unbudgeted")]
     [InlineData("Expenditure", "Unbudgeted", "unbudgeted")]
     [InlineData("Expenditure", "None", "")]
-    public void BudgetCells_AreColouredByKindAndState(string kind, string state, string colour)
+    public void BudgetCells_AreColoredByKindAndState(string kind, string state, string color)
     {
         var sheet = new BudgetSheetResponse
         {
@@ -86,10 +86,10 @@ public class BudgetViewModelMapperTests
 
         BudgetCellViewModel cell = sheet.ToViewModel(L).Cells.Single();
 
-        Assert.Equal(("B2", "Budget", "=1", "100", "Number", "120", "-20", colour), (cell.Address, cell.Role, cell.Input, cell.Display, cell.ValueKind, cell.Actual, cell.Remaining, cell.State));
+        Assert.Equal(("B2", "Budget", "=1", "100", "Number", "120", "-20", color), (cell.Address, cell.Role, cell.Input, cell.Display, cell.ValueKind, cell.Actual, cell.Remaining, cell.State));
     }
 
-    /// <summary>Other cells have no actual, remaining or colour; a budget cell without a budget has no remaining.</summary>
+    /// <summary>Other cells have no actual, remaining or color; a budget cell without a budget has no remaining.</summary>
     [Fact]
     public void OtherCells_HaveNoStatus()
     {

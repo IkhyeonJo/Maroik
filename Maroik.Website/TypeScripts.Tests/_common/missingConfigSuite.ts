@@ -17,7 +17,7 @@ export function withoutServerConstants(html: string): string {
 /** Registers a test that the page script still initializes with its server-published constants removed. */
 export function describeMissingServerConstants(area: "admin" | "anonymous" | "user", feature: string, page: string, fixture: () => string): void {
     describe(`${area}/${feature}/${page} — without the server-published constants`, () => {
-        it("still initialises, falling back to its built-in defaults", () => {
+        it("still initializes, falling back to its built-in defaults", () => {
             const html = withoutServerConstants(fixture());
             expect(html).not.toBe(fixture()); // the fixture really did carry some
             // an exception inside a jQuery ready-callback does not fail loadSite: jQuery logs it ("jQuery.Deferred exception") and moves on

@@ -15,7 +15,7 @@ public class BudgetServiceReadTests
     private readonly BudgetServiceHarness _h = new();
 
     /// <summary>Meal / eat-out in KRW.</summary>
-    private static readonly BudgetLine Meal = BudgetLine.Create(BudgetKind.Expenditure, "ConsumerSpending", "MealOrEatOutExpenses", "KRW").Value;
+    private static readonly BudgetLine _meal = BudgetLine.Create(BudgetKind.Expenditure, "ConsumerSpending", "MealOrEatOutExpenses", "KRW").Value;
 
     /// <summary>The cell of a sheet at an address.</summary>
     private static BudgetCellResponse Cell(BudgetSheetResponse sheet, string address) => sheet.Cells.Single(c => c.Address == address);
@@ -24,11 +24,11 @@ public class BudgetServiceReadTests
     [Fact]
     public async Task GetSheetAsync_ShowsAStoredSheet()
     {
-        long id = _h.Sheet(BudgetKind.Expenditure, 2026, H.Email, Meal);
-        _h.Cell(id, Meal.Key, "E", "100000");
-        _h.Cell(id, Meal.Key, "F", $"=E{{{Meal.Key}}}*1.5");
-        _h.Spend(Meal, 120000m, new DateTime(2026, 4, 10));
-        _h.Spend(Meal, 99m, new DateTime(2025, 4, 10));
+        long id = _h.Sheet(BudgetKind.Expenditure, 2026, H.Email, _meal);
+        _h.Cell(id, _meal.Key, "E", "100000");
+        _h.Cell(id, _meal.Key, "F", $"=E{{{_meal.Key}}}*1.5");
+        _h.Spend(_meal, 120000m, new DateTime(2026, 4, 10));
+        _h.Spend(_meal, 99m, new DateTime(2025, 4, 10));
 
         var (result, sheet) = await _h.Sut.GetSheetAsync(H.Email, BudgetKind.Expenditure, 2026, "UTC", TestContext.Current.CancellationToken);
 
@@ -59,8 +59,8 @@ public class BudgetServiceReadTests
     [Fact]
     public async Task GetSheetAsync_IgnoresOtherAccounts()
     {
-        long other = _h.Sheet(BudgetKind.Expenditure, 2026, "other@example.com", Meal);
-        _h.Cell(other, Meal.Key, "B", "5");
+        long other = _h.Sheet(BudgetKind.Expenditure, 2026, "other@example.com", _meal);
+        _h.Cell(other, _meal.Key, "B", "5");
 
         var (_, sheet) = await _h.Sut.GetSheetAsync(H.Email, BudgetKind.Expenditure, 2026, "UTC", TestContext.Current.CancellationToken);
 
@@ -83,7 +83,7 @@ public class BudgetServiceReadTests
     [Fact]
     public async Task GetSheetAsync_LoadsReferencedSheetsThatAreNotStored()
     {
-        long id = _h.Sheet(BudgetKind.Expenditure, 2026, H.Email, Meal);
+        long id = _h.Sheet(BudgetKind.Expenditure, 2026, H.Email, _meal);
         _h.Cell(id, "F.1", "B", "=Income2030!N{L.RegularIncome.LaborIncome.4B5257}+1");
 
         var (_, sheet) = await _h.Sut.GetSheetAsync(H.Email, BudgetKind.Expenditure, 2026, "UTC", TestContext.Current.CancellationToken);
@@ -95,7 +95,7 @@ public class BudgetServiceReadTests
     [Fact]
     public async Task GetSheetAsync_ListsUnbudgetedRecords()
     {
-        _h.Sheet(BudgetKind.Expenditure, 2026, H.Email, Meal);
+        _h.Sheet(BudgetKind.Expenditure, 2026, H.Email, _meal);
         _h.Spend(BudgetLine.Create(BudgetKind.Expenditure, "ConsumerSpending", "PinMoney", "USD").Value, 7m, new DateTime(2026, 2, 1));
 
         var (_, sheet) = await _h.Sut.GetSheetAsync(H.Email, BudgetKind.Expenditure, 2026, "UTC", TestContext.Current.CancellationToken);
@@ -112,7 +112,7 @@ public class BudgetServiceReadTests
     [Fact]
     public async Task PreviewAsync_RefusesAnInputLongerThanACellHolds_BeforeParsingIt()
     {
-        _h.Sheet(BudgetKind.Expenditure, 2026, H.Email, Meal);
+        _h.Sheet(BudgetKind.Expenditure, 2026, H.Email, _meal);
         string input = "=" + new string('-', BudgetCellInput.MaxLength) + "1";
 
         var (result, preview) = await _h.Sut.PreviewAsync(H.Email, BudgetKind.Expenditure, 2026, "UTC", "C2", input, TestContext.Current.CancellationToken);
@@ -123,12 +123,12 @@ public class BudgetServiceReadTests
         Assert.Null(preview);
     }
 
-    /// <summary>The preview colours the input, lists its problems with their message keys, and shows the value it would have.</summary>
+    /// <summary>The preview colors the input, lists its problems with their message keys, and shows the value it would have.</summary>
     [Fact]
-    public async Task PreviewAsync_ColoursAndCalculates()
+    public async Task PreviewAsync_ColorsAndCalculates()
     {
-        long id = _h.Sheet(BudgetKind.Expenditure, 2026, H.Email, Meal);
-        _h.Cell(id, Meal.Key, "B", "40");
+        long id = _h.Sheet(BudgetKind.Expenditure, 2026, H.Email, _meal);
+        _h.Cell(id, _meal.Key, "B", "40");
 
         var (result, preview) = await _h.Sut.PreviewAsync(H.Email, BudgetKind.Expenditure, 2026, "UTC", "C2", "=B2*2+FOO(1)", TestContext.Current.CancellationToken);
         var (_, ok) = await _h.Sut.PreviewAsync(H.Email, BudgetKind.Expenditure, 2026, "UTC", "C2", "=B2*2", TestContext.Current.CancellationToken);

@@ -9,13 +9,13 @@ namespace Maroik.Core.Domain.Tests.Accounts;
 public class AccountSignInTests
 {
     /// <summary>The fixed "current time" every domain call in this class receives.</summary>
-    private static readonly DateTime Now = new(2026, 7, 1, 12, 0, 0, DateTimeKind.Utc);
+    private static readonly DateTime _now = new(2026, 7, 1, 12, 0, 0, DateTimeKind.Utc);
 
     /// <summary>A stored account in the given state; by default confirmed, terms accepted, not deleted, not locked.</summary>
-    private static Domain.Accounts.Account AccountIn(
+    private static Account AccountIn(
         bool deleted = false, bool emailConfirmed = true, bool agreedServiceTerms = true, bool locked = false, string? resetToken = null)
-        => Domain.Accounts.Account.Reconstitute("user@example.com", "hashed", "Nick", null, "User", "UTC", "KRW",
-            locked, 0, emailConfirmed, agreedServiceTerms, null, resetToken, Now, Now, null, deleted, "stamp", false);
+        => Account.Reconstitute("user@example.com", "hashed", "Nick", null, "User", "UTC", "KRW",
+            locked, 0, emailConfirmed, agreedServiceTerms, null, resetToken, _now, _now, null, deleted, "stamp", false);
 
     // -- CheckSignInOnceAuthenticated -------------------------------------------
 
@@ -65,18 +65,18 @@ public class AccountSignInTests
     [Fact]
     public void AcceptsResetToken_IsTrue_ForALiveTokenOfAQualifyingAccount()
     {
-        string token = GuidToken.Generate(Now);
+        string token = GuidToken.Generate(_now);
 
-        Assert.True(AccountIn(resetToken: GuidToken.Hash(token)).AcceptsResetToken(token, Now.AddHours(24)));
+        Assert.True(AccountIn(resetToken: GuidToken.Hash(token)).AcceptsResetToken(token, _now.AddHours(24)));
     }
 
     /// <summary>An expired token is refused.</summary>
     [Fact]
     public void AcceptsResetToken_IsFalse_ForAnExpiredToken()
     {
-        string token = GuidToken.Generate(Now);
+        string token = GuidToken.Generate(_now);
 
-        Assert.False(AccountIn(resetToken: GuidToken.Hash(token)).AcceptsResetToken(token, Now.AddHours(24).AddTicks(1)));
+        Assert.False(AccountIn(resetToken: GuidToken.Hash(token)).AcceptsResetToken(token, _now.AddHours(24).AddTicks(1)));
     }
 
     /// <summary>A live token of a deleted or unconfirmed account is refused.</summary>
@@ -85,8 +85,8 @@ public class AccountSignInTests
     [InlineData(false, false)]
     public void AcceptsResetToken_IsFalse_ForADeletedOrUnconfirmedAccount(bool deleted, bool emailConfirmed)
     {
-        string token = GuidToken.Generate(Now);
+        string token = GuidToken.Generate(_now);
 
-        Assert.False(AccountIn(deleted: deleted, emailConfirmed: emailConfirmed, resetToken: GuidToken.Hash(token)).AcceptsResetToken(token, Now));
+        Assert.False(AccountIn(deleted: deleted, emailConfirmed: emailConfirmed, resetToken: GuidToken.Hash(token)).AcceptsResetToken(token, _now));
     }
 }

@@ -16,8 +16,7 @@ public class HttpContextAccountExtensionsTests
     public void GetLoggedInAccount_ReturnsTheStoredAccount()
     {
         var account = new AccountResponse { Email = "user@test.com" };
-        var context = new DefaultHttpContext();
-        context.Items[HttpContextItemKeys.LoggedInAccount] = account;
+        var context = new DefaultHttpContext { Items = { [HttpContextItemKeys.LoggedInAccount] = account } };
 
         Assert.Same(account, context.GetLoggedInAccount());
     }
@@ -31,7 +30,7 @@ public class HttpContextAccountExtensionsTests
     {
         var context = new DefaultHttpContext();
 
-        var ex = Assert.Throws<InvalidOperationException>(() => context.GetLoggedInAccount());
+        var ex = Assert.Throws<InvalidOperationException>(context.GetLoggedInAccount);
         Assert.Contains("ViewBagPopulatorFilter", ex.Message, StringComparison.Ordinal);
     }
 
@@ -39,18 +38,16 @@ public class HttpContextAccountExtensionsTests
     [Fact]
     public void GetLoggedInAccount_Throws_WhenTheStoredValueIsNotAnAccount()
     {
-        var context = new DefaultHttpContext();
-        context.Items[HttpContextItemKeys.LoggedInAccount] = "not an account";
+        var context = new DefaultHttpContext { Items = { [HttpContextItemKeys.LoggedInAccount] = "not an account" } };
 
-        Assert.Throws<InvalidOperationException>(() => context.GetLoggedInAccount());
+        Assert.Throws<InvalidOperationException>(context.GetLoggedInAccount);
     }
 
     /// <summary>Returns the email of the account stored under the logged-in-account key.</summary>
     [Fact]
     public void GetLoggedInEmail_ReturnsTheStoredAccountsEmail()
     {
-        var context = new DefaultHttpContext();
-        context.Items[HttpContextItemKeys.LoggedInAccount] = new AccountResponse { Email = "user@test.com" };
+        var context = new DefaultHttpContext { Items = { [HttpContextItemKeys.LoggedInAccount] = new AccountResponse { Email = "user@test.com" } } };
 
         Assert.Equal("user@test.com", context.GetLoggedInEmail());
     }
@@ -62,10 +59,9 @@ public class HttpContextAccountExtensionsTests
     [Fact]
     public void GetLoggedInEmail_Throws_WhenTheAccountHasNoEmail()
     {
-        var context = new DefaultHttpContext();
-        context.Items[HttpContextItemKeys.LoggedInAccount] = new AccountResponse { Email = null };
+        var context = new DefaultHttpContext { Items = { [HttpContextItemKeys.LoggedInAccount] = new AccountResponse { Email = null } } };
 
-        var ex = Assert.Throws<InvalidOperationException>(() => context.GetLoggedInEmail());
+        var ex = Assert.Throws<InvalidOperationException>(context.GetLoggedInEmail);
         Assert.Contains($"no {nameof(AccountResponse.Email)}", ex.Message, StringComparison.Ordinal);
     }
 
@@ -75,7 +71,7 @@ public class HttpContextAccountExtensionsTests
     {
         var context = new DefaultHttpContext();
 
-        var ex = Assert.Throws<InvalidOperationException>(() => context.GetLoggedInEmail());
+        var ex = Assert.Throws<InvalidOperationException>(context.GetLoggedInEmail);
         Assert.Contains("ViewBagPopulatorFilter", ex.Message, StringComparison.Ordinal);
     }
 }

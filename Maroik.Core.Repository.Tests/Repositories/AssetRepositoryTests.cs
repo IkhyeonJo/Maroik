@@ -46,7 +46,7 @@ public sealed class AssetRepositoryTests(DatabaseFixture database) : RepositoryT
     /// <summary>Inserts the owning accounts (FK <c>Asset_fk_0</c>) then the assets.</summary>
     private async Task SeedAsync(params OrmAsset[] assets)
     {
-        await EnsureAccountsAsync([.. assets.Select(a => a.AccountEmail!)]);
+        await EnsureAccountsAsync([.. assets.Select(a => a.AccountEmail)]);
         await Context.Assets.AddRangeAsync(assets);
         await Context.SaveChangesAsync();
         Context.ChangeTracker.Clear();
@@ -66,7 +66,7 @@ public sealed class AssetRepositoryTests(DatabaseFixture database) : RepositoryT
     public async Task CreateAsync_PersistsAnAssetOnTheColumnLimits(bool negative)
     {
         string email = UniqueEmail("limits");
-        await EnsureAccountsAsync([email]);
+        await EnsureAccountsAsync(email);
         decimal amount = negative ? -FinanceAmountPolicy.MaxAbsoluteAmount : FinanceAmountPolicy.MaxAbsoluteAmount;
         string name = new string('a', 250) + (negative ? "-neg" : "-pos") + "z";
         Assert.Equal(255, name.Length);
@@ -340,7 +340,7 @@ public sealed class AssetRepositoryTests(DatabaseFixture database) : RepositoryT
 
             await Task.Delay(300, TestContext.Current.CancellationToken);
 
-            asset.Withdraw(Maroik.Core.Domain.ValueObjects.Money.Create(amount, asset.Balance.Currency.Value).Value, DateTime.UtcNow);
+            asset.Withdraw(Domain.ValueObjects.Money.Create(amount, asset.Balance.Currency.Value).Value, DateTime.UtcNow);
             await repo.UpdateEntityAsync(asset, TestContext.Current.CancellationToken);
             // The repository defers its flush while a transaction is open on the context; this test
             // drives the transaction directly (not through UnitOfWork, which would flush on commit),

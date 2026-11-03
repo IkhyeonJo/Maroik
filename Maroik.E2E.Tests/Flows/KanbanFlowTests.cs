@@ -94,11 +94,11 @@ public class KanbanFlowTests(E2ESharedFixture fixture) : E2ETestBase(fixture)
     }
 
     /// <summary>
-    /// An overdue card's date is red and a future one's grey, while every card keeps the same default card colour — undated, upcoming
-    /// or overdue (the site is AdminLTE dark mode, so that colour is the dark card background, not white).
+    /// An overdue card's date is red and a future one's gray, while every card keeps the same default card color — undated, upcoming
+    /// or overdue (the site is AdminLTE dark mode, so that color is the dark card background, not white).
     /// </summary>
     [Fact]
-    public async Task DueDate_IsRed_OnlyOnceOverdue_AndTheCardColourNeverChanges()
+    public async Task DueDate_IsRed_OnlyOnceOverdue_AndTheCardColorNeverChanges()
     {
         var (page, account) = await NewSignedInPageAsync();
         long overdue = await Db.SeedKanbanCardAsync(account.Email, "ToDo", "Late", dueDate: new DateOnly(2000, 1, 2));
@@ -113,10 +113,10 @@ public class KanbanFlowTests(E2ESharedFixture fixture) : E2ETestBase(fixture)
         await Assertions.Expect(later.Locator(".kanban-due")).ToHaveCSSAsync("color", "rgb(173, 181, 189)");
         await Assertions.Expect(plain.Locator(".kanban-due")).ToHaveCountAsync(0);
 
-        string defaultCardColour = await page.EvaluateAsync<string>(
+        string defaultCardColor = await page.EvaluateAsync<string>(
             "() => { const c = document.createElement('div'); c.className = 'card'; document.querySelector('.kanban-lane .card-body').appendChild(c); return getComputedStyle(c).backgroundColor; }");
-        await Assertions.Expect(late).ToHaveCSSAsync("background-color", defaultCardColour);
-        await Assertions.Expect(later).ToHaveCSSAsync("background-color", defaultCardColour);
-        await Assertions.Expect(plain).ToHaveCSSAsync("background-color", defaultCardColour);
+        await Assertions.Expect(late).ToHaveCSSAsync("background-color", defaultCardColor);
+        await Assertions.Expect(later).ToHaveCSSAsync("background-color", defaultCardColor);
+        await Assertions.Expect(plain).ToHaveCSSAsync("background-color", defaultCardColor);
     }
 }

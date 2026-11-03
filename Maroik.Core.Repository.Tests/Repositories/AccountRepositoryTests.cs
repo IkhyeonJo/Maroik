@@ -678,7 +678,7 @@ public sealed class AccountRepositoryTests(DatabaseFixture database) : Repositor
         string second = UniqueEmail("b-admin");
         string locked = UniqueEmail("locked-admin");
         string deleted = UniqueEmail("deleted-admin");
-        string user = UniqueEmail("user");
+        string user = UniqueEmail();
         await SeedAsync(
             NewAccount(second, role: Role.Admin), NewAccount(first, role: Role.Admin),
             NewAccount(locked, role: Role.Admin, locked: true), NewAccount(deleted, role: Role.Admin, deleted: true),
@@ -726,7 +726,7 @@ public sealed class AccountRepositoryTests(DatabaseFixture database) : Repositor
         await SeedAsync(target, NewAccount());
 
         List<Account> byNickname = await Sut.SearchAsync(nickname.ToUpperInvariant(), TestContext.Current.CancellationToken);
-        List<Account> byEmail = await Sut.SearchAsync(target.Email!.ToUpperInvariant(), TestContext.Current.CancellationToken);
+        List<Account> byEmail = await Sut.SearchAsync(target.Email.ToUpperInvariant(), TestContext.Current.CancellationToken);
 
         Assert.Equal(target.Email, Assert.Single(byNickname).Email.Value);
         Assert.Equal(target.Email, Assert.Single(byEmail).Email.Value);
@@ -823,7 +823,7 @@ public sealed class AccountRepositoryTests(DatabaseFixture database) : Repositor
         await SeedAsync(target, bystander);
         DateTime updated = new(2031, 5, 6, 7, 8, 9, DateTimeKind.Utc);
 
-        int rows = await Sut.UpdateAgreedServiceTermsAsync(target.Email!.ToUpperInvariant(), true, updated, TestContext.Current.CancellationToken);
+        int rows = await Sut.UpdateAgreedServiceTermsAsync(target.Email.ToUpperInvariant(), true, updated, TestContext.Current.CancellationToken);
 
         Assert.Equal(1, rows);
         OrmAccount reloadedTarget = await Context.Accounts.AsNoTracking().SingleAsync(a => a.Email == target.Email, TestContext.Current.CancellationToken);

@@ -9,9 +9,6 @@ namespace Maroik.Core.Domain.Tests.ValueObjects;
 /// </summary>
 public class ValueObjectBoundaryTests
 {
-    /// <summary>Owner e-mail used by every aggregate built in these tests.</summary>
-    private const string Email = "user@example.com";
-
     /// <summary>A string of exactly <paramref name="length"/> characters.</summary>
     private static string Text(int length) => new('x', length);
 

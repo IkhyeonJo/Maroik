@@ -34,7 +34,7 @@ public class HostingModeStartupTests(MaroikWebApplicationFactory factory)
     [Fact]
     public async Task NoDomain_ServesPlainHttp()
     {
-        using var host = Host("NoDomain", "http://192.168.0.10:8080/");
+        await using var host = Host("NoDomain", "http://192.168.0.10:8080/");
 
         HttpContext context = await GetAsync(host, "/Account/Login");
 
@@ -46,7 +46,7 @@ public class HostingModeStartupTests(MaroikWebApplicationFactory factory)
     [Fact]
     public async Task NoDomain_SetsCookiesABrowserKeepsOverHttp()
     {
-        using var host = Host("NoDomain", "http://192.168.0.10:8080/");
+        await using var host = Host("NoDomain", "http://192.168.0.10:8080/");
 
         HttpContext context = await GetAsync(host, "/Account/Login");
 
@@ -60,7 +60,7 @@ public class HostingModeStartupTests(MaroikWebApplicationFactory factory)
     [Fact]
     public async Task NoDomain_IgnoresAForwardedScheme()
     {
-        using var host = Host("NoDomain", "http://192.168.0.10:8080/");
+        await using var host = Host("NoDomain", "http://192.168.0.10:8080/");
 
         HttpContext context = await GetAsync(host, "/health", forwardedHttps: true);
 
@@ -71,7 +71,7 @@ public class HostingModeStartupTests(MaroikWebApplicationFactory factory)
     [Fact]
     public async Task PortForwarding_BehavesAsTheTunnel()
     {
-        using var host = Host("PortForwarding", "https://www.maroik.test/");
+        await using var host = Host("PortForwarding", "https://www.maroik.test/");
 
         HttpContext context = await host.Server.SendAsync(c =>
         {
@@ -91,7 +91,7 @@ public class HostingModeStartupTests(MaroikWebApplicationFactory factory)
     [Fact]
     public async Task NoDomain_DoesNotRedirectToWww()
     {
-        using var host = Host("NoDomain", "http://maroik.test/");
+        await using var host = Host("NoDomain", "http://maroik.test/");
 
         HttpContext context = await host.Server.SendAsync(c =>
         {

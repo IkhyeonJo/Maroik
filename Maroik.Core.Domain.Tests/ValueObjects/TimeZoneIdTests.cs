@@ -35,13 +35,13 @@ public class TimeZoneIdTests
 
     /// <summary>Create returns error, when unrecognized.</summary>
     [Fact]
-    public void Create_ReturnsError_WhenUnrecognised()
+    public void Create_ReturnsError_WhenUnrecognized()
     {
         var result = TimeZoneId.Create("Not/AReal/TimeZone");
 
         Assert.True(result.IsError);
         Assert.Equal("TimeZoneId.Invalid", result.FirstError.Code);
-        Assert.Equal("'Not/AReal/TimeZone' is not a recognised time-zone ID.", result.FirstError.Description);
+        Assert.Equal("'Not/AReal/TimeZone' is not a recognized time-zone ID.", result.FirstError.Description);
     }
 
     /// <summary>
@@ -51,11 +51,11 @@ public class TimeZoneIdTests
     /// already-baked, value-embedding sentence in <see cref="ErrorOr.Error.Description"/>.
     /// </summary>
     [Fact]
-    public void Create_ReturnsError_WithLocalizableMetadata_WhenUnrecognised()
+    public void Create_ReturnsError_WithLocalizableMetadata_WhenUnrecognized()
     {
         var result = TimeZoneId.Create("Not/AReal/TimeZone");
 
-        Assert.Equal("'{0}' is not a recognised time-zone ID.", result.FirstError.Metadata!["MessageTemplate"]);
+        Assert.Equal("'{0}' is not a recognized time-zone ID.", result.FirstError.Metadata!["MessageTemplate"]);
         Assert.Equal(["Not/AReal/TimeZone"], (object[])result.FirstError.Metadata["MessageArgs"]);
     }
 

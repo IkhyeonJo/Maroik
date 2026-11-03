@@ -43,7 +43,7 @@ describe("Forum/FreeForum (anonymous)", () => {
 });
 
 describe("Forum/FreeForum (anonymous) — pages without the optional parts", () => {
-    it("a list page (no detail timestamp, body or attachment link) initialises without touching them", () => {
+    it("a list page (no detail timestamp, body or attachment link) initializes without touching them", () => {
         const html = fixture()
             .replace("<span id=\"free_forum_detail_updated\">2024-01-02T03:04:05Z</span>", "")
             .replace("<div id=\"detailBoardContent\"></div><a id=\"aDetailBoardAttachedFile\"></a>", "");

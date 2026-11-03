@@ -405,7 +405,7 @@ describe("user/Calendar/UserIndex", () => {
     });
 });
 
-// ==== extended coverage: events, calendars of interest and the shared calendar behaviour ===============================
+// ==== extended coverage: events, calendars of interest and the shared calendar behavior ===============================
 
 /** "Other calendars" checkboxes 9 (checked) and 8. */
 const others = `<div id="otherCalendars">

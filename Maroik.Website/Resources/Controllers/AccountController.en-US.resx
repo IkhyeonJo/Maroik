@@ -189,8 +189,8 @@
   <data name="'{0}' is an Email that already exists." xml:space="preserve">
     <value>'{0}' is an Email that already exists.</value>
   </data>
-  <data name="'{0}' is not a recognised time-zone ID." xml:space="preserve">
-    <value>'{0}' is not a recognised time-zone ID.</value>
+  <data name="'{0}' is not a recognized time-zone ID." xml:space="preserve">
+    <value>'{0}' is not a recognized time-zone ID.</value>
   </data>
   <data name="'{0}' is not a valid email address." xml:space="preserve">
     <value>'{0}' is not a valid email address.</value>

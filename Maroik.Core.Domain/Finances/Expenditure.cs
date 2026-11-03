@@ -201,7 +201,7 @@ public sealed class Expenditure : AggregateRoot<long>
     }
 
     // ------------------------------------------------------------------------
-    // Domain behaviours
+    // Domain behaviors
     // ------------------------------------------------------------------------
 
     /// <summary>Updates all editable fields of this expenditure record.</summary>

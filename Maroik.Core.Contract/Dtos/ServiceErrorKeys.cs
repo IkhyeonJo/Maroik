@@ -90,7 +90,7 @@ public static class ServiceErrorKeys
     /// <summary>An asset of the same name already exists.</summary>
     public const string AssetExists = "The asset already exists.";
     /// <summary>The asset's category is not one of the allowed values.</summary>
-    public const string AssetItemInvalid = "Asset category (item) is not a recognised value.";
+    public const string AssetItemInvalid = "Asset category (item) is not a recognized value.";
     /// <summary>The asset does not exist (asset edit / delete).</summary>
     public const string AssetNotFoundByProductName = "Fail to find the asset by given product name";
     /// <summary>The asset an income / expenditure refers to does not exist.</summary>

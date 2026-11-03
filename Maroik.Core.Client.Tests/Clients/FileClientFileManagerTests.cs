@@ -18,7 +18,7 @@ public class FileClientFileManagerTests
     private const string BaseUrl = "http://files.local";
 
     /// <summary>The upload id these tests use.</summary>
-    private static readonly Guid UploadId = Guid.Parse("0f8fad5b-d9cb-469f-a165-70867728950e");
+    private static readonly Guid _uploadId = Guid.Parse("0f8fad5b-d9cb-469f-a165-70867728950e");
 
     /// <summary>Answers every request with a fixed status and body, recording what was sent.</summary>
     private sealed class FakeStorage(HttpStatusCode status, string body) : HttpMessageHandler
@@ -78,11 +78,11 @@ public class FileClientFileManagerTests
     {
         using var storage = new FakeStorage(HttpStatusCode.OK, "16777219");
 
-        long? length = await Sut(storage).AppendFileManagerChunkAsync(UploadId, 16777216, new MemoryStream("abc"u8.ToArray()), BaseUrl, TestContext.Current.CancellationToken);
+        long? length = await Sut(storage).AppendFileManagerChunkAsync(_uploadId, 16777216, new MemoryStream("abc"u8.ToArray()), BaseUrl, TestContext.Current.CancellationToken);
 
         Assert.Equal(16777219, length);
         Assert.Equal($"{BaseUrl}/api/FileManager/chunk", storage.Url);
-        Assert.Contains(UploadId.ToString("D"), storage.Body, StringComparison.Ordinal);
+        Assert.Contains(_uploadId.ToString("D"), storage.Body, StringComparison.Ordinal);
         Assert.Contains("16777216", storage.Body, StringComparison.Ordinal);
         Assert.Contains("abc", storage.Body, StringComparison.Ordinal);
         Assert.Contains("name=chunk", storage.Body, StringComparison.Ordinal);
@@ -94,10 +94,10 @@ public class FileClientFileManagerTests
     {
         using var storage = new FakeStorage(HttpStatusCode.Conflict, FileStorageRefusals.OffsetMismatch);
 
-        Assert.Null(await Sut(storage).AppendFileManagerChunkAsync(UploadId, 5, new MemoryStream([1]), BaseUrl, TestContext.Current.CancellationToken));
+        Assert.Null(await Sut(storage).AppendFileManagerChunkAsync(_uploadId, 5, new MemoryStream([1]), BaseUrl, TestContext.Current.CancellationToken));
 
         FakeLogRecord warning = Assert.Single(_logger.Collector.GetSnapshot(), r => r.Level == LogLevel.Warning);
-        Assert.Equal($"File Manager chunk of {UploadId} at offset 5 returned 409: {FileStorageRefusals.OffsetMismatch}", warning.Message);
+        Assert.Equal($"File Manager chunk of {_uploadId} at offset 5 returned 409: {FileStorageRefusals.OffsetMismatch}", warning.Message);
     }
 
     /// <summary>An unreachable storage service is null, logged at Error with the exception.</summary>
@@ -106,10 +106,10 @@ public class FileClientFileManagerTests
     {
         using var handler = new Unreachable();
 
-        Assert.Null(await Sut(handler).AppendFileManagerChunkAsync(UploadId, 0, new MemoryStream([1]), BaseUrl, TestContext.Current.CancellationToken));
+        Assert.Null(await Sut(handler).AppendFileManagerChunkAsync(_uploadId, 0, new MemoryStream([1]), BaseUrl, TestContext.Current.CancellationToken));
 
         FakeLogRecord error = Assert.Single(_logger.Collector.GetSnapshot(), r => r.Level == LogLevel.Error);
-        Assert.Equal($"File Manager chunk request failed for {UploadId}", error.Message);
+        Assert.Equal($"File Manager chunk request failed for {_uploadId}", error.Message);
         Assert.NotNull(error.Exception);
     }
 
@@ -121,10 +121,10 @@ public class FileClientFileManagerTests
     {
         using var storage = new FakeStorage(HttpStatusCode.OK, "");
 
-        Assert.Equal(FileUploadResult.Stored, await Sut(storage).CompleteFileManagerUploadAsync(UploadId, 1234, false, BaseUrl, TestContext.Current.CancellationToken));
+        Assert.Equal(FileUploadResult.Stored, await Sut(storage).CompleteFileManagerUploadAsync(_uploadId, 1234, false, BaseUrl, TestContext.Current.CancellationToken));
         Assert.Equal($"{BaseUrl}/api/FileManager/complete", storage.Url);
         Assert.Contains("1234", storage.Body, StringComparison.Ordinal);
-        Assert.Contains(UploadId.ToString("D"), storage.Body, StringComparison.Ordinal);
+        Assert.Contains(_uploadId.ToString("D"), storage.Body, StringComparison.Ordinal);
     }
 
     /// <summary>
@@ -138,7 +138,7 @@ public class FileClientFileManagerTests
     {
         using var storage = new FakeStorage(HttpStatusCode.OK, "");
 
-        await Sut(storage).CompleteFileManagerUploadAsync(UploadId, 1234, skipScan, BaseUrl, TestContext.Current.CancellationToken);
+        await Sut(storage).CompleteFileManagerUploadAsync(_uploadId, 1234, skipScan, BaseUrl, TestContext.Current.CancellationToken);
 
         Assert.Matches($@"name=skipScan\r\n(.+\r\n)*\r\n{sent}\r\n", storage.Body);
     }
@@ -152,7 +152,7 @@ public class FileClientFileManagerTests
     {
         using var storage = new FakeStorage(HttpStatusCode.Accepted, "");
 
-        Assert.Equal(FileUploadResult.Scanning, await Sut(storage).CompleteFileManagerUploadAsync(UploadId, 1234, false, BaseUrl, TestContext.Current.CancellationToken));
+        Assert.Equal(FileUploadResult.Scanning, await Sut(storage).CompleteFileManagerUploadAsync(_uploadId, 1234, false, BaseUrl, TestContext.Current.CancellationToken));
         Assert.Empty(_logger.Collector.GetSnapshot());
     }
 
@@ -166,8 +166,8 @@ public class FileClientFileManagerTests
     {
         using var storage = new FakeStorage(HttpStatusCode.BadRequest, reason);
 
-        Assert.Equal(expected, await Sut(storage).CompleteFileManagerUploadAsync(UploadId, 1, false, BaseUrl, TestContext.Current.CancellationToken));
-        Assert.Contains(_logger.Collector.GetSnapshot(), r => r.Level == LogLevel.Warning && r.Message == $"File Manager upload {UploadId} returned 400: {reason}");
+        Assert.Equal(expected, await Sut(storage).CompleteFileManagerUploadAsync(_uploadId, 1, false, BaseUrl, TestContext.Current.CancellationToken));
+        Assert.Contains(_logger.Collector.GetSnapshot(), r => r.Level == LogLevel.Warning && r.Message == $"File Manager upload {_uploadId} returned 400: {reason}");
     }
 
     /// <summary>An unreachable storage service is Failed, logged at Error.</summary>
@@ -176,8 +176,8 @@ public class FileClientFileManagerTests
     {
         using var handler = new Unreachable();
 
-        Assert.Equal(FileUploadResult.Failed, await Sut(handler).CompleteFileManagerUploadAsync(UploadId, 1, false, BaseUrl, TestContext.Current.CancellationToken));
-        Assert.Contains(_logger.Collector.GetSnapshot(), r => r.Level == LogLevel.Error && r.Exception != null);
+        Assert.Equal(FileUploadResult.Failed, await Sut(handler).CompleteFileManagerUploadAsync(_uploadId, 1, false, BaseUrl, TestContext.Current.CancellationToken));
+        Assert.Contains(_logger.Collector.GetSnapshot(), r => r is { Level: LogLevel.Error, Exception: not null });
     }
 
     // -- Abort / Delete ----------------------------------------------------------------
@@ -189,13 +189,13 @@ public class FileClientFileManagerTests
         using var storage = new FakeStorage(HttpStatusCode.OK, "");
         FileClient sut = Sut(storage);
 
-        Assert.True(await sut.AbortFileManagerUploadAsync(UploadId, BaseUrl, TestContext.Current.CancellationToken));
+        Assert.True(await sut.AbortFileManagerUploadAsync(_uploadId, BaseUrl, TestContext.Current.CancellationToken));
         Assert.Equal($"{BaseUrl}/api/FileManager/abort", storage.Url);
-        Assert.Contains(UploadId.ToString("D"), storage.Body, StringComparison.Ordinal);
+        Assert.Contains(_uploadId.ToString("D"), storage.Body, StringComparison.Ordinal);
 
-        Assert.True(await sut.DeleteFileManagerFileAsync($"upload/FileManager/{UploadId:D}", BaseUrl, TestContext.Current.CancellationToken));
+        Assert.True(await sut.DeleteFileManagerFileAsync($"upload/FileManager/{_uploadId:D}", BaseUrl, TestContext.Current.CancellationToken));
         Assert.Equal($"{BaseUrl}/api/FileManager/delete", storage.Url);
-        Assert.Contains($"upload/FileManager/{UploadId:D}", storage.Body, StringComparison.Ordinal);
+        Assert.Contains($"upload/FileManager/{_uploadId:D}", storage.Body, StringComparison.Ordinal);
     }
 
     /// <summary>A refused delete is false, logged at Warning naming the path; an unreachable service is false, logged at Error.</summary>
@@ -207,9 +207,9 @@ public class FileClientFileManagerTests
 
         Assert.False(await Sut(storage).DeleteFileManagerFileAsync("upload/FileManager/x", BaseUrl, TestContext.Current.CancellationToken));
         Assert.False(await Sut(handler).DeleteFileManagerFileAsync("upload/FileManager/x", BaseUrl, TestContext.Current.CancellationToken));
-        Assert.False(await Sut(handler).AbortFileManagerUploadAsync(UploadId, BaseUrl, TestContext.Current.CancellationToken));
+        Assert.False(await Sut(handler).AbortFileManagerUploadAsync(_uploadId, BaseUrl, TestContext.Current.CancellationToken));
 
-        Assert.Contains(_logger.Collector.GetSnapshot(), r => r.Level == LogLevel.Warning && r.Message == $"File Manager delete of upload/FileManager/x returned 404: {FileStorageRefusals.FileNotFound}");
-        Assert.Equal(2, _logger.Collector.GetSnapshot().Count(r => r.Level == LogLevel.Error && r.Exception != null));
+        Assert.Contains(_logger.Collector.GetSnapshot(), r => r is { Level: LogLevel.Warning, Message: $"File Manager delete of upload/FileManager/x returned 404: {FileStorageRefusals.FileNotFound}" });
+        Assert.Equal(2, _logger.Collector.GetSnapshot().Count(r => r is { Level: LogLevel.Error, Exception: not null }));
     }
 }

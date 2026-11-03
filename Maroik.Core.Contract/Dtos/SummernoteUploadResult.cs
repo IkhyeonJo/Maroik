@@ -18,7 +18,7 @@ public class SummernoteUploadResult
     /// <summary>MIME content type of the uploaded file (e.g. "image/png").</summary>
     public string? ContentType { get; private init; }
 
-    /// <summary>Sanitised original file name.</summary>
+    /// <summary>Sanitized original file name.</summary>
     public string? FileName { get; private init; }
 
     /// <summary>Server-side storage path where the file was saved.</summary>

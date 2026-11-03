@@ -84,7 +84,7 @@ function describeBoardScript(c: BoardScriptConfig): void {
     const load = (extra = "", opts: Parameters<typeof loadSite>[4] = {}) =>
         loadSite(c.area, c.feature, c.page, boardFixture(c, extra), opts);
 
-    describe(`${c.area}/${c.feature}/${c.page} — shared board behaviour`, () => {
+    describe(`${c.area}/${c.feature}/${c.page} — shared board behavior`, () => {
         // ---- navigation / search ------------------------------------------------------------------
 
         it("the modify and list buttons navigate to their data-link", () => {
@@ -190,7 +190,7 @@ function describeBoardScript(c: BoardScriptConfig): void {
             expect(submittedFile(h, which)).not.toBeInstanceOf(h.win.File);
         });
 
-        it.each(["write", "edit"])("%s: cancelling the file picker drops the file chosen before — nothing is sent", (which) => {
+        it.each(["write", "edit"])("%s: canceling the file picker drops the file chosen before — nothing is sent", (which) => {
             const h = load();
             selectFile(h, `#${which}UploadedFile`, 10, "first.zip");
             h.$(`#${which}UploadedFile`).trigger("change");

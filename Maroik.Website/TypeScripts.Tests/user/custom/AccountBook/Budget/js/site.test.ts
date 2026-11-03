@@ -2,7 +2,7 @@ import { describe, it, expect, vi, afterEach } from "vitest";
 import { loadSite, hidden, antiForgery, present, successOf, stubPlugin, type SiteHandle, type AjaxCall, type FakeCodeMirror } from "@tests/_common/harness";
 
 // wwwroot/user/custom/AccountBook/Budget/js/site.js — the Income Budget / Expenditure Budget sheet: a spreadsheet grid drawn from the
-// server's sheet, a CodeMirror formula bar painted with the server's colouring, keyboard / mouse editing, paste / fill, undo / redo,
+// server's sheet, a CodeMirror formula bar painted with the server's coloring, keyboard / mouse editing, paste / fill, undo / redo,
 // the Budget / Actual / Remaining views, the year, the lines and the Excel download.
 
 /** The page shell, as Budget.cshtml renders it. */
@@ -380,7 +380,7 @@ describe("AccountBook/Budget — the formula bar", () => {
         };
     }
 
-    it("asks the server to colour the formula being typed (after a pause)", () => {
+    it("asks the server to color the formula being typed (after a pause)", () => {
         const h = load();
         typeFormula(h, "=SUM(B2:C3)");
 
@@ -388,7 +388,7 @@ describe("AccountBook/Budget — the formula bar", () => {
         expect(callsTo(h, "/AccountBook/PreviewBudgetCell")).toHaveLength(1);
     });
 
-    it("paints the tokens with their classes and each reference's colour, and outlines the referenced cells", () => {
+    it("paints the tokens with their classes and each reference's color, and outlines the referenced cells", () => {
         const h = load();
         typeFormula(h, "=SUM(B2:C3)");
         successOf(callTo(h, "/AccountBook/PreviewBudgetCell"))(preview());
@@ -437,7 +437,7 @@ describe("AccountBook/Budget — the formula bar", () => {
         expect(editor(h).liveMarks().filter((m) => m.className === "cm-budget-paren-match").map((m) => m.from).sort((a, b) => a - b)).toEqual([4, 10]);
     });
 
-    it("leaving the edit clears the colouring and the outlines", () => {
+    it("leaving the edit clears the coloring and the outlines", () => {
         const h = load();
         typeFormula(h, "=SUM(B2:C3)");
         successOf(callTo(h, "/AccountBook/PreviewBudgetCell"))(preview());
@@ -621,7 +621,7 @@ describe("AccountBook/Budget — paste, fill, undo", () => {
 });
 
 describe("AccountBook/Budget — views, year, lines, Excel", () => {
-    it("the Actual view shows the actual totals; Remaining shows what remains, coloured by state", () => {
+    it("the Actual view shows the actual totals; Remaining shows what remains, colored by state", () => {
         const h = load();
 
         h.$("#budgetViewSwitch [data-view='actual']").trigger("click");
@@ -774,7 +774,7 @@ describe("AccountBook/Budget — the less common paths", () => {
         expect(editor(h).getValue()).toBe("=B2");
     });
 
-    it("a reference outside the sheet is coloured but outlines nothing; moving the caret again moves the parenthesis highlight", () => {
+    it("a reference outside the sheet is colored but outlines nothing; moving the caret again moves the parenthesis highlight", () => {
         const h = load();
         vi.useFakeTimers();
         gridKey(h, "F2");

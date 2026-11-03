@@ -10,7 +10,7 @@ namespace Maroik.Core.Domain.Formulas;
 /// <para>
 /// It never throws. A problem becomes a <see cref="FormulaDiagnostic"/> at the exact span (a zero-length span at the end for
 /// "something is missing here") and an <see cref="InvalidNode"/> in the tree, and parsing goes on, so a formula that is still
-/// being typed is coloured and underlined as far as it goes. The lexer's error tokens are reported first and then skipped.
+/// being typed is colored and underlined as far as it goes. The lexer's error tokens are reported first and then skipped.
 /// </para>
 /// </summary>
 public static class FormulaParser
@@ -27,8 +27,7 @@ public static class FormulaParser
     /// </summary>
     public static FormulaSyntax Parse(string input, bool canonical)
     {
-        List<FormulaToken> tokens = [new FormulaToken(FormulaTokenKind.Operator, new TextSpan(0, 1), "=")];
-        tokens.AddRange(FormulaLexer.Tokenize(input, 1, canonical));
+        List<FormulaToken> tokens = [new(FormulaTokenKind.Operator, new TextSpan(0, 1), "="), .. FormulaLexer.Tokenize(input, 1, canonical)];
         var parser = new State(input.Length, [.. tokens.Skip(1).Where(t => t.Kind != FormulaTokenKind.Error)]);
         foreach (FormulaToken error in tokens.Where(t => t.Kind == FormulaTokenKind.Error))
             parser.Diagnostics.Add(new FormulaDiagnostic(error.Span, error.Problem!.Value));

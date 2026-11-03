@@ -10,11 +10,11 @@ namespace Maroik.Core.Domain.Tests.Kanbans;
 public class KanbanCardTests
 {
     /// <summary>The fixed "current time" every domain call in this class receives.</summary>
-    private static readonly DateTime Now = new(2026, 5, 24, 12, 0, 0, DateTimeKind.Utc);
+    private static readonly DateTime _now = new(2026, 5, 24, 12, 0, 0, DateTimeKind.Utc);
 
-    /// <summary>A valid card in the To do lane, created at <see cref="Now"/>.</summary>
+    /// <summary>A valid card in the To do lane, created at <see cref="_now"/>.</summary>
     private static KanbanCard ValidCard(DateOnly? dueDate = null) =>
-        KanbanCard.Create("user@example.com", "ToDo", "Write the report", "First draft", dueDate, Now).Value;
+        KanbanCard.Create("user@example.com", "ToDo", "Write the report", "First draft", dueDate, _now).Value;
 
     // -- Create ---------------------------------------------------------------
 
@@ -22,7 +22,7 @@ public class KanbanCardTests
     [Fact]
     public void Create_ReturnsTheCard_WhenValid()
     {
-        var result = KanbanCard.Create("User@Example.com", "InProgress", "Write the report", "Line 1\nLine 2", new DateOnly(2026, 5, 28), Now);
+        var result = KanbanCard.Create("User@Example.com", "InProgress", "Write the report", "Line 1\nLine 2", new DateOnly(2026, 5, 28), _now);
 
         Assert.False(result.IsError);
         KanbanCard card = result.Value;
@@ -32,8 +32,8 @@ public class KanbanCardTests
         Assert.Equal("Write the report", card.Title);
         Assert.Equal("Line 1\nLine 2", card.Description);
         Assert.Equal(new DateOnly(2026, 5, 28), card.DueDate);
-        Assert.Equal(Now, card.Created);
-        Assert.Equal(Now, card.Updated);
+        Assert.Equal(_now, card.Created);
+        Assert.Equal(_now, card.Updated);
     }
 
     /// <summary>The description and the due date are optional; an empty or blank description is stored as none.</summary>
@@ -43,7 +43,7 @@ public class KanbanCardTests
     [InlineData("   ")]
     public void Create_StoresNoDescription_WhenItIsBlank(string? description)
     {
-        var result = KanbanCard.Create("user@example.com", "Backlog", "Title", description, null, Now);
+        var result = KanbanCard.Create("user@example.com", "Backlog", "Title", description, null, _now);
 
         Assert.False(result.IsError);
         Assert.Null(result.Value.Description);
@@ -57,7 +57,7 @@ public class KanbanCardTests
     [InlineData(null)]
     public void Create_RefusesAnUnknownLane(string? lane)
     {
-        var result = KanbanCard.Create("user@example.com", lane, "Title", null, null, Now);
+        var result = KanbanCard.Create("user@example.com", lane, "Title", null, null, _now);
 
         Assert.True(result.IsError);
         Assert.Equal("KanbanCard.LaneInvalid", result.FirstError.Code);
@@ -71,7 +71,7 @@ public class KanbanCardTests
     [InlineData("  \t ")]
     public void Create_RefusesABlankTitle(string? title)
     {
-        var result = KanbanCard.Create("user@example.com", "Backlog", title, null, null, Now);
+        var result = KanbanCard.Create("user@example.com", "Backlog", title, null, null, _now);
 
         Assert.True(result.IsError);
         Assert.Equal("KanbanCard.TitleEmpty", result.FirstError.Code);
@@ -81,8 +81,8 @@ public class KanbanCardTests
     [Fact]
     public void Create_AppliesThePostTitleLimit()
     {
-        var atLimit = KanbanCard.Create("user@example.com", "Backlog", new string('a', TitledContentPolicy.MaxTitleLength), null, null, Now);
-        var overLimit = KanbanCard.Create("user@example.com", "Backlog", new string('a', TitledContentPolicy.MaxTitleLength + 1), null, null, Now);
+        var atLimit = KanbanCard.Create("user@example.com", "Backlog", new string('a', TitledContentPolicy.MaxTitleLength), null, null, _now);
+        var overLimit = KanbanCard.Create("user@example.com", "Backlog", new string('a', TitledContentPolicy.MaxTitleLength + 1), null, null, _now);
 
         Assert.False(atLimit.IsError);
         Assert.Equal("KanbanCard.TitleTooLong", overLimit.FirstError.Code);
@@ -93,8 +93,8 @@ public class KanbanCardTests
     [Fact]
     public void Create_AppliesTheBodyLimit_ToTheDescription()
     {
-        var atLimit = KanbanCard.Create("user@example.com", "Backlog", "Title", new string('a', TitledContentPolicy.MaxBodyLength), null, Now);
-        var overLimit = KanbanCard.Create("user@example.com", "Backlog", "Title", new string('a', TitledContentPolicy.MaxBodyLength + 1), null, Now);
+        var atLimit = KanbanCard.Create("user@example.com", "Backlog", "Title", new string('a', TitledContentPolicy.MaxBodyLength), null, _now);
+        var overLimit = KanbanCard.Create("user@example.com", "Backlog", "Title", new string('a', TitledContentPolicy.MaxBodyLength + 1), null, _now);
 
         Assert.False(atLimit.IsError);
         Assert.Equal("KanbanCard.DescriptionTooLong", overLimit.FirstError.Code);
@@ -105,7 +105,7 @@ public class KanbanCardTests
     [Fact]
     public void Create_RefusesAnInvalidEmail()
     {
-        var result = KanbanCard.Create("not-an-email", "Backlog", "Title", null, null, Now);
+        var result = KanbanCard.Create("not-an-email", "Backlog", "Title", null, null, _now);
 
         Assert.True(result.IsError);
         Assert.Equal("Email.Invalid", result.FirstError.Code);
@@ -118,7 +118,7 @@ public class KanbanCardTests
     public void Update_ReplacesTheContent_AndKeepsTheLane()
     {
         KanbanCard card = ValidCard(new DateOnly(2026, 5, 28));
-        DateTime later = Now.AddHours(3);
+        DateTime later = _now.AddHours(3);
 
         var result = card.Update("Send the report", null, null, later);
 
@@ -127,7 +127,7 @@ public class KanbanCardTests
         Assert.Null(card.Description);
         Assert.Null(card.DueDate);
         Assert.Equal("ToDo", card.Lane);
-        Assert.Equal(Now, card.Created);
+        Assert.Equal(_now, card.Created);
         Assert.Equal(later, card.Updated);
     }
 
@@ -139,13 +139,13 @@ public class KanbanCardTests
     {
         KanbanCard card = ValidCard(new DateOnly(2026, 5, 28));
 
-        var result = card.Update(title, "changed", new DateOnly(2027, 1, 1), Now.AddHours(1));
+        var result = card.Update(title, "changed", new DateOnly(2027, 1, 1), _now.AddHours(1));
 
         Assert.Equal(code, result.FirstError.Code);
         Assert.Equal("Write the report", card.Title);
         Assert.Equal("First draft", card.Description);
         Assert.Equal(new DateOnly(2026, 5, 28), card.DueDate);
-        Assert.Equal(Now, card.Updated);
+        Assert.Equal(_now, card.Updated);
     }
 
     /// <summary>Update applies the same title and description limits as Create.</summary>
@@ -154,8 +154,8 @@ public class KanbanCardTests
     {
         KanbanCard card = ValidCard();
 
-        Assert.Equal("KanbanCard.TitleTooLong", card.Update(new string('a', TitledContentPolicy.MaxTitleLength + 1), null, null, Now).FirstError.Code);
-        Assert.Equal("KanbanCard.DescriptionTooLong", card.Update("Title", new string('a', TitledContentPolicy.MaxBodyLength + 1), null, Now).FirstError.Code);
+        Assert.Equal("KanbanCard.TitleTooLong", card.Update(new string('a', TitledContentPolicy.MaxTitleLength + 1), null, null, _now).FirstError.Code);
+        Assert.Equal("KanbanCard.DescriptionTooLong", card.Update("Title", new string('a', TitledContentPolicy.MaxBodyLength + 1), null, _now).FirstError.Code);
     }
 
     /// <summary>
@@ -201,7 +201,7 @@ public class KanbanCardTests
     [Fact]
     public void DueStateAt_IsNone_WithoutADueDate()
     {
-        Assert.Equal(KanbanDueState.None, ValidCard().DueStateAt(Now, "UTC"));
+        Assert.Equal(KanbanDueState.None, ValidCard().DueStateAt(_now, "UTC"));
     }
 
     /// <summary>A card due later, or today, is not overdue; one due yesterday is.</summary>
@@ -211,7 +211,7 @@ public class KanbanCardTests
     [InlineData(2026, 5, 23, KanbanDueState.Overdue)]
     public void DueStateAt_ComparesTheDueDate_WithToday(int year, int month, int day, KanbanDueState expected)
     {
-        Assert.Equal(expected, ValidCard(new DateOnly(year, month, day)).DueStateAt(Now, "UTC"));
+        Assert.Equal(expected, ValidCard(new DateOnly(year, month, day)).DueStateAt(_now, "UTC"));
     }
 
     /// <summary>

@@ -23,7 +23,7 @@ public sealed class RecalculationEngine(Func<CellAddress, decimal?> actualOf, Fu
     private readonly FormulaDependencyGraph _graph = new();
 
     /// <summary>#CYCLE!.</summary>
-    private static readonly ErrorValue Cycle = new(FormulaErrorKind.Cycle);
+    private static readonly ErrorValue _cycle = new(FormulaErrorKind.Cycle);
 
     /// <summary>Sets (or, with null, clears) a cell's definition; its value changes on the next recalculation.</summary>
     public void Define(CellAddress cell, CellDefinition? definition)
@@ -68,7 +68,7 @@ public sealed class RecalculationEngine(Func<CellAddress, decimal?> actualOf, Fu
     public FormulaValue Preview(CellAddress cell, BoundFormula formula)
     {
         IReadOnlySet<CellAddress> dependents = _graph.Reach([cell]);
-        return formula.Precedents.Any(dependents.Contains) ? Cycle : FormulaEvaluator.Evaluate(formula, Context);
+        return formula.Precedents.Any(dependents.Contains) ? _cycle : FormulaEvaluator.Evaluate(formula, Context);
     }
 
     /// <summary>What a formula reads during evaluation.</summary>
@@ -79,7 +79,7 @@ public sealed class RecalculationEngine(Func<CellAddress, decimal?> actualOf, Fu
     {
         var (order, cyclic) = _graph.Order(cells);
         foreach (CellAddress cell in cyclic)
-            _values[cell] = Cycle;
+            _values[cell] = _cycle;
         foreach (CellAddress cell in order)
         {
             CellDefinition definition = _definitions[cell];

@@ -60,7 +60,7 @@ public class FolderRoleArchitectureTests
         string[] violations =
         [
             .. _productionTypes.Value
-                .Where(t => t.Folder == InterfacesFolder && !t.IsInterface)
+                .Where(t => t is { Folder: InterfacesFolder, IsInterface: false })
                 .Select(t => $"{t.Path}: {t.Name} is not an interface but sits in {InterfacesFolder}/"),
         ];
 
@@ -90,7 +90,7 @@ public class FolderRoleArchitectureTests
         string[] violations =
         [
             .. _productionTypes.Value
-                .Where(t => t.Folder == ExtensionsFolder && !t.HasExtensionMembers)
+                .Where(t => t is { Folder: ExtensionsFolder, HasExtensionMembers: false })
                 .Select(t => $"{t.Path}: {t.Name} declares no extension member but sits in {ExtensionsFolder}/"),
         ];
 
@@ -134,7 +134,7 @@ public class FolderRoleArchitectureTests
         Assert.Equal(
             ["IThing:Interfaces:interface", "ThisExtensions:Extensions:extensions", "BlockExtensions:Extensions:extensions", "Plain:Helpers:"],
             parsed.Select(t => $"{t.Name}:{t.Folder}:{(t.IsInterface ? "interface" : t.HasExtensionMembers ? "extensions" : "")}"));
-        Assert.Contains(_productionTypes.Value, t => t.Name == "IUnitOfWork" && t.IsInterface);
+        Assert.Contains(_productionTypes.Value, t => t is { Name: "IUnitOfWork", IsInterface: true });
     }
 
     /// <summary>Every top-level type declared in the <c>.cs</c> files of the production projects, or of the test projects.</summary>
@@ -178,11 +178,11 @@ public class FolderRoleArchitectureTests
                 folder,
                 type.Identifier.ValueText,
                 type is InterfaceDeclarationSyntax,
-                HasExtensionMembers(type)));
+                DeclaresExtensionMembers(type)));
     }
 
     /// <summary>True when <paramref name="type"/> declares an extension method or a C# 14 <c>extension</c> block.</summary>
-    private static bool HasExtensionMembers(BaseTypeDeclarationSyntax type) =>
+    private static bool DeclaresExtensionMembers(BaseTypeDeclarationSyntax type) =>
         type is TypeDeclarationSyntax declaration
         && declaration.Members.Any(member =>
             member is ExtensionBlockDeclarationSyntax

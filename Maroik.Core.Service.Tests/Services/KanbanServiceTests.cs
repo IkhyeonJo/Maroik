@@ -10,7 +10,7 @@ using Moq;
 namespace Maroik.Core.Service.Tests.Services;
 
 /// <summary>
-/// Unit tests for <see cref="KanbanService"/>. The repository is a Moq mock; the clock is stopped at <see cref="Now"/>.
+/// Unit tests for <see cref="KanbanService"/>. The repository is a Moq mock; the clock is stopped at <see cref="_now"/>.
 /// Covers the board layout (four lanes, creation order, the overdue flag in the owner's time zone), the card writes (each a single
 /// non-transactional repository call), the owner scoping (another account's card is "not found"), the fixed lane, and
 /// the log entries: a delete at Information, a card that was not found at Warning — never the card's text.
@@ -24,7 +24,7 @@ public class KanbanServiceTests
     private const string SecretTitle = "SECRET TITLE";
 
     /// <summary>The fixed "current time" of these tests: 2026-05-24 20:00 UTC (already the 25th in Seoul).</summary>
-    private static readonly DateTime Now = new(2026, 5, 24, 20, 0, 0, DateTimeKind.Utc);
+    private static readonly DateTime _now = new(2026, 5, 24, 20, 0, 0, DateTimeKind.Utc);
 
     /// <summary>Mock <c>IKanbanCardRepository</c> injected into the system under test.</summary>
     private readonly Mock<IKanbanCardRepository> _repository = new(MockBehavior.Strict);
@@ -32,15 +32,15 @@ public class KanbanServiceTests
     /// <summary>Captures the log entries the system under test writes.</summary>
     private readonly FakeLogger<KanbanService> _logger = new();
 
-    /// <summary>The clock the service under test reads, stopped at <see cref="Now"/>.</summary>
-    private readonly FakeTimeProvider _time = new(new DateTimeOffset(Now));
+    /// <summary>The clock the service under test reads, stopped at <see cref="_now"/>.</summary>
+    private readonly FakeTimeProvider _time = new(new DateTimeOffset(_now));
 
     /// <summary>The service under test over the mocked repository.</summary>
     private KanbanService CreateSut() => new(_repository.Object, _logger, _time);
 
     /// <summary>A stored card of <see cref="Email"/>.</summary>
     private static KanbanCard Stored(long id, string lane = "ToDo", DateOnly? dueDate = null, DateTime? created = null, string title = SecretTitle) =>
-        KanbanCard.Reconstitute(id, Email, lane, title, "SECRET BODY", dueDate, created ?? Now.AddDays(-1), created ?? Now.AddDays(-1));
+        KanbanCard.Reconstitute(id, Email, lane, title, "SECRET BODY", dueDate, created ?? _now.AddDays(-1), created ?? _now.AddDays(-1));
 
     /// <summary>Makes the repository answer the owner-scoped lookup of <paramref name="id"/> with <paramref name="card"/>.</summary>
     private void Find(long id, KanbanCard? card) =>
@@ -66,8 +66,8 @@ public class KanbanServiceTests
     {
         _repository.Setup(r => r.GetByAccountEmailAsync(Email, It.IsAny<CancellationToken>())).ReturnsAsync(
         [
-            Stored(2, "Done", created: Now.AddHours(-1)),
-            Stored(1, "Done", new DateOnly(2026, 6, 1), Now.AddHours(-2)),
+            Stored(2, "Done", created: _now.AddHours(-1)),
+            Stored(1, "Done", new DateOnly(2026, 6, 1), _now.AddHours(-2)),
         ]);
 
         List<KanbanLaneResponse> board = await CreateSut().GetBoardAsync(Email, "UTC", TestContext.Current.CancellationToken);
@@ -81,8 +81,8 @@ public class KanbanServiceTests
         Assert.Equal("SECRET BODY", first.Description);
         Assert.Equal(new DateOnly(2026, 6, 1), first.DueDate);
         Assert.False(first.Overdue);
-        Assert.Equal(Now.AddHours(-2), first.Created);
-        Assert.Equal(Now.AddHours(-2), first.Updated);
+        Assert.Equal(_now.AddHours(-2), first.Created);
+        Assert.Equal(_now.AddHours(-2), first.Updated);
     }
 
     /// <summary>
@@ -124,7 +124,7 @@ public class KanbanServiceTests
         Assert.Equal("Write", created.Title);
         Assert.Equal("Body", created.Description);
         Assert.Equal(new DateOnly(2026, 6, 1), created.DueDate);
-        Assert.Equal(Now, created.Created);
+        Assert.Equal(_now, created.Created);
     }
 
     /// <summary>A request the domain refuses returns its error (code, template, arguments) and writes nothing.</summary>
@@ -160,7 +160,7 @@ public class KanbanServiceTests
         Assert.Null(card.Description);
         Assert.Null(card.DueDate);
         Assert.Equal("Backlog", card.Lane);
-        Assert.Equal(Now, card.Updated);
+        Assert.Equal(_now, card.Updated);
         _repository.Verify(r => r.UpdateEntityAsync(card, It.IsAny<CancellationToken>()), Times.Once);
     }
 

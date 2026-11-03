@@ -27,7 +27,7 @@ that specific change. Check every candidate review finding in this area against 
 - CI/CD (`.github/workflows/ci-cd.yml`) runs on pushes to `main`, pull requests into `main` and on demand only — not on
   pushes to other branches. A feature branch is checked by opening its pull request (or a manual run). Do not widen the
   triggers.
-- Maroik only ever runs under docker-compose on Linux (Ubuntu). Behaviour that differs only on a Windows dev box
+- Maroik only ever runs under docker-compose on Linux (Ubuntu). Behavior that differs only on a Windows dev box
   (path separators, a test that fails only there) is an environment difference, not a defect.
 - The containers run as root (no `USER` in the Dockerfiles).
 - In production TLS ends at Cloudflare: the site is reached only through a Cloudflare Tunnel, which hands requests

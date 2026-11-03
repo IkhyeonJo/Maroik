@@ -15,7 +15,7 @@ public interface IFileManagerScanQueue
     bool IsPending(string uploadId);
 
     /// <summary>
-    /// Waits for the next queued scan: its upload id, and the token that is cancelled when the upload is aborted
+    /// Waits for the next queued scan: its upload id, and the token that is canceled when the upload is aborted
     /// (<see cref="Cancel"/>).
     /// </summary>
     ValueTask<(string UploadId, CancellationToken Aborted)> DequeueAsync(CancellationToken ct);

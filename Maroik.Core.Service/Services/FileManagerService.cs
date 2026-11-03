@@ -156,7 +156,7 @@ public class FileManagerService(
             if (Finished(tree, id) is not { } node)
                 return (ItemNotFound(), []);
 
-            IEnumerable<FileManagerNode> found = node.IsFolder ? tree.Descendants(node.Id).Where(n => !n.IsFolder && !n.Uploading) : [node];
+            IEnumerable<FileManagerNode> found = node.IsFolder ? tree.Descendants(node.Id).Where(n => n is { IsFolder: false, Uploading: false }) : [node];
             foreach (FileManagerNode file in found)
                 files.TryAdd(file.Id, file);
         }

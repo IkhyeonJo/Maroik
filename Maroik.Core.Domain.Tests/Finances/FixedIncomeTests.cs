@@ -8,15 +8,15 @@ namespace Maroik.Core.Domain.Tests.Finances;
 public class FixedIncomeTests
 {
     /// <summary>The fixed "current time" every domain call in this class receives.</summary>
-    private static readonly DateTime Now = new(2026, 7, 1, 12, 0, 0, DateTimeKind.Utc);
+    private static readonly DateTime _now = new(2026, 7, 1, 12, 0, 0, DateTimeKind.Utc);
 
     /// <summary>Maturity date one year from now.</summary>
-    private static readonly DateTime _maturity = Now.AddYears(1);
+    private static readonly DateTime _maturity = _now.AddYears(1);
 
     /// <summary>A valid KRW salary deposited into "My Bank", scheduled for month 1, day 25.</summary>
     private static FixedIncome ValidFixedIncome() =>
         FixedIncome.Register("user@example.com", "RegularIncome", "LaborIncome", "Salary",
-            3000000m, "KRW", "My Bank", 1, 25, _maturity, Now).Value;
+            3000000m, "KRW", "My Bank", 1, 25, _maturity, _now).Value;
 
     // -- Register -------------------------------------------------------------
 
@@ -45,7 +45,7 @@ public class FixedIncomeTests
     public void Register_ReturnsFixedIncome_WhenValid()
     {
         var result = FixedIncome.Register("user@example.com", "RegularIncome", "LaborIncome", "Salary",
-            3000000m, "KRW", "My Bank", 1, 25, _maturity, Now);
+            3000000m, "KRW", "My Bank", 1, 25, _maturity, _now);
 
         Assert.False(result.IsError);
         Assert.Equal(25, result.Value.DepositDay);
@@ -59,7 +59,7 @@ public class FixedIncomeTests
     public void Register_ReturnsError_WhenDepositDayOutOfRange(short day)
     {
         var result = FixedIncome.Register("user@example.com", "RegularIncome", "LaborIncome", null,
-            0m, "KRW", "My Bank", 1, day, _maturity, Now);
+            0m, "KRW", "My Bank", 1, day, _maturity, _now);
 
         Assert.True(result.IsError);
         Assert.Equal("FixedIncome.InvalidDepositDay", result.FirstError.Code);
@@ -75,7 +75,7 @@ public class FixedIncomeTests
     public void Register_ReturnsError_WhenDepositDayInvalidForMonth(short month, short day)
     {
         var result = FixedIncome.Register("user@example.com", "RegularIncome", "LaborIncome", null,
-            0m, "KRW", "My Bank", month, day, _maturity, Now);
+            0m, "KRW", "My Bank", month, day, _maturity, _now);
 
         Assert.True(result.IsError);
         Assert.Equal("FixedIncome.InvalidDepositDay", result.FirstError.Code);
@@ -88,7 +88,7 @@ public class FixedIncomeTests
     public void Register_ReturnsError_WhenDepositMonthOutOfRange(short month)
     {
         var result = FixedIncome.Register("user@example.com", "RegularIncome", "LaborIncome", null,
-            0m, "KRW", "My Bank", month, 1, _maturity, Now);
+            0m, "KRW", "My Bank", month, 1, _maturity, _now);
 
         Assert.True(result.IsError);
         Assert.Equal("FixedIncome.InvalidDepositMonth", result.FirstError.Code);
@@ -101,7 +101,7 @@ public class FixedIncomeTests
     public void Register_ReturnsError_WhenMainClassEmpty(string? mainClass)
     {
         var result = FixedIncome.Register("user@example.com", mainClass, "LaborIncome", null,
-            0m, "KRW", "My Bank", 1, 1, _maturity, Now);
+            0m, "KRW", "My Bank", 1, 1, _maturity, _now);
 
         Assert.True(result.IsError);
         Assert.Equal("FixedIncome.MainClassEmpty", result.FirstError.Code);
@@ -112,7 +112,7 @@ public class FixedIncomeTests
     public void Register_ReturnsError_WhenMaturityDateInPast()
     {
         var result = FixedIncome.Register("user@example.com", "RegularIncome", "LaborIncome", "Salary",
-            3000000m, "KRW", "My Bank", 1, 25, Now.AddYears(-1), Now);
+            3000000m, "KRW", "My Bank", 1, 25, _now.AddYears(-1), _now);
 
         Assert.True(result.IsError);
         Assert.Equal("FixedIncome.MaturityDateInPast", result.FirstError.Code);
@@ -123,7 +123,7 @@ public class FixedIncomeTests
     public void Register_Succeeds_WithNoMaturityDateSentinel()
     {
         var result = FixedIncome.Register("user@example.com", "RegularIncome", "LaborIncome", "Salary",
-            3000000m, "KRW", "My Bank", 1, 25, FixedSchedulePolicy.NoMaturityDate, Now);
+            3000000m, "KRW", "My Bank", 1, 25, FixedSchedulePolicy.NoMaturityDate, _now);
 
         Assert.False(result.IsError);
     }
@@ -136,7 +136,7 @@ public class FixedIncomeTests
     {
         var fi = ValidFixedIncome();
 
-        fi.MarkUnpunctual(Now);
+        fi.MarkUnpunctual(_now);
 
         Assert.True(fi.Unpunctuality);
     }
@@ -146,9 +146,9 @@ public class FixedIncomeTests
     public void ClearUnpunctuality_ClearsFlag()
     {
         var fi = ValidFixedIncome();
-        fi.MarkUnpunctual(Now);
+        fi.MarkUnpunctual(_now);
 
-        fi.ClearUnpunctuality(Now);
+        fi.ClearUnpunctuality(_now);
 
         Assert.False(fi.Unpunctuality);
     }
@@ -161,7 +161,7 @@ public class FixedIncomeTests
     {
         var fi = ValidFixedIncome();
 
-        var result = fi.Update("RegularIncome", "PensionIncome", "Pension", 500000m, "KRW", "Pension Account", 1, 10, _maturity, "note", Now);
+        var result = fi.Update("RegularIncome", "PensionIncome", "Pension", 500000m, "KRW", "Pension Account", 1, 10, _maturity, "note", _now);
 
         Assert.False(result.IsError);
         Assert.Equal("PensionIncome", fi.SubClass);
@@ -176,7 +176,7 @@ public class FixedIncomeTests
     {
         var fi = ValidFixedIncome();
 
-        var result = fi.Update("RegularIncome", "LaborIncome", null, 0m, "KRW", "My Bank", 1, day, _maturity, null, Now);
+        var result = fi.Update("RegularIncome", "LaborIncome", null, 0m, "KRW", "My Bank", 1, day, _maturity, null, _now);
 
         Assert.True(result.IsError);
         Assert.Equal("FixedIncome.InvalidDepositDay", result.FirstError.Code);
@@ -188,7 +188,7 @@ public class FixedIncomeTests
     {
         var fi = ValidFixedIncome();
 
-        var result = fi.Update("RegularIncome", "LaborIncome", null, 0m, "KRW", "My Bank", 4, 31, _maturity, null, Now);
+        var result = fi.Update("RegularIncome", "LaborIncome", null, 0m, "KRW", "My Bank", 4, 31, _maturity, null, _now);
 
         Assert.True(result.IsError);
         Assert.Equal("FixedIncome.InvalidDepositDay", result.FirstError.Code);
@@ -201,7 +201,7 @@ public class FixedIncomeTests
         var fi = ValidFixedIncome();
 
         var result = fi.Update("RegularIncome", "LaborIncome", null, 0m, "KRW", "My Bank", 1, 10,
-            Now.AddYears(-1), null, Now);
+            _now.AddYears(-1), null, _now);
 
         Assert.True(result.IsError);
         Assert.Equal("FixedIncome.MaturityDateInPast", result.FirstError.Code);
@@ -214,12 +214,12 @@ public class FixedIncomeTests
     [Fact]
     public void Update_Succeeds_WhenPastMaturityDateLeftUnchanged()
     {
-        var pastMaturity = Now.AddYears(-1);
+        var pastMaturity = _now.AddYears(-1);
         var fi = FixedIncome.Reconstitute(1, "user@example.com", "RegularIncome", "LaborIncome", "Salary",
-            3000000m, "KRW", "My Bank", 1, 25, pastMaturity, null, false, Now.AddYears(-2), Now.AddYears(-2));
+            3000000m, "KRW", "My Bank", 1, 25, pastMaturity, null, false, _now.AddYears(-2), _now.AddYears(-2));
 
         var result = fi.Update("RegularIncome", "LaborIncome", "Salary raise", 3200000m, "KRW", "My Bank", 1, 25,
-            pastMaturity, null, Now);
+            pastMaturity, null, _now);
 
         Assert.False(result.IsError);
         Assert.Equal("Salary raise", fi.Content);
@@ -234,7 +234,7 @@ public class FixedIncomeTests
     [InlineData("  ")]
     public void Register_ReturnsError_WhenSubClassEmpty(string? subClass)
     {
-        var result = FixedIncome.Register("user@example.com", "RegularIncome", subClass, "Salary", 1m, "KRW", "My Bank", 1, 25, _maturity, Now);
+        var result = FixedIncome.Register("user@example.com", "RegularIncome", subClass, "Salary", 1m, "KRW", "My Bank", 1, 25, _maturity, _now);
 
         Assert.True(result.IsError);
         Assert.Equal("FixedIncome.SubClassEmpty", result.FirstError.Code);
@@ -247,7 +247,7 @@ public class FixedIncomeTests
     [InlineData("  ")]
     public void Register_ReturnsError_WhenDepositAssetEmpty(string? asset)
     {
-        var result = FixedIncome.Register("user@example.com", "RegularIncome", "LaborIncome", "Salary", 1m, "KRW", asset, 1, 25, _maturity, Now);
+        var result = FixedIncome.Register("user@example.com", "RegularIncome", "LaborIncome", "Salary", 1m, "KRW", asset, 1, 25, _maturity, _now);
 
         Assert.True(result.IsError);
         Assert.Equal("FixedIncome.DepositAssetEmpty", result.FirstError.Code);

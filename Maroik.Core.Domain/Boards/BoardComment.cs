@@ -26,7 +26,7 @@ public sealed class BoardComment : AggregateRoot<long>
     public long BoardId { get; private set; }
 
     /// <summary>Display order of the comment within the post.</summary>
-    public long Order { get; private set; }
+    public long Order { get; }
 
     /// <summary>Relative path to the commenter's avatar image.</summary>
     public string? AvatarImagePath { get; private set; }

@@ -18,13 +18,13 @@ public sealed class KanbanCardRepositoryTests(DatabaseFixture database) : Reposi
     private KanbanCardRepository Sut => new(Context);
 
     /// <summary>The fixed creation time of the cards these tests create.</summary>
-    private static readonly DateTime Now = new(2026, 5, 24, 12, 0, 0, DateTimeKind.Utc);
+    private static readonly DateTime _now = new(2026, 5, 24, 12, 0, 0, DateTimeKind.Utc);
 
     /// <summary>Creates a valid card for <paramref name="email"/> through the repository and returns its stored id.</summary>
     private async Task<long> CreateAsync(string email, string title, string lane = "ToDo", string? description = null, DateOnly? dueDate = null)
     {
         await EnsureAccountsAsync(email);
-        await Sut.CreateAsync(KanbanCard.Create(email, lane, title, description, dueDate, Now).Value, TestContext.Current.CancellationToken);
+        await Sut.CreateAsync(KanbanCard.Create(email, lane, title, description, dueDate, _now).Value, TestContext.Current.CancellationToken);
         Context.ChangeTracker.Clear();
         return await Context.KanbanCards.AsNoTracking().Where(c => c.AccountEmail == email && c.Title == title).Select(c => c.Id).SingleAsync(TestContext.Current.CancellationToken);
     }
@@ -46,8 +46,8 @@ public sealed class KanbanCardRepositoryTests(DatabaseFixture database) : Reposi
         Assert.Equal("Write the report", card.Title);
         Assert.Equal("Line 1\nLine 2", card.Description);
         Assert.Equal(new DateOnly(2026, 5, 28), card.DueDate);
-        Assert.Equal(Now, card.Created);
-        Assert.Equal(Now, card.Updated);
+        Assert.Equal(_now, card.Created);
+        Assert.Equal(_now, card.Updated);
     }
 
     /// <summary>A card without a description or due date stores both as NULL and reads them back as none.</summary>
@@ -108,7 +108,7 @@ public sealed class KanbanCardRepositoryTests(DatabaseFixture database) : Reposi
         string email = UniqueEmail();
         long id = await CreateAsync(email, "Old title", "Backlog", "Old body", new DateOnly(2026, 5, 28));
         KanbanCard card = (await Sut.FindByEmailAndIdAsync(email, id, TestContext.Current.CancellationToken))!;
-        DateTime later = Now.AddHours(2);
+        DateTime later = _now.AddHours(2);
         Assert.False(card.Update("New title", null, new DateOnly(2026, 6, 1), later).IsError);
 
         await Sut.UpdateEntityAsync(card, TestContext.Current.CancellationToken);
@@ -119,7 +119,7 @@ public sealed class KanbanCardRepositoryTests(DatabaseFixture database) : Reposi
         Assert.Null(row.Description);
         Assert.Equal(new DateOnly(2026, 6, 1), row.DueDate);
         Assert.Equal("Backlog", row.Lane);
-        Assert.Equal(Now, row.Created);
+        Assert.Equal(_now, row.Created);
         Assert.Equal(later, row.Updated);
     }
 
@@ -156,7 +156,7 @@ public sealed class KanbanCardRepositoryTests(DatabaseFixture database) : Reposi
     /// <summary>An unsaved card row for <paramref name="email"/>.</summary>
     private static OrmKanbanCard Row(string email, string lane, string title) => new()
     {
-        AccountEmail = email, Lane = lane, Title = title, Created = Now, Updated = Now,
+        AccountEmail = email, Lane = lane, Title = title, Created = _now, Updated = _now,
     };
 
     /// <summary>PostgreSQL enforces <c>KanbanCard_Lane_check</c>: a lane outside the four is refused.</summary>

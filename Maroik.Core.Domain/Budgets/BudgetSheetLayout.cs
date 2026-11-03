@@ -101,7 +101,7 @@ public sealed class BudgetSheetLayout
 
     /// <summary>The month of a column: B = 1 .. M = 12; null for any other column.</summary>
     public static int? MonthOf(string column) =>
-        column.Length == 1 && column[0] is >= 'B' and <= 'M' ? column[0] - 'A' : null;
+        column is [>= 'B' and <= 'M'] ? column[0] - 'A' : null;
 
     /// <summary>What a cell is, or null when it is outside the sheet.</summary>
     public BudgetCellRole? Role(string key, string column)

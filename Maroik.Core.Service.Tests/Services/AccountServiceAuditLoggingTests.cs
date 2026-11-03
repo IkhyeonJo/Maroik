@@ -58,9 +58,9 @@ public class AccountServiceAuditLoggingTests
         _passwordService.Setup(p => p.VerifyPassword(ConfirmPassword, It.IsAny<string>())).Returns(true);
 
     /// <summary>The fixed "current time" of these tests.</summary>
-    private static readonly DateTime Now = new(2026, 7, 1, 12, 0, 0, DateTimeKind.Utc);
-    /// <summary>The clock the service under test reads, stopped at <see cref="Now"/>.</summary>
-    private readonly FakeTimeProvider _time = new(new DateTimeOffset(Now));
+    private static readonly DateTime _now = new(2026, 7, 1, 12, 0, 0, DateTimeKind.Utc);
+    /// <summary>The clock the service under test reads, stopped at <see cref="_now"/>.</summary>
+    private readonly FakeTimeProvider _time = new(new DateTimeOffset(_now));
 
     /// <summary>The service under test over the mocked dependencies and the capturing logger.</summary>
     private AccountService CreateSut() => new(_accountRepo.Object, _passwordService.Object, _mailClient.Object,
@@ -199,7 +199,7 @@ public class AccountServiceAuditLoggingTests
     [Fact]
     public async Task ConfirmEmail_LogsInformation_WhenTheTokenConfirmsTheAccount()
     {
-        string token = GuidToken.Generate(Now);
+        string token = GuidToken.Generate(_now);
         Account account = ExistingAccount(emailConfirmed: false, registrationToken: GuidToken.Hash(token));
         _dataProtection.Setup(r => r.Unprotect(ProtectedValue.MailToken, "enc")).Returns(token);
         _accountRepo.Setup(r => r.FindByRegistrationTokenAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(account);
@@ -216,7 +216,7 @@ public class AccountServiceAuditLoggingTests
     [Fact]
     public async Task ConfirmEmail_LogsWarning_WhenThePasswordDoesNotMatchTheRegistration()
     {
-        string token = GuidToken.Generate(Now);
+        string token = GuidToken.Generate(_now);
         Account account = ExistingAccount(emailConfirmed: false, registrationToken: GuidToken.Hash(token));
         _dataProtection.Setup(r => r.Unprotect(ProtectedValue.MailToken, "enc")).Returns(token);
         _accountRepo.Setup(r => r.FindByRegistrationTokenAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(account);
@@ -232,7 +232,7 @@ public class AccountServiceAuditLoggingTests
     [Fact]
     public async Task Register_LogsInformation_WhenAnUnconfirmedRegistrationIsReplaced()
     {
-        Account existing = ExistingAccount(emailConfirmed: false, registrationToken: GuidToken.Generate(Now));
+        Account existing = ExistingAccount(emailConfirmed: false, registrationToken: GuidToken.Generate(_now));
         _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(existing);
         _accountRepo.Setup(r => r.FindByEmailForUpdateAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(existing);
         _passwordService.Setup(p => p.HashPassword(It.IsAny<string>())).Returns("$2a$13$replaced");
@@ -296,7 +296,7 @@ public class AccountServiceAuditLoggingTests
     [Fact]
     public async Task ResetPassword_LogsInformation_WhenThePasswordIsReset()
     {
-        string token = GuidToken.Generate(Now);
+        string token = GuidToken.Generate(_now);
         Account account = ExistingAccount(locked: true, loginAttempt: 3, resetPasswordToken: GuidToken.Hash(token));
         _dataProtection.Setup(r => r.Unprotect(ProtectedValue.MailToken, "enc")).Returns(token);
         _accountRepo.Setup(r => r.FindByResetPasswordTokenAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(account);

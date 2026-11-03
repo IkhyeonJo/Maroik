@@ -16,7 +16,7 @@ namespace Maroik.Core.Service.Tests.Extensions;
 public class AssetBalanceOrdinalLockExtensionsTests
 {
     /// <summary>The fixed "current time" passed to the adjustments.</summary>
-    private static readonly DateTime Now = new(2026, 7, 1, 12, 0, 0, DateTimeKind.Utc);
+    private static readonly DateTime _now = new(2026, 7, 1, 12, 0, 0, DateTimeKind.Utc);
 
     /// <summary>Owner e-mail of every asset in these tests.</summary>
     private const string Email = "user@example.com";
@@ -153,7 +153,7 @@ public class AssetBalanceOrdinalLockExtensionsTests
 
         var result = await _assetBalance.Object.ApplyBalanceMovementsAsync(
             assets, [Move("Wallet", 30m, isDeposit: true)],
-            Now, TestContext.Current.CancellationToken);
+            _now, TestContext.Current.CancellationToken);
 
         Assert.False(result.IsError);
         _assetBalance.Verify(a => a.GetAssetsAsync(It.IsAny<string>(), It.IsAny<IReadOnlyCollection<string>>(), It.IsAny<CancellationToken>()), Times.Never);
@@ -178,7 +178,7 @@ public class AssetBalanceOrdinalLockExtensionsTests
         var result = await _assetBalance.Object.ApplyBalanceMovementsAsync(
             assets,
             [Move("Payment", 40m, isDeposit: false), Move("Deposit", 40m, isDeposit: true)],
-            Now, TestContext.Current.CancellationToken);
+            _now, TestContext.Current.CancellationToken);
 
         Assert.False(result.IsError);
         Assert.Equal(60m, payment.Balance.Amount);
@@ -199,7 +199,7 @@ public class AssetBalanceOrdinalLockExtensionsTests
 
         var result = await _assetBalance.Object.ApplyBalanceMovementsAsync(
             assets, [Move("", 10m, isDeposit: true)],
-            Now, TestContext.Current.CancellationToken);
+            _now, TestContext.Current.CancellationToken);
 
         Assert.False(result.IsError);
         Assert.Equal(0, saveCalls);
@@ -214,7 +214,7 @@ public class AssetBalanceOrdinalLockExtensionsTests
 
         var result = await _assetBalance.Object.ApplyBalanceMovementsAsync(
             assets, [Move("Wallet", 10m, isDeposit: true, currency: "USD")],
-            Now, TestContext.Current.CancellationToken);
+            _now, TestContext.Current.CancellationToken);
 
         Assert.True(result.IsError);
         Assert.Equal("Asset.CurrencyMismatch", result.FirstError.Code);

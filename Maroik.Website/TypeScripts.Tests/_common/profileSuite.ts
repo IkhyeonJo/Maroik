@@ -28,7 +28,7 @@ export function describeProfileScript(area: "admin" | "user"): void {
         h.$("#ProfileAvatarFiles").trigger("change");
     };
 
-    describe(`${area}/Management/Profile — shared profile behaviour`, () => {
+    describe(`${area}/Management/Profile — shared profile behavior`, () => {
         it.each([
             ["a file over the size limit", 1_048_577, "image/png", "too big"],
             ["an empty file", 0, "image/png", "too big"],

@@ -186,8 +186,8 @@
   <data name="The calendar shared has been successfully updated." xml:space="preserve">
     <value>The calendar shared has been successfully updated.</value>
   </data>
-  <data name="'{0}' is not a recognised time-zone ID." xml:space="preserve">
-    <value>'{0}' is not a recognised time-zone ID.</value>
+  <data name="'{0}' is not a recognized time-zone ID." xml:space="preserve">
+    <value>'{0}' is not a recognized time-zone ID.</value>
   </data>
   <data name="'{0}' is not a valid email address." xml:space="preserve">
     <value>'{0}' is not a valid email address.</value>
@@ -222,8 +222,8 @@
   <data name="Event title must be {0} characters or fewer." xml:space="preserve">
     <value>Event title must be {0} characters or fewer.</value>
   </data>
-  <data name="Event status is not a recognised value." xml:space="preserve">
-    <value>Event status is not a recognised value.</value>
+  <data name="Event status is not a recognized value." xml:space="preserve">
+    <value>Event status is not a recognized value.</value>
   </data>
   <data name="Exactly one lead-time field (minutes/hours/days/weeks) must be set." xml:space="preserve">
     <value>Exactly one lead-time field (minutes/hours/days/weeks) must be set.</value>

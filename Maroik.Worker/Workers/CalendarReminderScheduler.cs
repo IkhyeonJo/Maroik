@@ -15,12 +15,12 @@ public sealed class CalendarReminderScheduler(IServiceScopeFactory scopes, TimeP
     public const int MaxPerRun = 100;
 
     /// <summary>How often the due reminders are looked for.</summary>
-    private static readonly TimeSpan Interval = TimeSpan.FromMinutes(1);
+    private static readonly TimeSpan _interval = TimeSpan.FromMinutes(1);
 
     /// <inheritdoc />
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        using var timer = new PeriodicTimer(Interval, timeProvider);
+        using var timer = new PeriodicTimer(_interval, timeProvider);
         do
         {
             try

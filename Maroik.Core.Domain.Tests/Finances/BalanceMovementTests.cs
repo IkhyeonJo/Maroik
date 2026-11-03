@@ -9,7 +9,7 @@ namespace Maroik.Core.Domain.Tests.Finances;
 public class BalanceMovementTests
 {
     /// <summary>The fixed "current time" every domain call in this class receives.</summary>
-    private static readonly DateTime Now = new(2026, 7, 1, 12, 0, 0, DateTimeKind.Utc);
+    private static readonly DateTime _now = new(2026, 7, 1, 12, 0, 0, DateTimeKind.Utc);
 
     /// <summary>An amount in the given currency.</summary>
     private static Money MoneyOf(decimal amount, string currency = "KRW") => Money.Create(amount, currency).Value;
@@ -17,7 +17,7 @@ public class BalanceMovementTests
     /// <summary>An expenditure of 300 KRW paid from "Card", into <paramref name="depositAsset"/> when it is a transfer.</summary>
     private static Expenditure ExpenditureOf(string? depositAsset)
         => Expenditure.Reconstitute(1, "user@example.com", "ConsumerSpending", "MealOrEatOutExpenses", null,
-            300m, "KRW", "Card", depositAsset, null, Now, Now);
+            300m, "KRW", "Card", depositAsset, null, _now, _now);
 
     // -- Record movements -------------------------------------------------------
 
@@ -41,7 +41,7 @@ public class BalanceMovementTests
     public void Income_DepositsIntoItsDepositAsset()
     {
         var income = Income.Reconstitute(1, "user@example.com", "RegularIncome", "LaborIncome", null,
-            500m, "USD", "Bank", null, Now, Now);
+            500m, "USD", "Bank", null, _now, _now);
 
         Assert.Equal([new BalanceMovement("Bank", MoneyOf(500m, "USD"), IsDeposit: true)], income.BalanceMovements());
     }
@@ -81,21 +81,21 @@ public class BalanceMovementTests
     [Fact]
     public void Apply_Deposits_ForADepositMovement()
     {
-        var asset = Asset.Reconstitute("Card", "user@example.com", "CashAsset", 1000m, "KRW", null, false, Now, Now);
+        var asset = Asset.Reconstitute("Card", "user@example.com", "CashAsset", 1000m, "KRW", null, false, _now, _now);
 
-        Assert.False(asset.Apply(new BalanceMovement("Card", MoneyOf(300m), IsDeposit: true), Now.AddDays(1)).IsError);
+        Assert.False(asset.Apply(new BalanceMovement("Card", MoneyOf(300m), IsDeposit: true), _now.AddDays(1)).IsError);
 
         Assert.Equal(1300m, asset.Balance.Amount);
-        Assert.Equal(Now.AddDays(1), asset.Updated);
+        Assert.Equal(_now.AddDays(1), asset.Updated);
     }
 
     /// <summary>A withdrawal movement subtracts its amount from the balance.</summary>
     [Fact]
     public void Apply_Withdraws_ForAWithdrawalMovement()
     {
-        var asset = Asset.Reconstitute("Card", "user@example.com", "CashAsset", 1000m, "KRW", null, false, Now, Now);
+        var asset = Asset.Reconstitute("Card", "user@example.com", "CashAsset", 1000m, "KRW", null, false, _now, _now);
 
-        Assert.False(asset.Apply(new BalanceMovement("Card", MoneyOf(300m), IsDeposit: false), Now).IsError);
+        Assert.False(asset.Apply(new BalanceMovement("Card", MoneyOf(300m), IsDeposit: false), _now).IsError);
 
         Assert.Equal(700m, asset.Balance.Amount);
     }
@@ -104,9 +104,9 @@ public class BalanceMovementTests
     [Fact]
     public void Apply_ReturnsTheCurrencyMismatchError_ForAMovementInAnotherCurrency()
     {
-        var asset = Asset.Reconstitute("Card", "user@example.com", "CashAsset", 1000m, "KRW", null, false, Now, Now);
+        var asset = Asset.Reconstitute("Card", "user@example.com", "CashAsset", 1000m, "KRW", null, false, _now, _now);
 
-        var result = asset.Apply(new BalanceMovement("Card", MoneyOf(300m, "USD"), IsDeposit: false), Now);
+        var result = asset.Apply(new BalanceMovement("Card", MoneyOf(300m, "USD"), IsDeposit: false), _now);
 
         Assert.Equal("Asset.CurrencyMismatch", result.FirstError.Code);
         Assert.Equal(1000m, asset.Balance.Amount);
