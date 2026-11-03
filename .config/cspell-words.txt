@@ -24,7 +24,9 @@ Newtonsoft
 Nonfactor
 OPQRSTUVWXY
 OPQRSTUVWXYZ
+PGPASSWORD
 Passw
+Perc
 QUJD
 RCDATA
 RSET
@@ -42,6 +44,7 @@ attname
 attnum
 attrelid
 authzid
+autodeploy
 bademail
 beforeafter
 bfcache
@@ -103,6 +106,7 @@ findme
 freeforum
 fullcalendar
 ganss
+getline
 globalconfig
 gridconfigure
 hashedvalue
@@ -119,6 +123,7 @@ indisunique
 indkey
 indrelid
 instream
+ionice
 isready
 jqueryui
 jqvmap
@@ -142,6 +147,7 @@ nacks
 navigations
 needrestart
 netstandard
+newgrp
 newhash
 newpass
 nextcloud
@@ -155,6 +161,7 @@ nosniff
 notanemail
 notanimage
 npgsql
+nrconf
 nshowpage
 nullavatar
 numfmt
@@ -197,6 +204,7 @@ retargets
 rootedness
 rounddown
 rowclick
+rwxr
 sbmt
 scaffolder
 scanoff

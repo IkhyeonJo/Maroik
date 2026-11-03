@@ -1,4 +1,5 @@
-# Spell check for CI (.github/workflows/ci-cd.yml) and the pre-commit hook (.githooks/pre-commit).
+# Spell check, run by `dotnet test` (SpellingDictionaryArchitectureTests.TheRepository_HasNoSpellingErrors, which pins the
+# cspell version and passes the files git does not ignore).
 # American English, like Rider's default. Project words go in .config/cspell-words.txt, which must hold the same words as
 # Rider's project dictionary (.idea/.idea.Maroik/.idea/dictionaries/project.xml) — pinned by SpellingDictionaryArchitectureTests.
 version: "0.2"

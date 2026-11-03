@@ -45,11 +45,6 @@ jobs:
           cache: npm
           cache-dependency-path: Maroik.Website/package-lock.json
 
-      # cspell.config.yaml: American English, the project words in .config/cspell-words.txt (= Rider's project dictionary).
-      # The same pinned version as the pre-commit hook (.githooks/pre-commit); SpellingDictionaryArchitectureTests holds both to it.
-      - name: Spell check (cspell)
-        run: npx --yes cspell@10.4.0 --no-progress
-
       - name: Install client-script toolchain
         working-directory: Maroik.Website
         run: npm ci

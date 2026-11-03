@@ -27,7 +27,9 @@
       <w>Nonfactor</w>
       <w>OPQRSTUVWXY</w>
       <w>OPQRSTUVWXYZ</w>
+      <w>PGPASSWORD</w>
       <w>Passw</w>
+      <w>Perc</w>
       <w>QUJD</w>
       <w>RCDATA</w>
       <w>RSET</w>
@@ -45,6 +47,7 @@
       <w>attnum</w>
       <w>attrelid</w>
       <w>authzid</w>
+      <w>autodeploy</w>
       <w>bademail</w>
       <w>beforeafter</w>
       <w>bfcache</w>
@@ -106,6 +109,7 @@
       <w>freeforum</w>
       <w>fullcalendar</w>
       <w>ganss</w>
+      <w>getline</w>
       <w>globalconfig</w>
       <w>gridconfigure</w>
       <w>hashedvalue</w>
@@ -122,6 +126,7 @@
       <w>indkey</w>
       <w>indrelid</w>
       <w>instream</w>
+      <w>ionice</w>
       <w>isready</w>
       <w>jqueryui</w>
       <w>jqvmap</w>
@@ -145,6 +150,7 @@
       <w>navigations</w>
       <w>needrestart</w>
       <w>netstandard</w>
+      <w>newgrp</w>
       <w>newhash</w>
       <w>newpass</w>
       <w>nextcloud</w>
@@ -158,6 +164,7 @@
       <w>notanemail</w>
       <w>notanimage</w>
       <w>npgsql</w>
+      <w>nrconf</w>
       <w>nshowpage</w>
       <w>nullavatar</w>
       <w>numfmt</w>
@@ -200,6 +207,7 @@
       <w>rootedness</w>
       <w>rounddown</w>
       <w>rowclick</w>
+      <w>rwxr</w>
       <w>sbmt</w>
       <w>scaffolder</w>
       <w>scanoff</w>
