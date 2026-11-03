@@ -33,3 +33,7 @@ that specific change. Check every candidate review finding in this area against 
   unbounded list let one request queue tens of thousands; the page mirrors it from `#maxRemindersPerEvent` and adds no row past it.
   An event's dates lie between `CalendarEvent.MinYear` (2) and `MaxYear` (9998) (since 2026-11-02): around year 1 / 9999 the
   time-zone conversion, a reminder's lead time and the grid's exclusive end left DateTime's range and showed a "temporary error". `CalendarRecurrence` / `RecurrenceId` stay unused on purpose — do not drop the table.
+- The worker's periodic jobs (`CalendarReminderScheduler`, `FileManagerUploadSweepScheduler`, and the loop of
+  `CalendarReminderDispatchService`) catch with `when (ex is not OperationCanceledException)` (owner's decision, 2026-11-03). Do not
+  raise that an `OperationCanceledException` not caused by shutdown could escape and stop the worker host, and do not change the
+  filter to `when (!stoppingToken.IsCancellationRequested)`.
