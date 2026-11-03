@@ -400,12 +400,14 @@ FodyWeavers.xsd
 
 # Rider ignored files
 .idea/*
-# ...except the project spelling dictionary: Rider's spell check reads it, not the .DotSettings UserDictionary.
+# ...except the project spelling dictionary (Rider's spell check reads it, not the .DotSettings UserDictionary) and the
+# project inspection profile (Grazie's style suggestions, such as "Long sentence", are off: long rationale comments are wanted).
 !.idea/.idea.Maroik/
 .idea/.idea.Maroik/*
 !.idea/.idea.Maroik/.idea/
 .idea/.idea.Maroik/.idea/*
 !.idea/.idea.Maroik/.idea/dictionaries/
+!.idea/.idea.Maroik/.idea/inspectionProfiles/
 
 # =============================================================================
 # Custom Maroik Ignore Rules
