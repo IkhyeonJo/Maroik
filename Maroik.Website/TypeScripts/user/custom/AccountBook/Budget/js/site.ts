@@ -327,6 +327,8 @@
             RepaintCell(c.address);
         }
         ShowActive();
+        // A formula typed while this write was being saved was previewed against the values before it: preview it again.
+        if (editing) SchedulePreview(editing.address);
     }
 
     // -- Selection --------------------------------------------------------------------

@@ -85,10 +85,9 @@ public class BudgetFlowTests(E2ESharedFixture fixture) : E2ETestBase(fixture)
     public async Task AFormula_IsColoredWhileTyped_AndCalculates()
     {
         var (page, _) = await OpenAsync();
-        // The preview reads the stored sheet, so B2's save must have landed before the formula is typed: Playwright types faster
-        // than the save's round trip (≈300 ms here, against the preview's 150 ms pause), and the preview would then read B2 as 0.
-        await page.RunAndWaitForResponseAsync(() => EnterAsync(page, "B2", "100"),
-            response => response.Url.Contains("/AccountBook/SetBudgetCells", StringComparison.Ordinal));
+        // Typed straight on, while B2's save is still out (its round trip outlasts the preview's 150 ms pause): the page previews
+        // the formula again once the save's reply is in, so the value still comes out right.
+        await EnterAsync(page, "B2", "100");
 
         await Cell(page, "C2").ClickAsync();
         await page.Keyboard.TypeAsync("=B2*2");

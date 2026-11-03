@@ -427,6 +427,41 @@ describe("AccountBook/Budget — the formula bar", () => {
         expect(h.$("#budgetPreviewValue").text()).toBe("12");
     });
 
+    // The preview reads the stored sheet: one asked for while an earlier edit is still being saved reads the old values, so the
+    // formula being typed is previewed again once the save's reply is in.
+    it("a save that lands while a formula is typed asks for its preview again", () => {
+        const h = load();
+        vi.useFakeTimers();
+        gridKey(h, "F2");
+        editor(h).type("500");
+        editor(h).key("Enter");
+        gridKey(h, "F2");
+        editor(h).type("=B2*2");
+        vi.advanceTimersByTime(300);
+        successOf(callTo(h, "/AccountBook/PreviewBudgetCell"))(preview({ value: "600,000" }));
+
+        successOf(callTo(h, "/AccountBook/SetBudgetCells"))({ result: true, changed: [cell("B2", "Budget", "500", { input: "500" })] });
+        vi.advanceTimersByTime(300);
+
+        expect(callsTo(h, "/AccountBook/PreviewBudgetCell")).toHaveLength(2);
+        expect(bodyOf(callTo(h, "/AccountBook/PreviewBudgetCell"))).toEqual({ Kind: "Expenditure", Year: 2026, Address: "B3", Input: "=B2*2" });
+        successOf(callTo(h, "/AccountBook/PreviewBudgetCell"))(preview({ value: "1,000" }));
+        expect(h.$("#budgetPreviewValue").text()).toBe("1,000");
+    });
+
+    it("a save that lands while nothing is edited asks for no preview", () => {
+        const h = load();
+        vi.useFakeTimers();
+        gridKey(h, "F2");
+        editor(h).type("500");
+        editor(h).key("Enter");
+
+        successOf(callTo(h, "/AccountBook/SetBudgetCells"))({ result: true, changed: [cell("B2", "Budget", "500", { input: "500" })] });
+        vi.advanceTimersByTime(300);
+
+        expect(callsTo(h, "/AccountBook/PreviewBudgetCell")).toHaveLength(0);
+    });
+
     it("the caret next to a parenthesis highlights it and its partner", () => {
         const h = load();
         typeFormula(h, "=SUM(B2:C3)");
