@@ -35,7 +35,7 @@ public class AccountBoundaryTests
 
     /// <summary>Verifies that each new account gets a different 32-hex-digit security stamp.</summary>
     [Fact]
-    public void NewAccounts_GetADistinctHyphenlessSecurityStamp()
+    public void NewAccounts_GetADistinctSecurityStampWithoutHyphens()
     {
         string stamp1 = DomainAccount.Create(Email, "$2a$h", "Nick", AccountRole.User, "UTC", null, GuidToken.Generate(_now), true, _now).Value.SecurityStamp;
         string stamp2 = DomainAccount.Create(Email, "$2a$h", "Nick", AccountRole.User, "UTC", null, GuidToken.Generate(_now), true, _now).Value.SecurityStamp;

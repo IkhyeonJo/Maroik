@@ -19,8 +19,26 @@ dotnet test --solution Maroik.slnx --max-parallel-test-modules 1
 ```
 
 Run the test modules one at a time: the E2E browser fails when another suite's container leaves the Docker bridge.
-CI (`.github/workflows/ci-cd.yml`, on pull requests into `main`) runs the same steps plus a coverage gate
+CI (`.github/workflows/ci-cd.yml`, on pull requests into `main`) runs the same steps plus a spell check and a coverage gate
 (line >= 80 %, branch >= 65 %).
+
+## Spelling
+
+Comments, docs and identifiers are American English (`behavior`, `canceled`, `color`). CI checks them with cspell
+(`cspell.config.yaml`); a project word that is not in the dictionary — a product name, a protocol keyword, a piece of test
+data — goes into **both** `.config/cspell-words.txt` (cspell) and Rider's project dictionary
+(`.idea/.idea.Maroik/.idea/dictionaries/project.xml`, which "Save to project-level dictionary" in Rider writes). The two must
+hold the same words (`SpellingDictionaryArchitectureTests`). Before adding a word, check it is not a typo.
+
+To catch a spelling error before CI does, enable the pre-commit hook once per clone:
+
+```bash
+git config core.hooksPath .githooks
+```
+
+It runs the same cspell version as CI on the staged files (through `npx`, or in the `node:22-alpine` image when the machine
+has no Node). `git commit --no-verify` skips it for one commit. To check the whole repository as CI does, run the command of
+the "Spell check (cspell)" step in `ci-cd.yml` from the repository root.
 
 ## What the build and the tests already check for you
 
@@ -32,6 +50,7 @@ CI (`.github/workflows/ci-cd.yml`, on pull requests into `main`) runs the same s
 | Plural folder names, one type per file, folder roles (`Interfaces/`, `Extensions/`, `Fixtures/`, …) | `MAROIK0001`, SA1402 / SA1649, `FolderRoleArchitectureTests` |
 | Domain errors through `DomainError`, service error keys from `ServiceErrorKeys`, resx completeness | `DomainArchitectureTests`, `ServiceErrorKeyArchitectureTests`, `ServiceErrorKeyResxTests`, `ResourceCompletenessTests` |
 | No `any` / type assertions in the client scripts | `noExplicitAny.test.ts`, `noImplicitAny.test.ts` |
+| American spelling; cspell's word list = Rider's project dictionary; CI and the hook on one cspell version | cspell (CI, `.githooks/pre-commit`), `SpellingDictionaryArchitectureTests` |
 | Every POST action has a failure-contract test | `ControllerFailureContractTests` |
 
 ## What is left to you

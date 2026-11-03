@@ -49,7 +49,7 @@ public class FormFileExtensionsTests
     /// service-layer size check rejects it without the payload ever being buffered into memory.
     /// </summary>
     [Fact]
-    public async Task ToAttachedFileInfoAsync_OverMaxBytes_ReturnsBodylessDescriptor()
+    public async Task ToAttachedFileInfoAsync_OverMaxBytes_ReturnsDescriptorWithoutBody()
     {
         IFormFile file = MakeFormFile("hello world", "big.zip", "application/zip");
 

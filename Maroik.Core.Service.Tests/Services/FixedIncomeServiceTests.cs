@@ -253,7 +253,7 @@ public class FixedIncomeServiceTests
         _fixedIncomeRepo.Verify(r => r.UpdateEntityAsync(It.Is<FixedIncome>(fi => fi.Unpunctuality), It.IsAny<CancellationToken>()), Times.Once);
     }
 
-    /// <summary>Unticking the checkbox clears a previously set flag.</summary>
+    /// <summary>Clearing the checkbox clears a previously set flag.</summary>
     [Fact]
     public async Task UpdateAsync_ClearsUnpunctuality_WhenNotRequested()
     {

@@ -225,7 +225,7 @@ public class ProfileServiceTests
 
     /// <summary>A refused image is never re-encoded: the decoder only sees bytes the validator accepted.</summary>
     [Fact]
-    public async Task UploadAndUpdateAvatarAsync_DoesNotReencode_AnImageThatFailedValidation()
+    public async Task UploadAndUpdateAvatarAsync_DoesNotReEncode_AnImageThatFailedValidation()
     {
         _imageValidator.Setup(v => v.IsValidImage(It.IsAny<byte[]>())).Returns(false);
 

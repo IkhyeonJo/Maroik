@@ -337,7 +337,7 @@ try
         context.Response.Headers[Microsoft.Net.Http.Headers.HeaderNames.Vary] =
             (string[])["Accept-Encoding"];
 
-        #region Security Headers [https: //blog.elmah.io/the-asp-net-core-security-headers-guide/]
+        #region Security Headers [https://blog.elmah.io/the-asp-net-core-security-headers-guide/]
 
         // Strict-Transport-Security is emitted by app.UseHsts() alone (see AddHsts above) — a second
         // handWritten header here produced two conflicting max-age values on every HTTPS response.

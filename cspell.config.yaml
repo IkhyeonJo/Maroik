@@ -45,7 +45,7 @@ ignorePaths:
 ignoreRegExpList:
   - Urls
   - Email
-  - Hex
+  - HexValues
   - Base64
   # Text in other scripts (Korean, Cyrillic, Greek, full-width Latin) is test data, not English.
   - "/[^\\x00-\\x7F]+/g"

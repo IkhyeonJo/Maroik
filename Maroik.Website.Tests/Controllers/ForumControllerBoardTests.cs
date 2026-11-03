@@ -264,7 +264,7 @@ public class ForumControllerBoardTests(MaroikWebApplicationFactory factory)
 
     /// <summary>Delete board admin can delete anyone's board.</summary>
     [Fact]
-    public async Task DeleteBoard_Admin_CanDeleteAnyonesBoard()
+    public async Task DeleteBoard_Admin_CanDeleteAnotherUsersBoard()
     {
         var session = await LoginAsAdminAsync();
         long boardId = SeedBoard(writer: "SomeoneElse");

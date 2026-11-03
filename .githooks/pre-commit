@@ -1,0 +1,29 @@
+#!/bin/sh
+# Spell-checks the staged files with the same cspell as CI (.github/workflows/ci-cd.yml), against cspell.config.yaml: only the
+# files its `files` globs cover are checked, and its ignorePaths apply. SpellingDictionaryArchitectureTests holds this version
+# and CI's to the same one.
+#
+# Enable it once per clone:   git config core.hooksPath .githooks
+# Skip it for one commit:     git commit --no-verify
+#
+# It reads the files as they are in the working tree, not as staged. Without Node on the machine it runs cspell in the
+# node:22-alpine image (the one the Website build uses), keeping npm's download cache in a named volume.
+set -eu
+
+cspell="cspell@10.4.0"
+files=$(git diff --cached --name-only --diff-filter=ACMR)
+[ -n "$files" ] || exit 0
+
+# Staged files are tracked, so .gitignore has nothing to say about them (and the image has no git to read it with).
+args="--no-progress --no-summary --no-must-find-files --no-gitignore --file-list stdin"
+
+if command -v npx >/dev/null 2>&1; then
+    # shellcheck disable=SC2086 # $args is a list of flags.
+    printf '%s\n' "$files" | npx --yes "$cspell" $args
+else
+    root=$(git rev-parse --show-toplevel)
+    # shellcheck disable=SC2086 # $args is a list of flags.
+    printf '%s\n' "$files" | docker run --rm -i -e NPM_CONFIG_UPDATE_NOTIFIER=false \
+        -v "$root:/repo:ro" -v maroik-cspell-npm-cache:/root/.npm -w /repo \
+        node:22-alpine npx --yes "$cspell" $args
+fi

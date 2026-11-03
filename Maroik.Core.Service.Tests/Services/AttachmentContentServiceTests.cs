@@ -285,7 +285,7 @@ public class AttachmentContentServiceTests
 
     /// <summary>A refused editor image is never re-encoded: the decoder only sees bytes the validator accepted.</summary>
     [Fact]
-    public async Task UploadSummernoteImageAsync_DoesNotReencode_AnImageThatFailedValidation()
+    public async Task UploadSummernoteImageAsync_DoesNotReEncode_AnImageThatFailedValidation()
     {
         _imageValidator.Setup(v => v.IsValidImage(It.IsAny<byte[]>())).Returns(false);
         var file = new AttachedFileDto { Bytes = [1, 2, 3], ContentType = "image/png", FileName = "x.png" };

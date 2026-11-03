@@ -39,4 +39,37 @@ public class SpellingDictionaryArchitectureTests
 
         Assert.Contains("path: ./.config/cspell-words.txt", config, StringComparison.Ordinal);
     }
+
+    /// <summary>
+    /// CI spell-checks the repository with one exact cspell version (an unpinned <c>npx cspell</c> would pick up each new release,
+    /// whose dictionaries can turn a green commit red).
+    /// </summary>
+    [Fact]
+    public void Ci_RunsAPinnedCspell()
+    {
+        string workflow = File.ReadAllText(Path.Combine(RepositoryPaths.Root, ".github", "workflows", "ci-cd.yml"));
+
+        Assert.Single(_pinnedCspell.Matches(workflow));
+    }
+
+    /// <summary>
+    /// The pre-commit hook (<c>.githooks/pre-commit</c>, enabled by <c>git config core.hooksPath .githooks</c>) runs the same cspell
+    /// version as CI, so a commit the hook lets through is not refused by CI for spelling, and it is executable, or git skips it.
+    /// </summary>
+    [Fact]
+    public void PreCommitHook_RunsTheSameCspellAsCi()
+    {
+        string hookPath = Path.Combine(RepositoryPaths.Root, ".githooks", "pre-commit");
+        string workflow = File.ReadAllText(Path.Combine(RepositoryPaths.Root, ".github", "workflows", "ci-cd.yml"));
+
+        string[] hookVersions = [.. _pinnedCspell.Matches(File.ReadAllText(hookPath)).Select(match => match.Groups["version"].Value).Distinct()];
+
+        Assert.Equal([_pinnedCspell.Match(workflow).Groups["version"].Value], hookVersions);
+        // A Windows checkout has no execute bit to look at; CI (Linux) checks it.
+        if (!OperatingSystem.IsWindows())
+            Assert.True((File.GetUnixFileMode(hookPath) & UnixFileMode.UserExecute) != 0, ".githooks/pre-commit is not executable");
+    }
+
+    /// <summary>A cspell run pinned to an exact version: <c>cspell@1.2.3</c>.</summary>
+    private static readonly Regex _pinnedCspell = new(@"\bcspell@(?<version>\d+\.\d+\.\d+)\b", RegexOptions.None, TimeSpan.FromSeconds(1));
 }

@@ -12,7 +12,7 @@
     <!-- Compiler warnings fail the build so they cannot accumulate unnoticed.
          The solution currently builds warning-clean; keep it that way. -->
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-    <!-- .editorconfig code-style violations (IDExxxx) are enforced at build time too. -->
+    <!-- .editorconfig code-style violations (the IDE rules) are enforced at build time too. -->
     <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
     <!-- Needed for IDE0005 (unnecessary using) to run at build time, and checks the XML doc comments' references
          (paramref / cref / param names). Missing doc comments themselves (CS1591) stay allowed by the NoWarn above. -->

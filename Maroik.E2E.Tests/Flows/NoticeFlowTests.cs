@@ -41,7 +41,7 @@ public class NoticeFlowTests(E2ESharedFixture fixture) : E2ETestBase(fixture)
         await Assertions.Expect(page.Locator(".mvc-grid")).Not.ToContainTextAsync("Someone elses salary");
     }
 
-    /// <summary>Ticking "Unpunctuality" on a fixed income and saving persists the flag; unticking clears it again.</summary>
+    /// <summary>Ticking "Unpunctuality" on a fixed income and saving persists the flag; clearing the tick removes it again.</summary>
     [Fact]
     public async Task FixedIncome_Edit_PersistsTheUnpunctualityFlag_BothWays()
     {

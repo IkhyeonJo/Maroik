@@ -161,7 +161,7 @@ public sealed class UnitOfWorkTests(DatabaseFixture database) : RepositoryTestBa
 
     /// <summary>After a failed commit the same instance can run a fresh Beginning→Commit cycle without re-flushing the failed entity.</summary>
     [Fact]
-    public async Task CommitAsync_AfterFailedCommit_NextCycleDoesNotReflushTheFailedEntity()
+    public async Task CommitAsync_AfterFailedCommit_NextCycleDoesNotFlushTheFailedEntityAgain()
     {
         var ct = TestContext.Current.CancellationToken;
         string email = UniqueEmail("dup-retry");
