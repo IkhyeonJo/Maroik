@@ -52,6 +52,9 @@ public class FormulaEvaluatorTests
     [InlineData("=(-8)^(1/3)", FormulaErrorKind.Num)]
     [InlineData("=10^40", FormulaErrorKind.Num)]
     [InlineData("=0^-1", FormulaErrorKind.DivideByZero)]
+    [InlineData("=0.5^-200", FormulaErrorKind.Num)]
+    [InlineData("=0.1^-1000", FormulaErrorKind.Num)]
+    [InlineData("=-0.5^-201", FormulaErrorKind.Num)]
     public void ImpossibleArithmetic_IsAnError(string input, FormulaErrorKind error) => Assert.Equal(E(error), Evaluate(input));
 
     /// <summary>Operands are coerced as Excel does: numeric text and booleans to numbers, an empty cell to 0; other text is #VALUE!.</summary>

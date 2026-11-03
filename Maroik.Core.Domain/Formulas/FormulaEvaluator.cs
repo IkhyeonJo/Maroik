@@ -198,7 +198,10 @@ public static class FormulaEvaluator
 
                     return result;
                 });
-                return exponent >= 0 || power is not NumberValue p ? power : Checked(() => 1 / p.Value);
+                if (exponent >= 0 || power is not NumberValue p) return power;
+                // A non-zero base whose power underflowed to 0 (0.5^200 is below a decimal's 1E-28) has a reciprocal too large
+                // for a decimal: #NUM!, as an overflow. Dividing by that 0 would throw instead of giving the cell a value.
+                return p.Value == 0 ? NumError : Checked(() => 1 / p.Value);
             }
 
             if (number < 0) return NumError;
