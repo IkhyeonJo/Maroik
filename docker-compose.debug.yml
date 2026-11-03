@@ -1,4 +1,4 @@
-#file: noinspection HttpUrlsUsage
+#file: noinspection HttpUrlsUsage,SpellCheckingInspection
 # ─────────────────────────────────────────────────────────────────────────────
 # Maroik — LOCAL / DEBUG compose stack.
 #
@@ -177,7 +177,7 @@ services:
     # Headless background service: consumes RabbitMQ messages (e.g. sends email), sends the
     # calendar reminders and once an hour removes the File Manager's abandoned uploads (in
     # maroik.filestorage, FileStorage__BaseUrl from .env.debug). No network ports at all.
-    # Starts after PostgreSQL + rabbitmq; a sweep that cannot reach file storage is logged.
+    # Starts after PostgreSQL + RabbitMQ; a sweep that cannot reach file storage is logged.
     maroik.worker:
         build :
          context : .

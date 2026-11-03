@@ -2,20 +2,27 @@
   <dictionary name="project">
     <words>
       <w>IkhyeonJo</w>
+      <w>Mailpit</w>
       <w>appsettings</w>
       <w>clamav</w>
+      <w>clamd</w>
+      <w>clamd's</w>
       <w>cloudflared</w>
       <w>contenttype</w>
       <w>dataprotection</w>
       <w>daterangepicker</w>
       <w>globalconfig</w>
       <w>icheck</w>
+      <w>isready</w>
+      <w>mailpit</w>
       <w>maroik</w>
       <w>nosniff</w>
+      <w>rabbitmqadmin</w>
       <w>slnx</w>
       <w>syslib</w>
       <w>tempusdominus</w>
       <w>toastr</w>
+      <w>tsbuild</w>
       <w>valkey</w>
     </words>
   </dictionary>

@@ -35,7 +35,7 @@ public class ClamavClient(ILogger<ClamavClient> logger) : IClamavClient
     /// start, and the answer could look like a verdict on the whole file. <c>FileManagerUploadPolicy.MaxScannableBytes</c> holds the
     /// same number on the domain's side.
     /// </summary>
-    internal const long MaxStreamBytes = 2_147_483_645;
+    private const long MaxStreamBytes = 2_147_483_645;
 
     /// <summary>
     /// The prefix of the signature clamd reports, with <c>AlertExceedsMax</c> on, for a stream it could not scan whole because a

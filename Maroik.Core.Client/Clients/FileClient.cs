@@ -69,7 +69,7 @@ public class FileClient(IHttpClientFactory httpClientFactory, ILogger<FileClient
 
         // Disposed when this method returns. A client from IHttpClientFactory does not own its pooled
         // handler, and disposing it does not end a response it already returned: the streaming
-        // caller (OpenReadAsync) still reads the body afterwards, and disposing that response is
+        // caller (OpenReadAsync) still reads the body afterward, and disposing that response is
         // what releases the connection.
         using HttpClient httpClient = httpClientFactory.CreateClient();
         using MultipartFormDataContent content = [];
