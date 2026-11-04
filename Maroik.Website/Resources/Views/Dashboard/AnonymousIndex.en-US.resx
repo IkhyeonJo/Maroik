@@ -117,28 +117,49 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-  <data name="All posts can be read freely without registering as a separate member. It is disclosed so that there is no hindrance to learning without logging in." xml:space="preserve">
-    <value>All posts can be read freely without registering as a separate member. It is disclosed so that there is no hindrance to learning without logging in.</value>
+  <data name="Maroik – Your Personal Life Management Platform" xml:space="preserve">
+    <value>Maroik – Your Personal Life Management Platform</value>
   </data>
-  <data name="Additionally, when you log in, you can manage your personal schedule and create a household account book." xml:space="preserve">
-    <value>Additionally, when you log in, you can manage your personal schedule and create a household account book.</value>
+  <data name="Maroik is an integrated web platform designed to help you organize and manage your everyday activities and information." xml:space="preserve">
+    <value>Maroik is an integrated web platform designed to help you organize and manage your everyday activities and information.</value>
   </data>
-  <data name="However, for posting, membership registration and login are required due to advertisements or posts that violate social justice." xml:space="preserve">
-    <value>However, for posting, membership registration and login are required due to advertisements or posts that violate social justice.</value>
+  <data name="Finance Management" xml:space="preserve">
+    <value>Finance Management</value>
   </data>
-  <data name="If you have any good articles to post on this site, please feel free to contact us. welcome." xml:space="preserve">
-    <value>If you have any good articles to post on this site, please feel free to contact us. welcome.</value>
+  <data name="Track income and expenses and manage your personal finances." xml:space="preserve">
+    <value>Track income and expenses and manage your personal finances.</value>
   </data>
-  <data name="Regarding the post management policy, we plan to provide guidelines at a common-sense level in the future." xml:space="preserve">
-    <value>Regarding the post management policy, we plan to provide guidelines at a common-sense level in the future.</value>
+  <data name="Calendar Management" xml:space="preserve">
+    <value>Calendar Management</value>
   </data>
-  <data name="This site is operated by individuals for purely academic purposes and is open to anyone." xml:space="preserve">
-    <value>This site is operated by individuals for purely academic purposes and is open to anyone.</value>
+  <data name="Organize and manage your personal schedule through an integrated calendar." xml:space="preserve">
+    <value>Organize and manage your personal schedule through an integrated calendar.</value>
   </data>
-  <data name="Welcome to Maroik!" xml:space="preserve">
-    <value>Welcome to Maroik!</value>
+  <data name="File Management" xml:space="preserve">
+    <value>File Management</value>
   </data>
-  <data name="Contact: admin@maroik.com" xml:space="preserve">
-    <value>Contact: admin@maroik.com</value>
+  <data name="Store and manage your personal files." xml:space="preserve">
+    <value>Store and manage your personal files.</value>
+  </data>
+  <data name="Task Management" xml:space="preserve">
+    <value>Task Management</value>
+  </data>
+  <data name="Organize tasks and track progress using Kanban boards." xml:space="preserve">
+    <value>Organize tasks and track progress using Kanban boards.</value>
+  </data>
+  <data name="Community" xml:space="preserve">
+    <value>Community</value>
+  </data>
+  <data name="Create posts and share information with other users." xml:space="preserve">
+    <value>Create posts and share information with other users.</value>
+  </data>
+  <data name="Contact" xml:space="preserve">
+    <value>Contact</value>
+  </data>
+  <data name="For inquiries, suggestions, or article submissions, please contact us at:" xml:space="preserve">
+    <value>For inquiries, suggestions, or article submissions, please contact us at:</value>
+  </data>
+  <data name="admin@maroik.com" xml:space="preserve">
+    <value>admin@maroik.com</value>
   </data>
 </root>

@@ -117,28 +117,49 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-  <data name="All posts can be read freely without registering as a separate member. It is disclosed so that there is no hindrance to learning without logging in." xml:space="preserve">
-    <value>게시물은 별도의 회원 가입 없이도 모든 글은 자유롭게 읽을 수 있습니다. 로그인 없이도 학습에 아무 지장이 없도록 공개합니다.</value>
+  <data name="Maroik – Your Personal Life Management Platform" xml:space="preserve">
+    <value>Maroik – 개인 생활 통합 관리 플랫폼</value>
   </data>
-  <data name="Additionally, when you log in, you can manage your personal schedule and create a household account book." xml:space="preserve">
-    <value>또한 로그인 시, 개인 일정 관리 및 가계부 작성이 가능하도록 만들어져 있습니다.</value>
+  <data name="Maroik is an integrated web platform designed to help you organize and manage your everyday activities and information." xml:space="preserve">
+    <value>Maroik은 일상생활과 다양한 정보를 체계적으로 정리하고 관리할 수 있도록 설계된 통합 웹 플랫폼입니다.</value>
   </data>
-  <data name="However, for posting, membership registration and login are required due to advertisements or posts that violate social justice." xml:space="preserve">
-    <value>그러나 게시물 작성에 대해서는 광고나 사회 정의에 위반되는 글로 인해 회원 가입 및 로그인 과정이 필요합니다.</value>
+  <data name="Finance Management" xml:space="preserve">
+    <value>재정 관리</value>
   </data>
-  <data name="If you have any good articles to post on this site, please feel free to contact us. welcome." xml:space="preserve">
-    <value>이 사이트에 올릴만한 좋은 글을 가지고 계신 분들은 언제든지 연락 주십시요. 환영합니다.</value>
+  <data name="Track income and expenses and manage your personal finances." xml:space="preserve">
+    <value>수입과 지출을 기록하고 개인 재정을 체계적으로 관리할 수 있습니다.</value>
   </data>
-  <data name="Regarding the post management policy, we plan to provide guidelines at a common-sense level in the future." xml:space="preserve">
-    <value>게시물 관리 정책에 대해서는 차후 상식적인 수준에서 지침을 마련할 예정입니다.</value>
+  <data name="Calendar Management" xml:space="preserve">
+    <value>일정 관리</value>
   </data>
-  <data name="This site is operated by individuals for purely academic purposes and is open to anyone." xml:space="preserve">
-    <value>이 사이트는 개인이 순수한 학문적 목적으로 운영하며 누구에게나 열려 있습니다.</value>
+  <data name="Organize and manage your personal schedule through an integrated calendar." xml:space="preserve">
+    <value>통합 캘린더를 통해 개인 일정을 체계적으로 관리할 수 있습니다.</value>
   </data>
-  <data name="Welcome to Maroik!" xml:space="preserve">
-    <value>Maroik에 오신 것을 환영합니다!</value>
+  <data name="File Management" xml:space="preserve">
+    <value>파일 관리</value>
   </data>
-  <data name="Contact: admin@maroik.com" xml:space="preserve">
-    <value>연락처: admin@maroik.com</value>
+  <data name="Store and manage your personal files." xml:space="preserve">
+    <value>개인 파일을 안전하게 보관하고 체계적으로 관리할 수 있습니다.</value>
+  </data>
+  <data name="Task Management" xml:space="preserve">
+    <value>작업 관리</value>
+  </data>
+  <data name="Organize tasks and track progress using Kanban boards." xml:space="preserve">
+    <value>칸반 보드를 활용하여 작업을 정리하고 진행 상황을 추적할 수 있습니다.</value>
+  </data>
+  <data name="Community" xml:space="preserve">
+    <value>커뮤니티</value>
+  </data>
+  <data name="Create posts and share information with other users." xml:space="preserve">
+    <value>게시물을 작성하고 다른 사용자와 다양한 정보를 공유할 수 있습니다.</value>
+  </data>
+  <data name="Contact" xml:space="preserve">
+    <value>문의 및 연락</value>
+  </data>
+  <data name="For inquiries, suggestions, or article submissions, please contact us at:" xml:space="preserve">
+    <value>문의, 제안 또는 게시물 투고와 관련하여 아래 이메일로 연락해 주세요.</value>
+  </data>
+  <data name="admin@maroik.com" xml:space="preserve">
+    <value>admin@maroik.com</value>
   </data>
 </root>
