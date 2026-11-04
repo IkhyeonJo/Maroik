@@ -156,8 +156,8 @@
   <data name="Contact" xml:space="preserve">
     <value>Contact</value>
   </data>
-  <data name="For inquiries, suggestions, or article submissions, please contact us at:" xml:space="preserve">
-    <value>For inquiries, suggestions, or article submissions, please contact us at:</value>
+  <data name="For inquiries or suggestions, please contact us at:" xml:space="preserve">
+    <value>For inquiries or suggestions, please contact us at:</value>
   </data>
   <data name="admin@maroik.com" xml:space="preserve">
     <value>admin@maroik.com</value>

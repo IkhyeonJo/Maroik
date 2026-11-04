@@ -156,8 +156,8 @@
   <data name="Contact" xml:space="preserve">
     <value>문의 및 연락</value>
   </data>
-  <data name="For inquiries, suggestions, or article submissions, please contact us at:" xml:space="preserve">
-    <value>문의, 제안 또는 게시물 투고와 관련하여 아래 이메일로 연락해 주세요.</value>
+  <data name="For inquiries or suggestions, please contact us at:" xml:space="preserve">
+    <value>문의 사항이나 제안이 있으시면 아래 이메일로 연락해 주세요:</value>
   </data>
   <data name="admin@maroik.com" xml:space="preserve">
     <value>admin@maroik.com</value>
