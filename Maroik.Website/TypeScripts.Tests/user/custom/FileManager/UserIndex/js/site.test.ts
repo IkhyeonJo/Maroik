@@ -37,7 +37,7 @@ function fixture(maxScanWaitMilliseconds = 960000): string {
          <div id="uploadModal"><p id="uploadProgressText"></p><div id="uploadProgressBar"></div><ul id="uploadResults"></ul>
            <button id="btnUploadCancel"></button><button id="btnUploadClose" disabled></button></div>
          <div id="downloadModal"><p id="downloadProgressText"></p><div id="downloadProgressBar"></div><button id="btnDownloadCancel"></button></div>
-         <div id="previewModal"><h5 id="previewTitle"></h5><img id="previewImage" /></div>
+         <div id="previewModal"><h5 id="previewTitle"></h5><img id="previewImage" alt="" /></div>
          <div id="confirmDeleteModal"><button id="btnConfirmDelete"></button></div>`
     );
 }
@@ -89,7 +89,7 @@ async function answerScan(h: SiteHandle, uploadId: string, data: unknown): Promi
 }
 
 /** The jsTree calls the page made and a fake tree instance. */
-interface TreeSpy { options: unknown[]; instance: { settings: { core: { data: unknown[] } }; refreshed: number; refresh(): void; deselect_all(): void; select_node(): void } }
+interface TreeSpy { options: unknown[]; instance: { settings: { core: { data: unknown[] } }; refreshed: number; refresh(): void } }
 
 /** Stubs jsTree and the modal plugin; returns what they were asked. */
 function stubWidgets(h: SiteHandle): { tree: TreeSpy; modals: [string, unknown][] } {
@@ -98,8 +98,6 @@ function stubWidgets(h: SiteHandle): { tree: TreeSpy; modals: [string, unknown][
         settings: { core: { data: initialData } },
         refreshed: 0,
         refresh() { this.refreshed++; },
-        deselect_all() { return undefined; },
-        select_node() { return undefined; },
     };
     const tree: TreeSpy = { options: [], instance };
     stubPlugin(h, "jstree", function(this: JQuery, arg: never) {
@@ -197,10 +195,10 @@ describe("FileManager/UserIndex — loading", () => {
     });
 
     it("draws the root folder as tiles, its item count and a one-step breadcrumb", async () => {
-        const { h } = await load([folder(7, "Docs"), item(8, "<script>a</script>.txt")]);
+        const { h } = await load([folder(7, "Docs"), item(8, "<script>x()</script>.txt")]);
 
         expect(h.$(".file-manager-tile").map((_, el) => h.$(el).attr("data-id")).get()).toEqual(["7", "8"]);
-        expect(h.$(".file-manager-tile-name").eq(1).text()).toBe("<script>a</script>.txt");
+        expect(h.$(".file-manager-tile-name").eq(1).text()).toBe("<script>x()</script>.txt");
         expect(h.$("#fileManagerItems script")).toHaveLength(0);
         expect(h.$("#fileManagerItemCount").text()).toBe("2 items");
         expect(h.$("#fileManagerBreadcrumb li.active").text()).toBe("My Drive");
@@ -518,8 +516,8 @@ function folderEntry(name: string, children: Record<string, unknown>[]): Record<
     return {
         isFile: false, isDirectory: true, name,
         createReader: () => {
-            let batches = [children, []];
-            return { readEntries: (resolve: (value: unknown[]) => void) => { const [next = [], ...rest] = batches; batches = rest; resolve(next); } };
+            const batches = [children, []];
+            return { readEntries: (resolve: (value: unknown[]) => void) => { resolve(batches.shift() ?? []); } };
         },
     };
 }

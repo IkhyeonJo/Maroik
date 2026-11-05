@@ -9,6 +9,7 @@ function card(id: number, title: string, description: string | null, dueDate: st
     const attrs = [`data-id="${id}"`, `data-title="${title}"`];
     if (description !== null) attrs.push(`data-description="${description}"`);
     if (dueDate !== null) attrs.push(`data-due-date="${dueDate}"`);
+    // noinspection HtmlUnknownAttribute
     return `<div class="card kanban-card-item" role="button" tabindex="0" ${attrs.join(" ")}><h5>${title}</h5></div>`;
 }
 

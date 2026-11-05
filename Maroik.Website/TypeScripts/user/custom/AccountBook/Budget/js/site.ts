@@ -85,6 +85,7 @@
     const $__RequestVerificationToken = $("input[name=\"__RequestVerificationToken\"]");
     const editor = CodeMirror.fromTextArea(byId("budgetFormula", HTMLTextAreaElement), { lineWrapping: false, viewportMargin: Infinity });
 
+    // noinspection SpellCheckingInspection
     /** The column letters. */
     const COLUMNS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
     /** The characters after which a formula waits for a reference (Excel's point mode). */
@@ -197,7 +198,7 @@
 
     /** POSTs `body` as JSON; `handler` gets a reply that passes `reply` (any other shows the generic error). */
     function post<T>(url: string, body: unknown, reply: Check<T>, handler: (data: T) => void): void {
-        $.ajax({
+        void $.ajax({
             url: url,
             type: "POST",
             headers: { "RequestVerificationToken": fieldValue($__RequestVerificationToken) },

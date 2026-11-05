@@ -252,7 +252,7 @@
             Culture: culture
         });
 
-        $.ajax({
+        void $.ajax({
             url: "/Dashboard/CultureManagement",
             type: "POST",
             // Anti-forgery token from MVC's hidden input; `.val()` is a union, so

@@ -92,7 +92,7 @@ interface DatepickerInstance {
     input: JQuery<HTMLInputElement>;
 }
 
-// Augments @types/jqueryui's `$.datepicker` with the one undocumented internal the scripts call.
+// Augments `$.datepicker` of @types/jqueryui with the one undocumented internal the scripts call.
 declare namespace JQueryUI {
     interface Datepicker {
         /** jQuery UI internal: empties the target's date (used by the custom "No maturity date" / "Today" buttons). */
@@ -193,11 +193,15 @@ interface JQuery<TElement = HTMLElement> {
 // helpers instead of type assertions: a missing element or attribute throws, and a reply that does not
 // pass its check shows the generic "temporary error" toast (logging why).
 
+// Merges into the lib's ArrayConstructor (narrows `isArray`); Rider does not count a merge as a use.
+// noinspection JSUnusedGlobalSymbols
 interface ArrayConstructor {
     /** An array of values of unknown type (the library's typing says `any[]`). */
     isArray(arg: unknown): arg is unknown[];
 }
 
+// Merges into the lib's ObjectConstructor (narrows `entries`); Rider does not count a merge as a use.
+// noinspection JSUnusedGlobalSymbols
 interface ObjectConstructor {
     /** The own enumerable entries, values of unknown type (the library's typing says `any`). */
     entries(o: object): [string, unknown][];
@@ -299,7 +303,7 @@ interface Window {
     /** An attribute the element always carries. */
     attribute($element: JQuery, name: string): string;
 
-    /** Moves a datepicker's earliest selectable date. */
+    /** Moves the earliest selectable date of a datepicker. */
     setMinDate(picker: DatepickerMinDateSetter, date: Date | null): void;
 
     /**
@@ -345,8 +349,6 @@ interface JsTreeSettings {
 interface JsTreeInstance {
     settings: { core: { data: JsTreeNodeData[] } };
     refresh(): void;
-    deselect_all(suppressEvent: boolean): void;
-    select_node(id: string, suppressEvent: boolean): void;
 }
 
 // Augments jQuery's own interface with the jsTree plugin.

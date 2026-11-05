@@ -142,7 +142,7 @@
             TimeZoneIanaId: timeZoneIanaId
         });
 
-        $.ajax({
+        void $.ajax({
             url: "/Management/CreateAccount",
             type: "POST",
             headers: { "RequestVerificationToken": fieldValue($__RequestVerificationToken) },
@@ -190,7 +190,7 @@
             return false;
         }
 
-        $.ajax({
+        void $.ajax({
             url: "/Management/IsAccountExists" + "?email=" + encodeURIComponent(selectedRowEmail),
             type: "POST",
             headers: { "RequestVerificationToken": fieldValue($__RequestVerificationToken) },
@@ -264,7 +264,7 @@
             FileManagerScanDisabled: fileManagerScanDisabled
         });
 
-        $.ajax({
+        void $.ajax({
             url: "/Management/UpdateAccount",
             type: "POST",
             headers: { "RequestVerificationToken": fieldValue($__RequestVerificationToken) },
@@ -329,7 +329,7 @@
             return false;
         }
 
-        $.ajax({
+        void $.ajax({
             url: "/Management/IsAccountExists" + "?email=" + encodeURIComponent(selectedRowEmail),
             type: "POST",
             headers: { "RequestVerificationToken": fieldValue($__RequestVerificationToken) },
@@ -342,7 +342,7 @@
                         Email: data.account.email
                     });
 
-                    $.ajax({
+                    void $.ajax({
                         url: "/Management/DeleteAccount",
                         type: "POST",
                         headers: { "RequestVerificationToken": fieldValue($__RequestVerificationToken) },

@@ -173,7 +173,7 @@
             Order: order
         });
 
-        $.ajax({
+        void $.ajax({
             url: "/Management/CreateCategory",
             type: "POST",
             headers: { "RequestVerificationToken": fieldValue($__RequestVerificationToken) },
@@ -224,7 +224,7 @@
             Order: order
         });
 
-        $.ajax({
+        void $.ajax({
             url: "/Management/CreateSubCategory",
             type: "POST",
             headers: { "RequestVerificationToken": fieldValue($__RequestVerificationToken) },
@@ -274,7 +274,7 @@
 
         if (selectedRowCategoryId === "-1") {
             // Top-level category.
-            $.ajax({
+            void $.ajax({
                 url: "/Management/IsCategoryExists" + "?id=" + selectedRowId,
                 type: "POST",
                 headers: { "RequestVerificationToken": fieldValue($__RequestVerificationToken) },
@@ -306,7 +306,7 @@
             });
         } else {
             // Subcategory.
-            $.ajax({
+            void $.ajax({
                 url: "/Management/IsSubCategoryExists" + "?id=" + selectedRowId,
                 type: "POST",
                 headers: { "RequestVerificationToken": fieldValue($__RequestVerificationToken) },
@@ -366,7 +366,7 @@
             Order: order
         });
 
-        $.ajax({
+        void $.ajax({
             url: "/Management/UpdateCategory",
             type: "POST",
             headers: { "RequestVerificationToken": fieldValue($__RequestVerificationToken) },
@@ -415,7 +415,7 @@
             Order: order
         });
 
-        $.ajax({
+        void $.ajax({
             url: "/Management/UpdateSubCategory",
             type: "POST",
             headers: { "RequestVerificationToken": fieldValue($__RequestVerificationToken) },
@@ -489,7 +489,7 @@
 
         if (selectedRowCategoryId === "-1") {
 
-            $.ajax({
+            void $.ajax({
                 url: "/Management/IsCategoryExists" + "?id=" + selectedRowId,
                 type: "POST",
                 headers: { "RequestVerificationToken": fieldValue($__RequestVerificationToken) },
@@ -509,7 +509,7 @@
                             Order: data.category.order
                         });
 
-                        $.ajax({
+                        void $.ajax({
                             url: "/Management/DeleteCategory",
                             type: "POST",
                             headers: { "RequestVerificationToken": fieldValue($__RequestVerificationToken) },
@@ -535,7 +535,7 @@
                 })
             });
         } else {
-            $.ajax({
+            void $.ajax({
                 url: "/Management/IsSubCategoryExists" + "?id=" + selectedRowId,
                 type: "POST",
                 headers: { "RequestVerificationToken": fieldValue($__RequestVerificationToken) },
@@ -555,7 +555,7 @@
                             Order: data.subCategory.order
                         });
 
-                        $.ajax({
+                        void $.ajax({
                             url: "/Management/DeleteSubCategory",
                             type: "POST",
                             headers: { "RequestVerificationToken": fieldValue($__RequestVerificationToken) },

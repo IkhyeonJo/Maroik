@@ -219,7 +219,7 @@
             }
         });
 
-        // Hide the datepicker's built-in "Close" / "Today" buttons via injected CSS.
+        // Hide the built-in "Close" / "Today" buttons of the datepicker via injected CSS.
         $("<style> .ui-datepicker-close { display: none; } </style>").appendTo("head");
         $("<style> .ui-datepicker-current { display: none; } </style>").appendTo("head");
     });
@@ -329,7 +329,7 @@
             MyDepositAsset: myDepositAsset
         });
 
-        $.ajax({
+        void $.ajax({
             url: "/AccountBook/CreateExpenditure",
             type: "POST",
             headers: { "RequestVerificationToken": fieldValue($__RequestVerificationToken) },
@@ -376,7 +376,7 @@
             return false;
         }
 
-        $.ajax({
+        void $.ajax({
             url: "/AccountBook/IsExpenditureExists" + "?id=" + selectedRowId,
             type: "POST",
             headers: { "RequestVerificationToken": fieldValue($__RequestVerificationToken) },
@@ -472,7 +472,7 @@
             MyDepositAsset: myDepositAsset
         });
 
-        $.ajax({
+        void $.ajax({
             url: "/AccountBook/UpdateExpenditure",
             type: "POST",
             headers: { "RequestVerificationToken": fieldValue($__RequestVerificationToken) },
@@ -537,7 +537,7 @@
             return false;
         }
 
-        $.ajax({
+        void $.ajax({
             url: "/AccountBook/IsExpenditureExists" + "?id=" + selectedRowId,
             type: "POST",
             headers: { "RequestVerificationToken": fieldValue($__RequestVerificationToken) },
@@ -550,7 +550,7 @@
                         Id: data.expenditure.id
                     });
 
-                    $.ajax({
+                    void $.ajax({
                         url: "/AccountBook/DeleteExpenditure",
                         type: "POST",
                         headers: { "RequestVerificationToken": fieldValue($__RequestVerificationToken) },
@@ -609,7 +609,7 @@
      * just shows whatever fallback label the server sent.
      */
     function ChangeCreateExpenditureAmountLabel(productName: string) {
-        $.ajax({
+        void $.ajax({
             url: "/AccountBook/GetExpenditureAmountLabel" + "?productName=" + encodeURIComponent(productName),
             type: "POST",
             headers: { "RequestVerificationToken": fieldValue($__RequestVerificationToken) },
@@ -630,7 +630,7 @@
 
     /** Same as `ChangeCreateExpenditureAmountLabel` for the edit form. */
     function ChangeEditExpenditureAmountLabel(productName: string) {
-        $.ajax({
+        void $.ajax({
             url: "/AccountBook/GetExpenditureAmountLabel" + "?productName=" + encodeURIComponent(productName),
             type: "POST",
             headers: { "RequestVerificationToken": fieldValue($__RequestVerificationToken) },

@@ -150,7 +150,7 @@
             Note: note
         });
 
-        $.ajax({
+        void $.ajax({
             url: "/AccountBook/CreateAsset",
             type: "POST",
             headers: { "RequestVerificationToken": fieldValue($__RequestVerificationToken) },
@@ -199,7 +199,7 @@
             return false;
         }
 
-        $.ajax({
+        void $.ajax({
             url: "/AccountBook/IsAssetExists" + "?productName=" + encodeURIComponent(selectedRowProductName),
             type: "POST",
             headers: { "RequestVerificationToken": fieldValue($__RequestVerificationToken) },
@@ -262,7 +262,7 @@
             OriginalProductName: originalProductName
         });
 
-        $.ajax({
+        void $.ajax({
             url: "/AccountBook/UpdateAsset",
             type: "POST",
             headers: { "RequestVerificationToken": fieldValue($__RequestVerificationToken) },
@@ -334,7 +334,7 @@
             return false;
         }
 
-        $.ajax({
+        void $.ajax({
             url: "/AccountBook/IsAssetExists" + "?productName=" + encodeURIComponent(selectedRowProductName),
             type: "POST",
             headers: { "RequestVerificationToken": fieldValue($__RequestVerificationToken) },
@@ -347,7 +347,7 @@
                         ProductName: data.asset.productName
                     });
 
-                    $.ajax({
+                    void $.ajax({
                         url: "/AccountBook/DeleteAsset",
                         type: "POST",
                         headers: { "RequestVerificationToken": fieldValue($__RequestVerificationToken) },

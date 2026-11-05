@@ -401,7 +401,7 @@
             DepositMyAssetProductName: depositMyAssetProductName
         });
 
-        $.ajax({
+        void $.ajax({
             url: "/Notice/CreateFixedIncome",
             type: "POST",
             headers: { "RequestVerificationToken": fieldValue($__RequestVerificationToken) },
@@ -448,7 +448,7 @@
             return false;
         }
 
-        $.ajax({
+        void $.ajax({
             url: "/Notice/IsFixedIncomeExists" + "?id=" + selectedRowId,
             type: "POST",
             headers: { "RequestVerificationToken": fieldValue($__RequestVerificationToken) },
@@ -522,7 +522,7 @@
             Unpunctuality: unpunctuality
         });
 
-        $.ajax({
+        void $.ajax({
             url: "/Notice/UpdateFixedIncome",
             type: "POST",
             headers: { "RequestVerificationToken": fieldValue($__RequestVerificationToken) },
@@ -588,7 +588,7 @@
             return false;
         }
 
-        $.ajax({
+        void $.ajax({
             url: "/Notice/IsFixedIncomeExists" + "?id=" + selectedRowId,
             type: "POST",
             headers: { "RequestVerificationToken": fieldValue($__RequestVerificationToken) },
@@ -601,7 +601,7 @@
                         Id: data.fixedIncome.id
                     });
 
-                    $.ajax({
+                    void $.ajax({
                         url: "/Notice/DeleteFixedIncome",
                         type: "POST",
                         headers: { "RequestVerificationToken": fieldValue($__RequestVerificationToken) },
@@ -659,7 +659,7 @@
      * (its currency). Both `if` branches set the same thing.
      */
     function ChangeCreateFixedIncomeAmountLabel(productName: string) {
-        $.ajax({
+        void $.ajax({
             url: "/Notice/GetFixedIncomeAmountLabel" + "?productName=" + encodeURIComponent(productName),
             type: "POST",
             headers: { "RequestVerificationToken": fieldValue($__RequestVerificationToken) },
@@ -680,7 +680,7 @@
 
     /** Same as `ChangeCreateFixedIncomeAmountLabel` for the edit form. */
     function ChangeEditFixedIncomeAmountLabel(productName: string) {
-        $.ajax({
+        void $.ajax({
             url: "/Notice/GetFixedIncomeAmountLabel" + "?productName=" + encodeURIComponent(productName),
             type: "POST",
             headers: { "RequestVerificationToken": fieldValue($__RequestVerificationToken) },

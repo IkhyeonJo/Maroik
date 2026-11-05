@@ -366,11 +366,13 @@ describe("user/Calendar/UserIndex", () => {
     // of interest" dialog below) instead of being displayed as plain text.
     it("escapes a malicious calendar name before appending it to the sidebar list", () => {
         const h = loadSite("user", "Calendar", "UserIndex", fixture());
+        // noinspection HtmlUnknownTarget
         h.$("#createCalendarName").val(`<img src=x alt="">`);
 
         h.$("#formCreateCalendar").trigger("submit");
         const call = h.lastAjax();
         expect(call.url).toBe("/Calendar/CreateCalendar");
+        // noinspection HtmlUnknownTarget
         call.success?.({
             result: true,
             message: "created",
@@ -388,6 +390,7 @@ describe("user/Calendar/UserIndex", () => {
         h.$("#aBrowseCalendarsOfInterest").trigger("click");
         const call = h.lastAjax();
         expect(call.url).toBe("/Calendar/GetBrowseCalendarsOfInterest");
+        // noinspection HtmlUnknownTarget
         call.success?.({
             result: true,
             browseCalendarsOfInterests: [{ id: 1, name: `<img src=x alt="">`, checked: false }],
@@ -615,6 +618,7 @@ describe("user/Calendar/UserIndex — calendars of interest", () => {
 // ==== the edit form, the shared-event view and the "other" popup in detail ========================================
 
 describe("user/Calendar/UserIndex — edit form and shared-event view in detail", () => {
+    // noinspection SpellCheckingInspection
     const png = "iVBORw0KGgo="; // any base64 — only decoded into a Blob
     /** The "other event" popup and the read-only view modal. */
     const detailDom = `
@@ -762,6 +766,7 @@ describe("user/Calendar/UserIndex — edit form and shared-event view in detail"
         });
 
         it.each(["onload", "onerror"] as const)("the view's rebuilt image %s releases the object URL it was given", (event) => {
+            // noinspection HtmlUnknownTarget
             const h = build({ body: (html) => html.replace("<div id=\"viewCalendarEventDescription\"></div>", `<div id="viewCalendarEventDescription"></div><div class="note-editor"><img src="blob:live" alt=""></div>`) + detailDom });
             h.win.URL.createObjectURL = vi.fn(() => "blob:fake");
             spyModal(h);

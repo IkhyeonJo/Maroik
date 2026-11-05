@@ -169,7 +169,7 @@
             }
             let name = attribute($(this), "data-name");
 
-            $.ajax({
+            void $.ajax({
                 url: "/Forum/DownloadFreeBoardAttachedFile",
                 type: "POST",
                 headers: { "RequestVerificationToken": fieldValue($__RequestVerificationToken) },

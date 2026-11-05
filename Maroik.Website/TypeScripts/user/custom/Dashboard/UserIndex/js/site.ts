@@ -76,7 +76,7 @@
     // Monetary-unit change first persists the choice, then reloads. Both `if`
     // branches reload, so a failed save just re-renders in the old currency.
     $("#monetaryUnit").off("change").on("change", function() {
-        $.ajax({
+        void $.ajax({
             url: "/Dashboard/UserUpdateDefaultMonetary",
             type: "POST",
             headers: { "RequestVerificationToken": fieldValue($("input[name=\"__RequestVerificationToken\"]")) },

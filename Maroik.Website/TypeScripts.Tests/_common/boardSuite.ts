@@ -478,6 +478,7 @@ function describeBoardScript(c: BoardScriptConfig): void {
         });
 
         it.each(["onload", "onerror"] as const)("edit view: a rebuilt image's %s releases the object URL it was given", (event) => {
+            // noinspection HtmlUnknownTarget
             const h = loadSite(c.area, c.feature, c.page,
                 boardFixture(c).replace("<div id=\"detailBoardContent\" style=\"display:none\"></div>", "")
                     .replace("<div id=\"editBoardContent\"></div>", "<div id=\"editBoardContent\"></div><div class=\"note-editor\"><img src=\"blob:live\" alt=\"\"></div>")

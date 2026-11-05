@@ -198,7 +198,7 @@
         let formData = new FormData();
         formData.append("summernoteImageFile", file);
 
-        $.ajax({
+        void $.ajax({
             url: "/Management/UploadImageFile",
             data: formData,
             headers: { "RequestVerificationToken": fieldValue($__RequestVerificationToken) },
@@ -238,7 +238,7 @@
         let formData = new FormData();
         formData.append("summernoteImageFile", file);
 
-        $.ajax({
+        void $.ajax({
             url: "/Management/UploadImageFile",
             data: formData,
             headers: { "RequestVerificationToken": fieldValue($__RequestVerificationToken) },
@@ -293,7 +293,7 @@
         formData.append("Locked", locked);
         formData.append("UploadedFile", writeUploadedFile);
 
-        $.ajax({
+        void $.ajax({
             url: "/Management/WritePrivateNoteBoard",
             type: "POST",
             headers: { "RequestVerificationToken": fieldValue($__RequestVerificationToken) },
@@ -337,7 +337,7 @@
         formData.append("Content", content);
         formData.append("UploadedFile", editUploadedFile);
 
-        $.ajax({
+        void $.ajax({
             url: "/Management/EditPrivateNoteBoard",
             type: "POST",
             headers: { "RequestVerificationToken": fieldValue($__RequestVerificationToken) },
@@ -376,7 +376,7 @@
      */
     function DeleteBoard(detailBoardId: string) {
 
-        $.ajax({
+        void $.ajax({
             url: "/Management/IsBoardExists" + "?id=" + detailBoardId,
             type: "POST",
             headers: { "RequestVerificationToken": fieldValue($__RequestVerificationToken) },
@@ -389,7 +389,7 @@
                         Id: data.privateNoteBoard.id
                     });
 
-                    $.ajax({
+                    void $.ajax({
                         url: "/Management/DeleteBoard",
                         type: "POST",
                         headers: { "RequestVerificationToken": fieldValue($__RequestVerificationToken) },
@@ -432,7 +432,7 @@
             DetailCurrentPage: detailCurrentPage
         });
 
-        $.ajax({
+        void $.ajax({
             url: "/Management/WritePrivateNoteComment",
             type: "POST",
             headers: { "RequestVerificationToken": fieldValue($__RequestVerificationToken) },
@@ -453,7 +453,7 @@
 
     /** Deletes one comment by id, then reloads the detail view. */
     function DeleteComment(commentId: string, boardId: string, page: string) {
-        $.ajax({
+        void $.ajax({
             url: "/Management/DeleteComment" + "?id=" + commentId,
             type: "POST",
             headers: { "RequestVerificationToken": fieldValue($__RequestVerificationToken) },
@@ -602,7 +602,7 @@
             }
             let name = attribute($(this), "data-name");
 
-            $.ajax({
+            void $.ajax({
                 url: "/Management/DownloadPrivateNoteAttachedFile",
                 type: "POST",
                 headers: { "RequestVerificationToken": fieldValue($__RequestVerificationToken) },

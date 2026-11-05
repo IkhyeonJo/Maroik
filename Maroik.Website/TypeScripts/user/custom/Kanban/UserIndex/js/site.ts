@@ -65,7 +65,7 @@
 
     /** Re-fetches the board partial and swaps it in (lane / card order and overdue colors are the server's). */
     function ReloadBoard() {
-        $.ajax({
+        void $.ajax({
             url: "/Kanban/UserIndex",
             type: "GET",
             dataType: "html",
@@ -88,7 +88,7 @@
             DueDate: dueDate === "" ? null : dueDate,
         };
         const isNew = id === "";
-        $.ajax({
+        void $.ajax({
             url: isNew ? "/Kanban/CreateKanbanCard" : "/Kanban/UpdateKanbanCard",
             type: "POST",
             headers: { "RequestVerificationToken": fieldValue($__RequestVerificationToken) },
@@ -110,7 +110,7 @@
 
     /** Confirmed delete: POST the open card's id, then close both modals / toast / refresh. */
     function DeleteCard() {
-        $.ajax({
+        void $.ajax({
             url: "/Kanban/DeleteKanbanCard" + "?id=" + encodeURIComponent(fieldValue($kanbanCardId)),
             type: "POST",
             headers: { "RequestVerificationToken": fieldValue($__RequestVerificationToken) },

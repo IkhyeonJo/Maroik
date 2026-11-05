@@ -5,6 +5,7 @@ import { loadSite, antiForgery, hidden, stubPlugin, eventProps, lastOf, successO
 
 // wwwroot/anonymous/custom/Calendar/AnonymousIndex/js/site.js  (read-only calendar view)
 function fixture(): string {
+    // noinspection HtmlUnknownTarget
     return (
         antiForgery +
         hidden("minLeadTimeBeforeEvent", "0") +
@@ -387,7 +388,7 @@ describe("Calendar/AnonymousIndex — the read-only view modal", () => {
     });
 
     it.each(["onload", "onerror"] as const)("a rebuilt description image's %s releases the object URL it was given", (event) => {
-        const h = load(); // (the fixture's editor container already holds an image, as summernote's own DOM would after `code` is set)
+        const h = load(); // (the fixture's editor container already holds an image, as the summernote DOM would after `code` is set)
         open(h);
         successOf(h.lastAjax())(reply({ description: `<img data-file="${btoa("abc")}" data-contenttype="image/png" alt="">` }));
         const revoke = (h.win.URL.revokeObjectURL = vi.fn());

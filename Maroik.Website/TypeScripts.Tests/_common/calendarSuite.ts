@@ -78,6 +78,7 @@ export function describeCalendarCommon(c: CalendarCommon): void {
         const row = (kind: "create" | "edit", checked: boolean, type: string, value: string) => {
             const suffix = checked ? "AllDayChecked" : "AllDayUnchecked";
             const units = checked ? ["Days", "Weeks"] : ["Minutes", "Hours", "Days", "Weeks"];
+            // noinspection HtmlUnknownAttribute
             return `<div class="div${kind === "create" ? "Create" : "Edit"}EventNotification${suffix}Row">
       <input class="${kind}CalendarEventSelNotificationNumber${suffix}" value="${value}" />
       <select class="${kind}CalendarEventSelNotificationTimeType${suffix}">${units.map((u) => `<option value="${u}" ${u === type ? "selected" : ""}>${u}</option>`).join("")}</select>
@@ -361,6 +362,7 @@ export function describeCalendarCommon(c: CalendarCommon): void {
             const h = build();
             spyModal(h);
             h.$("#formCreateCalendar").trigger("submit");
+            // noinspection HtmlUnknownTarget
             successOf(h.lastAjax())({
                 result: true,
                 message: "made",
@@ -909,7 +911,7 @@ export function describeCalendarCommon(c: CalendarCommon): void {
             const dates = new Map<string, Date | null>();
             const options: { id: string; args: unknown[] }[] = [];
             stubPlugin(h, "datepicker", function(this: JQuery, cmd?: string, ...args: unknown[]) {
-                const id = present(this[0], "the datepicker's element").id;
+                const id = present(this[0], "the datepicker element").id;
                 if (cmd === "getDate") return dates.get(id) ?? null;
                 if (cmd === "setDate") {
                     dates.set(id, instanceOfType(args[0], Date));
@@ -1222,6 +1224,7 @@ export function describeCalendarExtras(c: { label: string; build: Build }): void
  */
 export function describeEditFormDetail(c: { label: string; build: Build }): void {
     const { label, build } = c;
+    // noinspection SpellCheckingInspection
     const png = "iVBORw0KGgo="; // any base64 — only decoded into a Blob
     /** Edit-form attachment and reminder containers, each reminder list pre-filled with a stale row. */
     const editDom = `
@@ -1364,6 +1367,7 @@ export function describeEditFormDetail(c: { label: string; build: Build }): void
         });
 
         it.each(["onload", "onerror"] as const)("the edit form's rebuilt image %s releases the object URL it was given", (event) => {
+            // noinspection HtmlUnknownTarget
             const h = build({
                 body: (html) => html
                     .replace("<div id=\"divEditEventNotificationAllDayUnchecked\"></div>", "").replace("<div id=\"divEditEventNotificationAllDayChecked\"></div>", "")
@@ -1570,6 +1574,7 @@ export function describeEventLayout(c: { label: string; build: () => Handle; pop
         const clickAt = (calendarType: string, id: string, width: number, left: number, eventWidth: number) => {
             const h = c.build();
             windowWidth(h, width);
+            // noinspection SpellCheckingInspection
             Object.defineProperty(h.win, "scrollY", { value: 40, configurable: true });
             layOut(instanceOfType(h.$(id)[0], HTMLElement), { left: 0, top: 0, width: 200, height: 150 });
             const el = h.win.document.createElement("div");

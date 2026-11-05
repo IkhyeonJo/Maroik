@@ -70,7 +70,7 @@
                     // through untouched with the correct multipart boundary.
                     let form = elementOf($formUpdateProfileAvatar, HTMLFormElement);
                     let formData = new FormData(form);
-                    $.ajax({
+                    void $.ajax({
                         url: "/Management/UpdateProfileAvatar",
                         data: formData,
                         type: "POST",
@@ -121,7 +121,7 @@
             NewPassword: newPassword
         });
 
-        $.ajax({
+        void $.ajax({
             url: "/Management/UpdateProfilePassword",
             type: "POST",
             headers: { "RequestVerificationToken": fieldValue($__RequestVerificationToken) },

@@ -169,7 +169,7 @@
      */
     function post<T>(url: string, body: unknown, reply: Check<T>): Promise<T | null> {
         return new Promise((resolve) => {
-            $.ajax({
+            void $.ajax({
                 url: url,
                 type: "POST",
                 headers: { "RequestVerificationToken": fieldValue($__RequestVerificationToken) },
@@ -187,7 +187,7 @@
     /** POSTs a multipart form (an upload chunk); resolves like {@link post}. */
     function postForm<T>(url: string, form: FormData, reply: Check<T>): Promise<T | null> {
         return new Promise((resolve) => {
-            $.ajax({
+            void $.ajax({
                 url: url,
                 type: "POST",
                 headers: { "RequestVerificationToken": fieldValue($__RequestVerificationToken) },

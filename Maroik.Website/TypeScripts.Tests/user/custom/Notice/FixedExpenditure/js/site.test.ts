@@ -111,6 +111,7 @@ describeAmountLabel({
 });
 
 describe("Notice/FixedExpenditure — class and deposit-month changes, and filling the edit form", () => {
+    // noinspection CssInvalidHtmlTagReference
     /** Values of the options of `sel` that are neither disabled nor hidden. */
     const enabled = (h: ReturnType<typeof loadSite>, sel: string) =>
         [...h.win.document.querySelectorAll<HTMLOptionElement>(`${sel} option`)].filter((o) => !o.disabled && !o.hidden).map((o) => o.value);

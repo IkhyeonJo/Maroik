@@ -36,6 +36,9 @@ function fixture(kind = "Expenditure", year = 2026): string {
     );
 }
 
+// noinspection SpellCheckingInspection
+/** Every column letter: the editable columns of a free row, and the grid header. */
+const ALL_COLUMNS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 /** The editable columns of a line row and of a header / subtotal / total row. */
 const LINE_COLUMNS = "BCDEFGHIJKLMOPQRSTUVWXYZ";
 const FIXED_COLUMNS = "OPQRSTUVWXYZ";
@@ -44,7 +47,7 @@ const FIXED_COLUMNS = "OPQRSTUVWXYZ";
 function row(number: number, kind: string, label: string, over: Record<string, unknown> = {}): Record<string, unknown> {
     return {
         number, kind, label, mainClass: "", subClass: "", currency: "",
-        editable: kind === "Line" ? LINE_COLUMNS : kind === "Free" ? "ABCDEFGHIJKLMNOPQRSTUVWXYZ" : FIXED_COLUMNS, ...over,
+        editable: kind === "Line" ? LINE_COLUMNS : kind === "Free" ? ALL_COLUMNS : FIXED_COLUMNS, ...over,
     };
 }
 
@@ -140,8 +143,8 @@ describe("AccountBook/Budget — loading and drawing", () => {
     it("draws the column letters, the row numbers and every cell", () => {
         const h = load();
 
-        expect(h.$("#budgetGrid thead th[data-column]").map((_, el) => h.$(el).attr("data-column")).get().join("")).toBe("ABCDEFGHIJKLMNOPQRSTUVWXYZ");
-        expect(h.$("#budgetGrid thead th[data-column]").map((_, el) => h.$(el).contents().first().text()).get().join("")).toBe("ABCDEFGHIJKLMNOPQRSTUVWXYZ");
+        expect(h.$("#budgetGrid thead th[data-column]").map((_, el) => h.$(el).attr("data-column")).get().join("")).toBe(ALL_COLUMNS);
+        expect(h.$("#budgetGrid thead th[data-column]").map((_, el) => h.$(el).contents().first().text()).get().join("")).toBe(ALL_COLUMNS);
         expect(h.$("#budgetGrid tbody tr")).toHaveLength(7);
         expect(h.$("#budgetGrid tbody th.budget-row-number").map((_, el) => h.$(el).text()).get()).toEqual(["1", "2", "3", "4", "5", "6", "7"]);
         expect(h.$("#budgetGrid tbody tr").first().find("td")).toHaveLength(26);

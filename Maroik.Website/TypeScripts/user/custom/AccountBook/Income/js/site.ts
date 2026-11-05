@@ -200,7 +200,7 @@
             }
         });
 
-        // Hide the datepicker's built-in "Close" / "Today" buttons via injected CSS.
+        // Hide the built-in "Close" / "Today" buttons of the datepicker via injected CSS.
         $("<style> .ui-datepicker-close { display: none; } </style>").appendTo("head");
         $("<style> .ui-datepicker-current { display: none; } </style>").appendTo("head");
     });
@@ -309,7 +309,7 @@
             Note: note
         });
 
-        $.ajax({
+        void $.ajax({
             url: "/AccountBook/CreateIncome",
             type: "POST",
             headers: { "RequestVerificationToken": fieldValue($__RequestVerificationToken) },
@@ -356,7 +356,7 @@
             return false;
         }
 
-        $.ajax({
+        void $.ajax({
             url: "/AccountBook/IsIncomeExists" + "?id=" + selectedRowId,
             type: "POST",
             headers: { "RequestVerificationToken": fieldValue($__RequestVerificationToken) },
@@ -433,7 +433,7 @@
             Note: note
         });
 
-        $.ajax({
+        void $.ajax({
             url: "/AccountBook/UpdateIncome",
             type: "POST",
             headers: { "RequestVerificationToken": fieldValue($__RequestVerificationToken) },
@@ -498,7 +498,7 @@
             return false;
         }
 
-        $.ajax({
+        void $.ajax({
             url: "/AccountBook/IsIncomeExists" + "?id=" + selectedRowId,
             type: "POST",
             headers: { "RequestVerificationToken": fieldValue($__RequestVerificationToken) },
@@ -511,7 +511,7 @@
                         Id: data.income.id
                     });
 
-                    $.ajax({
+                    void $.ajax({
                         url: "/AccountBook/DeleteIncome",
                         type: "POST",
                         headers: { "RequestVerificationToken": fieldValue($__RequestVerificationToken) },
@@ -572,7 +572,7 @@
      * `failedToLoadAmountLabelMessage` instead.
      */
     function ChangeCreateIncomeAmountLabel(productName: string) {
-        $.ajax({
+        void $.ajax({
             url: "/AccountBook/GetIncomeAmountLabel" + "?productName=" + encodeURIComponent(productName),
             type: "POST",
             headers: { "RequestVerificationToken": fieldValue($__RequestVerificationToken) },
@@ -589,7 +589,7 @@
 
     /** Same as `ChangeCreateIncomeAmountLabel` for the edit form. */
     function ChangeEditIncomeAmountLabel(productName: string) {
-        $.ajax({
+        void $.ajax({
             url: "/AccountBook/GetIncomeAmountLabel" + "?productName=" + encodeURIComponent(productName),
             type: "POST",
             headers: { "RequestVerificationToken": fieldValue($__RequestVerificationToken) },

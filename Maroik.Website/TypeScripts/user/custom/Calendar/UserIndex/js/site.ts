@@ -755,7 +755,7 @@
                 $createCalendarEventAllDayUncheckedEndDate.val(selectedEndDate);
                 $createCalendarEventAllDayCheckedEndDate.val(selectedEndDate);
 
-                $.ajax({
+                void $.ajax({
                     url: "/Calendar/GetCalendars",
                     method: "POST",
                     headers: { "RequestVerificationToken": fieldValue($__RequestVerificationToken) },
@@ -814,7 +814,7 @@
                     $divCalendarEventPopupAllDayChecked.hide();
                     $divCalendarEventPopupAllDayUnchecked.hide();
 
-                    if (arg.event.allDay === true) {
+                    if (arg.event.allDay) {
                         $calendarEventPopupStartAllDayChecked.text(conform(arg.event.extendedProps, calendarEventProps, "the event\'s extendedProps").displayStartDate);
                         $calendarEventPopupEndAllDayChecked.text(conform(arg.event.extendedProps, calendarEventProps, "the event\'s extendedProps").displayEndDate);
                         $divCalendarEventPopupAllDayChecked.show();
@@ -842,7 +842,7 @@
 
                     $editCalendarEventPopup.off("click").on("click", function() {
 
-                        $.ajax({
+                        void $.ajax({
                             url: "/Calendar/IsCalendarEventExists" + "?id=" + popup.data("event-id"),
                             type: "POST",
                             headers: { "RequestVerificationToken": fieldValue($__RequestVerificationToken) },
@@ -858,7 +858,7 @@
                                     $divEditEventAllDayChecked.hide();
                                     $divEditEventAllDayUnchecked.hide();
 
-                                    if (data.calendarEvent.allDay === true) {
+                                    if (data.calendarEvent.allDay) {
                                         $divEditEventAllDayChecked.show();
                                         $editCalendarEventAllDay.prop("checked", true);
                                         $editCalendarEventAllDayCheckedStartDate.val(data.calendarEvent.displayStartDate);
@@ -926,7 +926,7 @@
                                         $divEditEventNotificationAllDayChecked.hide();
                                         $divEditEventNotificationAllDayUnchecked.hide();
 
-                                        if (calendarEvent.allDay === true) {
+                                        if (calendarEvent.allDay) {
                                             $divEditEventNotificationAllDayChecked.find(".divEditEventNotificationAllDayCheckedRow").remove();
                                             $divEditEventNotificationAllDayChecked.show();
 
@@ -941,6 +941,7 @@
                                                     let selectedDays = reminder.DaysBeforeEvent !== null ? "selected" : "";
                                                     let selectedWeeks = reminder.WeeksBeforeEvent !== null ? "selected" : "";
 
+                                                    // noinspection HtmlUnknownAttribute
                                                     const selNotificationTimeTypeAllDayChecked = `
                                             <input type='number' class='form-control-sm editCalendarEventSelNotificationNumberAllDayChecked' style='width:20%;text-overflow:ellipsis; background-color:#343a40; color:#fff; border-color:#6c757d;' min="${minLeadTimeBeforeEvent}" max="${max}" value="${value}">
                                             <select class='form-control-sm editCalendarEventSelNotificationTimeTypeAllDayChecked' style='width:15%;text-overflow:ellipsis;'>
@@ -986,6 +987,7 @@
                                                     let selectedDays = reminder.DaysBeforeEvent !== null ? "selected" : "";
                                                     let selectedWeeks = reminder.WeeksBeforeEvent !== null ? "selected" : "";
 
+                                                    // noinspection HtmlUnknownAttribute
                                                     const selNotificationTimeTypeAllDayUnchecked = `
                                             <input type='number' class='form-control-sm editCalendarEventSelNotificationNumberAllDayUnchecked' style='width:20%;text-overflow:ellipsis; background-color:#343a40; color:#fff; border-color:#6c757d;' min="${minLeadTimeBeforeEvent}" max="${max}" value="${value}">
                                             <select class='form-control-sm editCalendarEventSelNotificationTimeTypeAllDayUnchecked' style='width:15%;text-overflow:ellipsis;'>
@@ -1025,7 +1027,7 @@
                                         $editCalendarEventTaskDialogModal.modal("show");
                                     }
 
-                                    $.ajax({
+                                    void $.ajax({
                                         url: "/Calendar/GetCalendars",
                                         method: "POST",
                                         headers: { "RequestVerificationToken": fieldValue($__RequestVerificationToken) },
@@ -1063,7 +1065,7 @@
 
                     $deleteCalendarEventPopup.off("click").on("click", function() {
                         if (confirm(`${localizer.ConfirmDelete}`)) {
-                            $.ajax({
+                            void $.ajax({
                                 url: "/Calendar/DeleteCalendarEvent?id=" + popup.data("event-id"),
                                 type: "POST",
                                 headers: { "RequestVerificationToken": fieldValue($__RequestVerificationToken) },
@@ -1097,7 +1099,7 @@
                     $divOtherCalendarEventPopupAllDayChecked.hide();
                     $divOtherCalendarEventPopupAllDayUnchecked.hide();
 
-                    if (arg.event.allDay === true) {
+                    if (arg.event.allDay) {
                         $otherCalendarEventPopupStartAllDayChecked.text(conform(arg.event.extendedProps, calendarEventProps, "the event\'s extendedProps").displayStartDate);
                         $otherCalendarEventPopupEndAllDayChecked.text(conform(arg.event.extendedProps, calendarEventProps, "the event\'s extendedProps").displayEndDate);
                         $divOtherCalendarEventPopupAllDayChecked.show();
@@ -1124,7 +1126,7 @@
                     });
 
                     $viewOtherCalendarEventPopup.off("click").on("click", function() {
-                        $.ajax({
+                        void $.ajax({
                             url: "/Calendar/IsOtherCalendarEventExists" + "?id=" + popup.data("event-id"),
                             type: "POST",
                             headers: { "RequestVerificationToken": fieldValue($__RequestVerificationToken) },
@@ -1139,7 +1141,7 @@
                                     $divViewEventAllDayChecked.hide();
                                     $divViewEventAllDayUnchecked.hide();
 
-                                    if (data.calendarEvent.allDay === true) {
+                                    if (data.calendarEvent.allDay) {
                                         $divViewEventAllDayChecked.show();
                                         $viewCalendarEventAllDay.prop("checked", true);
                                         $viewCalendarEventAllDayCheckedStartDate.val(data.calendarEvent.displayStartDate);
@@ -1209,7 +1211,7 @@
                                         $divViewEventNotificationAllDayChecked.hide();
                                         $divViewEventNotificationAllDayUnchecked.hide();
 
-                                        if (calendarEvent.allDay === true) {
+                                        if (calendarEvent.allDay) {
                                             $divViewEventNotificationAllDayChecked.find(".divViewEventNotificationAllDayCheckedRow").remove();
                                             $divViewEventNotificationAllDayChecked.show();
 
@@ -1224,6 +1226,7 @@
                                                     let selectedDays = reminder.DaysBeforeEvent !== null ? "selected" : "";
                                                     let selectedWeeks = reminder.WeeksBeforeEvent !== null ? "selected" : "";
 
+                                                    // noinspection HtmlUnknownAttribute
                                                     const selNotificationTimeTypeAllDayChecked = `
                                                 <input type='number' class='form-control-sm viewCalendarEventSelNotificationNumberAllDayChecked' style='width:20%;text-overflow:ellipsis; background-color:#343a40; color:#fff; border-color:#6c757d;' min="${minLeadTimeBeforeEvent}" max="${max}" value="${value}" disabled>
                                                 <select class='form-control-sm viewCalendarEventSelNotificationTimeTypeAllDayChecked' style='width:15%;text-overflow:ellipsis;' disabled>
@@ -1266,6 +1269,7 @@
                                                     let selectedDays = reminder.DaysBeforeEvent !== null ? "selected" : "";
                                                     let selectedWeeks = reminder.WeeksBeforeEvent !== null ? "selected" : "";
 
+                                                    // noinspection HtmlUnknownAttribute
                                                     const selNotificationTimeTypeAllDayUnchecked = `
                                                 <input type='number' class='form-control-sm viewCalendarEventSelNotificationNumberAllDayUnchecked' style='width:20%;text-overflow:ellipsis; background-color:#343a40; color:#fff; border-color:#6c757d;' min="${minLeadTimeBeforeEvent}" max="${max}" value="${value}" disabled>
                                                 <select class='form-control-sm viewCalendarEventSelNotificationTimeTypeAllDayUnchecked' style='width:15%;text-overflow:ellipsis;' disabled>
@@ -1299,7 +1303,7 @@
                                         $viewCalendarEventTaskDialogModal.modal("show");
                                     }
 
-                                    $.ajax({
+                                    void $.ajax({
                                         url: "/Calendar/GetOtherCalendars",
                                         method: "POST",
                                         headers: { "RequestVerificationToken": fieldValue($__RequestVerificationToken) },
@@ -1422,7 +1426,7 @@
                 paramValue.Calendars.push(...calendarsArray);
             });
 
-            $.ajax({
+            void $.ajax({
                 url: "/Calendar/GetCalendarEvents",
                 method: "POST",
                 headers: { "RequestVerificationToken": fieldValue($__RequestVerificationToken) },
@@ -1846,7 +1850,7 @@
 
             formData.append("SerializedCalendarReminders", JSON.stringify(calendarReminders));
 
-            $.ajax({
+            void $.ajax({
                 url: "/Calendar/CreateCalendarEvent",
                 type: "POST",
                 headers: { "RequestVerificationToken": fieldValue($__RequestVerificationToken) },
@@ -1882,7 +1886,7 @@
                             paramValue.Calendars.push(...calendarsArray);
                         });
 
-                        $.ajax({
+                        void $.ajax({
                             url: "/Calendar/GetCalendarEvents",
                             method: "POST",
                             headers: { "RequestVerificationToken": fieldValue($__RequestVerificationToken) },
@@ -2074,7 +2078,7 @@
 
             formData.append("SerializedCalendarReminders", JSON.stringify(calendarReminders));
 
-            $.ajax({
+            void $.ajax({
                 url: "/Calendar/UpdateCalendarEvent",
                 type: "POST",
                 headers: { "RequestVerificationToken": fieldValue($__RequestVerificationToken) },
@@ -2110,7 +2114,7 @@
                             paramValue.Calendars.push(...calendarsArray);
                         });
 
-                        $.ajax({
+                        void $.ajax({
                             url: "/Calendar/GetCalendarEvents",
                             method: "POST",
                             headers: { "RequestVerificationToken": fieldValue($__RequestVerificationToken) },
@@ -2185,7 +2189,7 @@
 
             paramValue.Calendars.push(...calendarsArray);
 
-            $.ajax({
+            void $.ajax({
                 url: "/Calendar/UpdateCalendar",
                 type: "POST",
                 headers: { "RequestVerificationToken": fieldValue($__RequestVerificationToken) },
@@ -2248,7 +2252,7 @@
         function DeleteCalendar() {
             let selectedCalendarId = $confirmDeleteCalendarDialogModal.data("calendar-id");
 
-            $.ajax({
+            void $.ajax({
                 url: "/Calendar/IsCalendarExists" + "?id=" + selectedCalendarId,
                 type: "POST",
                 headers: { "RequestVerificationToken": fieldValue($__RequestVerificationToken) },
@@ -2266,7 +2270,7 @@
 
                         paramValue.Calendars.push(...calendarsArray);
 
-                        $.ajax({
+                        void $.ajax({
                             url: "/Calendar/DeleteCalendar",
                             type: "POST",
                             headers: { "RequestVerificationToken": fieldValue($__RequestVerificationToken) },
@@ -2318,7 +2322,7 @@
         let formData = new FormData();
         formData.append("summernoteImageFile", file);
 
-        $.ajax({
+        void $.ajax({
             url: "/Calendar/UploadImageFile",
             data: formData,
             headers: { "RequestVerificationToken": fieldValue($__RequestVerificationToken) },
@@ -2358,7 +2362,7 @@
         let formData = new FormData();
         formData.append("summernoteImageFile", file);
 
-        $.ajax({
+        void $.ajax({
             url: "/Calendar/UploadImageFile",
             data: formData,
             headers: { "RequestVerificationToken": fieldValue($__RequestVerificationToken) },
@@ -2419,7 +2423,7 @@
 
         paramValue.Calendars.push(...calendarsArray);
 
-        $.ajax({
+        void $.ajax({
             url: "/Calendar/CreateCalendar",
             type: "POST",
             headers: { "RequestVerificationToken": fieldValue($__RequestVerificationToken) },
@@ -2461,7 +2465,7 @@
     // once the fetch settles, rather than blocking the page while in flight.
     $aCreateCalendarEvent.off("click").on("click", function() {
 
-        $.ajax({
+        void $.ajax({
             url: "/Calendar/GetCalendars",
             method: "POST",
             headers: { "RequestVerificationToken": fieldValue($__RequestVerificationToken) },
@@ -2692,7 +2696,7 @@
     // "check all" box toggles them all; submitting POSTs the chosen set so the
     // user starts/stops seeing those calendars' events.
     $aBrowseCalendarsOfInterest.off("click").on("click", function() {
-        $.ajax({
+        void $.ajax({
             url: "/Calendar/GetBrowseCalendarsOfInterest",
             method: "POST",
             headers: { "RequestVerificationToken": fieldValue($__RequestVerificationToken) },
@@ -2702,10 +2706,11 @@
                 if (response.result) {
                     let htmlString = "";
                     $.each(response.browseCalendarsOfInterests, function(_, browseCalendarsOfInterest) {
+                        // noinspection HtmlUnknownAttribute
                         htmlString += String.raw`
                             <div class="form-row browseCalendarsOfInterest" style="margin-top: 20px;">
                                 <div id="divBrowseCalendarsOfInterest${browseCalendarsOfInterest.id}" class="form-group col-md-3 mb-3 text-center">
-                                    <input class="calendar-checkbox checkBoxBrowseCalendarsOfInterest" type="checkbox" ${browseCalendarsOfInterest.checked === true ? "checked" : ""}/>
+                                    <input class="calendar-checkbox checkBoxBrowseCalendarsOfInterest" type="checkbox" ${browseCalendarsOfInterest.checked ? "checked" : ""}/>
                                 </div>
                                 <div class="form-group col-md-9 mb-9 text-center">
                                     <label style="word-break: break-all;">${escapeHtml(browseCalendarsOfInterest.name)}</label>
@@ -2754,7 +2759,7 @@
             }
         });
 
-        $.ajax({
+        void $.ajax({
             url: "/Calendar/UpdateOtherCalendar",
             type: "POST",
             headers: { "RequestVerificationToken": fieldValue($__RequestVerificationToken) },
@@ -2776,7 +2781,7 @@
                         toastr.success(savedMessage);
                     }
 
-                    $.ajax({
+                    void $.ajax({
                         url: "/Calendar/GetOtherCalendars",
                         method: "POST",
                         headers: { "RequestVerificationToken": fieldValue($__RequestVerificationToken) },
@@ -2819,7 +2824,7 @@
                                     paramValue.Calendars.push(...calendarsArray);
                                 });
 
-                                $.ajax({
+                                void $.ajax({
                                     url: "/Calendar/GetCalendarEvents",
                                     method: "POST",
                                     headers: { "RequestVerificationToken": fieldValue($__RequestVerificationToken) },
@@ -2889,7 +2894,7 @@
 
         let selectedCalendarId = attribute($(this).parent(), "id").replace("lblCalendar", "");
 
-        $.ajax({
+        void $.ajax({
             url: "/Calendar/IsCalendarExists" + "?id=" + selectedCalendarId,
             type: "POST",
             headers: { "RequestVerificationToken": fieldValue($__RequestVerificationToken) },
@@ -2963,7 +2968,7 @@
         }
         let name = attribute($(this), "data-name");
 
-        $.ajax({
+        void $.ajax({
             url: "/Calendar/DownloadCalendarEventAttachedFile",
             type: "POST",
             headers: { "RequestVerificationToken": fieldValue($__RequestVerificationToken) },

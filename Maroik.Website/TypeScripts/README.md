@@ -156,8 +156,8 @@ TS interfaces take **no** `I` prefix, unlike C# (Rider's TypeScript inspections 
 | Purpose                 | Tool                                           | Version                 | Notes                                                                                                                      |
 |-------------------------|------------------------------------------------|-------------------------|----------------------------------------------------------------------------------------------------------------------------|
 | Type-check **and** emit | **TypeScript** (`tsc`)                         | **7.0.2**               | The native (Go) compiler — the whole `TypeScripts/` tree type-checks + emits in well under a second. No Babel, no bundler. |
-| Type-check-only gate    | `tsc --noEmit`                                 | —                       | `npm run check`.                                                                                                          |
-| Minify (release only)   | **terser** (`minify-client-scripts.mjs`)       | **5.51.2**              | Run by `npm run build` after `tsc`; top-level names kept, strings double-quoted. Not run by `build:debug` / `watch`.     |
+| Type-check-only gate    | `tsc --noEmit`                                 | —                       | `npm run check`.                                                                                                           |
+| Minify (release only)   | **terser** (`minify-client-scripts.mjs`)       | **5.51.2**              | Run by `npm run build` after `tsc`; top-level names kept, strings double-quoted. Not run by `build:debug` / `watch`.       |
 | Tests                   | **Vitest** + **jsdom** + real **jQuery 3.6.0** | 4.1.12 / 30.0.1 / 3.6.0 | See `../TypeScripts.Tests/`.                                                                                               |
 
 ### `@types/*` — pinned to the runtime versions actually loaded by `Views/Shared/_Layout.cshtml`
@@ -174,7 +174,7 @@ TS interfaces take **no** `I` prefix, unlike C# (Rider's TypeScript inspections 
 | `plugins/fullcalendar/main.js`                      | FullCalendar 5.5.1                | `@fullcalendar/core@5.5.1` (installed type-only; global `<script>` build is used at runtime)                                                                                                                                                |
 | `plugins/moment/moment.min.js`                      | moment 2.30.1                     | `moment@2.30.1` (ships its own `.d.ts`; installed type-only). Bumped from 2.29.1 for CVE-2022-24785 / CVE-2022-31129; 2.30.1 is the last 2.x and a drop-in for global `<script>` use.                                                       |
 | `plugins/jstree/jstree.min.js` (user only)          | jsTree 3.3.17                     | none — the File Manager uses a small part of the API, hand-typed in `global.d.ts` (`JsTree*`).                                                                                                                                              |
-| `plugins/codemirror/codemirror.js` (user only)      | CodeMirror 5.60.0                 | none — the budget sheet's formula bar uses a small part of the API, hand-typed in `global.d.ts` (`CodeMirror*`); no language mode: the server's tokens are painted with `markText`. |
+| `plugins/codemirror/codemirror.js` (user only)      | CodeMirror 5.60.0                 | none — the budget sheet's formula bar uses a small part of the API, hand-typed in `global.d.ts` (`CodeMirror*`); no language mode: the server's tokens are painted with `markText`.                                                         |
 | `js/mvc-grid/nonfactors-mvc-grid.js`                | NonFactors.Grid.Mvc6 companion JS | not on npm → hand-written ambient in `global.d.ts`                                                                                                                                                                                          |
 | `dist/js/adminlte.js`                               | AdminLTE 3.1.0                    | no types — the custom scripts never call the AdminLTE JS API directly                                                                                                                                                                       |
 
@@ -228,16 +228,16 @@ data, jQuery's `.data(key)`) could be used without stating a type — `global.d.
 A value the code cannot prove is **checked at run time** through the toolkit each role's `_Layout` script puts
 on `window` (typed in `global.d.ts`, tested once per area by `TypeScripts.Tests/_common/toolkitSuite.ts`):
 
-| Reading …                                                         | goes through                                          | when it is not what the code expects                         |
-|-------------------------------------------------------------------|-------------------------------------------------------|--------------------------------------------------------------|
-| a form field / hidden input the view always renders               | `fieldValue($el)` (`selectValue` for a select)        | throws (`selectValue` answers `null` when nothing is chosen) |
-| a server constant with a built-in fallback                        | `optionalFieldValue($el)`                             | `undefined` → the fallback                                   |
-| JSON the view rendered                                            | `parseJson(text, check, "#id")`                       | throws                                                       |
-| an attribute / element / event target / dropped file             | `attribute`, `byId`, `elementOf`, `instanceOf`         | throws                                                       |
-| a value a library may leave out (`getContext("2d")`, an index)    | `required(value, what)`                               | throws                                                       |
-| an ajax reply                                                     | `success: onReply(check, function(data) { … })`        | logs why, toasts the layout's generic "temporary error"      |
-| a refusal sent instead of a file                                  | `.then(onReplyText(replies.failed, …))`                | as above                                                     |
-| data a widget hands back (rowclick detail, FullCalendar props)    | `conform(value, check, what)`                         | throws                                                       |
+| Reading …                                                      | goes through                                    | when it is not what the code expects                         |
+|----------------------------------------------------------------|-------------------------------------------------|--------------------------------------------------------------|
+| a form field / hidden input the view always renders            | `fieldValue($el)` (`selectValue` for a select)  | throws (`selectValue` answers `null` when nothing is chosen) |
+| a server constant with a built-in fallback                     | `optionalFieldValue($el)`                       | `undefined` → the fallback                                   |
+| JSON the view rendered                                         | `parseJson(text, check, "#id")`                 | throws                                                       |
+| an attribute / element / event target / dropped file           | `attribute`, `byId`, `elementOf`, `instanceOf`  | throws                                                       |
+| a value a library may leave out (`getContext("2d")`, an index) | `required(value, what)`                         | throws                                                       |
+| an ajax reply                                                  | `success: onReply(check, function(data) { … })` | logs why, toasts the layout's generic "temporary error"      |
+| a refusal sent instead of a file                               | `.then(onReplyText(replies.failed, …))`         | as above                                                     |
+| data a widget hands back (rowclick detail, FullCalendar props) | `conform(value, check, what)`                   | throws                                                       |
 
 A reply's check (`window.check` builders, `window.replies.action / read / write / failed`) is declared at the
 top of the page script that reads it and mirrors the controller's `Json(...)` result field for field — camelCase

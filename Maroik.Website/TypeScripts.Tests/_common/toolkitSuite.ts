@@ -152,7 +152,7 @@ export function describeToolkit(area: "admin" | "user" | "anonymous"): void {
                 const read = h.win.onReplyText(h.win.replies.failed, handler);
                 read("{\"result\":false,\"error\":\"denied\"}");
                 expect(handler).toHaveBeenCalledWith({ result: false, error: "denied" });
-                read("<html>");
+                read("<html lang=\"en\">");
                 read("{\"result\":true}");
                 expect(handler).toHaveBeenCalledTimes(1);
                 expect(h.toastr.error).toHaveBeenCalledTimes(2);
@@ -230,7 +230,7 @@ export function describeToolkit(area: "admin" | "user" | "anonymous"): void {
             expect(() => h.win.attribute(h.$("#nope"), "data-id")).toThrow("A required element is missing from the page");
         });
 
-        it("setMinDate moves a datepicker's earliest selectable date", () => {
+        it("setMinDate moves the earliest selectable date of a datepicker", () => {
             const h = load();
             const picker = { datepicker: vi.fn() };
             const date = new Date(2024, 4, 10);

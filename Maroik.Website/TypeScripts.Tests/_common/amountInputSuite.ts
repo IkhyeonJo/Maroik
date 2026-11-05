@@ -31,6 +31,7 @@ export interface AmountInputConfig {
 export function describeAmountInput(c: AmountInputConfig): void {
     const N = c.page;
     const attr = c.rowKey === "Id" ? "data-id" : "data-productName";
+    // noinspection HtmlUnknownAttribute
     const load = (): SiteHandle => loadSite("user", c.feature, N, c.fixture() +
         `<input id="create${N}Amount" value="0" /><input id="edit${N}Amount" value="0" />` +
         `<div class="mvc-grid"></div><table><tbody><tr class="clsGridRow" ${attr}="row-1"></tr></tbody></table>` +

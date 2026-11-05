@@ -164,11 +164,13 @@ describe("admin/Calendar/AdminIndex", () => {
     // calendars" dialog below) instead of being displayed as plain text.
     it("escapes a malicious calendar name before appending it to the sidebar list", () => {
         const h = loadSite("admin", "Calendar", "AdminIndex", fixture());
+        // noinspection HtmlUnknownTarget
         h.$("#createCalendarName").val(`<img src=x alt="">`);
 
         h.$("#formCreateCalendar").trigger("submit");
         const call = h.lastAjax();
         expect(call.url).toBe("/Calendar/CreateCalendar");
+        // noinspection HtmlUnknownTarget
         call.success?.({
             result: true,
             message: "created",
@@ -281,6 +283,7 @@ describe("admin/Calendar/AdminIndex", () => {
         h.$("#aUpdateCalendarShared").trigger("click");
         const call = h.lastAjax();
         expect(call.url).toBe("/Calendar/GetCalendarShareds");
+        // noinspection HtmlUnknownTarget
         call.success?.({
             result: true,
             setCalendarShareds: [{ id: 1, name: `<img src=x alt="">`, user: true, guest: false }],

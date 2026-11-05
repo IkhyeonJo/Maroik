@@ -323,7 +323,7 @@
             Culture: culture
         });
 
-        $.ajax({
+        void $.ajax({
             url: "/Dashboard/CultureManagement",
             type: "POST",
             // ASP.NET anti-forgery token, read from the hidden input MVC renders

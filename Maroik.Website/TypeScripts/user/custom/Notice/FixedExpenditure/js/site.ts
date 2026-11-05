@@ -438,7 +438,7 @@
             MyDepositAsset: myDepositAsset
         });
 
-        $.ajax({
+        void $.ajax({
             url: "/Notice/CreateFixedExpenditure",
             type: "POST",
             headers: { "RequestVerificationToken": fieldValue($__RequestVerificationToken) },
@@ -486,7 +486,7 @@
             return false;
         }
 
-        $.ajax({
+        void $.ajax({
             url: "/Notice/IsFixedExpenditureExists" + "?id=" + selectedRowId,
             type: "POST",
             headers: { "RequestVerificationToken": fieldValue($__RequestVerificationToken) },
@@ -571,7 +571,7 @@
             Unpunctuality: unpunctuality
         });
 
-        $.ajax({
+        void $.ajax({
             url: "/Notice/UpdateFixedExpenditure",
             type: "POST",
             headers: { "RequestVerificationToken": fieldValue($__RequestVerificationToken) },
@@ -636,7 +636,7 @@
             return false;
         }
 
-        $.ajax({
+        void $.ajax({
             url: "/Notice/IsFixedExpenditureExists" + "?id=" + selectedRowId,
             type: "POST",
             headers: { "RequestVerificationToken": fieldValue($__RequestVerificationToken) },
@@ -649,7 +649,7 @@
                         Id: data.fixedExpenditure.id
                     });
 
-                    $.ajax({
+                    void $.ajax({
                         url: "/Notice/DeleteFixedExpenditure",
                         type: "POST",
                         headers: { "RequestVerificationToken": fieldValue($__RequestVerificationToken) },
@@ -707,7 +707,7 @@
      * (its currency). Both `if` branches set the same thing.
      */
     function ChangeCreateFixedExpenditureAmountLabel(productName: string) {
-        $.ajax({
+        void $.ajax({
             url: "/Notice/GetFixedExpenditureAmountLabel" + "?productName=" + encodeURIComponent(productName),
             type: "POST",
             headers: { "RequestVerificationToken": fieldValue($__RequestVerificationToken) },
@@ -728,7 +728,7 @@
 
     /** Same as `ChangeCreateFixedExpenditureAmountLabel` for the edit form. */
     function ChangeEditFixedExpenditureAmountLabel(productName: string) {
-        $.ajax({
+        void $.ajax({
             url: "/Notice/GetFixedExpenditureAmountLabel" + "?productName=" + encodeURIComponent(productName),
             type: "POST",
             headers: { "RequestVerificationToken": fieldValue($__RequestVerificationToken) },

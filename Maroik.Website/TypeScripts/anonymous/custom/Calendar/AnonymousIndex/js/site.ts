@@ -290,7 +290,7 @@
                     $divOtherCalendarEventPopupAllDayChecked.hide();
                     $divOtherCalendarEventPopupAllDayUnchecked.hide();
 
-                    if (arg.event.allDay === true) {
+                    if (arg.event.allDay) {
                         $otherCalendarEventPopupStartAllDayChecked.text(conform(arg.event.extendedProps, calendarEventProps, "the event\'s extendedProps").displayStartDate);
                         $otherCalendarEventPopupEndAllDayChecked.text(conform(arg.event.extendedProps, calendarEventProps, "the event\'s extendedProps").displayEndDate);
                         $divOtherCalendarEventPopupAllDayChecked.show();
@@ -320,7 +320,7 @@
 
                     // "View" button: fetch the full event and open the read-only modal.
                     $viewOtherCalendarEventPopup.off("click").on("click", function() {
-                        $.ajax({
+                        void $.ajax({
                             url: "/Calendar/IsOtherCalendarEventExists" + "?id=" + popup.data("event-id"),
                             type: "POST",
                             headers: { "RequestVerificationToken": fieldValue($__RequestVerificationToken) },
@@ -336,7 +336,7 @@
                                     $divViewEventAllDayChecked.hide();
                                     $divViewEventAllDayUnchecked.hide();
 
-                                    if (data.calendarEvent.allDay === true) {
+                                    if (data.calendarEvent.allDay) {
                                         $divViewEventAllDayChecked.show();
                                         $viewCalendarEventAllDay.prop("checked", true);
                                         $viewCalendarEventAllDayCheckedStartDate.val(data.calendarEvent.displayStartDate);
@@ -422,7 +422,7 @@
                                         $divViewEventNotificationAllDayChecked.hide();
                                         $divViewEventNotificationAllDayUnchecked.hide();
 
-                                        if (calendarEvent.allDay === true) {
+                                        if (calendarEvent.allDay) {
                                             $divViewEventNotificationAllDayChecked.find(".divViewEventNotificationAllDayCheckedRow").remove();
                                             $divViewEventNotificationAllDayChecked.show();
 
@@ -437,6 +437,7 @@
                                                         let selectedDays = reminder.DaysBeforeEvent !== null ? "selected" : "";
                                                         let selectedWeeks = reminder.WeeksBeforeEvent !== null ? "selected" : "";
 
+                                                        // noinspection HtmlUnknownAttribute
                                                         const selNotificationTimeTypeAllDayChecked = `
                                                     <input type='number' class='form-control-sm viewCalendarEventSelNotificationNumberAllDayChecked' style='width:20%;text-overflow:ellipsis; background-color:#343a40; color:#fff; border-color:#6c757d;' min="${minLeadTimeBeforeEvent}" max="${max}" value="${value}" disabled>
                                                     <select class='form-control-sm viewCalendarEventSelNotificationTimeTypeAllDayChecked' style='width:15%;text-overflow:ellipsis;' disabled>
@@ -480,6 +481,7 @@
                                                         let selectedDays = reminder.DaysBeforeEvent !== null ? "selected" : "";
                                                         let selectedWeeks = reminder.WeeksBeforeEvent !== null ? "selected" : "";
 
+                                                        // noinspection HtmlUnknownAttribute
                                                         const selNotificationTimeTypeAllDayUnchecked = `
                                                     <input type='number' class='form-control-sm viewCalendarEventSelNotificationNumberAllDayUnchecked' style='width:20%;text-overflow:ellipsis; background-color:#343a40; color:#fff; border-color:#6c757d;' min="${minLeadTimeBeforeEvent}" max="${max}" value="${value}" disabled>
                                                     <select class='form-control-sm viewCalendarEventSelNotificationTimeTypeAllDayUnchecked' style='width:15%;text-overflow:ellipsis;' disabled>
@@ -514,7 +516,7 @@
                                         $viewCalendarEventTaskDialogModal.modal("show");
                                     }
 
-                                    $.ajax({
+                                    void $.ajax({
                                         url: "/Calendar/GetOtherCalendars",
                                         method: "POST",
                                         headers: { "RequestVerificationToken": fieldValue($__RequestVerificationToken) },
@@ -607,7 +609,7 @@
                 paramValue.Calendars.push(...calendarsArray);
             });
 
-            $.ajax({
+            void $.ajax({
                 url: "/Calendar/GetCalendarEvents",
                 method: "POST",
                 headers: { "RequestVerificationToken": fieldValue($__RequestVerificationToken) },
@@ -666,7 +668,7 @@
         }
         let name = attribute($(this), "data-name");
 
-        $.ajax({
+        void $.ajax({
             url: "/Calendar/DownloadCalendarEventAttachedFile",
             type: "POST",
             headers: { "RequestVerificationToken": fieldValue($__RequestVerificationToken) },

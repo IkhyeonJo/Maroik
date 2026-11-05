@@ -45,6 +45,7 @@ export function describeGridCrudScript(c: GridCrudConfig): void {
     const N = c.entity;
     /** The row attribute that carries the key. */
     const attr = { Id: "data-id", ProductName: "data-productName", Email: "data-email" }[c.rowKey];
+    // noinspection HtmlUnknownAttribute
     /** Two grid rows plus the modal shells and search box the script expects. */
     const rows =
         `<div class="mvc-grid"></div><table><tbody>` +
@@ -281,7 +282,7 @@ export function describeGridCrudScript(c: GridCrudConfig): void {
                 const sets: { id: string; date: Date }[] = [];
                 stubPlugin(h, "datepicker", function(this: JQuery, cmd?: string, arg?: unknown) {
                     if (cmd === "widget") return h.$(widget);
-                    if (cmd === "setDate") sets.push({ id: present(this[0], "the datepicker's element").id, date: instanceOfType(arg, Date) });
+                    if (cmd === "setDate") sets.push({ id: present(this[0], "the datepicker element").id, date: instanceOfType(arg, Date) });
                     return this;
                 });
                 return { pane, sets };

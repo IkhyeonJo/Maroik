@@ -26,7 +26,7 @@ const PROBE = [
     `const checked: string = $("#x").prop("checked");`,
 ].join("\n");
 
-/** Compiles `probe` together with `declarations` and returns tsc's diagnostics, one per line. */
+/** Compiles `probe` together with `declarations` and returns the tsc diagnostics, one per line. */
 function compileProbe(declarations: string, types: string[]): string[] {
     const dir = mkdtempSync(join(tmpdir(), "maroik-no-implicit-any-"));
     try {
