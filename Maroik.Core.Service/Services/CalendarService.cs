@@ -16,7 +16,7 @@ namespace Maroik.Core.Service.Services;
 /// Event attachments (zip only, per <c>AttachmentUploadPolicy</c>) are stored in and retrieved from the
 /// file-storage microservice, which virus-scans them with ClamAV; Summernote inline images in an event
 /// description go through <see cref="IAttachmentContentService"/> (image-validated before upload).
-/// All multi-step write operations use <see cref="IUnitOfWork"/> transactions.
+/// All multistep write operations use <see cref="IUnitOfWork"/> transactions.
 /// </summary>
 public class CalendarService(
     ICalendarRepository calendarRepository,

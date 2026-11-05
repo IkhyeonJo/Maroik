@@ -5,7 +5,7 @@ using Maroik.Core.Domain.Formulas;
 namespace Maroik.Core.Domain.Budgets;
 
 /// <summary>
-/// The shape of a budget sheet: its rows — per main class (taxonomy order) a header, its lines (sub-class order, then currency) and a
+/// The shape of a budget sheet: its rows — per main class (taxonomy order) a header, its lines (subclass order, then currency) and a
 /// subtotal per currency; a total per currency; then <see cref="FreeRowCount"/> free rows — and its columns A..Z: A labels, B..M the
 /// months (January..December), N the year total, O..Z free. It says what each cell is (<see cref="BudgetCellRole"/>) and writes
 /// the formulas of the computed cells, in the stored form with row keys.
@@ -19,7 +19,7 @@ public sealed class BudgetSheetLayout
     public const int ColumnCount = 26;
 
     /// <summary>
-    /// The most lines a sheet holds. A line is a sub-class and a free-text currency, so lines were unbounded, and every request
+    /// The most lines a sheet holds. A line is a subclass and a free-text currency, so lines were unbounded, and every request
     /// rebuilds the sheet's rows (a subtotal and a total per currency) and their formulas from them.
     /// </summary>
     public const int MaxLines = 100;

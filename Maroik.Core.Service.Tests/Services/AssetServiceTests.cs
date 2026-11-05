@@ -566,7 +566,7 @@ public class AssetServiceTests
         Assert.Empty(_logger.Collector.GetSnapshot());
     }
 
-    /// <summary>A create that throws anything else logs the failure with the exception, the asset and the account.</summary>
+    /// <summary>A creation that throws anything else logs the failure with the exception, the asset and the account.</summary>
     [Fact]
     public async Task CreateAsync_LogsTheFailureWithTheException_WhenTheRepositoryThrows()
     {
@@ -712,7 +712,7 @@ public class AssetServiceTests
         _unitOfWork.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Never);
     }
 
-    /// <summary>A delete that throws logs the failure with the exception, the asset and the account.</summary>
+    /// <summary>A deleted that throws logs the failure with the exception, the asset and the account.</summary>
     [Fact]
     public async Task DeleteAsync_LogsTheFailureWithTheException_WhenTheRepositoryThrows()
     {

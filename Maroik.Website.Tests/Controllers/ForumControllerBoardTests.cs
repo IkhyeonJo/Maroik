@@ -47,6 +47,7 @@ public class ForumControllerBoardTests(MaroikWebApplicationFactory factory)
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         var board = new Board
         {
+            // ReSharper disable once GrammarMistakeInComment
             // "Board"."Id" is bigint: an explicit id above int.MaxValue (and above every id so far, so it stays unique).
             Id = idBeyondInt32 ? Math.Max(int.MaxValue, db.Boards.Max(b => b.Id)) + 1 : 0,
             Type = FreeForumType,

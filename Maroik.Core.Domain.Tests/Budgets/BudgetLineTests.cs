@@ -3,7 +3,7 @@ using Maroik.Core.Domain.Tests.Fixtures;
 
 namespace Maroik.Core.Domain.Tests.Budgets;
 
-/// <summary>Unit tests for <see cref="BudgetLine"/>: a line of a sheet (main class, sub-class, currency) and its stable row key.</summary>
+/// <summary>Unit tests for <see cref="BudgetLine"/>: a line of a sheet (main class, subclass, currency) and its stable row key.</summary>
 public class BudgetLineTests
 {
     /// <summary>A valid line keeps its classes and the normalized currency.</summary>

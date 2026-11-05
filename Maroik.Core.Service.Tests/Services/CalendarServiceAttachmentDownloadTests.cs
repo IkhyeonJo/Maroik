@@ -14,7 +14,7 @@ namespace Maroik.Core.Service.Tests.Services;
 
 /// <summary>
 /// <see cref="CalendarService.OpenCalendarEventAttachedFileAsync"/>: an event's attachment is handed out
-/// only after it is checked again that the event's calendar is one the requesting viewer may see (their
+/// only after it is checked again that the event's calendar is one of the requesting viewer may see (their
 /// own, one they subscribe to that is still shared, or — for an anonymous visitor — one shared with
 /// anonymous visitors), and it is streamed from file storage rather than embedded in the event detail.
 /// A refused download is logged as a permission denial.

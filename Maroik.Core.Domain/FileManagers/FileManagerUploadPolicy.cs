@@ -69,7 +69,7 @@ public static class FileManagerUploadPolicy
 
     /// <summary>
     /// Accepts an upload of <paramref name="requestedBytes"/> when it fits what is left of <paramref name="quotaBytes"/> after
-    /// <paramref name="usedBytes"/> (the user's files, unfinished uploads included). Otherwise the refusal names the shortfall in
+    /// <paramref name="usedBytes"/> (the user's files, unfinished uploads included). Otherwise, the refusal names the shortfall in
     /// GB, rounded up to 0.1 GB, so the user is told "N GB short". A quota already below the usage refuses every new upload.
     /// </summary>
     public static ErrorOr<Success> CheckQuota(long quotaBytes, long usedBytes, long requestedBytes)

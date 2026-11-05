@@ -96,7 +96,7 @@ internal sealed class FakeSmtpServer : IAsyncDisposable
             // Shutting down: DisposeAsync signals the stop, then closes the listener while this loop may be anywhere, so the accept
             // ends however that race falls — canceled, on a disposed or not-listening listener (InvalidOperationException), or as a
             // SocketException ("Operation canceled" / "Invalid argument") when closing the socket beats the token. Before the stop,
-            // any exception still fails the dispose (FakeSmtpServerTests).
+            // any exception still fails to dispose (FakeSmtpServerTests).
         }
     }
 

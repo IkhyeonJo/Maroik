@@ -98,7 +98,7 @@ public class FixedExpenditureOutputViewModel
     public bool Unpunctuality { get; set; }
 
     /// <summary>
-    /// CSS row class for the grid, prioritizing Expired over Noticed over the default state.
+    /// CSS row class for the grid, prioritizing Expired over Noticed the default state.
     /// </summary>
     public string RowCssClass => FixedSchedulePolicy.GetRowStatus(Expired, Noticed).ToRowCssClass();
 }

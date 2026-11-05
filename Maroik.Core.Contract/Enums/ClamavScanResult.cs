@@ -23,7 +23,7 @@ public enum ClamavScanResult
     /// <summary>
     /// The daemon could not scan the stream whole because one of its limits was reached (size, recursion, file count or scan time —
     /// reported as "Heuristics.Limits.Exceeded…" with <c>AlertExceedsMax</c>). Like <see cref="Unavailable"/> nothing is known about
-    /// the file and it is not a detection; kept apart so a caller can say the file was too large to scan.
+    /// the file, and it is not a detection; kept apart so a caller can say the file was too large to scan.
     /// </summary>
     LimitExceeded
 }

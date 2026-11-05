@@ -60,6 +60,7 @@ public class SdkPinArchitectureTests
         Assert.Empty(violations);
     }
 
+    // ReSharper disable once GrammarMistakeInComment
     /// <summary>
     /// The weekly bump (<c>.github/workflows/sdk-bump.yml</c>) rewrites global.json and every <c>&lt;project&gt;/Dockerfile</c>
     /// in one pull request, so it never opens a bump the test above would fail. It finds the Dockerfiles with that one-level

@@ -42,7 +42,7 @@ public sealed class Email : ValueObject
 
         // Persisted in character varying(255) columns (Account.Email and every table that references it):
         // an over-long address is a clean validation error here, not a raw "value too long" (SQLSTATE
-        // 22001) from the write.
+        // 22001) from to write.
         if (trimmed.Length > MaxLength)
             return DomainError.Validation("Email.TooLong", "Email address must be {0} characters or fewer.", MaxLength);
 

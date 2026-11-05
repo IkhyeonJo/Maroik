@@ -124,7 +124,7 @@ public static class ServiceErrorKeys
     public const string FileManagerInfected = "The file may be infected with a virus.";
     /// <summary>The uploaded file could not be scanned (scanner outage, or a scan limit was exceeded) and the account may not keep it.</summary>
     public const string FileManagerScanUnavailable = "The file could not be scanned for viruses.";
-    /// <summary>The file has no preview (not a png / jpg / gif / webp image of at most 100 MB).</summary>
+    /// <summary>The file has no preview (not a png / jpg / GIF / webp image of at most 100 MB).</summary>
     public const string FileManagerNoPreview = "This file cannot be previewed.";
     /// <summary>A budget line that the sheet does not have.</summary>
     public const string BudgetLineNotFound = "The line could not be found.";

@@ -12,7 +12,7 @@ public sealed class BudgetRowResponse
     /// <summary>Its main class (header, line, subtotal), or null.</summary>
     public string? MainClass { get; init; }
 
-    /// <summary>Its sub-class (line), or null.</summary>
+    /// <summary>Its subclass (line), or null.</summary>
     public string? SubClass { get; init; }
 
     /// <summary>Its currency (line, subtotal, total), or null.</summary>

@@ -80,6 +80,7 @@ public class FileManagerFlowTests(E2ESharedFixture fixture) : E2ETestBase(fixtur
         Assert.Equal("hello"u8.ToArray(), Files.BytesOf(path!));
     }
 
+    // ReSharper disable once GrammarMistakeInComment
     /// <summary>
     /// While file storage is still scanning a sent file, its line says so and the page keeps asking (every 3 seconds, the domain's
     /// interval); once the scan is decided the line says it is uploaded and the file is listed.

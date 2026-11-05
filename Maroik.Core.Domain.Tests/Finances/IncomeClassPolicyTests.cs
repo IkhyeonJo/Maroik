@@ -10,7 +10,7 @@ public class IncomeClassPolicyTests
 {
     // -- RegularIncome ---------------------------------------------------------
 
-    /// <summary>Validate returns success for all regular income sub classes.</summary>
+    /// <summary>Validate returns success for all regular income subclasses.</summary>
     [Theory]
     [InlineData("LaborIncome")]
     [InlineData("BusinessIncome")]
@@ -56,7 +56,7 @@ public class IncomeClassPolicyTests
 
     // -- IrregularIncome -------------------------------------------------------
 
-    /// <summary>Validate returns success for all irregular income sub classes.</summary>
+    /// <summary>Validate returns success for all irregular income subclasses.</summary>
     [Theory]
     [InlineData("LaborIncome")]
     [InlineData("OtherIncome")]
@@ -67,7 +67,7 @@ public class IncomeClassPolicyTests
         Assert.False(result.IsError);
     }
 
-    /// <summary>Validate returns error, when irregular income sub class invalid.</summary>
+    /// <summary>Validate returns error, when irregular income subclass invalid.</summary>
     [Theory]
     [InlineData("BusinessIncome")]
     [InlineData("PensionIncome")]
@@ -155,7 +155,7 @@ public class IncomeClassPolicyTests
         Assert.Equal(["LaborIncome", "OtherIncome"], IncomeClassPolicy.SubClassesByMainClass["IrregularIncome"]);
     }
 
-    /// <summary>The typed taxonomy lists each main class's sub-classes in display order.</summary>
+    /// <summary>The typed taxonomy lists each main class's subclasses in display order.</summary>
     [Fact]
     public void Taxonomy_ListsTheSubClassesOfEachMainClass()
     {

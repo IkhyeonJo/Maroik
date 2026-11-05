@@ -16,7 +16,7 @@ namespace Maroik.Core.Domain.Finances;
 public static class ExpenditureClassPolicy
 {
     /// <summary>
-    /// The recognized sub-classes of each expenditure main class, in display order — the single source of truth, typed so a
+    /// The recognized subclasses of each expenditure main class, in display order — the single source of truth, typed so a
     /// misspelt class is a compile error. The string views below are generated from it.
     /// </summary>
     public static readonly IReadOnlyDictionary<ExpenditureMainClass, IReadOnlyList<ExpenditureSubClass>> Taxonomy =

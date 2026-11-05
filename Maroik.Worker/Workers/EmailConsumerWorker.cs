@@ -388,8 +388,8 @@ public sealed class EmailConsumerWorker(
         }
         catch (OperationCanceledException)
         {
-            // Either the host's own shutdown deadline or the DrainTimeout deadline was reached. If a
-            // send is still running at this point, cancel it via _sendCts (every HandleAsync call
+            // Either the host's own shutdown deadline or the DrainTimeout deadline was reached.
+            // If a Send is still running at this point, cancel it via _sendCts (every HandleAsync call
             // is given its token) instead of disposing the channel straight out from under it below
             // -- that would throw from the handler's own ack/nack and force a redelivery/resend of
             // a send that may already have completed. Cancellation instead lets OnMessageReceivedAsync's own

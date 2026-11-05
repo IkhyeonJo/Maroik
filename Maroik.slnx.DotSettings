@@ -93,4 +93,5 @@
 
 	<!-- ===== Migration marker ===== -->
 	<s:Boolean x:Key="/Default/Environment/SettingsMigration/IsMigratedToUnifiedSettings/@EntryValue">True</s:Boolean>
+	<s:Boolean x:Key="/Default/UserDictionary/Words/=_0430dmin/@EntryIndexedValue">True</s:Boolean>
 </wpf:ResourceDictionary>

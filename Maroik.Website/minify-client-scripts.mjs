@@ -10,6 +10,8 @@
 // Each site.js is a plain global <script> wrapped in an IIFE (tsconfig.json: moduleDetection "legacy"), so
 // top-level names are left alone (mangle.toplevel false) and only the IIFE's locals are renamed. Strings are
 // always printed with double quotes: tests find `$("#id")` reads in the compiled script with that pattern.
+// noinspection JSUnresolvedReference,GrazieInspection
+
 import { readFileSync, readdirSync, statSync, writeFileSync, existsSync } from "node:fs";
 import { dirname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";

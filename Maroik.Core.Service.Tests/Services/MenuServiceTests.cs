@@ -37,7 +37,7 @@ public class MenuServiceTests
         _logger);
 
     /// <summary>
-    /// Every menu write locks the whole menu first. By default it is empty — no route to menu management, so the menu
+    /// Every menu write locks the whole menu first. By default, it is empty — no route to menu management, so the menu
     /// safeguard lets every change through — unless a test seeds one with <see cref="SeedMenuManagementRoute"/>.
     /// </summary>
     public MenuServiceTests()
@@ -486,6 +486,7 @@ public class MenuServiceTests
 
     // -- Whole-search fields, transaction boundaries, exact results and failure logging -----
 
+    // ReSharper disable once GrammarMistakeInComment
     /// <summary>A category whose every searchable field holds a distinct value.</summary>
     private static Category DistinctCategory() =>
         Category.Reconstitute(3, "nm", "disp", "/ic.png", "Ctrl", "Act", Role.Admin, 7L);
@@ -542,7 +543,7 @@ public class MenuServiceTests
         Assert.Equal(message, record.Message);
     }
 
-    /// <summary>A category create that throws is logged with its name and reported as the create failure.</summary>
+    /// <summary>A category create that throws is logged with its name and reported as the creation failure.</summary>
     [Fact]
     public async Task CreateCategoryAsync_LogsAndReportsCreateFailed_WhenTheRepositoryThrows()
     {
@@ -609,7 +610,7 @@ public class MenuServiceTests
         AssertLoggedError("Failed to delete category Forum", thrown);
     }
 
-    /// <summary>A sub-category create that throws is logged with its name and reported as the create failure.</summary>
+    /// <summary>A sub-category create that throws is logged with its name and reported as the creation failure.</summary>
     [Fact]
     public async Task CreateSubCategoryAsync_LogsAndReportsCreateFailed_WhenTheRepositoryThrows()
     {
@@ -805,7 +806,7 @@ public class MenuServiceTests
         _subCategoryRepo.Verify(r => r.DeleteByIdAsync(It.IsAny<long>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
-    /// <summary>A category delete now runs in a transaction (the menu stays locked from the check to the delete) and commits.</summary>
+    /// <summary>A category delete now runs in a transaction (the menu stays locked from the check to delete) and commits.</summary>
     [Fact]
     public async Task DeleteCategoryAsync_BeginsAndCommitsTheTransaction_OnSuccess()
     {
@@ -831,7 +832,7 @@ public class MenuServiceTests
         _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Never);
     }
 
-    /// <summary>A delete that throws rolls the transaction back.</summary>
+    /// <summary>A deleted that throws rolls the transaction back.</summary>
     [Fact]
     public async Task DeleteCategoryAsync_RollsBack_WhenTheRepositoryThrows()
     {

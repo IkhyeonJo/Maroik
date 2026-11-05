@@ -16,7 +16,7 @@ public class BudgetSheetLayoutTests
     private static BudgetSheetLayout Layout(params BudgetLine[] lines) => BudgetSheetLayout.Create(BudgetKind.Expenditure, lines);
 
     /// <summary>
-    /// Rows: per main class (taxonomy order) a header, its lines (sub-class order, then currency), a subtotal per currency; then a
+    /// Rows: per main class (taxonomy order) a header, its lines (subclass order, then currency), a subtotal per currency; then a
     /// total per currency; then the free rows.
     /// </summary>
     [Fact]
@@ -147,7 +147,7 @@ public class BudgetSheetLayoutTests
     }
 
     /// <summary>
-    /// A sheet holds at most <see cref="BudgetSheetLayout.MaxLines"/> lines (a line is a sub-class and a free-text currency, so
+    /// A sheet holds at most <see cref="BudgetSheetLayout.MaxLines"/> lines (a line is a subclass and a free-text currency, so
     /// lines were unbounded, and every request rebuilds the sheet's rows and its subtotal formulas from them).
     /// </summary>
     [Fact]

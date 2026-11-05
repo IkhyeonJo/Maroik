@@ -34,7 +34,7 @@ public sealed class FileManagerScanQueue : IFileManagerScanQueue
             _pending[uploadId] = new CancellationTokenSource();
         }
 
-        // An unbounded channel always takes the write.
+        // An unbounded channel always takes to write.
         return _queued.Writer.TryWrite(uploadId);
     }
 

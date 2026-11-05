@@ -23,6 +23,7 @@ public static class LocalizedHtmlStringExtensions
         return writer.ToString();
     }
 
+    // ReSharper disable once GrammarMistakeInComment
     /// <summary>
     /// Formats <paramref name="args"/> into the resource template <paramref name="key"/> <em>without</em>
     /// HTML-encoding them. For a message that is stored raw (e.g. in <c>TempData</c>) and encoded

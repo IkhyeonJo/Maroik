@@ -12,10 +12,10 @@ public sealed class BudgetPageViewModel
     /// <summary>The main classes of the kind, in taxonomy order.</summary>
     public IReadOnlyList<string> MainClasses { get; init; } = [];
 
-    /// <summary>The sub-classes of each main class.</summary>
+    /// <summary>The subclasses of each main class.</summary>
     public IReadOnlyDictionary<string, IReadOnlyList<string>> SubClassesByMainClass { get; init; } = new Dictionary<string, IReadOnlyList<string>>();
 
-    /// <summary>The localized name of every main class and sub-class of the kind.</summary>
+    /// <summary>The localized name of every main class and subclass of the kind.</summary>
     public IReadOnlyDictionary<string, string> ClassLabels { get; init; } = new Dictionary<string, string>();
 
     /// <summary>The currency labels of the account's assets (the currency field's suggestions).</summary>

@@ -168,6 +168,7 @@ public class KanbanControllerTests(MaroikWebApplicationFactory factory)
         Assert.Equal(2, html.Split("kanban-due ").Length - 1);
     }
 
+    // ReSharper disable once GrammarMistakeInComment
     /// <summary>The AJAX request for the page returns only the board (no layout), which the script swaps in after a write.</summary>
     [Fact]
     public async Task UserIndex_ReturnsOnlyTheBoard_ToAnAjaxRequest()

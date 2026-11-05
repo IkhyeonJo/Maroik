@@ -33,7 +33,7 @@ public static class AssetUsagePolicy
     }
 
     /// <summary>
-    /// Assets whose balance a record already moved and will move back (an edit or a delete): refused when any of them
+    /// Assets whose balance a record already moved and will move back (an edit or a deleted): refused when any of them
     /// is deleted. A missing asset is not refused here.
     /// </summary>
     public static bool CanMoveBack(IEnumerable<Asset?> assets, out AssetRefusal? refusal)

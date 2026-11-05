@@ -189,7 +189,7 @@ public class ErrorContractTests
 
     // ---- Finance records ------------------------------------------------------------------------
 
-    /// <summary>Verifies the empty main class / sub class / deposit asset / content errors of <c>Income.Record</c>.</summary>
+    /// <summary>Verifies the empty main class / subclass / deposit asset / content errors of <c>Income.Record</c>.</summary>
     [Fact]
     public void Income_Record_Errors()
     {
@@ -199,7 +199,7 @@ public class ErrorContractTests
         ErrorAssert.Validation(Income.Record(Email, "RegularIncome", "LaborIncome", " ", 1m, "KRW", "a", _now), "Income.ContentEmpty", "Content cannot be empty.");
     }
 
-    /// <summary>Verifies the empty main class / sub class / payment method / content errors of <c>Expenditure.Record</c>.</summary>
+    /// <summary>Verifies the empty main class / subclass / payment method / content errors of <c>Expenditure.Record</c>.</summary>
     [Fact]
     public void Expenditure_Record_Errors()
     {

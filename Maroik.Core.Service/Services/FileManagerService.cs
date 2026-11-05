@@ -471,7 +471,7 @@ public class FileManagerService(
         }
 
         // A failure (a timeout, a lost answer) is not a refusal: file storage may still hold the staging file, a queued scan or the stored
-        // file. It is aborted first; when the abort fails too the row stays uploading, so the worker's hourly sweep aborts it once idle —
+        // file. It is aborted first; when the abort fails so long the row stays uploading, so the worker's hourly sweep aborts it once idle —
         // without the row no sweep could find the file.
         if (outcome == FileUploadResult.Failed && !await fileClient.AbortFileManagerUploadAsync(uploadId, BaseUrl, ct))
         {
@@ -502,7 +502,7 @@ public class FileManagerService(
     }
 
     /// <summary>
-    /// Makes an upload whose file file storage has stored a normal item of the drive, under the account lock: completed meanwhile is a
+    /// Makes an upload whose file storage has stored a normal item of the drive, under the account lock: completed meanwhile is a
     /// success, removed meanwhile is "not found", a name taken meanwhile (without <paramref name="overwrite"/>) fails, and an overwrite
     /// replaces the old file. A file stored with the account's virus scan off (<paramref name="scanDisabled"/>) is an audit event. The
     /// file nobody keeps, or the one an overwrite replaced, is deleted after the commit.

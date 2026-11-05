@@ -732,6 +732,7 @@ public sealed class AccountRepositoryTests(DatabaseFixture database) : Repositor
         Assert.Equal(target.Email, Assert.Single(byEmail).Email.Value);
     }
 
+    // ReSharper disable once GrammarMistakeInComment
     /// <summary>
     /// The "virus scan off" flag is shown in the admin grid, so the whole-row search matches it too: an account whose every
     /// other flag is false is found by "true" through it alone.

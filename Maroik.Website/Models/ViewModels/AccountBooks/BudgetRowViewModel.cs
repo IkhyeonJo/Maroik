@@ -15,7 +15,7 @@ public sealed class BudgetRowViewModel
     /// <summary>Its main class (for removing a line), or empty.</summary>
     public string MainClass { get; init; } = "";
 
-    /// <summary>Its sub-class, or empty.</summary>
+    /// <summary>Its subclass, or empty.</summary>
     public string SubClass { get; init; } = "";
 
     /// <summary>Its currency, or empty.</summary>

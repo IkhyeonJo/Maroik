@@ -530,7 +530,7 @@ public sealed class FileManagerControllerTests(MaroikWebApplicationFactory facto
         Assert.False(scope.ServiceProvider.GetRequiredService<ApplicationDbContext>().FileManagerNodes.Any(n => n.AccountEmail == email));
     }
 
-    /// <summary>The question flow is gone: there is no AcceptUnscannedUpload action any more.</summary>
+    /// <summary>The question flow is gone: there is no AcceptUnscannedUpload action anymore.</summary>
     [Fact]
     public async Task AcceptUnscannedUpload_NoLongerExists()
     {

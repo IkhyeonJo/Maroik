@@ -387,7 +387,7 @@ public class AccountServiceTests
         Assert.False(created.Locked);
         Assert.False(created.EmailConfirmed);
         Assert.False(created.Deleted);
-        Assert.Matches("^[0-9a-f]{64}$", created.RegistrationToken); // a SHA-256 hash, never the mailed token
+        Assert.Matches("^[0-9a-f]{64}$", created.RegistrationToken); // an SHA-256 hash, never the mailed token
     }
 
     /// <summary>
@@ -2250,7 +2250,7 @@ public class AccountServiceTests
         AssertLogged(LogLevel.Warning, $"Failed to update account message after mail send failure for {account.Email.Value}", thrown);
     }
 
-    /// <summary>A queued confirmation mail records "verify your mail" on the account, and the publish is logged with an empty correlation id outside a request.</summary>
+    /// <summary>A queued confirmation mail records "verify your mail" on the account, and the publishing is logged with an empty correlation id outside a request.</summary>
     [Fact]
     public async Task ResendConfirmationEmailAsync_RecordsVerifyEmail_AndLogsThePublish()
     {

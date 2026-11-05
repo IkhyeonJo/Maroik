@@ -514,7 +514,7 @@ public class MailClientTests
 
     /// <summary>
     /// Once the server has accepted the message, a failure while closing the connection must not be reported as a failed
-    /// send — the caller would republish and the recipient would get a duplicate. The send is a success; the close failure is
+    /// send — the caller would republish and the recipient would get a duplicate. To send is a success; the close failure is
     /// only logged (as a warning, with the exception).
     /// </summary>
     [Fact]

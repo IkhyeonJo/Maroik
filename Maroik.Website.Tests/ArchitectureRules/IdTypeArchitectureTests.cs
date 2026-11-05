@@ -4,6 +4,7 @@ using Maroik.Website.Filters;
 
 namespace Maroik.Website.Tests.ArchitectureRules;
 
+// ReSharper disable once GrammarMistakeInComment
 /// <summary>
 /// Every key column in <c>Init.sql</c> (each table's <c>Id</c> and every <c>*Id</c> foreign key) is <c>bigint</c>, so the HTTP
 /// surface and the service contracts carry ids as <c>long</c> too. An <c>int</c> id (a view model property, an action
@@ -21,6 +22,7 @@ public class IdTypeArchitectureTests
     private const BindingFlags Declared =
         BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static | BindingFlags.DeclaredOnly;
 
+    // ReSharper disable once GrammarMistakeInComment
     /// <summary>No property or method parameter named <c>id</c> / <c>*Id</c> in the Website or Contract is an <c>int</c>.</summary>
     [Fact]
     public void Ids_AreLong_LikeTheirBigintColumns()

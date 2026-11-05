@@ -51,7 +51,7 @@ public class ExceptionControllerTests(MaroikWebApplicationFactory factory)
         Assert.Contains(requestIdLabel, html, StringComparison.Ordinal);
     }
 
-    /// <summary>Error logged in user returns200.</summary>
+    /// <summary>Error logged-in user returns200.</summary>
     [Fact]
     public async Task Error_LoggedInUser_Returns200()
     {

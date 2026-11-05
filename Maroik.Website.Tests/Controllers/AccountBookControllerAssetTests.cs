@@ -48,7 +48,7 @@ public class AccountBookControllerAssetTests(MaroikWebApplicationFactory factory
         db.SaveChanges();
     }
 
-    /// <summary>A valid create/update-asset JSON body for <paramref name="productName"/>.</summary>
+    /// <summary>A valid creation/update-asset JSON body for <paramref name="productName"/>.</summary>
     private static object ValidAssetPayload(string productName) => new
     {
         ProductName = productName,

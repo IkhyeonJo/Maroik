@@ -48,7 +48,7 @@ public class AccountBookControllerTests(MaroikWebApplicationFactory factory)
 
     // -- Income ---------------------------------------------------------------
 
-    /// <summary>Income get logged in user returns200.</summary>
+    /// <summary>Income get logged-in user returns200.</summary>
     [Fact]
     public async Task Income_Get_LoggedInUser_Returns200()
     {
@@ -59,7 +59,7 @@ public class AccountBookControllerTests(MaroikWebApplicationFactory factory)
 
     // -- Expenditure ------------------------------------------------------------
 
-    /// <summary>Expenditure get logged in user returns200.</summary>
+    /// <summary>Expenditure get logged-in user returns200.</summary>
     [Fact]
     public async Task Expenditure_Get_LoggedInUser_Returns200()
     {

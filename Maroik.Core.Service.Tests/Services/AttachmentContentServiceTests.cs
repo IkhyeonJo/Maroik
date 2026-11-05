@@ -509,7 +509,7 @@ public class AttachmentContentServiceTests
         Assert.Equal("Attachment.TooLarge", result?.ErrorCode);
     }
 
-    /// <summary>Every refused editor image (wrong type, SVG, undecodable) answers "Invalid image file.".</summary>
+    /// <summary>Every refused editor image (wrong type, SVG, undecodable) answers "Invalid image file."</summary>
     [Theory]
     [InlineData("photo.gif", "image/gif", false, true)]
     [InlineData("photo.png", "image/png", true, true)]

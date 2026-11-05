@@ -243,7 +243,7 @@ public class FileManagerServiceWriteTests
         Assert.Contains(_h.Logger.Collector.GetSnapshot(), r => r is { Level: LogLevel.Information, Message: $"File Manager: {H.Email} deleted 2 item(s) (4 node(s), 3 stored file(s))" });
     }
 
-    /// <summary>A stored file that cannot be deleted is left as an orphan: the delete still succeeds for the user and a warning names it.</summary>
+    /// <summary>A stored file that cannot be deleted is left as an orphan: to delete still succeeds for the user and a warning names it.</summary>
     [Fact]
     public async Task DeleteAsync_LeavesAnOrphan_WhenTheStoredFileCannotBeDeleted()
     {
@@ -273,6 +273,7 @@ public class FileManagerServiceWriteTests
         _h.Files.Verify(f => f.DeleteFileManagerFileAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
+    // ReSharper disable once GrammarMistakeInComment
     /// <summary>A database failure inside a write is rolled back, logged at Error with the exception and answered as a temporary error.</summary>
     [Fact]
     public async Task AWriteFailure_IsRolledBack_LoggedAndAnsweredAsTemporary()

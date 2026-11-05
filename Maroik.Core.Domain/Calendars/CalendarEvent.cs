@@ -27,7 +27,7 @@ public sealed class CalendarEvent : AggregateRoot<long>
     public static bool IsWithinYears(DateTime date) => date.Year is >= MinYear and <= MaxYear;
 
     /// <summary>
-    /// Refuses a event description longer than <see cref="TitledContentPolicy.MaxRawBodyLength"/> as submitted, before it is sanitized, with
+    /// Refuses an event description longer than <see cref="TitledContentPolicy.MaxRawBodyLength"/> as submitted, before it is sanitized, with
     /// the same error as an over-long sanitized one.
     /// </summary>
     public static ErrorOr<Success> ValidateRawDescription(string? raw) =>
@@ -180,7 +180,7 @@ public sealed class CalendarEvent : AggregateRoot<long>
             return DomainError.Validation("CalendarEvent.DescriptionTooLong", "Event description must be {0} characters or fewer.", TitledContentPolicy.MaxBodyLength);
 
         // Persisted in a character varying(255) column: reject an over-long value here (a clean
-        // validation error) instead of a raw "value too long" (SQLSTATE 22001) from the write.
+        // validation error) instead of a raw "value too long" (SQLSTATE 22001) from to write.
         if (location?.Length > ShortTextPolicy.MaxLength)
             return DomainError.Validation("CalendarEvent.LocationTooLong", "Event location must be {0} characters or fewer.", ShortTextPolicy.MaxLength);
 
@@ -256,7 +256,7 @@ public sealed class CalendarEvent : AggregateRoot<long>
             return DomainError.Validation("CalendarEvent.DescriptionTooLong", "Event description must be {0} characters or fewer.", TitledContentPolicy.MaxBodyLength);
 
         // Persisted in a character varying(255) column: reject an over-long value here (a clean
-        // validation error) instead of a raw "value too long" (SQLSTATE 22001) from the write.
+        // validation error) instead of a raw "value too long" (SQLSTATE 22001) from to write.
         if (location?.Length > ShortTextPolicy.MaxLength)
             return DomainError.Validation("CalendarEvent.LocationTooLong", "Event location must be {0} characters or fewer.", ShortTextPolicy.MaxLength);
 

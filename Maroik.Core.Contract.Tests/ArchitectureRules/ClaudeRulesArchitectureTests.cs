@@ -6,7 +6,7 @@ namespace Maroik.Core.Contract.Tests.ArchitectureRules;
 /// <summary>
 /// The project rules are split between <c>CLAUDE.md</c> (cross-cutting, always loaded) and <c>.claude/rules/*.md</c>
 /// (one area each, loaded by Claude Code when a file matching the rule file's <c>paths:</c> globs is read or edited).
-/// A rule file that no file matches any more — after a rename or a removed folder — would silently never load, and a rule
+/// A rule file that no file matches anymore — after a rename or a removed folder — would silently never load, and a rule
 /// file missing from the CLAUDE.md index could not be found by a reader; these tests catch both.
 /// </summary>
 public class ClaudeRulesArchitectureTests

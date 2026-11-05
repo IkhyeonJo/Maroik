@@ -30,7 +30,7 @@ public class FolderRoleArchitectureTests
     /// <summary>The folder of the <c>*Mapper</c> classes, which are extension classes too.</summary>
     private const string MappersFolder = "Mappers";
 
-    /// <summary>The folder every non-test type of a test project lives in.</summary>
+    /// <summary>The folder every non-test type of test project lives in.</summary>
     private const string FixturesFolder = "Fixtures";
 
     /// <summary>Every top-level type of the production sources, parsed once on first use.</summary>

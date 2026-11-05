@@ -219,6 +219,7 @@ public sealed class FileManagerStorageServiceTests : IDisposable
         Assert.Equal((FileStorageRefusals.SizeMismatch, false), await CompleteAsync(3));
     }
 
+    // ReSharper disable once GrammarMistakeInComment
     /// <summary>
     /// After a restart nothing is pending: a complete of an upload whose staging file is still whole queues its scan again.
     /// </summary>

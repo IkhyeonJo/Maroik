@@ -19,7 +19,7 @@ public sealed class OtherTestcontainersTests : IAsyncDisposable
     private readonly DockerClient _docker = TestcontainersSettings.OS.DockerEndpointAuthConfig
         .GetDockerClientBuilder(ResourceReaper.DefaultSessionId).Build();
 
-    /// <summary>Id of the container started by <see cref="StartOtherSessionContainerAsync"/>, removed on dispose.</summary>
+    /// <summary>ID of the container started by <see cref="StartOtherSessionContainerAsync"/>, removed on dispose.</summary>
     private string? _containerId;
 
     /// <summary>

@@ -7,7 +7,7 @@ using Maroik.Core.Domain.ValueObjects;
 namespace Maroik.Core.Domain.Budgets;
 
 /// <summary>
-/// A line of a budget sheet: one sub-class of one main class in one currency. Its <see cref="Key"/> is made of those three, so the
+/// A line of a budget sheet: one subclass of one main class in one currency. Its <see cref="Key"/> is made of those three, so the
 /// same line has the same key in every year's sheet and a stored formula that names it keeps working when rows move or a formula is
 /// copied from last year.
 /// </summary>
@@ -39,7 +39,7 @@ public sealed record BudgetLine(string MainClass, string SubClass, string Curren
         return new BudgetLine(mainClass!, subClass!, code.Value.Value);
     }
 
-    /// <summary>The main classes of a kind with their sub-classes, in taxonomy order.</summary>
+    /// <summary>The main classes of a kind to their subclasses, in taxonomy order.</summary>
     public static IReadOnlyDictionary<string, IReadOnlyList<string>> Taxonomy(BudgetKind kind) =>
         kind == BudgetKind.Income ? IncomeClassPolicy.SubClassesByMainClass : ExpenditureClassPolicy.SubClassesByMainClass;
 

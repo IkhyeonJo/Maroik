@@ -375,7 +375,7 @@ public class AccountService(
             // consumed, or vice versa. The lock is held only long enough to persist the
             // regenerated token's hash — released at Commit below, before the network mail send
             // that follows, so a slow/degraded broker cannot hold this row's lock (and this
-            // request's DB connection) open for the duration of the publish.
+            // request's DB connection) open for the duration of the publishing.
             Account? found = await accountRepository.FindByEmailForUpdateAsync(email, ct);
             if (found == null)
             {

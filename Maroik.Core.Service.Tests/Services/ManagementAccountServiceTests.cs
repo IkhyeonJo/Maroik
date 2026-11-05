@@ -836,7 +836,7 @@ public class ManagementAccountServiceTests
         _accountRepo.Verify(r => r.CreateAsync(It.Is<Account>(a => a.TimeZone.Value == "Asia/Seoul"), It.IsAny<CancellationToken>()), Times.Once);
     }
 
-    /// <summary>A create that throws unexpectedly is logged with the exception and the e-mail.</summary>
+    /// <summary>A creation that throws unexpectedly is logged with the exception and the e-mail.</summary>
     [Fact]
     public async Task CreateAccountAsync_LogsTheFailure_WhenTheRepositoryThrows()
     {
@@ -919,7 +919,7 @@ public class ManagementAccountServiceTests
         _unitOfWork.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Never);
     }
 
-    /// <summary>A delete that throws unexpectedly is logged with the exception and the e-mail.</summary>
+    /// <summary>A deleted that throws unexpectedly is logged with the exception and the e-mail.</summary>
     [Fact]
     public async Task DeleteAccountAsync_LogsTheFailure_WhenTheRepositoryThrows()
     {
@@ -1105,7 +1105,7 @@ public class ManagementAccountServiceTests
         _unitOfWork.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
-    /// <summary>A delete locks the active administrators before the deleted account (same order as an update).</summary>
+    /// <summary>A deleted locks the active administrators before the deleted account (same order as an update).</summary>
     [Fact]
     public async Task DeleteAccountAsync_LocksTheActiveAdminsBeforeTheDeletedAccount()
     {

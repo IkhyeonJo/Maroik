@@ -261,7 +261,7 @@ public class DashboardService(
     {
         var byMainClass = items.ToLookup(i => i.MainClass);
         // The lambda's explicit return type widens SubClass to string?, the shape FinanceBreakdownPolicy.Compute takes (it also
-        // accepts rows without a sub-class); an IEnumerable of non-nullable tuples is not accepted there (CS8620).
+        // accepts rows without a subclass); an IEnumerable of non-nullable tuples is not accepted there (CS8620).
         return mainClasses.ToDictionary(
             mainClass => mainClass,
             mainClass => ToDto(FinanceBreakdownPolicy.Compute(byMainClass[mainClass].Select((string? SubClass, decimal Amount) (i) => (i.SubClass, i.Amount)))));

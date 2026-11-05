@@ -137,7 +137,7 @@ public class FinanceReadEndpointsTests(MaroikWebApplicationFactory factory)
 
     /// <summary>
     /// Every finance grid shows an amount with every decimal place the column stores (up to four, trailing zeros
-    /// dropped) and with a thousands separator: 1234.5678 is listed as "1,234.5678", not rounded to "1234.57".
+    /// dropped) and with a thousand separator: 1234.5678 is listed as "1,234.5678", not rounded to "1234.57".
     /// </summary>
     [Theory]
     [InlineData("/AccountBook/Asset")]

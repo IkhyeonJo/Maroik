@@ -51,7 +51,7 @@ public sealed class RabbitMqEmailPublisher(
 
     /// <summary>
     /// 1 from the moment a <see cref="DisposeAsync"/> call claims the disposal, so any other call — repeated or
-    /// concurrent — returns at once instead of waiting on (or later releasing) the lock that call disposes. A dispose
+    /// concurrent — returns at once instead of waiting on (or later releasing) the lock that call disposes. A disposed
     /// that timed out disposed nothing and resets it to 0, so a later call can still dispose.
     /// </summary>
     private int _disposed;

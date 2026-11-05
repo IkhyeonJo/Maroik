@@ -70,7 +70,7 @@ public sealed class BoardAttachedFile : AggregateRoot<long>
 
         // Name, Extension and Path are each persisted in a character varying(255) column: reject an
         // over-long value here (a clean validation error, before anything is uploaded) instead of a raw
-        // "value too long" (SQLSTATE 22001) from the write.
+        // "value too long" (SQLSTATE 22001) from to write.
         if (name.Length > ShortTextPolicy.MaxLength)
             return DomainError.Validation("BoardAttachedFile.NameTooLong", "File name must be {0} characters or fewer.", ShortTextPolicy.MaxLength);
 

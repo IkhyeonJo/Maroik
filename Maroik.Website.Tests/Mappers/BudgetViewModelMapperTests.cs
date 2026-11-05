@@ -17,7 +17,7 @@ public class BudgetViewModelMapperTests
     /// <summary>A number value.</summary>
     private static BudgetValueResponse Number(decimal n) => new() { Kind = "Number", Number = n };
 
-    /// <summary>Rows get localized labels: the main class for a header, the sub-class for a line, Subtotal / Total, nothing for a free row.</summary>
+    /// <summary>Rows get localized labels: the main class for a header, the subclass for a line, Subtotal / Total, nothing for a free row.</summary>
     [Fact]
     public void Rows_GetLocalizedLabels()
     {
@@ -109,7 +109,7 @@ public class BudgetViewModelMapperTests
         Assert.Equal(("", "5", ""), (cells[1].Input, cells[1].Actual, cells[1].Remaining));
     }
 
-    /// <summary>Unbudgeted records get the localized sub-class and their months in the amount format.</summary>
+    /// <summary>Unbudgeted records get the localized subclass and their months in the amount format.</summary>
     [Fact]
     public void Unbudgeted_AreShown()
     {

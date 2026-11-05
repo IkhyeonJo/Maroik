@@ -94,7 +94,7 @@ public class ExpenditureClassPolicyTests
 
     // -- ConsumerSpending ------------------------------------------------------
 
-    /// <summary>Validate returns false for all consumer spending sub classes.</summary>
+    /// <summary>Validate returns false for all consumer spending subclasses.</summary>
     [Theory]
     [InlineData("MealOrEatOutExpenses")]
     [InlineData("HousingOrSuppliesCost")]
@@ -213,7 +213,7 @@ public class ExpenditureClassPolicyTests
         Assert.Equal(["Deposit", "Investment", "PublicPension", "DebtRepayment"], ExpenditureClassPolicy.DepositAssetSubClasses);
     }
 
-    /// <summary>The typed taxonomy lists each main class's sub-classes in display order.</summary>
+    /// <summary>The typed taxonomy lists each main class's subclasses in display order.</summary>
     [Fact]
     public void Taxonomy_ListsTheSubClassesOfEachMainClass()
     {

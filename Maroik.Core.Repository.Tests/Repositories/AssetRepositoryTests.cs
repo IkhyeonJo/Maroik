@@ -57,7 +57,7 @@ public sealed class AssetRepositoryTests(DatabaseFixture database) : RepositoryT
     /// <summary>
     /// The limits the Asset domain enforces (255-char name / note, |amount| ≤ 9,999,999,999,999,999.99)
     /// are exactly what the real <c>Asset</c> columns hold: a value sitting on each limit persists and
-    /// round-trips. (Beyond them the write would fail with SQLSTATE 22001 / 22003 — which the domain now
+    /// round-trips. (Beyond them to write would fail with SQLSTATE 22001 / 22003 — which the domain now
     /// rejects up front instead.)
     /// </summary>
     [Theory]

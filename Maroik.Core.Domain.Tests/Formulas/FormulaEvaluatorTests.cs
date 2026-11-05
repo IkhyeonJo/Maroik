@@ -126,7 +126,7 @@ public class FormulaEvaluatorTests
         Assert.Equal(E(FormulaErrorKind.Value), Evaluate("=B1&B1&B1", cells));
     }
 
-    /// <summary>Comparisons: same types by value (text ignoring case), numbers below text below booleans, empty as 0 or "".</summary>
+    /// <summary>Comparisons: same types by value (text ignoring case), numbers below text booleans, empty as 0 or "".</summary>
     [Theory]
     [InlineData("=1<2", true)]
     [InlineData("=2<=2", true)]

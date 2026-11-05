@@ -152,7 +152,7 @@ public class DashboardControllerTests
 
     // -- UserIndex ----------------------------------------------------------------
 
-    /// <summary>User index logged in user returns200.</summary>
+    /// <summary>User index logged-in user returns200.</summary>
     [Fact]
     public async Task UserIndex_LoggedInUser_Returns200()
     {

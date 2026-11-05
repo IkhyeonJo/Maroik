@@ -40,7 +40,7 @@ public class ExpenditureTests
         Assert.Equal("Expenditure.MainClassEmpty", result.FirstError.Code);
     }
 
-    /// <summary>Record returns error, when sub class empty.</summary>
+    /// <summary>Record returns error, when subclass empty.</summary>
     [Theory]
     [InlineData(null)]
     [InlineData("")]

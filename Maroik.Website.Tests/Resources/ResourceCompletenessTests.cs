@@ -183,7 +183,7 @@ public class ResourceCompletenessTests
 
     /// <summary>
     /// The keys a view may look up through an expression: the names of the domain's enums (the finance taxonomies the forms
-    /// list, e.g. <c>AssetItemType</c>), the display names of the seeded menu (the side bar and the page header) and the system
+    /// list, e.g. <c>AssetItemType</c>), the display names of the seeded menu (the sidebar and the page header) and the system
     /// texts an account's message can hold (the account grid, <see cref="StoredAccountMessages"/>).
     /// </summary>
     private static HashSet<string> DynamicViewKeys()

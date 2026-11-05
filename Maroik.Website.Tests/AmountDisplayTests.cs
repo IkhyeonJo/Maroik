@@ -9,7 +9,7 @@ public class AmountDisplayTests
 {
     /// <summary>
     /// An amount shows every decimal place the column stores (up to <see cref="FinanceAmountPolicy.MaxDecimalPlaces"/>),
-    /// without trailing zeros, and with a thousands separator — the same in every supported culture.
+    /// without trailing zeros, and with a thousand separator — the same in every supported culture.
     /// </summary>
     [Theory]
     [InlineData("en-US", "10000", "10,000")]

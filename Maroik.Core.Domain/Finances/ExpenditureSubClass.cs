@@ -2,7 +2,7 @@
 namespace Maroik.Core.Domain.Finances;
 
 /// <summary>
-/// Expenditure sub-classes; which ones a main class allows is <see cref="ExpenditureClassPolicy.Taxonomy"/>. The member names are the values stored in the database and the resx keys of their labels, so renaming a member
+/// Expenditure subclasses; which ones a main class allows is <see cref="ExpenditureClassPolicy.Taxonomy"/>. The member names are the values stored in the database and the resx keys of their labels, so renaming a member
 /// changes stored data; the members are declared in display order.
 /// </summary>
 public enum ExpenditureSubClass

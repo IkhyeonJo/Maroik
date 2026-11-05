@@ -53,7 +53,7 @@ public class FileManagerNodeTests
     // -- StartUpload / CompleteUpload ------------------------------------------------
 
     /// <summary>
-    /// Starting an upload creates an "uploading" file: its declared size is reserved against the quota and it is stored under the
+    /// Starting an upload creates an "uploading" file: its declared size is reserved against the quota, and it is stored under the
     /// GUID name in upload/FileManager, never under the name the user typed.
     /// </summary>
     [Fact]
@@ -153,7 +153,7 @@ public class FileManagerNodeTests
         Assert.Equal(_now.AddHours(1), folder.Updated);
     }
 
-    /// <summary>A refused rename leaves the name as it was.</summary>
+    /// <summary>A refused to rename leaves the name as it was.</summary>
     [Fact]
     public void Rename_RefusesAnInvalidName_AndChangesNothing()
     {

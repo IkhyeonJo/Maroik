@@ -36,7 +36,7 @@ public class ValueObjectBoundaryTests
         Assert.NotEqual(Email.Create("a@b.com").Value, Email.Create("c@b.com").Value);
     }
 
-    /// <summary>Verifies that ordinary addresses, including dotted local parts and sub-domains, are accepted.</summary>
+    /// <summary>Verifies that ordinary addresses, including dotted local parts and subdomains, are accepted.</summary>
     [Theory]
     [InlineData("a@b.co")]
     [InlineData("first.last@sub.example.com")]

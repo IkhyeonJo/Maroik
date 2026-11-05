@@ -173,6 +173,7 @@ public class HtmlParserServiceTests
         Assert.False(hasImages);
     }
 
+    // ReSharper disable once GrammarMistakeInComment
     /// <summary>
     /// An &lt;img&gt; directly inside a &lt;table&gt; is moved in front of the table by the HTML5 algorithm (foster parenting); the
     /// output is the tree the browser builds, not the source text.
@@ -229,6 +230,7 @@ public class HtmlParserServiceTests
 
     // -- Images without alt, and more images than the fetch limit ----------------------------
 
+    // ReSharper disable once GrammarMistakeInComment
     /// <summary>An &lt;img&gt; without an alt reaches the async patch factory as an empty string.</summary>
     [Fact]
     public async Task TransformImageAttributesAsync_PassesAnEmptyAlt_ForAnImageWithoutOne()
@@ -241,6 +243,7 @@ public class HtmlParserServiceTests
         Assert.Equal("", capturedAlt);
     }
 
+    // ReSharper disable once GrammarMistakeInComment
     /// <summary>An &lt;img&gt; without an alt reaches the sync patch factory as an empty string.</summary>
     [Fact]
     public void TransformImageAttributes_PassesAnEmptyAlt_ForAnImageWithoutOne()

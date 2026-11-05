@@ -286,6 +286,7 @@ public class EmailConsumerWorkerBrokerTests(WorkerBrokerFixture broker) : IClass
         }
     }
 
+    // ReSharper disable once GrammarMistakeInComment
     /// <summary>Stopping the worker while a sent is in flight waits for it to finish and ack — the message is not redelivered (no duplicate mail).</summary>
     [Fact]
     public async Task StopAsync_WaitsForTheInFlightSend_ThenAcksIt()

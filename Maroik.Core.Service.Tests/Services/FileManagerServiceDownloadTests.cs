@@ -8,7 +8,7 @@ namespace Maroik.Core.Service.Tests.Services;
 
 /// <summary>
 /// Download and preview in <see cref="FileManagerService"/>: a file of the account is streamed from file storage under its
-/// name; a preview is answered only for a png / jpg / gif / webp image of at most 100 MB whose magic bytes prove the format, with the
+/// name; a preview is answered only for a png / jpg / GIF / webp image of at most 100 MB whose magic bytes prove the format, with the
 /// Content-Type the server sets. Another account's file, a folder and an unfinished upload are "not found".
 /// </summary>
 public class FileManagerServiceDownloadTests

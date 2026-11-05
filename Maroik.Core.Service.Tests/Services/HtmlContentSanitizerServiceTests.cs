@@ -57,7 +57,7 @@ public class HtmlContentSanitizerServiceTests
 
     /// <summary>
     /// Verifies each layout property that lets stored content escape its box and cover the page
-    /// (a click-jacking link or a fake login overlay) is stripped from inline styles.
+    /// (a clickjacking link or a fake login overlay) is stripped from inline styles.
     /// </summary>
     [Theory]
     [InlineData("position")]

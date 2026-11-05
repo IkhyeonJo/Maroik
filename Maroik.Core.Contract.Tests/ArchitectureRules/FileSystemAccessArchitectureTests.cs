@@ -33,7 +33,7 @@ public class FileSystemAccessArchitectureTests
     /// <summary>
     /// Every file-system use in production code, as "path::member", the APIs it uses there, and why the path is safe. An API is
     /// <c>Type.Member</c> for a call (<c>File.Exists</c>), <c>new Type</c> for a constructor, and the bare type name where the
-    /// code only names the type (a declared return type of a target-typed <c>new</c>).
+    /// code only names the type (a declared return type of target-typed <c>new</c>).
     /// </summary>
     private static readonly Dictionary<string, (string[] Apis, string Reason)> _allowed = new(StringComparer.Ordinal)
     {

@@ -16,7 +16,7 @@ namespace Maroik.Core.Domain.Finances;
 public static class IncomeClassPolicy
 {
     /// <summary>
-    /// The recognized sub-classes of each income main class, in display order — the single source of truth, typed so a
+    /// The recognized subclasses of each income main class, in display order — the single source of truth, typed so a
     /// misspelt class is a compile error. The string views below are generated from it.
     /// </summary>
     public static readonly IReadOnlyDictionary<IncomeMainClass, IReadOnlyList<IncomeSubClass>> Taxonomy =

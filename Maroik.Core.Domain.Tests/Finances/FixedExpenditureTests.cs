@@ -45,6 +45,7 @@ public class FixedExpenditureTests
         Assert.Equal("FixedExpenditure.InvalidDepositDay", result.FirstError.Code);
     }
 
+    // ReSharper disable once GrammarMistakeInComment
     /// <summary>Register returns error, when the day doesn't exist in the given month (e.g. April 31, February 30).</summary>
     [Theory]
     [InlineData(4, 31)]
@@ -162,6 +163,7 @@ public class FixedExpenditureTests
         Assert.Equal("FixedExpenditure.InvalidDepositDay", result.FirstError.Code);
     }
 
+    // ReSharper disable once GrammarMistakeInComment
     /// <summary>Update returns error, when the day doesn't exist in the given month (e.g. April 31).</summary>
     [Fact]
     public void Update_ReturnsError_WhenDepositDayInvalidForMonth()

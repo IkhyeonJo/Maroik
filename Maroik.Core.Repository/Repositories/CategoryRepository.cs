@@ -67,7 +67,7 @@ public class CategoryRepository(ApplicationDbContext context)
         var entities = await Set.FromSqlInterpolated(
             $"""
              SELECT *
-             FROM "Category"
+             FROM "{nameof(PostgreSQL.Models.Category)}"
              ORDER BY "Id"
              FOR UPDATE
              """).AsNoTracking().ToListAsync(ct);

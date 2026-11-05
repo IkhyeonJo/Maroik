@@ -77,7 +77,7 @@ public class BoardViewModelMapperTests
         Assert.False(row.IsWriterAdmin);
     }
 
-    /// <summary>Someone else's comment is not marked as the post writer's, an administrator's is marked, and a refused delete stays refused.</summary>
+    /// <summary>Someone else's comment is not marked as the post writer's, an administrator's is marked, and a refused to delete stays refused.</summary>
     [Fact]
     public void ToCommentRow_ForAnotherWriter_AndAnAdmin()
     {

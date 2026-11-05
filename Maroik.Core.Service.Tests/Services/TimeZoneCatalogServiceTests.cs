@@ -12,7 +12,7 @@ public class TimeZoneCatalogServiceTests
     /// <summary>The service under test.</summary>
     private static TimeZoneCatalogService CreateSut() => new();
 
-    /// <summary>Get time zone options returns non empty list.</summary>
+    /// <summary>Get time zone options returns non-empty list.</summary>
     [Fact]
     public void GetTimeZoneOptions_ReturnsNonEmptyList()
     {

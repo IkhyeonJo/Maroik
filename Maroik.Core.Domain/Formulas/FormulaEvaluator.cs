@@ -4,7 +4,7 @@ namespace Maroik.Core.Domain.Formulas;
 
 /// <summary>
 /// Evaluates a bound formula with Excel's value rules, in decimals: operands are coerced as Excel coerces them (numeric text and
-/// booleans to numbers, an empty cell to 0 / "" / FALSE), comparisons order numbers below text below booleans (text ignoring case),
+/// booleans to numbers, an empty cell to 0 / "" / FALSE), comparisons order numbers below text booleans (text ignoring case),
 /// and the first error met — the left operand first — is the result. An overflow is #NUM!, a division by zero #DIV/0!, a text past
 /// <see cref="MaxTextLength"/> #VALUE!.
 /// A tree walk over a closed set of node types and the <see cref="FormulaFunctions"/> catalog: user text never becomes code.

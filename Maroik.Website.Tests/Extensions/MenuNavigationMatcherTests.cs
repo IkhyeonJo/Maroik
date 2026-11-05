@@ -85,6 +85,7 @@ public class MenuNavigationMatcherTests
     public void ResolveActiveMenuItem_SubCategoryBelongsToDifferentCategory_DoesNotMatch()
     {
         var categories = new[] { ParentCategory(1, "AccountBook") };
+        // ReSharper disable once GrammarMistakeInComment
         // SubCategory's CategoryId (2) does not match the parent category's Id (1).
         var subCategories = new[] { SubCategory(10, categoryId: 2, action: "Income") };
 
@@ -93,7 +94,7 @@ public class MenuNavigationMatcherTests
         Assert.False(match.IsMatch);
     }
 
-    /// <summary>Resolve active menu item action matches but controller does not does not match.</summary>
+    /// <summary>Resolve active menu item action matches but controller does not match.</summary>
     [Fact]
     public void ResolveActiveMenuItem_ActionMatchesButControllerDoesNot_DoesNotMatch()
     {

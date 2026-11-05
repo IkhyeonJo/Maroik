@@ -448,7 +448,7 @@ public class ForumController(
 
     /// <summary>
     /// Checks that a free-forum post still exists and is visible to the caller (a locked post only to its
-    /// author or an admin). Called by the client before confirming a delete. The reply carries only the
+    /// author or an admin). Called by the client before confirming a deleted. The reply carries only the
     /// post's id: the stored content holds decrypted plain storage paths that never go to the client.
     /// </summary>
     [HttpPost]

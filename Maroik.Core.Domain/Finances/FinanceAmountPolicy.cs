@@ -32,7 +32,7 @@ public static partial class FinanceAmountPolicy
 
     /// <summary>
     /// Rejects an amount whose magnitude the database column cannot hold, so an over-large value is a
-    /// clean validation error instead of a raw "numeric field overflow" (SQLSTATE 22003) from the write.
+    /// clean validation error instead of a raw "numeric field overflow" (SQLSTATE 22003) from to write.
     /// </summary>
     public static ErrorOr<Success> ValidateWithinRange(decimal amount)
     {

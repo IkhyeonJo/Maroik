@@ -30,7 +30,7 @@ public class ManagementControllerProfileTests(MaroikWebApplicationFactory factor
 
     // -- Profile: GET -----------------------------------------------------------------
 
-    /// <summary>Profile get logged in user returns200.</summary>
+    /// <summary>Profile get logged-in user returns200.</summary>
     [Fact]
     public async Task Profile_Get_LoggedInUser_Returns200()
     {

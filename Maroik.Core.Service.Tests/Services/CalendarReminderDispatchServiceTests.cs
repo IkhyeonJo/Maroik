@@ -158,7 +158,7 @@ public class CalendarReminderDispatchServiceTests
         Assert.Same(broken, log.Exception);
     }
 
-    /// <summary>A run handles at most <c>max</c> reminders, so one run cannot go on for ever; with nothing due it does nothing.</summary>
+    /// <summary>A run handles at most <c>max</c> reminders, so one run cannot go on forever; with nothing due it does nothing.</summary>
     [Fact]
     public async Task ARun_StopsAfterMax_AndDoesNothingWhenNothingIsDue()
     {

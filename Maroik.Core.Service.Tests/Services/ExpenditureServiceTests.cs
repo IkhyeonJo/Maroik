@@ -758,7 +758,7 @@ public class ExpenditureServiceTests
         _expenditureRepo.Verify(r => r.DeleteByIdAsync(It.IsAny<long>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
-    /// <summary>Reverting the record's impact must keep every balance in range; otherwise the delete is refused and rolled back.</summary>
+    /// <summary>Reverting the record's impact must keep every balance in range; otherwise to delete is refused and rolled back.</summary>
     [Fact]
     public async Task DeleteAsync_ReturnsTheAdjustmentError_AndKeepsTheRow_WhenRevertingWouldOverflowTheBalance()
     {
@@ -849,7 +849,7 @@ public class ExpenditureServiceTests
         Assert.Null(await CreateSut().GetByIdAsync(Email, 2, TestContext.Current.CancellationToken));
     }
 
-    /// <summary>A successful create opens the transaction and commits it, without rolling back.</summary>
+    /// <summary>A successful creation opens the transaction and commits it, without rolling back.</summary>
     [Fact]
     public async Task CreateAsync_BeginsAndCommitsTheTransaction_OnSuccess()
     {
@@ -912,7 +912,7 @@ public class ExpenditureServiceTests
         Assert.Equal("Savings", stored?.MyDepositAsset);
     }
 
-    /// <summary>A create that throws logs the failure with the exception and the account.</summary>
+    /// <summary>A creation that throws logs the failure with the exception and the account.</summary>
     [Fact]
     public async Task CreateAsync_LogsTheFailureWithTheException_WhenThePersistenceThrows()
     {
@@ -1066,7 +1066,7 @@ public class ExpenditureServiceTests
         _expenditureRepo.Verify(r => r.DeleteByIdAsync(It.IsAny<long>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
-    /// <summary>A delete that throws logs the failure with the exception and the account.</summary>
+    /// <summary>A deleted that throws logs the failure with the exception and the account.</summary>
     [Fact]
     public async Task DeleteAsync_LogsTheFailureWithTheException_WhenThePersistenceThrows()
     {

@@ -6,7 +6,7 @@ public enum BudgetRowKind
     /// <summary>A main class's header row.</summary>
     Header,
 
-    /// <summary>A line: one sub-class in one currency.</summary>
+    /// <summary>A line: one subclass in one currency.</summary>
     Line,
 
     /// <summary>A main class's subtotal in one currency.</summary>

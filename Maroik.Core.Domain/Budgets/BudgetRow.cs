@@ -5,7 +5,7 @@ namespace Maroik.Core.Domain.Budgets;
 /// <param name="Key">Its stable key (what stored formulas refer to).</param>
 /// <param name="Kind">What it is.</param>
 /// <param name="MainClass">Its main class (header, line, subtotal), or null.</param>
-/// <param name="SubClass">Its sub-class (line), or null.</param>
+/// <param name="SubClass">Its subclass (line), or null.</param>
 /// <param name="Currency">Its currency (line, subtotal, total), or null.</param>
 public sealed record BudgetRow(int Number, string Key, BudgetRowKind Kind, string? MainClass, string? SubClass, string? Currency)
 {

@@ -4,7 +4,7 @@ using Maroik.Core.Domain.Finances;
 namespace Maroik.Core.Domain.Budgets;
 
 /// <summary>
-/// The actual side of the budgets: real income and expenditure records summed per kind, line (main class, sub-class, currency) and
+/// The actual side of the budgets: real income and expenditure records summed per kind, line (main class, subclass, currency) and
 /// month. A record's month is its creation time in the owner's time zone (as the dashboard counts it); fixed schedules are not
 /// records until one is entered.
 /// </summary>

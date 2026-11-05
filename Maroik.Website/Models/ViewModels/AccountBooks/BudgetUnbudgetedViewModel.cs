@@ -3,7 +3,7 @@ namespace Maroik.Website.Models.ViewModels.AccountBooks;
 /// <summary>Records of a line the sheet does not have.</summary>
 public sealed class BudgetUnbudgetedViewModel
 {
-    /// <summary>The localized sub-class.</summary>
+    /// <summary>The localized subclass.</summary>
     public string Label { get; init; } = "";
 
     /// <summary>The main class.</summary>

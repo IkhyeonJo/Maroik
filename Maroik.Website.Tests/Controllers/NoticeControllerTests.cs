@@ -28,7 +28,7 @@ public class NoticeControllerTests(MaroikWebApplicationFactory factory)
 
     // -- FixedIncome ------------------------------------------------------------
 
-    /// <summary>Fixed income get logged in user returns200.</summary>
+    /// <summary>Fixed income get logged-in user returns200.</summary>
     [Fact]
     public async Task FixedIncome_Get_LoggedInUser_Returns200()
     {
@@ -48,7 +48,7 @@ public class NoticeControllerTests(MaroikWebApplicationFactory factory)
 
     // -- FixedExpenditure ---------------------------------------------------------
 
-    /// <summary>Fixed expenditure get logged in user returns200.</summary>
+    /// <summary>Fixed expenditure get logged-in user returns200.</summary>
     [Fact]
     public async Task FixedExpenditure_Get_LoggedInUser_Returns200()
     {

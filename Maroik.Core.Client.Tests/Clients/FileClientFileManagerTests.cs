@@ -198,7 +198,7 @@ public class FileClientFileManagerTests
         Assert.Contains($"upload/FileManager/{_uploadId:D}", storage.Body, StringComparison.Ordinal);
     }
 
-    /// <summary>A refused delete is false, logged at Warning naming the path; an unreachable service is false, logged at Error.</summary>
+    /// <summary>A refused to delete is false, logged at Warning naming the path; an unreachable service is false, logged at Error.</summary>
     [Fact]
     public async Task Delete_ReturnsFalse_AndLogs_WhenRefusedOrUnreachable()
     {
