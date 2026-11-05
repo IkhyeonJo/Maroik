@@ -67,7 +67,7 @@ public class SubCategoryRepository(ApplicationDbContext context)
         var entities = await Set.FromSqlInterpolated(
             $"""
              SELECT *
-             FROM "{nameof(PostgreSQL.Models.SubCategory)}"
+             FROM "SubCategory"
              ORDER BY "Id"
              FOR UPDATE
              """).AsNoTracking().ToListAsync(ct);
