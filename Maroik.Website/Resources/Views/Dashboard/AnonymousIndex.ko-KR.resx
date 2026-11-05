@@ -124,25 +124,25 @@
     <value>Maroik은 일상생활과 다양한 정보를 체계적으로 정리하고 관리할 수 있도록 설계된 통합 웹 플랫폼입니다.</value>
   </data>
   <data name="Finance Management" xml:space="preserve">
-    <value>재정 관리</value>
+    <value>재정관리</value>
   </data>
   <data name="Track income and expenses and manage your personal finances." xml:space="preserve">
     <value>수입과 지출을 기록하고 개인 재정을 체계적으로 관리할 수 있습니다.</value>
   </data>
   <data name="Calendar Management" xml:space="preserve">
-    <value>일정 관리</value>
+    <value>일정관리</value>
   </data>
   <data name="Organize and manage your personal schedule through an integrated calendar." xml:space="preserve">
     <value>통합 캘린더를 통해 개인 일정을 체계적으로 관리할 수 있습니다.</value>
   </data>
   <data name="File Management" xml:space="preserve">
-    <value>파일 관리</value>
+    <value>파일관리</value>
   </data>
   <data name="Store and manage your personal files." xml:space="preserve">
     <value>개인 파일을 안전하게 보관하고 체계적으로 관리할 수 있습니다.</value>
   </data>
   <data name="Task Management" xml:space="preserve">
-    <value>작업 관리</value>
+    <value>작업관리</value>
   </data>
   <data name="Organize tasks and track progress using Kanban boards." xml:space="preserve">
     <value>할 일을 정리하고 진행 상황을 체계적으로 관리할 수 있습니다.</value>
