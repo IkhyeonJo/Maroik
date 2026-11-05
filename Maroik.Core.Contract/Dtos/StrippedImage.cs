@@ -6,6 +6,6 @@ namespace Maroik.Core.Contract.Dtos;
 /// name or type the upload claimed.
 /// </summary>
 /// <param name="Bytes">The re-encoded image.</param>
-/// <param name="Extension">The extension to store it under (".jpg" or ".png").</param>
+/// <param name="Extension">The extension to store it under (.jpg or .png).</param>
 /// <param name="ContentType">Its content type ("image/jpeg" or "image/png").</param>
 public sealed record StrippedImage(byte[] Bytes, string Extension, string ContentType);
