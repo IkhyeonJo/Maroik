@@ -13,8 +13,9 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace Maroik.Website.Tests.Controllers;
 
+// ReSharper disable once GrammarMistakeInComment
 /// <summary>
-/// The post / comment / private-note write and edit actions and the menu actions answer a refused to write with
+/// The post / comment / private-note write and edit actions and the menu actions answer a refused write with
 /// the reason the service gave — localized, like the account book, notice and calendar actions — instead
 /// of always "Input is invalid". Each case drives the real host into a representative refusal.
 /// </summary>
@@ -216,8 +217,9 @@ public class ServiceFailureReasonContractTests(MaroikWebApplicationFactory facto
             await ErrorOf(() => admin.BuildJsonPostRequest("/Management/UpdateCategory", body), "ko-KR"));
     }
 
+    // ReSharper disable once GrammarMistakeInComment
     /// <summary>
-    /// A refused menu delete reports the service's reason too. The real service only refuses a deleted when the
+    /// A refused menu delete reports the service's reason too. The real service only refuses a delete when the
     /// database throws, so a stub service stands in to give the action a reason to pass on.
     /// </summary>
     [Fact]

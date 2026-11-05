@@ -85,7 +85,8 @@ public class ExcelExportServiceTests
             [], _identity, "UTC", 7))[1][4]);
     }
 
-    /// <summary>A negative amount and a whole amount are numbers too, written without a thousand separator.</summary>
+    // ReSharper disable once GrammarMistakeInComment
+    /// <summary>A negative amount and a whole amount are numbers too, written without a thousands separator.</summary>
     [Theory]
     [InlineData("-0.0001")]
     [InlineData("1000000.0000")]

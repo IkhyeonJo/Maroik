@@ -243,7 +243,8 @@ public class FileManagerServiceWriteTests
         Assert.Contains(_h.Logger.Collector.GetSnapshot(), r => r is { Level: LogLevel.Information, Message: $"File Manager: {H.Email} deleted 2 item(s) (4 node(s), 3 stored file(s))" });
     }
 
-    /// <summary>A stored file that cannot be deleted is left as an orphan: to delete still succeeds for the user and a warning names it.</summary>
+    // ReSharper disable once GrammarMistakeInComment
+    /// <summary>A stored file that cannot be deleted is left as an orphan: the delete still succeeds for the user and a warning names it.</summary>
     [Fact]
     public async Task DeleteAsync_LeavesAnOrphan_WhenTheStoredFileCannotBeDeleted()
     {

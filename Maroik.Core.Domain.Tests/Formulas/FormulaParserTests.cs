@@ -152,7 +152,8 @@ public class FormulaParserTests
         Assert.Empty(Parse(new string('(', FormulaParser.MaxDepth - 1) + "1" + new string(')', FormulaParser.MaxDepth - 1)).Diagnostics);
     }
 
-    /// <summary>More arguments than Excel allows to are diagnosed.</summary>
+    // ReSharper disable once GrammarMistakeInComment
+    /// <summary>More arguments than Excel allows are diagnosed.</summary>
     [Fact]
     public void TooManyArguments_AreDiagnosed() =>
         Assert.Contains(Parse("SUM(" + string.Join(",", Enumerable.Repeat("1", FormulaParser.MaxArguments + 1)) + ")").Diagnostics,

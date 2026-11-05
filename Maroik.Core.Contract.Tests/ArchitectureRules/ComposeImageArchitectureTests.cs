@@ -3,8 +3,9 @@ using Maroik.Core.Contract.Tests.Fixtures;
 
 namespace Maroik.Core.Contract.Tests.ArchitectureRules;
 
+// ReSharper disable once GrammarMistakeInComment
 /// <summary>
-/// The third-party images in the compose files carry a version: a major (<c>postgres:17</c>), a major. Minor
+/// The third-party images in the compose files carry a version: a major (<c>postgres:17</c>), a major.minor
 /// (<c>clamav/clamav:1.5</c>) or an exact one (<c>cloudflare/cloudflared:2026.9.3</c>), never <c>latest</c> or no tag at all.
 /// A floating tag still brings the patch releases on the next pull, while a release that changes the image's config, ports or
 /// behavior (a new major, or for ClamAV a new minor) arrives only as a deliberate edit. ClamAV matters most: an upload whose

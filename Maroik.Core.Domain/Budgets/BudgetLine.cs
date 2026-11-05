@@ -39,7 +39,8 @@ public sealed record BudgetLine(string MainClass, string SubClass, string Curren
         return new BudgetLine(mainClass!, subClass!, code.Value.Value);
     }
 
-    /// <summary>The main classes of a kind to their subclasses, in taxonomy order.</summary>
+    // ReSharper disable once GrammarMistakeInComment
+    /// <summary>The main classes of a kind with their subclasses, in taxonomy order.</summary>
     public static IReadOnlyDictionary<string, IReadOnlyList<string>> Taxonomy(BudgetKind kind) =>
         kind == BudgetKind.Income ? IncomeClassPolicy.SubClassesByMainClass : ExpenditureClassPolicy.SubClassesByMainClass;
 

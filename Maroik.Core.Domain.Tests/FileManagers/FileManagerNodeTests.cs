@@ -153,7 +153,8 @@ public class FileManagerNodeTests
         Assert.Equal(_now.AddHours(1), folder.Updated);
     }
 
-    /// <summary>A refused to rename leaves the name as it was.</summary>
+    // ReSharper disable once GrammarMistakeInComment
+    /// <summary>A refused rename leaves the name as it was.</summary>
     [Fact]
     public void Rename_RefusesAnInvalidName_AndChangesNothing()
     {

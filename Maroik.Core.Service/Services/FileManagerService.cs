@@ -470,8 +470,9 @@ public class FileManagerService(
             return (ServiceResult.Ok(), FileManagerCompletion.Scanning);
         }
 
+        // ReSharper disable once GrammarMistakeInComment
         // A failure (a timeout, a lost answer) is not a refusal: file storage may still hold the staging file, a queued scan or the stored
-        // file. It is aborted first; when the abort fails so long the row stays uploading, so the worker's hourly sweep aborts it once idle —
+        // file. It is aborted first; when the abort fails too, the row stays uploading, so the worker's hourly sweep aborts it once idle —
         // without the row no sweep could find the file.
         if (outcome == FileUploadResult.Failed && !await fileClient.AbortFileManagerUploadAsync(uploadId, BaseUrl, ct))
         {

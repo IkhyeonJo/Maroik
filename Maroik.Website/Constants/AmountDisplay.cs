@@ -2,8 +2,9 @@ using Maroik.Core.Domain.Finances;
 
 namespace Maroik.Website.Constants;
 
+// ReSharper disable once GrammarMistakeInComment
 /// <summary>
-/// How the finance screens show an amount: with a thousand separator and every decimal place the column stores
+/// How the finance screens show an amount: with a thousands separator and every decimal place the column stores
 /// (<see cref="FinanceAmountPolicy.MaxDecimalPlaces"/>), trailing zeros dropped — 10000 → "10,000", 12.50 → "12.5",
 /// 1234.5678 → "1,234.5678". The currency is a free-text label, so its usual number of decimals cannot be looked
 /// up; showing what was stored never hides a digit the user entered. A presentation setting, so it lives here

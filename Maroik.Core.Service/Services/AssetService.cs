@@ -106,7 +106,8 @@ public class AssetService(
                 return ServiceResult.Validation("Asset.ItemInvalid", ServiceErrorKeys.AssetItemInvalid);
             }
 
-            // A renames ON UPDATE CASCADE rewrites every record naming the asset. An income / expenditure edit locks
+            // ReSharper disable once GrammarMistakeInComment
+            // A rename's ON UPDATE CASCADE rewrites every record naming the asset. An income / expenditure edit locks
             // its record first and its assets second, so the rename takes those records before the asset too —
             // locking the asset first would leave each transaction holding what the other waits for (a deadlock).
             if (request.ProductName is { } newName && !string.Equals(newName, originalProductName, StringComparison.Ordinal))
@@ -169,10 +170,11 @@ public class AssetService(
         await unitOfWork.BeginAsync(ct: ct);
         try
         {
+            // ReSharper disable once GrammarMistakeInComment
             // Row-lock the asset for the rest of this transaction, exactly as UpdateAsync does: the
             // soft-delete is a full-row UPDATE (UpdateEntityAsync writes every column), so without the
             // lock a balance mutation committed by a concurrent Income/Expenditure between the read
-            // and to write would be silently overwritten with this pre-lock snapshot.
+            // and the write would be silently overwritten with this pre-lock snapshot.
             Asset? asset = await assetRepository.FindByEmailAndProductNameForUpdateAsync(accountEmail, productName, ct);
             if (asset == null)
             {

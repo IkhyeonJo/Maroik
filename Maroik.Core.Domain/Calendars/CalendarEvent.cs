@@ -179,8 +179,9 @@ public sealed class CalendarEvent : AggregateRoot<long>
         if (description?.Length > TitledContentPolicy.MaxBodyLength)
             return DomainError.Validation("CalendarEvent.DescriptionTooLong", "Event description must be {0} characters or fewer.", TitledContentPolicy.MaxBodyLength);
 
+        // ReSharper disable once GrammarMistakeInComment
         // Persisted in a character varying(255) column: reject an over-long value here (a clean
-        // validation error) instead of a raw "value too long" (SQLSTATE 22001) from to write.
+        // validation error) instead of a raw "value too long" (SQLSTATE 22001) from the write.
         if (location?.Length > ShortTextPolicy.MaxLength)
             return DomainError.Validation("CalendarEvent.LocationTooLong", "Event location must be {0} characters or fewer.", ShortTextPolicy.MaxLength);
 
@@ -255,8 +256,9 @@ public sealed class CalendarEvent : AggregateRoot<long>
         if (description?.Length > TitledContentPolicy.MaxBodyLength)
             return DomainError.Validation("CalendarEvent.DescriptionTooLong", "Event description must be {0} characters or fewer.", TitledContentPolicy.MaxBodyLength);
 
+        // ReSharper disable once GrammarMistakeInComment
         // Persisted in a character varying(255) column: reject an over-long value here (a clean
-        // validation error) instead of a raw "value too long" (SQLSTATE 22001) from to write.
+        // validation error) instead of a raw "value too long" (SQLSTATE 22001) from the write.
         if (location?.Length > ShortTextPolicy.MaxLength)
             return DomainError.Validation("CalendarEvent.LocationTooLong", "Event location must be {0} characters or fewer.", ShortTextPolicy.MaxLength);
 

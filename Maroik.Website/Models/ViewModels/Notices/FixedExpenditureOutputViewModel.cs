@@ -97,8 +97,9 @@ public class FixedExpenditureOutputViewModel
     [Display(Name = "Unpunctuality")]
     public bool Unpunctuality { get; set; }
 
+    // ReSharper disable once GrammarMistakeInComment
     /// <summary>
-    /// CSS row class for the grid, prioritizing Expired over Noticed the default state.
+    /// CSS row class for the grid, prioritizing Expired over Noticed over the default state.
     /// </summary>
     public string RowCssClass => FixedSchedulePolicy.GetRowStatus(Expired, Noticed).ToRowCssClass();
 }

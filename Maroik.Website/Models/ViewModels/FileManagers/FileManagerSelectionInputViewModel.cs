@@ -3,7 +3,8 @@
 // ReSharper disable UnusedAutoPropertyAccessor.Global
 namespace Maroik.Website.Models.ViewModels.FileManagers;
 
-/// <summary>The selected items of a move, a deleted or a multi-download; a move also names its target.</summary>
+// ReSharper disable once GrammarMistakeInComment
+/// <summary>The selected items of a move, a delete or a multi-download; a move also names its target.</summary>
 public class FileManagerSelectionInputViewModel
 {
     /// <summary>The selected item IDs.</summary>

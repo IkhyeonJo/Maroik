@@ -7,7 +7,7 @@
   //   Dockerfile (tsbuild stage) -> `npm run build`
   //
   // Debugging in Chrome uses tsconfig.json instead (`npm run build:debug` / `npm run watch`),
-  // which additionally emits site.js.map. See TypeScript/README.md ("Debugging in Chrome").
+  // which additionally emits site.js.map. See TypeScripts/README.md ("Debugging in Chrome").
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "sourceMap": false,

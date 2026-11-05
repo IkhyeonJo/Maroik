@@ -68,9 +68,10 @@ public sealed class CalendarEventAttachedFile : AggregateRoot<long>
         if (size < 0)
             return DomainError.Validation("CalendarEventAttachedFile.InvalidSize", "File size cannot be negative.");
 
+        // ReSharper disable once GrammarMistakeInComment
         // Name, Extension and Path are each persisted in a character varying(255) column: reject an
         // over-long value here (a clean validation error, before anything is uploaded) instead of a raw
-        // "value too long" (SQLSTATE 22001) from to write.
+        // "value too long" (SQLSTATE 22001) from the write.
         if (name.Length > ShortTextPolicy.MaxLength)
             return DomainError.Validation("CalendarEventAttachedFile.NameTooLong", "File name must be {0} characters or fewer.", ShortTextPolicy.MaxLength);
 

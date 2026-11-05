@@ -9,7 +9,8 @@ public sealed class BudgetCellResponse
     /// <summary>Label, Budget, Computed, Blank or Free.</summary>
     public string Role { get; init; } = "";
 
-    /// <summary>It's input in A1 form, or null.</summary>
+    // ReSharper disable once GrammarMistakeInComment
+    /// <summary>Its input in A1 form, or null.</summary>
     public string? Input { get; init; }
 
     /// <summary>Its value.</summary>

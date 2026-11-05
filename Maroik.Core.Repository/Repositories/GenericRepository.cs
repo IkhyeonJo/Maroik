@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Maroik.Core.Repository.Repositories;
 
+// ReSharper disable once GrammarMistakeInComment
 /// <summary>
 /// Base class for EF Core repositories, implementing the create/update operations of
 /// <see cref="IGenericRepository{TDomain}"/> and providing protected query/delete helpers shared
@@ -25,7 +26,7 @@ namespace Maroik.Core.Repository.Repositories;
 /// <para>
 /// Flush behavior: when no <see cref="IUnitOfWork"/> transaction is open on the context, each
 /// write is persisted immediately (a single-write service method, or a repository integration
-/// test, behaves exactly as before). When a transaction <em>is</em> open, to write is left
+/// test, behaves exactly as before). When a transaction <em>is</em> open, the write is left
 /// pending so that <see cref="IUnitOfWork.CommitAsync"/> flushes the whole unit of work as one
 /// round trip instead of one per repository call.
 /// </para>
@@ -272,8 +273,9 @@ public abstract class GenericRepository<TDomain, TEntity>(ApplicationDbContext c
             }
         }
         
+        // ReSharper disable once GrammarMistakeInComment
         // Pending rows the database query above cannot see: an Added (never-flushed) match simply
-        // stops being inserted, and a Modified match is turned into a deleted.
+        // stops being inserted, and a Modified match is turned into a delete.
         var predicateFunc = predicate.Compile();
         foreach (var entry in Context.ChangeTracker.Entries<TEntity>().Where(e => e.State == EntityState.Added).ToList().Where(entry => predicateFunc(entry.Entity)))
         {

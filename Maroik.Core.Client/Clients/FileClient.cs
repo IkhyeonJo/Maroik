@@ -137,6 +137,9 @@ public class FileClient(IHttpClientFactory httpClientFactory, ILogger<FileClient
                 return FileUploadResult.Failed;
             }
 
+            // ReSharper disable once GrammarMistakeInComment
+            // The directory portion is forwarded to the storage service as-is; reject a rooted or
+            // ".."-containing path so it can't place the file outside the storage root.
             if (!IsSafeRelativePath(filePath))
             {
                 logger.LogWarning("Rejected file upload with unsafe storage path: {FilePath}", filePath);
