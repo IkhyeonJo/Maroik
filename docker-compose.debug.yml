@@ -96,7 +96,8 @@ services:
         - .env.debug                   # POSTGRES_PASSWORD, POSTGRES_DB=Maroik, ...
       volumes:
         - datasource:/var/lib/postgresql/data
-        - ./Maroik.DB/PostgreSQL/SQL_Init_Script/Debugging:/docker-entrypoint-initdb.d   # schema + admin/demo account seed data
+        - ./Maroik.DB/PostgreSQL/SQL_Init_Script/Debugging/Init.sql:/docker-entrypoint-initdb.d/Init.sql:ro   # schema + admin/demo account seed data
+        - ./Maroik.DB/PostgreSQL/SQL_Init_Script/SeedDemo.sql:/docker-entrypoint-initdb.d/SeedDemo.sql:ro   # sorts after Init.sql, so it runs next: the demo account's sample data
       expose:
         - "5432"
       networks:
