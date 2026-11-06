@@ -29,7 +29,7 @@ jobs:
     timeout-minutes: 45
 
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
       # The exact SDK global.json pins (rollForward: disable), the same one the Dockerfiles build with
       # (pinned by SdkPinArchitectureTests): a newer SDK can bring analyzer diagnostics the build treats as errors.
@@ -211,7 +211,7 @@ jobs:
       IMAGE_PREFIX: ghcr.io/${{ github.repository_owner }}
 
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0   # the whole history and its tags: the version is computed from them
 

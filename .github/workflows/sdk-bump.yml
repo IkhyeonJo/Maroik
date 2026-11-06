@@ -30,7 +30,7 @@ jobs:
     timeout-minutes: 30
 
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
       - name: Find the newest SDK of the pinned channel
         id: sdk
