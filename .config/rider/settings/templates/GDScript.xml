@@ -1,0 +1,6 @@
+<templateSet group="GDScript">
+  <template name="if" value="if $CONDITION$:&#10;&#9;$END$" description="if" toReformat="false" toShortenFQNames="false">
+    <variable name="CONDITION" expression="" defaultValue="expr" alwaysStopAt="true" />
+    <context />
+  </template>
+</templateSet>

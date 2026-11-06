@@ -1,0 +1,5 @@
+<application>
+  <component name="NotificationConfiguration">
+    <notification groupId="IDE-errors" displayType="NONE" shouldLog="false" />
+  </component>
+</application>

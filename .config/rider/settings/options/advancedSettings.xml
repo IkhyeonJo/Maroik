@@ -1,0 +1,9 @@
+<application>
+  <component name="AdvancedSettings">
+    <option name="settings">
+      <map>
+        <entry key="floating.codeToolbar.hide" value="true" />
+      </map>
+    </option>
+  </component>
+</application>

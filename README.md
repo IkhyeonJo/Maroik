@@ -494,8 +494,23 @@ dotnet test --project Maroik.Core.Service.Tests            # any single project
 
 #### Linux/Mac
 1. Install JetBrains Rider
-2. Open Maroik.slnx
-3. Start debug mode with docker-compose.debug.yml
+2. With Rider closed, run `.config/rider/install.sh` once per PC (see [Rider settings](#rider-settings))
+3. Open Maroik.slnx
+4. Start debug mode with docker-compose.debug.yml
+
+#### Rider settings
+
+Opening the solution brings what Rider reads from a solution: the run configurations (`.run`), the required plugins, the
+inspection profile and dictionary (`.idea`), and the code style (`.editorconfig`, `Maroik.slnx.DotSettings`).
+
+The keymap, color scheme, theme, editor options and tool-window layout are IDE-level: Rider reads them only from its own
+configuration folder, so a solution cannot apply them. `.config/rider/install.sh` copies them there, on Linux, macOS and
+Windows (Git Bash), into the newest installed Rider. It refuses while that Rider runs, because Rider writes its settings
+back when it exits, and keeps what it replaces in `settings-backup-<time>` inside the configuration folder.
+
+`.config/rider/settings` mirrors the configuration folder. To share a changed setting, copy its file from
+`~/.config/JetBrains/Rider<version>/` to the same relative path. Copy single files, never the whole folder: it also holds
+the license key, the GitHub account and the recent solutions, which never belong in the repository.
 
 ## CI/CD
 

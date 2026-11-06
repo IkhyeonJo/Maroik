@@ -403,12 +403,15 @@ FodyWeavers.xsd
 # ...except the project spelling dictionary (the one list of project words for Rider; cspell reads the same words from
 # .config/cspell-words.txt) and the
 # project inspection profile (Grazie's style suggestions, such as "Long sentence", are off: long rationale comments are wanted).
+# ...and the plugins the solution requires and its VCS mapping.
 !.idea/.idea.Maroik/
 .idea/.idea.Maroik/*
 !.idea/.idea.Maroik/.idea/
 .idea/.idea.Maroik/.idea/*
 !.idea/.idea.Maroik/.idea/dictionaries/
 !.idea/.idea.Maroik/.idea/inspectionProfiles/
+!.idea/.idea.Maroik/.idea/externalDependencies.xml
+!.idea/.idea.Maroik/.idea/vcs.xml
 
 # =============================================================================
 # Custom Maroik Ignore Rules

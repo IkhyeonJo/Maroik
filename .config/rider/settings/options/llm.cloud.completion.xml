@@ -1,0 +1,15 @@
+<application>
+  <component name="CloudCompletionState">
+    <languageToEnabled>
+      <entry language="html" enabled="true" />
+      <entry language="rider-cpp" enabled="true" />
+      <entry language="javascript.typescript" enabled="true" />
+      <entry language="css" enabled="true" />
+      <entry language="csharp" enabled="true" />
+      <entry language="xml" enabled="true" />
+      <entry language="yaml" enabled="true" />
+      <entry language="json" enabled="true" />
+      <entry language="markdown" enabled="true" />
+    </languageToEnabled>
+  </component>
+</application>
