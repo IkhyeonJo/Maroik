@@ -93,6 +93,8 @@
     // the request's CurrentCulture); the server publishes that culture so a re-sort after a create / rename here
     // collates the same way instead of by code point.
     const calendarNameCollator = new Intl.Collator(optionalFieldValue($("#calendarNameCulture")) || undefined);
+    // The date the server fixed for the grid's first screen (the public demo account's period); empty otherwise.
+    const calendarInitialDate = optionalFieldValue($("#calendarInitialDate"));
     // Authoritative in CalendarReminderPolicy (server); rendered into hidden inputs by the view.
     const minLeadTimeBeforeEvent = parseInt(optionalFieldValue($("#minLeadTimeBeforeEvent")) ?? "", 10);
     const maxMinutesBeforeEvent = parseInt(optionalFieldValue($("#maxMinutesBeforeEvent")) ?? "", 10);
@@ -719,6 +721,7 @@
         // view). `calendar` is the module-scope var, closed over by the form
         // handlers and `RefreshCalendarEvents`.
         calendar = new FullCalendar.Calendar(byId("calendar", HTMLElement), {
+            ...(calendarInitialDate ? { initialDate: calendarInitialDate } : {}),
             locale: localizer.IETFLanguageTag,
             headerToolbar: {
                 left: "prevYear,prev,next,nextYear today",

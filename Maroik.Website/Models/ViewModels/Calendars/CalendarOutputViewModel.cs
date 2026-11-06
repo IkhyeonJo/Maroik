@@ -31,6 +31,9 @@ public class CalendarOutputViewModel
     /// <summary>IANA time-zone ID of the logged-in user (e.g. "Asia/Seoul"), used to convert displayed times.</summary>
     public string LoggedInAccountTimeZoneIanaId { get; set; } = "UTC";
 
+    /// <summary>The date (<c>yyyy-MM-dd</c>) the grid first opens on, or null to open on today (see <c>ICalendarService.GetFixedInitialDate</c>).</summary>
+    public string? InitialDate { get; set; }
+
     /// <summary>Today's date string formatted for the calendar header, in the user's local time zone.</summary>
     public string CurrentDate { get; set; } = "";
 

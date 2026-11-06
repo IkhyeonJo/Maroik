@@ -47,7 +47,8 @@ that specific change. Check every candidate review finding in this area against 
 - A deleted account's login answers "Your Account is Deleted. Please contact the administrator." — it is not
   re-registrable.
 - The Login page is pre-filled with the public demo account (`demo@maroik.com` / `demoO12!!`), and the demo
-  account's dashboard always shows the fixed period from `ServerSetting.DemoDashboardYear/Month`.
+  account's dashboard always shows the fixed period from `ServerSetting.DemoDashboardYear/Month`. Its calendar first
+  opens on that same period (`ICalendarService.GetFixedInitialDate`); the toolbar can still page away from it.
 - Nicknames reject `<`, `>`, `"`, the backtick and `\` (after NFKC) but allow `&` and `'` ("R&D team",
   "O'Brien"): nicknames are always output encoded, so those two are not an injection vector. An
   administrator may create an account under a reserved nickname; self-registration may not.

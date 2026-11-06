@@ -60,7 +60,10 @@ public class CalendarServiceTests
     private readonly FakeTimeProvider _time = new(new DateTimeOffset(_now));
 
     /// <summary>The service under test over the mocked dependencies.</summary>
-    private CalendarService CreateSut() => new(
+    private CalendarService CreateSut() => CreateSut(_settings);
+
+    /// <summary>The service under test over the mocked dependencies and the given settings.</summary>
+    private CalendarService CreateSut(IOptions<ServerSetting> settings) => new(
         _calendarRepo.Object,
         _eventRepo.Object,
         _eventFileRepo.Object,
@@ -70,9 +73,43 @@ public class CalendarServiceTests
         _fileClient.Object,
         _unitOfWork.Object,
         _attachmentContent.Object,
-        _settings,
+        settings,
         _logger,
         _time);
+
+    /// <summary>The service under test with the given public demo account and fixed period.</summary>
+    private CalendarService CreateDemoSut(string? email, string? year, string? month) => CreateSut(Options.Create(new ServerSetting
+    {
+        DemoAccountEmail = email,
+        DemoDashboardYear = year,
+        DemoDashboardMonth = month
+    }));
+
+    /// <summary>The demo account's calendar opens on the first day of the fixed period, however the month is written.</summary>
+    [Theory]
+    [InlineData("2025", "06", "2025-06-01")]
+    [InlineData("2025", "6", "2025-06-01")]
+    [InlineData("2024", "12", "2024-12-01")]
+    public void GetFixedInitialDate_ReturnsTheFirstDayOfTheDemoPeriod_ForTheDemoAccount(string year, string month, string expected) =>
+        Assert.Equal(expected, CreateDemoSut("demo@maroik.com", year, month).GetFixedInitialDate("demo@maroik.com"));
+
+    /// <summary>Any other account opens on today, as does every account when no demo account is configured (empty in some settings files).</summary>
+    [Theory]
+    [InlineData("demo@maroik.com", "user@maroik.com")]
+    [InlineData("", "")]
+    [InlineData(null, "")]
+    public void GetFixedInitialDate_ReturnsNull_ForAnAccountThatIsNotTheDemoAccount(string? demoEmail, string accountEmail) =>
+        Assert.Null(CreateDemoSut(demoEmail, "2025", "06").GetFixedInitialDate(accountEmail));
+
+    /// <summary>A demo period that is missing or is no real month falls back to today instead of breaking the page.</summary>
+    [Theory]
+    [InlineData(null, "06")]
+    [InlineData("2025", null)]
+    [InlineData("", "")]
+    [InlineData("2025", "13")]
+    [InlineData("abcd", "06")]
+    public void GetFixedInitialDate_ReturnsNull_WhenTheDemoPeriodIsNotAValidMonth(string? year, string? month) =>
+        Assert.Null(CreateDemoSut("demo@maroik.com", year, month).GetFixedInitialDate("demo@maroik.com"));
 
     // -- Helpers --------------------------------------------------------------
 

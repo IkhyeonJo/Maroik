@@ -91,6 +91,16 @@ function fixture(): string {
 }
 
 describe("user/Calendar/UserIndex", () => {
+    it("opens the grid on the date the server fixed (the public demo account's period)", () => {
+        const h = loadSite("user", "Calendar", "UserIndex", fixture() + hidden("calendarInitialDate", "2025-06-01"));
+        expect(present(h.calendarOptions[0], "the FullCalendar options").initialDate).toBe("2025-06-01");
+    });
+
+    it("leaves the grid on today when the server fixed no date (every other account)", () => {
+        const h = loadSite("user", "Calendar", "UserIndex", fixture() + hidden("calendarInitialDate", ""));
+        expect(present(h.calendarOptions[0], "the FullCalendar options")).not.toHaveProperty("initialDate");
+    });
+
     it("flags a day-reminder above CalendarReminderPolicy.MaxDaysBeforeEvent (28)", () => {
         const h = loadSite("user", "Calendar", "UserIndex", fixture());
         const row = h.$(".divCreateEventNotificationAllDayCheckedRow");

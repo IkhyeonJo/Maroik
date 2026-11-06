@@ -59,6 +59,7 @@ export interface CapturedCalendarOptions {
     eventClick?: (arg: object) => unknown;
     height?: string | number;
     stickyHeaderDates?: boolean;
+    initialDate?: string;
 }
 
 /** An event object a page passed to `calendar.addEvent(...)`. */
@@ -131,7 +132,8 @@ function isCalendarOptions(value: unknown): value is CapturedCalendarOptions {
     const height = fields?.get("height");
     return fields !== null && isOptionalCallback(fields.get("select")) && isOptionalCallback(fields.get("eventClick"))
         && (height === undefined || typeof height === "string" || typeof height === "number")
-        && (fields.get("stickyHeaderDates") === undefined || typeof fields.get("stickyHeaderDates") === "boolean");
+        && (fields.get("stickyHeaderDates") === undefined || typeof fields.get("stickyHeaderDates") === "boolean")
+        && (fields.get("initialDate") === undefined || typeof fields.get("initialDate") === "string");
 }
 
 /** Whether `value` is a doughnut config with the data, colors and tooltip callback the Dashboard tests read. */

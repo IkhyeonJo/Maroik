@@ -52,6 +52,22 @@ public class CalendarService(
     private const int SharedRaceRetryLimit = 3;
 
     /// <inheritdoc />
+    public string? GetFixedInitialDate(string accountEmail)
+    {
+        ServerSetting server = settings.Value;
+
+        // The same period the dashboard pins for this account (see DashboardService.GetSummaryAsync), so a visitor
+        // finds the pre-seeded sample events on the first screen whenever they browse the demo.
+        if (string.IsNullOrEmpty(server.DemoAccountEmail) || accountEmail != server.DemoAccountEmail) return null;
+
+        // Full names: a using of System.Globalization would make Calendar ambiguous with the domain's aggregate.
+        return DateOnly.TryParseExact($"{server.DemoDashboardYear}-{server.DemoDashboardMonth}", "yyyy-M",
+            System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.None, out DateOnly firstDay)
+            ? firstDay.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture)
+            : null;
+    }
+
+    /// <inheritdoc />
     public async Task<List<CalendarResponse>> GetCalendarsAsync(string email, CancellationToken ct = default)
         =>
         [

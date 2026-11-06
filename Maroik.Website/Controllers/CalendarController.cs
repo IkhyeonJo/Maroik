@@ -240,7 +240,8 @@ public class CalendarController(
             OtherCalendars = otherCalendars,
             OtherCalendarEventOutputViewModels = await calendarService.GetCalendarEventViewModelsAsync(otherCalendars, userTimezone, null, HttpContext.RequestAborted),
             LoggedInAccount = loggedInAccount,
-            LoggedInAccountTimeZoneIanaId = userTimezone
+            LoggedInAccountTimeZoneIanaId = userTimezone,
+            InitialDate = calendarService.GetFixedInitialDate(loggedInAccount.RequireEmail())
         };
         vm.PopulateTimeData(userTimezone, timeProvider.GetUtcNow().UtcDateTime);
         return View(vm);

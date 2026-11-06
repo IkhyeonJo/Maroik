@@ -12,6 +12,13 @@ public interface ICalendarService
     Task<List<CalendarResponse>> GetCalendarsAsync(string email, CancellationToken ct = default);
 
     /// <summary>
+    /// The date (<c>yyyy-MM-dd</c>) the calendar page first opens on for this account: the first day of the fixed
+    /// demo period for the public demo account, or null for everyone else (and when that period is not a valid
+    /// year and month), whose calendar opens on today.
+    /// </summary>
+    string? GetFixedInitialDate(string accountEmail);
+
+    /// <summary>
     /// Returns all events belonging to any of the given calendars, fetched in a single query
     /// and grouped by calendar ID for per-calendar lookup. A calendar ID with no events is not
     /// present as a key — look it up with <c>GetValueOrDefault(id, [])</c>.

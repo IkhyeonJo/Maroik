@@ -59,6 +59,7 @@ public class ServerSetting
     /// Email of the public demo account, if one is configured for this deployment. When the
     /// dashboard is requested for this account, <see cref="DemoDashboardYear"/>/<see cref="DemoDashboardMonth"/>
     /// are shown instead of the requested period, so visitors always see the same pre-seeded sample data.
+    /// The account's calendar first opens on the same period (it can still page away from it).
     /// </summary>
     public string? DemoAccountEmail { get; set; }
 
