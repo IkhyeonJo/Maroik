@@ -8,9 +8,7 @@
     <File Path=".editorconfig" />
     <File Path="Directory.Build.props" />
     <File Path="Directory.Packages.props" />
-    <File Path="Maroik.nuspec" />
     <File Path="Maroik.slnx.DotSettings" />
-    <File Path="template.json" />
   </Folder>
   <Folder Name="/src/">
     <Project Path="docker-compose.dcproj">
