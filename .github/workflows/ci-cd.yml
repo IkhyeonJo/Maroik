@@ -39,7 +39,7 @@ jobs:
 
       # Node 22 for the project (package.json engines: >=22.22.2 <23, enforced by .npmrc engine-strict),
       # same as production. The @v5 actions themselves run on Node 24; that does not change this.
-      - uses: actions/setup-node@v5
+      - uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: npm
