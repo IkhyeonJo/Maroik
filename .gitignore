@@ -443,7 +443,7 @@ Maroik.SSL/**
 *.log
 Maroik.Log/**
 
-# Backup artifacts written into the repo folder by Maroik.Crontab/DBBackup.sh and UploadFileBackup.sh
+# Backup artifacts the removed per-item backup scripts wrote into the repo folder; kept so a leftover dump cannot be committed
 maroik-db-*.sql
 maroik-db-*.sql.gz
 website-upload-*/
