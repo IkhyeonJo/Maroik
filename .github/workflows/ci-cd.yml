@@ -33,7 +33,7 @@ jobs:
 
       # The exact SDK global.json pins (rollForward: disable), the same one the Dockerfiles build with
       # (pinned by SdkPinArchitectureTests): a newer SDK can bring analyzer diagnostics the build treats as errors.
-      - uses: actions/setup-dotnet@v5
+      - uses: actions/setup-dotnet@v6
         with:
           global-json-file: global.json
 

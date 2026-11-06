@@ -82,7 +82,7 @@ jobs:
           sed -i -E "s#^(FROM mcr\.microsoft\.com/dotnet/sdk:)$CURRENT( |$)#\1$LATEST\2#" */Dockerfile
           git diff --stat
 
-      - uses: actions/setup-dotnet@v5
+      - uses: actions/setup-dotnet@v6
         if: steps.gate.outputs.run == 'true'
         with:
           global-json-file: global.json
