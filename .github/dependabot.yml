@@ -1,4 +1,4 @@
-# Weekly pull requests for the NuGet packages, the client-script toolchain and the GitHub Actions. Minor and patch updates of
+# Monthly pull requests for the NuGet packages, the client-script toolchain and the GitHub Actions. Minor and patch updates of
 # one ecosystem come together in one pull request, a major update on its own. Merging one to main deploys it, so nothing merges
 # by itself.
 #
@@ -11,8 +11,7 @@ updates:
   - package-ecosystem: nuget
     directory: /
     schedule:
-      interval: weekly
-      day: monday
+      interval: monthly
       timezone: Asia/Seoul
     open-pull-requests-limit: 5
     groups:
@@ -42,8 +41,7 @@ updates:
   - package-ecosystem: npm
     directory: /Maroik.Website
     schedule:
-      interval: weekly
-      day: monday
+      interval: monthly
       timezone: Asia/Seoul
     open-pull-requests-limit: 5
     groups:
@@ -64,8 +62,7 @@ updates:
   - package-ecosystem: github-actions
     directory: /
     schedule:
-      interval: weekly
-      day: monday
+      interval: monthly
       timezone: Asia/Seoul
     open-pull-requests-limit: 5
     groups:

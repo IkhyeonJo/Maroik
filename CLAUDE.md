@@ -163,6 +163,12 @@ for shipped code, `tests` for `*.Tests`): `dotnet sln Maroik.slnx add <csproj> -
 `SolutionLayeringArchitectureTests` (`EveryProject_MustBeRegisteredInTheSolution`,
 `EveryProject_MustBeNestedUnderTheMatchingSolutionFolder`).
 
+## Adding rules and checks
+
+A new rule, architecture test or other check is added only after a real incident, or where data or security is at stake. A
+check that only repeats a value of a settings file is not added. One found later, or a rule whose reason is gone, is removed.
+The architecture tests of the code and the domain tests stay: they are worth what they cost.
+
 ## Rules kept in `.claude/rules/`
 
 These sections apply to the C# code, the build or the tests, and load with the files they govern. Each keeps its
