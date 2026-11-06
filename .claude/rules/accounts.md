@@ -48,7 +48,8 @@ that specific change. Check every candidate review finding in this area against 
   re-registrable.
 - The Login page is pre-filled with the public demo account (`demo@maroik.com` / `demoO12!!`), and the demo
   account's dashboard always shows the fixed period from `ServerSetting.DemoDashboardYear/Month`. Its calendar first
-  opens on that same period (`ICalendarService.GetFixedInitialDate`); the toolbar can still page away from it.
+  opens on that same period (`ICalendarService.GetFixedInitialDate`) and its budget pages on that year
+  (`IBudgetService.GetFixedInitialYear`); the toolbars can still page away from them.
 - Nicknames reject `<`, `>`, `"`, the backtick and `\` (after NFKC) but allow `&` and `'` ("R&D team",
   "O'Brien"): nicknames are always output encoded, so those two are not an injection vector. An
   administrator may create an account under a reserved nickname; self-registration may not.

@@ -18,11 +18,13 @@ public static class BudgetViewModelMapper
     /// <summary>
     /// The page model: the kind, the account's current year in its time zone, the kind's classes (localized), the asset currencies, and
     /// the captions of the month and year-total columns (localized; which column is which comes from <see cref="BudgetSheetLayout"/>).
+    /// <paramref name="fixedInitialYear"/> is the year to open on instead of the current one, if any.
     /// </summary>
-    public static BudgetPageViewModel Page(BudgetKind kind, IEnumerable<AssetResponse> assets, DateTime utcNow, string timeZoneIanaId, Func<string, string> localize) => new()
+    public static BudgetPageViewModel Page(BudgetKind kind, IEnumerable<AssetResponse> assets, DateTime utcNow, string timeZoneIanaId, Func<string, string> localize, int? fixedInitialYear = null) => new()
     {
         Kind = kind.ToString(),
         Year = utcNow.ConvertTimeByTimeZoneIanaId(timeZoneIanaId).Year,
+        InitialYear = fixedInitialYear ?? utcNow.ConvertTimeByTimeZoneIanaId(timeZoneIanaId).Year,
         MainClasses = BudgetLine.MainClasses(kind),
         SubClassesByMainClass = BudgetLine.Taxonomy(kind),
         ClassLabels = BudgetLine.MainClasses(kind).Concat(BudgetLine.Taxonomy(kind).Values.SelectMany(s => s)).Distinct(StringComparer.Ordinal)

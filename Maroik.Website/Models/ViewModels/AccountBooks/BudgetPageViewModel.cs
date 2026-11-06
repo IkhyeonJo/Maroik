@@ -6,8 +6,11 @@ public sealed class BudgetPageViewModel
     /// <summary>Income or Expenditure.</summary>
     public string Kind { get; init; } = "";
 
-    /// <summary>The year the page opens on (the account's current year).</summary>
+    /// <summary>The account's current year (what the "This year" button goes to).</summary>
     public int Year { get; init; }
+
+    /// <summary>The year the page opens on: the current year, or the public demo account's fixed one.</summary>
+    public int InitialYear { get; init; }
 
     /// <summary>The main classes of the kind, in taxonomy order.</summary>
     public IReadOnlyList<string> MainClasses { get; init; } = [];

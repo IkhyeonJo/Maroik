@@ -8,12 +8,12 @@ using Microsoft.Extensions.DependencyInjection;
 namespace Maroik.Website.Tests.Controllers;
 
 /// <summary>
-/// The user calendar page hands its script the date to open on: the public demo account's fixed period
-/// (<c>ServerSetting.DemoDashboardYear/Month</c>, the one its dashboard shows), and nothing for any other account,
-/// whose calendar opens on today. One derived host carries the demo settings.
+/// The calendar and budget pages hand their scripts where to open: the public demo account's fixed period
+/// (<c>ServerSetting.DemoDashboardYear/Month</c>, the one its dashboard shows), and today or the current year for any
+/// other account. One derived host carries the demo settings.
 /// </summary>
 [Collection("Website Integration")]
-public class CalendarFixedInitialDateTests(MaroikWebApplicationFactory factory)
+public class DemoFixedPeriodTests(MaroikWebApplicationFactory factory)
 {
     /// <summary>The demo account this class's host is configured with.</summary>
     private const string DemoEmail = "calendar-demo@test.com";
@@ -42,8 +42,8 @@ public class CalendarFixedInitialDateTests(MaroikWebApplicationFactory factory)
         }
     }
 
-    /// <summary>Signs <paramref name="email"/> in as a user and returns the calendar page's HTML.</summary>
-    private async Task<string> GetCalendarPageAsync(string email)
+    /// <summary>Signs <paramref name="email"/> in as a user and returns the HTML of the page at <paramref name="url"/>.</summary>
+    private async Task<string> GetPageAsync(string email, string url = "/Calendar/UserIndex")
     {
         using HttpClient client = _host.CreateClient(new WebApplicationFactoryClientOptions
         {
@@ -51,7 +51,7 @@ public class CalendarFixedInitialDateTests(MaroikWebApplicationFactory factory)
         });
         var session = await AuthenticatedSessionHelper.LoginAsync(_host, client, email, "UserPassword1!", Role.User, TestContext.Current.CancellationToken);
 
-        using var request = new HttpRequestMessage(HttpMethod.Get, "/Calendar/UserIndex");
+        using var request = new HttpRequestMessage(HttpMethod.Get, url);
         request.Headers.Add("Cookie", session.CookieHeader);
         var response = await client.SendAsync(request, TestContext.Current.CancellationToken);
         Assert.Equal(System.Net.HttpStatusCode.OK, response.StatusCode);
@@ -62,7 +62,7 @@ public class CalendarFixedInitialDateTests(MaroikWebApplicationFactory factory)
     [Fact]
     public async Task UserIndex_PublishesTheFixedPeriodsFirstDay_ForTheDemoAccount()
     {
-        string html = await GetCalendarPageAsync(DemoEmail);
+        string html = await GetPageAsync(DemoEmail);
 
         Assert.Contains("id=\"calendarInitialDate\" name=\"calendarInitialDate\" type=\"hidden\" value=\"2025-06-01\"", html, StringComparison.Ordinal);
     }
@@ -71,8 +71,32 @@ public class CalendarFixedInitialDateTests(MaroikWebApplicationFactory factory)
     [Fact]
     public async Task UserIndex_PublishesNoDate_ForAnyOtherAccount()
     {
-        string html = await GetCalendarPageAsync($"calendar-other-{Guid.NewGuid():N}@test.com");
+        string html = await GetPageAsync($"calendar-other-{Guid.NewGuid():N}@test.com");
 
         Assert.Contains("id=\"calendarInitialDate\" name=\"calendarInitialDate\" type=\"hidden\" value=\"\"", html, StringComparison.Ordinal);
+    }
+
+    /// <summary>The demo account's budget pages open on the fixed year, with "This year" still the real one.</summary>
+    [Theory]
+    [InlineData("/AccountBook/IncomeBudget")]
+    [InlineData("/AccountBook/ExpenditureBudget")]
+    public async Task BudgetPage_OpensOnTheFixedYear_ForTheDemoAccount(string url)
+    {
+        string html = await GetPageAsync(DemoEmail, url);
+
+        Assert.Contains("id=\"budgetInitialYear\" name=\"budgetInitialYear\" type=\"hidden\" value=\"2025\"", html, StringComparison.Ordinal);
+        Assert.Contains($"id=\"budgetYear\" name=\"budgetYear\" type=\"hidden\" value=\"{DateTime.UtcNow.Year}\"", html, StringComparison.Ordinal);
+        Assert.Matches("id=\"budgetYearLabel\"[^>]*>2025<", html);
+    }
+
+    /// <summary>Any other account's budget pages open on the current year.</summary>
+    [Theory]
+    [InlineData("/AccountBook/IncomeBudget")]
+    [InlineData("/AccountBook/ExpenditureBudget")]
+    public async Task BudgetPage_OpensOnTheCurrentYear_ForAnyOtherAccount(string url)
+    {
+        string html = await GetPageAsync($"budget-other-{Guid.NewGuid():N}@test.com", url);
+
+        Assert.Contains($"id=\"budgetInitialYear\" name=\"budgetInitialYear\" type=\"hidden\" value=\"{DateTime.UtcNow.Year}\"", html, StringComparison.Ordinal);
     }
 }

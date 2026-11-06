@@ -1,10 +1,12 @@
 using System.Data;
 using Maroik.Core.Contract.Interfaces;
+using Maroik.Core.Contract.Settings;
 using Maroik.Core.Domain.Accounts;
 using Maroik.Core.Domain.Budgets;
 using Maroik.Core.Domain.Finances;
 using Maroik.Core.Service.Services;
 using Microsoft.Extensions.Logging.Testing;
+using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Time.Testing;
 using Moq;
 
@@ -47,6 +49,9 @@ internal sealed class BudgetServiceHarness
     /// <summary>The unit of work.</summary>
     private Mock<IUnitOfWork> UnitOfWork { get; } = new();
 
+    /// <summary>The settings the service reads.</summary>
+    public ServerSetting Settings { get; } = new();
+
     /// <summary>The captured log.</summary>
     public FakeLogger<BudgetService> Logger { get; } = new();
 
@@ -74,7 +79,7 @@ internal sealed class BudgetServiceHarness
     }
 
     /// <summary>The service under test.</summary>
-    public BudgetService Sut => new(Sheets, Lines, Cells, Accounts.Object, Assets.Object, Incomes.Object, Expenditures.Object, UnitOfWork.Object, Logger, Time);
+    public BudgetService Sut => new(Sheets, Lines, Cells, Accounts.Object, Assets.Object, Incomes.Object, Expenditures.Object, UnitOfWork.Object, Options.Create(Settings), Logger, Time);
 
     /// <summary>Stores a sheet with lines for <see cref="Email"/> (or another account) and returns its id.</summary>
     public long Sheet(BudgetKind kind, int year, string email = Email, params BudgetLine[] lines)

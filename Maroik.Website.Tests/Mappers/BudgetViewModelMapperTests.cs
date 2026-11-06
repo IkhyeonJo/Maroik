@@ -148,6 +148,17 @@ public class BudgetViewModelMapperTests
         Assert.Equal("", new BudgetPreviewResponse().ToViewModel((k, _) => k).Value);
     }
 
+    /// <summary>The page opens on the fixed year when there is one and on the current year otherwise; "This year" stays the current one.</summary>
+    [Theory]
+    [InlineData(null, 2026)]
+    [InlineData(2025, 2025)]
+    public void ThePage_OpensOnTheFixedYear_WhenThereIsOne(int? fixedYear, int expected)
+    {
+        BudgetPageViewModel page = BudgetViewModelMapper.Page(BudgetKind.Income, [], new DateTime(2026, 5, 1, 0, 0, 0, DateTimeKind.Utc), "UTC", L, fixedYear);
+
+        Assert.Equal((2026, expected), (page.Year, page.InitialYear));
+    }
+
     /// <summary>The page opens on the account's current year, offers the kind's classes (with their localized names) and the distinct currencies of its assets.</summary>
     [Fact]
     public void ThePage_OpensOnTheCurrentYear()

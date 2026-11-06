@@ -10,6 +10,12 @@ namespace Maroik.Core.Contract.Interfaces;
 /// </summary>
 public interface IBudgetService
 {
+    /// <summary>
+    /// The year the budget pages first open on for this account: the fixed demo year for the public demo account, or null for
+    /// everyone else (and when that year is not a valid one), whose pages open on the current year.
+    /// </summary>
+    int? GetFixedInitialYear(string accountEmail);
+
     /// <summary>The account's sheet of a kind and year (a sheet not stored yet is shown with its default lines).</summary>
     Task<(ServiceResult Result, BudgetSheetResponse? Sheet)> GetSheetAsync(string accountEmail, BudgetKind kind, int year, string timeZoneIanaId, CancellationToken ct = default);
 

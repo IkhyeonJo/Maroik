@@ -1,12 +1,14 @@
 using ErrorOr;
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
+using Maroik.Core.Contract.Settings;
 using Maroik.Core.Domain.Accounts;
 using Maroik.Core.Domain.Budgets;
 using Maroik.Core.Domain.Extensions;
 using Maroik.Core.Domain.Finances;
 using Maroik.Core.Service.Mappers;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace Maroik.Core.Service.Services;
 
@@ -30,6 +32,7 @@ public class BudgetService(
     IIncomeRepository incomeRepository,
     IExpenditureRepository expenditureRepository,
     IUnitOfWork unitOfWork,
+    IOptions<ServerSetting> settings,
     ILogger<BudgetService> logger,
     TimeProvider timeProvider) : IBudgetService
 {
@@ -45,6 +48,21 @@ public class BudgetService(
     /// <summary>The refusal of a bad kind, year or e-mail, or null when the sheet can exist.</summary>
     private ServiceResult? Refusal(string accountEmail, BudgetKind kind, int year) =>
         BudgetSheet.Create(accountEmail, kind, year, UtcNow) is { IsError: true } refused ? ServiceResult.FromError(refused.FirstError) : null;
+
+    /// <inheritdoc />
+    public int? GetFixedInitialYear(string accountEmail)
+    {
+        ServerSetting server = settings.Value;
+
+        // The year the dashboard pins for this account (see DashboardService.GetSummaryAsync), so a visitor finds the
+        // pre-seeded sample budgets on the first screen whenever they browse the demo.
+        if (string.IsNullOrEmpty(server.DemoAccountEmail) || accountEmail != server.DemoAccountEmail) return null;
+
+        return int.TryParse(server.DemoDashboardYear, System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture, out int year)
+               && year is >= 1 and <= 9999
+            ? year
+            : null;
+    }
 
     /// <inheritdoc />
     public async Task<(ServiceResult Result, BudgetSheetResponse? Sheet)> GetSheetAsync(string accountEmail, BudgetKind kind, int year, string timeZoneIanaId, CancellationToken ct = default)

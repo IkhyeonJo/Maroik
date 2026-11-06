@@ -662,7 +662,7 @@ public class AccountBookController(
     {
         AccountResponse account = HttpContext.GetLoggedInAccount();
         var assets = await assetService.GetAssetsAsync(account.RequireEmail(), ct);
-        return View("Budget", BudgetViewModelMapper.Page(BudgetKind.Income, assets, timeProvider.GetUtcNow().UtcDateTime, account.RequireTimeZoneIanaId(), key => localizer[key].Value));
+        return View("Budget", BudgetViewModelMapper.Page(BudgetKind.Income, assets, timeProvider.GetUtcNow().UtcDateTime, account.RequireTimeZoneIanaId(), key => localizer[key].Value, budgetService.GetFixedInitialYear(account.RequireEmail())));
     }
 
     /// <summary>The Expenditure Budget page (the budget sheet view, told its kind).</summary>
@@ -671,7 +671,7 @@ public class AccountBookController(
     {
         AccountResponse account = HttpContext.GetLoggedInAccount();
         var assets = await assetService.GetAssetsAsync(account.RequireEmail(), ct);
-        return View("Budget", BudgetViewModelMapper.Page(BudgetKind.Expenditure, assets, timeProvider.GetUtcNow().UtcDateTime, account.RequireTimeZoneIanaId(), key => localizer[key].Value));
+        return View("Budget", BudgetViewModelMapper.Page(BudgetKind.Expenditure, assets, timeProvider.GetUtcNow().UtcDateTime, account.RequireTimeZoneIanaId(), key => localizer[key].Value, budgetService.GetFixedInitialYear(account.RequireEmail())));
     }
 
     /// <summary>A budget sheet, ready to draw.</summary>

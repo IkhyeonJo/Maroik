@@ -12,6 +12,7 @@
 
 @Html.Hidden("budgetKind", Model.Kind)
 @Html.Hidden("budgetYear", Model.Year)
+@Html.Hidden("budgetInitialYear", Model.InitialYear)
 @Html.Hidden("budgetFunctions", ClientJsonSerializer.Serialize(FormulaFunctions.All))
 @Html.Hidden("budgetSubClassMap", ClientJsonSerializer.Serialize(Model.SubClassesByMainClass))
 @Html.Hidden("budgetClassLabels", ClientJsonSerializer.Serialize(Model.ClassLabels))
@@ -26,7 +27,7 @@
         <div class="card-header budget-toolbar">
             <div class="btn-group btn-group-sm mr-2" role="group" aria-label="@Localizer["Year"].Value">
                 <button type="button" id="btnBudgetPrevYear" class="btn btn-default" title="@Localizer["Previous year"].Value"><i class="fas fa-chevron-left"></i></button>
-                <span id="budgetYearLabel" class="btn btn-default disabled budget-year-label">@Model.Year</span>
+                <span id="budgetYearLabel" class="btn btn-default disabled budget-year-label">@Model.InitialYear</span>
                 <button type="button" id="btnBudgetNextYear" class="btn btn-default" title="@Localizer["Next year"].Value"><i class="fas fa-chevron-right"></i></button>
             </div>
             <button type="button" id="btnBudgetThisYear" class="btn btn-sm btn-default mr-3">@Localizer["This year"].Value</button>

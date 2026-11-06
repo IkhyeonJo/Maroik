@@ -677,6 +677,18 @@ describe("AccountBook/Budget — views, year, lines, Excel", () => {
         expect(td(h, "C2").hasClass("budget-state-bad")).toBe(false);
     });
 
+    it("opens on the year the server fixed (the public demo account's), and 'This year' still goes to the real one", () => {
+        const h = loadSite("user", "AccountBook", "Budget", fixture("Income", 2026) + hidden("budgetInitialYear", "2025"));
+
+        expect(bodyOf(callTo(h, "/AccountBook/GetBudgetSheet"))).toEqual({ Kind: "Income", Year: 2025 });
+        expect(h.$("#budgetYearLabel").text()).toBe("2025");
+        h.$("#btnBudgetNextYear").trigger("click");
+        expect(bodyOf(callTo(h, "/AccountBook/GetBudgetSheet"))).toEqual({ Kind: "Income", Year: 2026 });
+        h.$("#btnBudgetPrevYear").trigger("click");
+        h.$("#btnBudgetThisYear").trigger("click");
+        expect(bodyOf(callTo(h, "/AccountBook/GetBudgetSheet"))).toEqual({ Kind: "Income", Year: 2026 });
+    });
+
     it("the year buttons load the previous, next and current year", () => {
         const h = load();
 

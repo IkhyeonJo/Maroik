@@ -19,6 +19,25 @@ public class BudgetServiceReadTests
     /// <summary>The cell of a sheet at an address.</summary>
     private static BudgetCellResponse Cell(BudgetSheetResponse sheet, string address) => sheet.Cells.Single(c => c.Address == address);
 
+    /// <summary>The demo account's budget pages open on its fixed year; any other account, or an unusable year, on the current one.</summary>
+    [Theory]
+    [InlineData("demo@maroik.com", "2025", "demo@maroik.com", 2025)]
+    [InlineData("demo@maroik.com", "2025", "user@maroik.com", null)]
+    [InlineData("", "2025", "", null)]
+    [InlineData(null, "2025", "", null)]
+    [InlineData("demo@maroik.com", null, "demo@maroik.com", null)]
+    [InlineData("demo@maroik.com", "", "demo@maroik.com", null)]
+    [InlineData("demo@maroik.com", "abcd", "demo@maroik.com", null)]
+    [InlineData("demo@maroik.com", "0", "demo@maroik.com", null)]
+    [InlineData("demo@maroik.com", "10000", "demo@maroik.com", null)]
+    public void GetFixedInitialYear_IsTheDemoYear_OnlyForTheDemoAccount(string? demoEmail, string? demoYear, string accountEmail, int? expected)
+    {
+        _h.Settings.DemoAccountEmail = demoEmail;
+        _h.Settings.DemoDashboardYear = demoYear;
+
+        Assert.Equal(expected, _h.Sut.GetFixedInitialYear(accountEmail));
+    }
+
     /// <summary>A stored sheet is shown with its inputs calculated and its budget cells against the year's actuals.</summary>
     [Fact]
     public async Task GetSheetAsync_ShowsAStoredSheet()

@@ -19,7 +19,7 @@
  */
 (function() {
     // The runtime-check helpers the _Layout script defines (see TypeScripts/global.d.ts).
-    const { check, replies, onReply, fieldValue, selectValue, parseJson, byId, elementOf } = window;
+    const { check, replies, onReply, fieldValue, optionalFieldValue, selectValue, parseJson, byId, elementOf } = window;
 
     // The replies this page reads, mirroring the controller's Json(...) results.
     const cellCheck = check.object({
@@ -101,7 +101,8 @@
     /** A position in the grid: the row number (1-based) and the column index (A = 0). */
     interface Position { row: number; col: number; }
 
-    let year = thisYear;
+    // The year the server chose for the first screen: the public demo account's fixed one, otherwise the current year.
+    let year = Number(optionalFieldValue($("#budgetInitialYear"))) || thisYear;
     let rows: Row[] = [];
     const cells = new Map<string, Cell>();
     let unbudgeted: Unbudgeted[] = [];
