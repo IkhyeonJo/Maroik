@@ -1,18 +1,12 @@
 using System.Diagnostics;
-using System.Text.RegularExpressions;
 using Maroik.Core.Contract.Tests.Fixtures;
 
 namespace Maroik.Core.Contract.Tests.ArchitectureRules;
 
 /// <summary>
-/// The repository is spelled in American English, checked by cspell (<c>cspell.config.yaml</c>) as part of <c>dotnet test</c>,
-/// so the spelling needs no step of its own in CI and no git hook.
-/// <para>
-/// The project's words live twice, because the two spell checkers cannot read each other's format: Rider reads the IntelliJ
-/// project dictionary (<c>.idea/.idea.Maroik/.idea/dictionaries/project.xml</c>), and cspell reads a plain word list
-/// (<c>.config/cspell-words.txt</c>, named by <c>cspell.config.yaml</c>). A word added to only one of them would pass in the
-/// editor and fail here, or the other way round, so the two must hold the same words.
-/// </para>
+/// The repository is spelled in American English, checked by cspell (<c>cspell.config.mjs</c>) as part of <c>dotnet test</c>,
+/// so the spelling needs no step of its own in CI and no git hook. The project's words live once, in Rider's project dictionary
+/// (<c>.idea/.idea.Maroik/.idea/dictionaries/project.xml</c>), which the cspell configuration reads.
 /// </summary>
 public class SpellingDictionaryArchitectureTests
 {
@@ -25,29 +19,9 @@ public class SpellingDictionaryArchitectureTests
     /// <summary>The image cspell runs in on a machine without Node: the one the Website build compiles the client scripts in.</summary>
     private const string NodeImage = "node:22-alpine";
 
-    private static readonly string _riderDictionary =
-        Path.Combine(RepositoryPaths.Root, ".idea", ".idea.Maroik", ".idea", "dictionaries", "project.xml");
-
-    private static readonly string _cspellWords = Path.Combine(RepositoryPaths.Root, ".config", "cspell-words.txt");
-
-    /// <summary>Rider's project dictionary and cspell's word list hold exactly the same words.</summary>
-    [Fact]
-    public void RiderAndCspell_ShareOneWordList()
-    {
-        SortedSet<string> rider = new(
-            Regex.Matches(File.ReadAllText(_riderDictionary), "<w>(.*?)</w>").Select(match => match.Groups[1].Value),
-            StringComparer.Ordinal);
-        SortedSet<string> cspell = new(
-            File.ReadAllLines(_cspellWords).Select(line => line.Trim()).Where(line => line.Length > 0 && !line.StartsWith('#')),
-            StringComparer.Ordinal);
-
-        Assert.NotEmpty(rider);
-        Assert.Equal(string.Join("\n", rider), string.Join("\n", cspell));
-    }
-
     /// <summary>
     /// The shared ReSharper settings hold no spelling words of their own (<c>UserDictionary</c>): a third list would drift from the
-    /// two above unseen. A project word goes into the shared list, which Rider reads through its project dictionary.
+    /// two above unseen. A project word goes into Rider's project dictionary.
     /// </summary>
     [Fact]
     public void TheSharedRiderSettings_KeepNoWordListOfTheirOwn()
@@ -57,19 +31,10 @@ public class SpellingDictionaryArchitectureTests
         Assert.DoesNotContain("/UserDictionary/", settings, StringComparison.Ordinal);
     }
 
-    /// <summary>The cspell configuration reads that word list, so the shared words are the ones cspell uses.</summary>
-    [Fact]
-    public void CspellConfig_ReadsTheSharedWordList()
-    {
-        string config = File.ReadAllText(Path.Combine(RepositoryPaths.Root, "cspell.config.yaml"));
-
-        Assert.Contains("path: ./.config/cspell-words.txt", config, StringComparison.Ordinal);
-    }
-
     /// <summary>
     /// cspell finds no unknown word in the repository. The files are the ones git does not ignore (tracked, or new and not yet
     /// added), filtered by the configuration's <c>files</c> globs and <c>ignorePaths</c>. A new word that is spelled right goes
-    /// into both word lists (see <see cref="RiderAndCspell_ShareOneWordList"/>); the failure message lists every finding.
+    /// into Rider's project dictionary; the failure message lists every finding.
     /// </summary>
     [Fact]
     public async Task TheRepository_HasNoSpellingErrors()

@@ -400,8 +400,7 @@ FodyWeavers.xsd
 
 # Rider ignored files
 .idea/*
-# ...except the project spelling dictionary (the one list of project words for Rider; cspell reads the same words from
-# .config/cspell-words.txt) and the
+# ...except the project spelling dictionary (the one list of project words, which cspell.config.mjs also reads) and the
 # project inspection profile (Grazie's style suggestions, such as "Long sentence", are off: long rationale comments are wanted).
 # ...and the plugins the solution requires and its VCS mapping.
 !.idea/.idea.Maroik/
