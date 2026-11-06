@@ -23,12 +23,13 @@ export PATH="/w/node_modules/.bin:$PATH"
 
 # On the way out, also after a failed build or test: vitest leaves its cache in the project's node_modules
 # (.vite, .vite-temp), which would leave a root-owned node_modules folder on the host, so it goes. And the
-# container runs as root, so what it wrote goes back to the owner of the project folder, for the host to
-# rebuild or delete (a no-op on Docker Desktop, where the bind mount maps owners itself).
+# container runs as root, so what it wrote goes back to the owner of the project folder, folders included (the
+# host cannot delete a file from a root-owned folder, whoever owns the file), for the host to rebuild or delete
+# (a no-op on Docker Desktop, where the bind mount maps owners itself).
 cleanup() {
     rm -rf /w/app/node_modules/.vite /w/app/node_modules/.vite-temp
     rmdir /w/app/node_modules 2>/dev/null || true
-    find /w/app/wwwroot -path '*/custom/*' \( -name '*.js' -o -name '*.js.map' \) -exec chown "$(stat -c %u:%g /w/app)" {} +
+    find /w/app/wwwroot -user 0 -exec chown "$(stat -c %u:%g /w/app)" {} +
 }
 trap cleanup EXIT
 
