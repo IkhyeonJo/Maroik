@@ -42,6 +42,22 @@
     <GlobalAnalyzerConfigFiles Include="$(MSBuildThisFileDirectory)stylecop.globalconfig" />
   </ItemGroup>
   <!--
+    The IDE-level Rider settings of the repository reach this PC's Rider when the solution is built. Maroik.Core.Domain is
+    in every solution build, so the script runs once per build, not once per project. CI and image builds have no Rider
+    to configure. Failing to install is no reason to fail the build, so the exit code is ignored.
+  -->
+  <Target Name="InstallRiderSettings" AfterTargets="Build"
+          Condition="'$(MSBuildProjectName)' == 'Maroik.Core.Domain' And '$(CI)' == '' And '$(DOTNET_RUNNING_IN_CONTAINER)' != 'true' And Exists('$(MSBuildThisFileDirectory).config/rider/install.sh')">
+    <PropertyGroup>
+      <_RiderSettingsBash>bash</_RiderSettingsBash>
+      <_RiderSettingsBash Condition="$([MSBuild]::IsOSPlatform('Windows'))">$(ProgramFiles)\Git\bin\bash.exe</_RiderSettingsBash>
+      <_RiderSettingsScript>$([System.String]::Copy('$(MSBuildThisFileDirectory)').Replace('\', '/')).config/rider/install.sh</_RiderSettingsScript>
+    </PropertyGroup>
+    <Exec Command="&quot;$(_RiderSettingsBash)&quot; &quot;$(_RiderSettingsScript)&quot; --if-changed"
+          IgnoreExitCode="true" IgnoreStandardErrorWarningFormat="true"
+          StandardOutputImportance="high" StandardErrorImportance="high" />
+  </Target>
+  <!--
     Plural folder names: the folder that directly holds a .cs file is named with a plural noun (Accounts, Fixtures,
     ArchitectureRules, Mappers), never a singular noun, an adjective or a mass/concept word (Account, Shared,
     Infrastructure, Misc). A concept word is replaced by a noun that has a plural, then pluralized (Time -> TimeZones,

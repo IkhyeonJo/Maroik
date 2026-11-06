@@ -1,7 +1,12 @@
 #!/usr/bin/env bash
 #
-# Copies the Rider settings of the repository into this PC's Rider configuration. Run it once per PC, with Rider closed
-# (Git Bash on Windows).
+# Copies the Rider settings of the repository into this PC's Rider configuration (Git Bash on Windows).
+# Building the solution runs it with --if-changed (Directory.Build.props), which installs only settings this configuration
+# has not received yet, so a setting changed in Rider afterwards is not reverted by the next build. Without the option it
+# always installs.
+#
+# Rider writes its settings back when it exits, which would undo a copy made while it runs. So while it runs, the script
+# leaves a background copy of itself (--wait-for-exit) that installs the moment Rider exits, and asks for a restart.
 #
 # The solution itself carries what Rider reads from a solution: run configurations (.run), required plugins, inspection
 # profile and dictionary (.idea), code style and severities (.editorconfig, Maroik.slnx.DotSettings). The keymap, color
@@ -14,7 +19,10 @@ repository_settings="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 exported_version="Rider2026.2"
 is_windows=false
 
-case "$(uname -s)" in
+mode="${1:-}"
+platform="$(uname -s)"
+
+case "$platform" in
     Darwin) jetbrains="$HOME/Library/Application Support/JetBrains" ;;
     MINGW* | MSYS* | CYGWIN*)
         jetbrains="$APPDATA/JetBrains"
@@ -28,23 +36,61 @@ esac
 newest="$(find "$jetbrains" -mindepth 1 -maxdepth 1 -type d -name 'Rider[0-9]*' 2>/dev/null | sort -V | tail -n 1 || true)"
 config="${newest:-$jetbrains/$exported_version}"
 
-# Rider writes its settings back when it exits, which would undo the copy. The folder's .lock holds its Rider's process
-# id, and is left behind after the exit, so what counts is whether that process still runs.
-lock_holder_runs() {
-    local pid
-    [[ -s "$config/.lock" ]] || return 1
-    pid="$(cat "$config/.lock")"
+# What the repository exports now, recorded in the configuration after an install.
+settings_version() {
+    find "$repository_settings/settings" "$repository_settings/ui-font-component.xml" -type f | LC_ALL=C sort |
+        while IFS= read -r file; do cat "$file"; done | cksum
+}
+
+installed_version="$config/.maroik-rider-settings"
+pending="$config/.maroik-rider-settings-pending"
+
+if [[ "$mode" == "--if-changed" && -f "$installed_version" && "$(cat "$installed_version")" == "$(settings_version)" ]]; then
+    exit 0
+fi
+
+# The folder's .lock holds its Rider's process id, and is left behind after the exit, so what counts is whether that process
+# still runs. It is read once: the restarted Rider writes its own id there, and the install must not wait for that one.
+rider="$(cat "$config/.lock" 2>/dev/null || true)"
+
+rider_runs() {
+    [[ -n "$rider" ]] || return 1
     if [[ "$is_windows" == true ]]; then
         # Git Bash's kill knows only its own processes.
-        tasklist.exe //FI "PID eq $pid" | grep -qw "$pid"
+        tasklist.exe //FI "PID eq $rider" | grep -qw "$rider"
     else
-        kill -0 "$pid" 2>/dev/null
+        kill -0 "$rider" 2>/dev/null
     fi
 }
 
-if lock_holder_runs; then
-    echo "Close Rider first: it would overwrite these settings when it exits ($config)." >&2
-    exit 1
+# A popup where the desktop offers one; the build output says the same either way.
+show_popup() {
+    local message="$1"
+    case "$platform" in
+        Darwin) osascript -e "display notification \"$message\" with title \"Rider\"" >/dev/null 2>&1 || true ;;
+        MINGW* | MSYS* | CYGWIN*)
+            powershell.exe -NoProfile -Command "Add-Type -AssemblyName PresentationFramework; [System.Windows.MessageBox]::Show('$message', 'Rider')" </dev/null >/dev/null 2>&1 &
+            ;;
+        *) notify-send "Rider" "$message" >/dev/null 2>&1 || true ;;
+    esac
+}
+
+if rider_runs; then
+    if [[ "$mode" == "--wait-for-exit" ]]; then
+        while rider_runs; do sleep 0.2; done
+    else
+        restart_message="Rider settings are ready. Restart Rider to apply them."
+        echo "$restart_message"
+        # Every build reaches this line until the restart; one waiting install and one popup are enough.
+        if [[ -f "$pending" ]] && kill -0 "$(cat "$pending")" 2>/dev/null; then
+            exit 0
+        fi
+        mkdir -p "$config"
+        nohup bash "${BASH_SOURCE[0]}" --wait-for-exit </dev/null >/dev/null 2>&1 &
+        echo "$!" > "$pending"
+        show_popup "$restart_message"
+        exit 0
+    fi
 fi
 
 backup="$config/settings-backup-$(date +%Y%m%d%H%M%S)"
@@ -90,6 +136,9 @@ if [[ -e "$other" ]]; then
 else
     { echo "<application>"; cat "$font"; echo "</application>"; } > "$other"
 fi
+
+settings_version > "$installed_version"
+rm -f "$pending"
 
 echo "Rider settings installed into $config"
 if [[ -d "$backup" ]]; then
