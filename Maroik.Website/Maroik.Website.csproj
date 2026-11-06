@@ -93,7 +93,7 @@
     <_ClientTypeScriptNpmScript Condition="'$(Configuration)' == 'Debug'">build:debug</_ClientTypeScriptNpmScript>
     <_ClientTypeScriptNpmScript Condition="'$(_ClientTypeScriptNpmScript)' == ''">build</_ClientTypeScriptNpmScript>
     <ClientScriptsInDocker Condition="'$(ClientScriptsInDocker)' == '' And '$(Configuration)' == 'Debug' And '$(DOTNET_RUNNING_IN_CONTAINER)' != 'true' And !Exists('$(MSBuildProjectDirectory)/node_modules/typescript')">true</ClientScriptsInDocker>
-    <!-- The Dockerfile's tsbuild image (pinned equal by ClientScriptToolchainArchitectureTests). -->
+    <!-- The Dockerfile's tsbuild image. -->
     <ClientScriptNodeImage>node:22-alpine</ClientScriptNodeImage>
     <_ClientScriptDockerRun>docker run --rm -v "$(MSBuildProjectDirectory):/w/app" -v maroik-website-node-modules:/w -w /w/app $(ClientScriptNodeImage) sh client-scripts-in-docker.sh</_ClientScriptDockerRun>
   </PropertyGroup>

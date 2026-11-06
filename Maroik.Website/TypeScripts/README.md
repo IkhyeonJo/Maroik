@@ -340,7 +340,7 @@ Both `site.js` and `site.js.map` under `Maroik.Website/wwwroot/**/custom/**` are
 * **Debug `dotnet build` without `node_modules/`** (Rider/VS "Fast Mode", no Node installed) —
   `ClientScriptsInDocker` runs the same `npm run build:debug` and the Vitest suite in a
   `node:22-alpine` container (`docker run … sh client-scripts-in-docker.sh`), the Dockerfile's
-  tsbuild image (pinned equal by `ClientScriptToolchainArchitectureTests`). The packages are kept
+  tsbuild image. The packages are kept
   in the `maroik-website-node-modules` Docker volume, not in this folder, and reinstalled only when
   `package-lock.json` changes (`docker volume rm maroik-website-node-modules` forces it). Not inside
   a container, not for Release; switch off with `-p:ClientScriptsInDocker=false`.
