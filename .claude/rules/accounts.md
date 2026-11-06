@@ -60,5 +60,5 @@ that specific change. Check every candidate review finding in this area against 
   as it. Anyone can also lock any account with `MaxLoginAttempt` wrong guesses. Both are accepted.
 - The demo account's 2025 sample data lives in `Maroik.DB/PostgreSQL/SQL_Init_Script/SeedDemo.sql`, which both compose files
   mount to run after `Init.sql`, so every rebuild of the database restores it, including what a visitor changed. It also
-  restores the account's login state; it leaves other accounts and the demo account's posts, Kanban cards and File Manager
-  entries alone. A schema change to a table it writes also means editing this file.
+  restores the account's login state and replaces its Kanban cards; it leaves other accounts and the demo account's posts
+  and File Manager entries alone. A schema change to a table it writes also means editing this file.

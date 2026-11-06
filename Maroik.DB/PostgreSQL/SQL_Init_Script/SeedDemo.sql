@@ -1,13 +1,14 @@
--- Puts the public demo account back to its sample data: 2025 account book, notices, budgets and calendars, and its login
--- state (a visitor can lock it or change its password). Only this account's rows are touched, ids come from the sequences,
--- and running it again gives the same result, so it can follow a production dump or run against a live database.
--- Its posts, comments, Kanban cards and File Manager entries are left as they are.
+-- Puts the public demo account back to its sample data: 2025 account book, notices, budgets, calendars and Kanban cards, and
+-- its login state (a visitor can lock it or change its password). Only this account's rows are touched, ids come from the
+-- sequences, and running it again gives the same result, so it can follow a production dump or run against a live database.
+-- Its posts, comments and File Manager entries are left as they are.
 SET client_encoding = 'UTF8';
 BEGIN;
 
 INSERT INTO public."Account" ("Email", "HashedPassword", "Nickname", "AvatarImagePath", "Role", "TimeZoneIanaId", "DefaultMonetaryUnit", "Locked", "LoginAttempt", "EmailConfirmed", "AgreedServiceTerms", "RegistrationToken", "ResetPasswordToken", "Created", "Updated", "Message", "Deleted", "SecurityStamp", "MustChangePassword", "FileManagerQuotaBytes") VALUES ('demo@maroik.com', '$2a$13$e06KyPwRiFlJSgUeYoCv6uxedAHR1COyg9HsemA40xQbDVRQp/xfa', 'Demo', '/upload/Management/Profile/Avatar/56EEF375-6DE8-49C2-BD23-673F2513F6D5.jpeg', 'User', 'Asia/Seoul', 'KRW', 'f', '0', 't', 't', NULL, NULL, '2021-07-12 22:46:59', '2025-08-24 13:32:49.471924', 'This account is locked', 'f', '5f69576a-557e-4d91-b810-9ba8930ae02a', 'f', '0')
 ON CONFLICT ("Email") DO UPDATE SET "HashedPassword" = EXCLUDED."HashedPassword", "Nickname" = EXCLUDED."Nickname", "AvatarImagePath" = EXCLUDED."AvatarImagePath", "Role" = EXCLUDED."Role", "TimeZoneIanaId" = EXCLUDED."TimeZoneIanaId", "DefaultMonetaryUnit" = EXCLUDED."DefaultMonetaryUnit", "Locked" = EXCLUDED."Locked", "LoginAttempt" = EXCLUDED."LoginAttempt", "EmailConfirmed" = EXCLUDED."EmailConfirmed", "AgreedServiceTerms" = EXCLUDED."AgreedServiceTerms", "RegistrationToken" = EXCLUDED."RegistrationToken", "ResetPasswordToken" = EXCLUDED."ResetPasswordToken", "Updated" = EXCLUDED."Updated", "Message" = EXCLUDED."Message", "Deleted" = EXCLUDED."Deleted", "SecurityStamp" = EXCLUDED."SecurityStamp", "MustChangePassword" = EXCLUDED."MustChangePassword", "FileManagerQuotaBytes" = EXCLUDED."FileManagerQuotaBytes";
 
+DELETE FROM public."KanbanCard" WHERE "AccountEmail" = 'demo@maroik.com';
 DELETE FROM public."OtherCalendar" WHERE "AccountEmail" = 'demo@maroik.com';
 DELETE FROM public."Calendar" WHERE "AccountEmail" = 'demo@maroik.com';
 DELETE FROM public."BudgetSheet" WHERE "AccountEmail" = 'demo@maroik.com';
@@ -1331,5 +1332,28 @@ INSERT INTO public."BudgetSheetCell" ("SheetId", "RowKey", "Column", "Input", "U
 ((SELECT "Id" FROM public."BudgetSheet" WHERE "AccountEmail" = 'demo@maroik.com' AND "Kind" = 'Income' AND "Year" = 2025), 'F.1', 'L', '=ACTUAL(L{L.RegularIncome.LaborIncome.4B5257}:L{L.RegularIncome.FinancialIncome.4B5257})+ACTUAL(L{L.RegularIncome.RentalIncome.4B5257}:L{L.RegularIncome.OtherIncome.4B5257})', '2024-12-28 01:00:00'),
 ((SELECT "Id" FROM public."BudgetSheet" WHERE "AccountEmail" = 'demo@maroik.com' AND "Kind" = 'Income' AND "Year" = 2025), 'F.1', 'M', '=ACTUAL(M{L.RegularIncome.LaborIncome.4B5257}:M{L.RegularIncome.FinancialIncome.4B5257})+ACTUAL(M{L.RegularIncome.RentalIncome.4B5257}:M{L.RegularIncome.OtherIncome.4B5257})', '2024-12-28 01:00:00'),
 ((SELECT "Id" FROM public."BudgetSheet" WHERE "AccountEmail" = 'demo@maroik.com' AND "Kind" = 'Income' AND "Year" = 2025), 'F.1', 'N', '=SUM(B{F.1}:M{F.1})', '2024-12-28 01:00:00');
+
+-- The board as it stands in June 2025, the demo dashboard's fixed period. A due date is judged against the real date, so 2025
+-- dates show red; the two far-off dates keep the gray state on show, and the finished cards carry none so that Done is not red.
+INSERT INTO public."KanbanCard" ("AccountEmail", "Lane", "Title", "Description", "DueDate", "Created", "Updated") VALUES
+('demo@maroik.com', 'Backlog', '사이드 프로젝트 아이디어 정리', '가계부 자동 분류, 독서 기록 앱 후보 비교', NULL, '2025-01-11 03:00:00', '2025-01-11 03:00:00'),
+('demo@maroik.com', 'Backlog', '전세 계약 연장 여부 검토', E'2026-09 계약 만료\n주변 시세 확인 후 집주인과 협의', '2026-03-31', '2025-02-22 02:30:00', '2025-02-22 02:30:00'),
+('demo@maroik.com', 'Backlog', '청년 적금 만기 후 운용 계획', '2026-06 만기, ETF와 예금 비중 고민', NULL, '2025-04-05 04:00:00', '2025-04-05 04:00:00'),
+('demo@maroik.com', 'Backlog', '여권 갱신', '만료 6개월 전에 미리 신청', '2031-03-31', '2025-04-21 11:00:00', '2025-04-21 11:00:00'),
+('demo@maroik.com', 'Backlog', '운전면허 갱신', NULL, '2032-12-31', '2025-05-10 02:00:00', '2025-05-10 02:00:00'),
+('demo@maroik.com', 'ToDo', '자동차세 1기분 납부 확인', '주거래 통장 자동이체', '2025-06-16', '2025-06-02 00:30:00', '2025-06-02 00:30:00'),
+('demo@maroik.com', 'ToDo', '조카 돌잔치 선물 준비', '6월 21일 돌잔치 전까지', '2025-06-20', '2025-06-03 12:00:00', '2025-06-03 12:00:00'),
+('demo@maroik.com', 'ToDo', '상반기 평가 자기 기술서 작성', E'6월 30일 평가 면담 전 제출\n서비스 개편 성과 위주로 정리', '2025-06-27', '2025-06-09 01:00:00', '2025-06-09 01:00:00'),
+('demo@maroik.com', 'ToDo', '여름 휴가 숙소 예약', '강릉 4박 5일, 8월 4일 출발', '2025-06-30', '2025-06-10 11:30:00', '2025-06-10 11:30:00'),
+('demo@maroik.com', 'ToDo', '고객사 요구사항 회의 자료 준비', NULL, '2025-07-08', '2025-06-12 05:00:00', '2025-06-12 05:00:00'),
+('demo@maroik.com', 'InProgress', '하프 마라톤 훈련', E'주 3회 달리기\n11월 대회까지 거리 조금씩 늘리기', '2025-11-02', '2025-03-03 22:00:00', '2025-06-01 22:00:00'),
+('demo@maroik.com', 'InProgress', '이달의 책 읽기', '독서 모임 전까지 완독', NULL, '2025-06-01 12:00:00', '2025-06-01 12:00:00'),
+('demo@maroik.com', 'InProgress', '서비스 개편 2차 릴리스 준비', E'릴리스 노트 작성\n배포 체크리스트 점검', '2025-06-23', '2025-06-02 01:30:00', '2025-06-11 08:00:00'),
+('demo@maroik.com', 'Done', '연말정산 서류 제출', '3월 급여에 환급 반영', NULL, '2025-01-15 01:00:00', '2025-02-07 02:00:00'),
+('demo@maroik.com', 'Done', '자동차 보험 갱신', NULL, NULL, '2025-02-20 12:00:00', '2025-03-08 03:00:00'),
+('demo@maroik.com', 'Done', '자동차 엔진오일 교체', NULL, NULL, '2025-03-01 04:00:00', '2025-03-15 03:00:00'),
+('demo@maroik.com', 'Done', '제주 여행 항공권·숙소 예약', '2박 3일', NULL, '2025-03-02 11:00:00', '2025-03-09 12:30:00'),
+('demo@maroik.com', 'Done', '서비스 개편 1차 개발', '회원·결제 화면 개편', NULL, '2025-03-10 00:00:00', '2025-04-11 09:00:00'),
+('demo@maroik.com', 'Done', '부산 출장 교육 자료 준비', NULL, NULL, '2025-04-28 02:00:00', '2025-05-13 08:30:00');
 
 COMMIT;
