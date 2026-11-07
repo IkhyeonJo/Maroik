@@ -173,6 +173,27 @@ public class ForumControllerPageTests(MaroikWebApplicationFactory factory)
         Assert.Contains("LockedBody-2", await BodyAsync(authorResponse), StringComparison.Ordinal);
     }
 
+    /// <summary>
+    /// A visitor has no nickname, so an account named "Login" (an administrator may create a reserved name) keeps its locked post to
+    /// itself. Regression: the anonymous placeholder carried that nickname, and the visitor counted as the post's writer. The top bar
+    /// still offers the login button.
+    /// </summary>
+    [Fact]
+    public async Task LockedPost_OfAnAccountNamedLogin_IsHiddenFromAnAnonymousVisitor()
+    {
+        long id = SeedBoard("Login", "LoginLockedTitle-Anon", content: "<p>LoginLockedBody-Anon</p>", locked: true);
+
+        var detail = await GetAsync(Detail(id));
+        var list = await GetAsync("/Forum/FreeForum");
+        string listBody = await BodyAsync(list);
+
+        Assert.Equal(System.Net.HttpStatusCode.Redirect, detail.StatusCode);
+        Assert.Equal(0, ViewCount(id));
+        Assert.Equal(System.Net.HttpStatusCode.OK, list.StatusCode);
+        Assert.DoesNotContain("LoginLockedTitle-Anon", listBody, StringComparison.Ordinal);
+        Assert.Contains("id=\"btnMainTopBarLogin\"", listBody, StringComparison.Ordinal);
+    }
+
     /// <summary>A soft-deleted post cannot be opened by anyone; the visitor is sent back to the list.</summary>
     [Fact]
     public async Task Detail_DeletedPost_RedirectsToTheList()

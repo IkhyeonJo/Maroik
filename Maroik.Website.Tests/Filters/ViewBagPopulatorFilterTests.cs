@@ -179,7 +179,7 @@ public class ViewBagPopulatorFilterTests
 
         AccountResponse account = context.HttpContext.GetLoggedInAccount();
         Assert.Equal(Role.Anonymous, account.Role);
-        Assert.Equal("Login", account.Nickname);
+        Assert.Null(account.Nickname);
         Assert.Equal("UTC", account.TimeZoneIanaId);
         Assert.Equal("/anonymous/images/bg1.jpg", account.AvatarImagePath);
     }

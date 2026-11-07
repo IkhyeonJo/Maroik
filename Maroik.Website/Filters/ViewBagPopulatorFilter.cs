@@ -88,13 +88,13 @@ public class ViewBagPopulatorFilter(
         // AuthorizationFilter (which always runs first) re-loads and re-validates a signed-in session's
         // account from the database and stashes it here — or redirects the request to the login page,
         // so the action never runs. No stash therefore means no signed-in account: the anonymous
-        // placeholder below.
+        // placeholder below. It has no nickname: a post is owned by its writer's nickname, so any value here
+        // would make a visitor the owner of what an account of that name wrote.
         return context.HttpContext.Items.TryGetValue(HttpContextItemKeys.LoggedInAccount, out var stashed)
             && stashed is AccountResponse signedInAccount
                 ? signedInAccount
                 : new AccountResponse
                 {
-                    Nickname = "Login",
                     Role = AccountRoles.Anonymous,
                     TimeZoneIanaId = "UTC",
                     AvatarImagePath = "/anonymous/images/bg1.jpg"

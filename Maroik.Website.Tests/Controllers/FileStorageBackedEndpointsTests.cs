@@ -427,6 +427,26 @@ public class FileStorageBackedEndpointsTests(MaroikWebApplicationFactory factory
         Assert.Equal([1, 2, 3], await response.Content.ReadAsByteArrayAsync(TestContext.Current.CancellationToken));
     }
 
+    /// <summary>A visitor has no nickname, so the attachment of a locked post by an account named "Login" is not handed out to them.</summary>
+    [Fact]
+    public async Task DownloadFreeBoardAttachedFile_RefusesAnAnonymousVisitor_OnALockedPostOfAnAccountNamedLogin()
+    {
+        using var host = CreateHost();
+        using (var scope = factory.Services.CreateScope())
+            TestAccounts.EnsureNickname(scope.ServiceProvider.GetRequiredService<ApplicationDbContext>(), "Login");
+        string path = $"upload/FreeForum/attachments/{Guid.NewGuid():N}.zip";
+        host.Files.Seed(path, [1, 2, 3]);
+        long boardId = await SeedPostWithAttachmentAsync("FreeForum", "Login", path, 3, locked: true);
+        var anonymous = await AuthenticatedSessionHelper.AnonymousAsync(host.Client, TestContext.Current.CancellationToken);
+
+        using var request = anonymous.BuildFormPostRequest("/Forum/DownloadFreeBoardAttachedFile", MultipartForm.Of(("boardId", boardId.ToString(System.Globalization.CultureInfo.InvariantCulture))));
+        using JsonDocument doc = await PostAsync(host, request);
+
+        Assert.False(doc.RootElement.GetProperty("result").GetBoolean());
+        Assert.Equal("The post could not be found.", doc.RootElement.GetProperty("error").GetString());
+        Assert.Empty(host.Files.FetchedPaths);
+    }
+
     /// <summary>
     /// The post's visibility is checked again on download: another account cannot fetch a private
     /// note's attachment, nor an anonymous visitor a locked post's; nothing is read from storage.
