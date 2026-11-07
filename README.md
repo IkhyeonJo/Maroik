@@ -20,16 +20,16 @@ restored from a backup keeps the backup's admin password.
 <img width="551" height="574" alt="1" src="https://github.com/user-attachments/assets/54821d51-5fce-46b6-a182-c97bbfa86b76" />
 
 ### User Dashboard
-<img width="1902" height="940" alt="0" src="https://github.com/user-attachments/assets/22e98cb6-8f39-402a-9ec5-e73528afa06d" />
+<img width="1851" height="958" alt="image" src="https://github.com/user-attachments/assets/7e90f7a1-5d45-4cc1-8444-4cb0bdd0cd3e" />
 
 ### File Manager
-<img width="1918" height="942" alt="1" src="https://github.com/user-attachments/assets/4b4099de-20d8-4fcd-9d68-838a29b5c6c9" />
+<img width="1851" height="958" alt="image" src="https://github.com/user-attachments/assets/d9a33ad6-e34a-407b-b886-dde2e2d17936" />
 
 ### Kanban Board
-<img width="1915" height="934" alt="2" src="https://github.com/user-attachments/assets/7537ddfc-6657-48a4-acac-88e1dab44ee2" />
+<img width="1851" height="958" alt="image" src="https://github.com/user-attachments/assets/866840d6-a129-4399-a6f9-c9e181b477a3" />
 
 ### Calendar
-<img width="1915" height="933" alt="3" src="https://github.com/user-attachments/assets/884d923b-995b-4c98-93b1-5b10841c315c" />
+<img width="1851" height="958" alt="image" src="https://github.com/user-attachments/assets/883466c3-12a9-48b3-8daf-0192318eacf7" />
 
 ### Forum
 <img width="1914" height="940" alt="4" src="https://github.com/user-attachments/assets/76894805-ac2e-4416-bba6-670b62133fa3" />
