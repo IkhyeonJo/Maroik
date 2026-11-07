@@ -324,7 +324,7 @@ flowchart TB
   lanes) and the budget formula engine. It calls no other project, logs nothing, never reads the clock (the current time is passed in) and reports every error through
   `DomainError`, so the outer layers can translate it.
 - **Service** orchestrates a use case: it loads aggregates through repository interfaces, calls domain methods, owns
-  the transaction (each write spells out `BeginAsync` / `CommitAsync` / `RollbackAsync`), maps to DTOs and logs. It
+  the transaction (each write that runs in one spells out `BeginAsync` / `CommitAsync` / `RollbackAsync`), maps to DTOs and logs. It
   calls Repository and Client only through their Contract interfaces.
 - **Repository** (EF Core) and **Client** (file storage over HTTP, RabbitMQ publishing, SMTP, ClamAV) implement the
   Contract interfaces. Website controllers and views never call them; the Worker calls the SMTP client itself and
@@ -413,7 +413,7 @@ generic error instead of failing half-way through a handler.
 - Bootstrap 4.6.0
 - jQuery 3.6.0
 - HTML5/CSS3
-- JavaScript ES2024
+- JavaScript ES2020
 - TypeScript 7.0
   - The custom client scripts are authored in TypeScript at `Maroik.Website/TypeScripts/{admin,anonymous,user}/custom/**/site.ts` and compiled 1:1 by `tsc` to `Maroik.Website/wwwroot/**/custom/**/site.js` (no bundler, no Babel). The release build (`npm run build`, used by the Docker image) then minifies each `site.js` in place with terser; `npm run build:debug` leaves it readable with a source map.
   - Compiled under `--strict`; each file is an IIFE-wrapped global script (no `import`/`export`).
@@ -472,7 +472,7 @@ The goal is that a test fails whenever the behavior it describes breaks — not 
   or ones the MTP runner miscounts inside static field initializers).
 
 ### Test projects
-Every source project has a matching `*.Tests` project (xUnit v3 on Microsoft.Testing.Platform), plus the client-script suite and an end-to-end suite — about 3,700 .NET tests and 500 client-script tests. `Maroik.slnx` builds them all; CI runs each with coverage (`.github/workflows/ci-cd.yml`, gate: line >= 80 %, branch >= 65 %).
+Every source project has a matching `*.Tests` project (xUnit v3 on Microsoft.Testing.Platform), plus the client-script suite and an end-to-end suite — more than 3,800 .NET test methods and about 500 client-script tests. `Maroik.slnx` builds them all; CI runs each with coverage (`.github/workflows/ci-cd.yml`, gate: line >= 80 %, branch >= 65 %).
 
 | Tests | What they cover | Needs Docker |
 |---|---|---|
