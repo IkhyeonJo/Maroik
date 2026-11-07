@@ -35,11 +35,10 @@ The dependency rule holds: `Website` → `Service` → `Domain`; `Domain` depend
 nothing. Repositories/Clients are wired through `Contract` interfaces.
 
 `Maroik.Website` never names the Domain (owner's decision, 2026-11-07): not in a controller, mapper, view model, filter,
-middleware or view. A rule or a page value comes from a service, the stateless ones from `IPolicyService`. Two exceptions
-live in `Maroik.Core.Contract`, because no service can be called there: `Constants/` for what a C# attribute argument needs
-(an attribute takes only a compile-time constant, e.g. `[StringLength(PolicyLimits.PasswordMaxByteLength)]`, each value being
-the Domain's own constant), and `Extensions/TimeZoneDisplayExtensions` for time-zone conversion in static mappers and Razor
-expressions. Enforced by `WebsiteTypes_ShouldNot_DependOnDomainNamespace` (the IL) and
+middleware or view. A rule or a page value comes from a service, the stateless ones from `IPolicyService`. Every path from the Website to the Domain goes through `Maroik.Core.Service`, including
+constants: an attribute takes only a compile-time constant, e.g. `[StringLength(PolicyLimits.PasswordMaxByteLength)]`, so no
+method can be called there, and `Maroik.Core.Service/Constants/` exposes those as the Domain's own constants. `Maroik.Core.Contract`
+gives the Website interfaces and DTOs only: no constant or helper of it reads the Domain for the Website. Enforced by `WebsiteTypes_ShouldNot_DependOnDomainNamespace` (the IL) and
 `WebsiteSources_ShouldNot_MentionDomainNamespace` (the source, since a `const` leaves nothing in the IL).
 
 ## What MUST NOT appear in `.cshtml`

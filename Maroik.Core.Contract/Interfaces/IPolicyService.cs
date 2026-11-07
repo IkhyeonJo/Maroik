@@ -48,6 +48,36 @@ public interface IPolicyService
     /// <summary>The message a freshly created account carries.</summary>
     string GetAccountCreatedMessage();
 
+    /// <summary>A UTC value in the time zone; unchanged when the zone is invalid.</summary>
+    DateTime ToTimeZone(DateTime utc, string timeZoneIanaId);
+
+    /// <summary>A local value in UTC.</summary>
+    DateTime ToUtcFromTimeZone(DateTime local, string timeZoneIanaId);
+
+    /// <summary>A UTC value as a viewer sees it: local time, or ISO-8601 UTC for one who does not see local time.</summary>
+    string FormatForViewer(DateTime utc, bool viewerSeesLocalTime, string timeZoneIanaId);
+
+    /// <summary>A time zone's standard name, or the ID itself when it is unknown.</summary>
+    string GetTimeZoneDisplayName(string timeZoneIanaId);
+
+    /// <summary>Whether the viewer wrote the content.</summary>
+    bool IsContentOwner(AccountResponse viewer, string? contentWriter);
+
+    /// <summary>Whether the viewer wrote the content or is an administrator.</summary>
+    bool IsContentOwnerOrAdmin(AccountResponse viewer, string? contentWriter);
+
+    /// <summary>Whether the viewer sees local times rather than raw UTC.</summary>
+    bool SeesLocalTime(AccountResponse viewer);
+
+    /// <summary>The nicknames of the administrators among the accounts.</summary>
+    HashSet<string> GetAdminNicknames(IEnumerable<AccountResponse> accounts);
+
+    /// <summary>Whether a post's title may be shown to the viewer, an administrator seeing it too.</summary>
+    bool IsTitleVisibleToOwnerOrAdmin(BoardResponse board, AccountResponse viewer);
+
+    /// <summary>Whether a post's title may be shown to the viewer, with no administrator bypass.</summary>
+    bool IsTitleVisibleToOwner(BoardResponse board, AccountResponse viewer);
+
     /// <summary>What the finance forms offer and mirror.</summary>
     FinanceFormRules GetFinanceFormRules();
 

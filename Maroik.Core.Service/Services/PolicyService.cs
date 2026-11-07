@@ -3,7 +3,9 @@ using Maroik.Core.Contract.Enums;
 using Maroik.Core.Contract.Extensions;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Domain.Accounts;
+using Maroik.Core.Domain.Boards;
 using Maroik.Core.Domain.Budgets;
+using Maroik.Core.Domain.Extensions;
 using Maroik.Core.Domain.Calendars;
 using Maroik.Core.Domain.FileManagers;
 using Maroik.Core.Domain.Finances;
@@ -78,6 +80,44 @@ public sealed class PolicyService : IPolicyService
 
     /// <inheritdoc />
     public string GetAccountCreatedMessage() => AccountMessage.Success.GetDescription();
+
+    /// <inheritdoc />
+    public DateTime ToTimeZone(DateTime utc, string timeZoneIanaId) => utc.ConvertTimeByTimeZoneIanaId(timeZoneIanaId);
+
+    /// <inheritdoc />
+    public DateTime ToUtcFromTimeZone(DateTime local, string timeZoneIanaId) => local.ConvertToUtcByTimeZoneIanaId(timeZoneIanaId);
+
+    /// <inheritdoc />
+    public string FormatForViewer(DateTime utc, bool viewerSeesLocalTime, string timeZoneIanaId) =>
+        utc.ToViewerFormattedString(viewerSeesLocalTime, timeZoneIanaId);
+
+    /// <inheritdoc />
+    public string GetTimeZoneDisplayName(string timeZoneIanaId) => timeZoneIanaId.ToTimeZoneStandardName();
+
+    /// <inheritdoc />
+    public bool IsContentOwner(AccountResponse viewer, string? contentWriter) => Board.IsOwnedBy(contentWriter, viewer.Nickname);
+
+    /// <inheritdoc />
+    public bool IsContentOwnerOrAdmin(AccountResponse viewer, string? contentWriter) =>
+        Board.IsOwnedBy(contentWriter, viewer.Nickname) || viewer.Role == Role.Admin;
+
+    /// <inheritdoc />
+    public bool SeesLocalTime(AccountResponse viewer) => AccountViewPolicy.SeesLocalTime(viewer.Role);
+
+    /// <inheritdoc />
+    public HashSet<string> GetAdminNicknames(IEnumerable<AccountResponse> accounts) =>
+    [
+        .. accounts.Where(account => account.Role == Role.Admin && !string.IsNullOrEmpty(account.Nickname))
+            .Select(account => account.Nickname!)
+    ];
+
+    /// <inheritdoc />
+    public bool IsTitleVisibleToOwnerOrAdmin(BoardResponse board, AccountResponse viewer) =>
+        Board.CanBeViewedBy(board.Type, board.Deleted, board.Locked, board.Writer, viewer.Nickname, viewer.Role == Role.Admin);
+
+    /// <inheritdoc />
+    public bool IsTitleVisibleToOwner(BoardResponse board, AccountResponse viewer) =>
+        Board.CanBeViewedBy(board.Type, board.Deleted, board.Locked, board.Writer, viewer.Nickname, viewerIsAdmin: false);
 
     /// <inheritdoc />
     public FinanceFormRules GetFinanceFormRules() => new()

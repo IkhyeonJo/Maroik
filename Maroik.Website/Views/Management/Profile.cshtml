@@ -43,7 +43,7 @@
                         <h3 class="profile-username text-center">@Model.Nickname</h3>
                         <ul class="list-group list-group-unbordered mb-3">
                             <li class="list-group-item">
-                                <b>@Localizer["Create"]</b> <span class="float-right">@Model.Created.ToTimeZone(Model.TimeZoneIanaId ?? "").ToString("d")</span>
+                                <b>@Localizer["Create"]</b> <span class="float-right">@Model.Created.ToString("d")</span>
                             </li>
                         </ul>
                     </div>

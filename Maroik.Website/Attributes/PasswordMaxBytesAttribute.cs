@@ -1,5 +1,5 @@
 using Maroik.Core.Contract.Interfaces;
-using Maroik.Core.Contract.Constants;
+using Maroik.Core.Service.Constants;
 using System.ComponentModel.DataAnnotations;
 
 namespace Maroik.Website.Attributes;

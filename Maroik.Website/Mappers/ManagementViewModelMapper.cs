@@ -1,4 +1,4 @@
-using Maroik.Core.Contract.Extensions;
+using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Contract.Dtos;
 using Maroik.Website.Models.ViewModels.Managements;
 
@@ -13,7 +13,7 @@ public static class ManagementViewModelMapper
     extension(AccountResponse item)
     {
         /// <summary>Maps a single <see cref="AccountResponse"/> to an <see cref="AccountOutputViewModel"/> for display.</summary>
-        private AccountOutputViewModel ToDisplayViewModel(string timeZoneIanaId) => new()
+        private AccountOutputViewModel ToDisplayViewModel(IPolicyService policy, string timeZoneIanaId) => new()
         {
             Email = item.Email,
             Nickname = item.Nickname,
@@ -24,8 +24,8 @@ public static class ManagementViewModelMapper
             LoginAttempt = item.LoginAttempt,
             EmailConfirmed = item.EmailConfirmed,
             AgreedServiceTerms = item.AgreedServiceTerms,
-            Created = item.Created.ToTimeZone(timeZoneIanaId),
-            Updated = item.Updated.ToTimeZone(timeZoneIanaId),
+            Created = policy.ToTimeZone(item.Created, timeZoneIanaId),
+            Updated = policy.ToTimeZone(item.Updated, timeZoneIanaId),
             Message = item.Message,
             Deleted = item.Deleted,
             FileManagerScanDisabled = item.FileManagerScanDisabled
@@ -35,10 +35,10 @@ public static class ManagementViewModelMapper
     extension(IEnumerable<AccountResponse> items)
     {
         /// <summary>Maps all <see cref="AccountResponse"/> items to display view models.</summary>
-        public List<AccountOutputViewModel> ToDisplayViewModels(string timeZoneIanaId)
+        public List<AccountOutputViewModel> ToDisplayViewModels(IPolicyService policy, string timeZoneIanaId)
             =>
             [
-                .. items.Select(i => i.ToDisplayViewModel(timeZoneIanaId))
+                .. items.Select(i => i.ToDisplayViewModel(policy, timeZoneIanaId))
             ];
     }
 }

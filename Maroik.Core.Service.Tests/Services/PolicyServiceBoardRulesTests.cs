@@ -1,16 +1,19 @@
 using Maroik.Core.Contract.Dtos;
-using Maroik.Core.Contract.Extensions;
+using Maroik.Core.Service.Services;
 using Maroik.Core.Domain.Accounts;
 using Maroik.Core.Domain.Boards;
 
-namespace Maroik.Core.Contract.Tests.Extensions;
+namespace Maroik.Core.Service.Tests.Services;
 
 /// <summary>
-/// Unit tests for <see cref="BoardResponseExtensions"/> — the "can this viewer see a
+/// Unit tests for <see cref="PolicyService"/> — the "can this viewer see a
 /// locked post's title" rule used by the FreeForum and PrivateNote board list views.
 /// </summary>
-public class BoardResponseExtensionsTests
+public class PolicyServiceBoardRulesTests
 {
+    /// <summary>The service under test.</summary>
+    private readonly PolicyService _sut = new();
+
     // -- IsTitleVisibleToOwnerOrAdmin ---------------------------------------------
 
     /// <summary>Is title visible to owner or admin not locked any viewer true.</summary>
@@ -20,7 +23,7 @@ public class BoardResponseExtensionsTests
         var board = new BoardResponse { Locked = false, Writer = "Alice" };
         var viewer = new AccountResponse { Nickname = "Bob", Role = Role.User };
 
-        Assert.True(board.IsTitleVisibleToOwnerOrAdmin(viewer));
+        Assert.True(_sut.IsTitleVisibleToOwnerOrAdmin(board, viewer));
     }
 
     /// <summary>Is title visible to owner or admin locked and writer true.</summary>
@@ -30,7 +33,7 @@ public class BoardResponseExtensionsTests
         var board = new BoardResponse { Locked = true, Writer = "Alice" };
         var viewer = new AccountResponse { Nickname = "Alice", Role = Role.User };
 
-        Assert.True(board.IsTitleVisibleToOwnerOrAdmin(viewer));
+        Assert.True(_sut.IsTitleVisibleToOwnerOrAdmin(board, viewer));
     }
 
     /// <summary>Is title visible to owner or admin locked and admin not writer true.</summary>
@@ -40,7 +43,7 @@ public class BoardResponseExtensionsTests
         var board = new BoardResponse { Locked = true, Writer = "Alice" };
         var admin = new AccountResponse { Nickname = "AdminUser", Role = Role.Admin };
 
-        Assert.True(board.IsTitleVisibleToOwnerOrAdmin(admin));
+        Assert.True(_sut.IsTitleVisibleToOwnerOrAdmin(board, admin));
     }
 
     /// <summary>Is title visible to owner or admin locked and regular user not writer false.</summary>
@@ -50,7 +53,7 @@ public class BoardResponseExtensionsTests
         var board = new BoardResponse { Locked = true, Writer = "Alice" };
         var viewer = new AccountResponse { Nickname = "Bob", Role = Role.User };
 
-        Assert.False(board.IsTitleVisibleToOwnerOrAdmin(viewer));
+        Assert.False(_sut.IsTitleVisibleToOwnerOrAdmin(board, viewer));
     }
 
     /// <summary>Is title visible to owner or admin locked and anonymous false.</summary>
@@ -60,7 +63,7 @@ public class BoardResponseExtensionsTests
         var board = new BoardResponse { Locked = true, Writer = "Alice" };
         var anonymous = new AccountResponse { Nickname = null, Role = Role.Anonymous };
 
-        Assert.False(board.IsTitleVisibleToOwnerOrAdmin(anonymous));
+        Assert.False(_sut.IsTitleVisibleToOwnerOrAdmin(board, anonymous));
     }
 
     // -- IsTitleVisibleToOwner ------------------------------------------------------
@@ -72,7 +75,7 @@ public class BoardResponseExtensionsTests
         var board = new BoardResponse { Locked = false, Writer = "Alice" };
         var viewer = new AccountResponse { Nickname = "Bob", Role = Role.User };
 
-        Assert.True(board.IsTitleVisibleToOwner(viewer));
+        Assert.True(_sut.IsTitleVisibleToOwner(board, viewer));
     }
 
     /// <summary>Is title visible to owner locked and writer true.</summary>
@@ -82,7 +85,7 @@ public class BoardResponseExtensionsTests
         var board = new BoardResponse { Locked = true, Writer = "Alice" };
         var viewer = new AccountResponse { Nickname = "Alice", Role = Role.User };
 
-        Assert.True(board.IsTitleVisibleToOwner(viewer));
+        Assert.True(_sut.IsTitleVisibleToOwner(board, viewer));
     }
 
     /// <summary>Is title visible to owner locked and admin not writer false.</summary>
@@ -93,7 +96,7 @@ public class BoardResponseExtensionsTests
         var board = new BoardResponse { Locked = true, Writer = "Alice" };
         var admin = new AccountResponse { Nickname = "AdminUser", Role = Role.Admin };
 
-        Assert.False(board.IsTitleVisibleToOwner(admin));
+        Assert.False(_sut.IsTitleVisibleToOwner(board, admin));
     }
 
     /// <summary>Is title visible to owner locked and regular user not writer false.</summary>
@@ -103,7 +106,7 @@ public class BoardResponseExtensionsTests
         var board = new BoardResponse { Locked = true, Writer = "Alice" };
         var viewer = new AccountResponse { Nickname = "Bob", Role = Role.User };
 
-        Assert.False(board.IsTitleVisibleToOwner(viewer));
+        Assert.False(_sut.IsTitleVisibleToOwner(board, viewer));
     }
 
     /// <summary>Is title visible to owner locked and anonymous false.</summary>
@@ -113,7 +116,7 @@ public class BoardResponseExtensionsTests
         var board = new BoardResponse { Locked = true, Writer = "Alice" };
         var anonymous = new AccountResponse { Nickname = null, Role = Role.Anonymous };
 
-        Assert.False(board.IsTitleVisibleToOwner(anonymous));
+        Assert.False(_sut.IsTitleVisibleToOwner(board, anonymous));
     }
 
     // -- Delegation to Board.CanBeViewedBy (PrivateNote is owner-only regardless of lock) ---------
@@ -131,7 +134,7 @@ public class BoardResponseExtensionsTests
         var board = new BoardResponse { Type = BoardTypes.PrivateNote, Locked = false, Writer = "Alice" };
         var viewer = new AccountResponse { Nickname = "Bob", Role = Role.User };
 
-        Assert.False(board.IsTitleVisibleToOwner(viewer));
+        Assert.False(_sut.IsTitleVisibleToOwner(board, viewer));
     }
 
     /// <summary>An unlocked PrivateNote's title is still visible to its own writer.</summary>
@@ -141,7 +144,7 @@ public class BoardResponseExtensionsTests
         var board = new BoardResponse { Type = BoardTypes.PrivateNote, Locked = false, Writer = "Alice" };
         var viewer = new AccountResponse { Nickname = "Alice", Role = Role.User };
 
-        Assert.True(board.IsTitleVisibleToOwner(viewer));
+        Assert.True(_sut.IsTitleVisibleToOwner(board, viewer));
     }
 
     /// <summary>A soft-deleted post's title is never visible, even to its own writer.</summary>
@@ -151,6 +154,6 @@ public class BoardResponseExtensionsTests
         var board = new BoardResponse { Locked = false, Deleted = true, Writer = "Alice" };
         var viewer = new AccountResponse { Nickname = "Alice", Role = Role.Admin };
 
-        Assert.False(board.IsTitleVisibleToOwnerOrAdmin(viewer));
+        Assert.False(_sut.IsTitleVisibleToOwnerOrAdmin(board, viewer));
     }
 }

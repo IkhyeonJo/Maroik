@@ -1,6 +1,6 @@
 using Maroik.Core.Domain.Calendars;
 
-namespace Maroik.Core.Contract.Constants;
+namespace Maroik.Core.Service.Constants;
 
 /// <summary>The calendar kinds, for the code outside the Service layer that may not read the Domain; each value is the Domain's own constant.</summary>
 public static class CalendarKinds

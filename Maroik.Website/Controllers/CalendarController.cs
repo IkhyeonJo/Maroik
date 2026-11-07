@@ -1,4 +1,4 @@
-using Maroik.Core.Contract.Constants;
+using Maroik.Core.Service.Constants;
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Contract.Settings;
@@ -91,7 +91,7 @@ public class CalendarController(
                 return Json(new { result = false, error = localizer["Please Login to create calendar event"].Value });
 
             ServiceResult createEventResult = await calendarService.CreateCalendarEventAsync(
-                calendarEventInputViewModel.ToCalendarEventRequest(),
+                calendarEventInputViewModel.ToCalendarEventRequest(policyService),
                 loggedInAccount.RequireEmail(),
                 $"{loggedInAccount.Role}Index",
                 calendarEventInputViewModel.SerializedCalendarReminders.ToReminderInfoList(),
@@ -154,11 +154,11 @@ public class CalendarController(
         {
             ReminderRules = policyService.GetCalendarFormRules(),
             Calendars = calendars,
-            CalendarEventOutputViewModels = await calendarService.GetCalendarEventViewModelsAsync(calendars, userTimezone, null, HttpContext.RequestAborted),
+            CalendarEventOutputViewModels = await calendarService.GetCalendarEventViewModelsAsync(policyService, calendars, userTimezone, null, HttpContext.RequestAborted),
             LoggedInAccount = loggedInAccount,
             LoggedInAccountTimeZoneIanaId = userTimezone
         };
-        vm.PopulateTimeData(userTimezone, timeProvider.GetUtcNow().UtcDateTime);
+        vm.PopulateTimeData(policyService, userTimezone, timeProvider.GetUtcNow().UtcDateTime);
         return View(vm);
     }
 
@@ -188,14 +188,14 @@ public class CalendarController(
         {
             ReminderRules = policyService.GetCalendarFormRules(),
             Calendars = calendars,
-            CalendarEventOutputViewModels = await calendarService.GetCalendarEventViewModelsAsync(calendars, userTimezone, null, HttpContext.RequestAborted),
+            CalendarEventOutputViewModels = await calendarService.GetCalendarEventViewModelsAsync(policyService, calendars, userTimezone, null, HttpContext.RequestAborted),
             OtherCalendars = otherCalendars,
-            OtherCalendarEventOutputViewModels = await calendarService.GetCalendarEventViewModelsAsync(otherCalendars, userTimezone, null, HttpContext.RequestAborted),
+            OtherCalendarEventOutputViewModels = await calendarService.GetCalendarEventViewModelsAsync(policyService, otherCalendars, userTimezone, null, HttpContext.RequestAborted),
             LoggedInAccount = loggedInAccount,
             LoggedInAccountTimeZoneIanaId = userTimezone,
             InitialDate = calendarService.GetFixedInitialDate(loggedInAccount.RequireEmail())
         };
-        vm.PopulateTimeData(userTimezone, timeProvider.GetUtcNow().UtcDateTime);
+        vm.PopulateTimeData(policyService, userTimezone, timeProvider.GetUtcNow().UtcDateTime);
         return View(vm);
     }
 
@@ -212,11 +212,11 @@ public class CalendarController(
         {
             ReminderRules = policyService.GetCalendarFormRules(),
             OtherCalendars = otherCalendars,
-            OtherCalendarEventOutputViewModels = await calendarService.GetCalendarEventViewModelsAsync(otherCalendars, userTimezone, null, HttpContext.RequestAborted),
+            OtherCalendarEventOutputViewModels = await calendarService.GetCalendarEventViewModelsAsync(policyService, otherCalendars, userTimezone, null, HttpContext.RequestAborted),
             LoggedInAccount = loggedInAccount,
             LoggedInAccountTimeZoneIanaId = userTimezone
         };
-        vm.PopulateTimeData(userTimezone, timeProvider.GetUtcNow().UtcDateTime);
+        vm.PopulateTimeData(policyService, userTimezone, timeProvider.GetUtcNow().UtcDateTime);
         return View(vm);
     }
 
@@ -308,7 +308,7 @@ public class CalendarController(
             AccountResponse loggedInAccount = HttpContext.GetLoggedInAccount();
             List<CalendarResponse> calendars = await calendarService.GetCalendarsAsync(loggedInAccount.RequireEmail(), HttpContext.RequestAborted);
 
-            CalendarEventOutputViewModel? calendarEvent = await calendarService.GetCalendarEventDetailViewModelAsync(
+            CalendarEventOutputViewModel? calendarEvent = await calendarService.GetCalendarEventDetailViewModelAsync(policyService, 
                 calendars, loggedInAccount.RequireTimeZoneIanaId(), id, includeReminders: true, HttpContext.RequestAborted);
 
             return calendarEvent == null
@@ -339,7 +339,7 @@ public class CalendarController(
             List<CalendarResponse> calendars =
                 await calendarService.GetVisibleOtherCalendarsAsync(sessionAccount, HttpContext.RequestAborted);
 
-            CalendarEventOutputViewModel? calendarEvent = await calendarService.GetCalendarEventDetailViewModelAsync(
+            CalendarEventOutputViewModel? calendarEvent = await calendarService.GetCalendarEventDetailViewModelAsync(policyService, 
                 calendars, loggedInAccount.RequireTimeZoneIanaId(), id, includeReminders: false, HttpContext.RequestAborted);
 
             return calendarEvent == null
@@ -435,7 +435,7 @@ public class CalendarController(
                     ? ownedCalendars.FirstOrDefault(x => x.Id == inputCalendar.Id)?.HtmlColorCode
                     : otherCalendars.FirstOrDefault(x => x.Id == inputCalendar.Id)?.HtmlColorCode
                 from evt in eventsByCalendarId.GetValueOrDefault(inputCalendar.Id, [])
-                select evt.ToDisplayViewModel(userTimezone, htmlColorCode, calendarType));
+                select evt.ToDisplayViewModel(policyService, userTimezone, htmlColorCode, calendarType));
 
             // Matches main: an empty result set for the requested range/calendars is reported the
             // same way as any other "nothing to return" case, not as a distinct success payload.
@@ -544,7 +544,7 @@ public class CalendarController(
                 return Json(new { result = false, error = localizer["Please Login to update calendar event"].Value });
 
             ServiceResult updateEventResult = await calendarService.UpdateCalendarEventAsync(
-                calendarEventInputViewModel.ToCalendarEventRequest(),
+                calendarEventInputViewModel.ToCalendarEventRequest(policyService),
                 loggedInAccount.RequireEmail(),
                 $"{loggedInAccount.Role}Index",
                 calendarEventInputViewModel.SerializedCalendarReminders.ToReminderInfoList(),

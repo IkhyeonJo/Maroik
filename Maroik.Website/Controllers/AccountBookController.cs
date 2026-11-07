@@ -1,6 +1,5 @@
 using Maroik.Core.Contract.Enums;
-using Maroik.Core.Contract.Extensions;
-using Maroik.Core.Contract.Constants;
+using Maroik.Core.Service.Constants;
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Website.Attributes;
@@ -91,7 +90,7 @@ public class AccountBookController(
                 ? await assetService.GetAssetsAsync(account.RequireEmail(), ct)
                 : await assetService.SearchAssetsAsync(account.RequireEmail(), wholeSearch, ct);
             var viewModels = assets
-                .ToDisplayViewModels(key => localizer[key].Value, account.RequireTimeZoneIanaId())
+                .ToDisplayViewModels(policyService, key => localizer[key].Value, account.RequireTimeZoneIanaId())
                 .OrderBy(m => m.ProductName)
                 .AsQueryable();
             return PartialView("_AssetGrid", viewModels);
@@ -108,7 +107,7 @@ public class AccountBookController(
                 .Where(x => !x.Deleted).OrderBy(x => x.ProductName)
             ]
         };
-        vm.PopulateTimeData(tz, timeProvider.GetUtcNow().UtcDateTime);
+        vm.PopulateTimeData(policyService, tz, timeProvider.GetUtcNow().UtcDateTime);
         return View(vm);
     }
 
@@ -212,7 +211,7 @@ public class AccountBookController(
         AccountResponse account = HttpContext.GetLoggedInAccount();
         var assets = await assetService.GetAssetsAsync(account.RequireEmail(), ct);
         var stream = excelExportService.CreateAssetExcel(assets, key => localizer[key].Value, account.RequireTimeZoneIanaId());
-        string name = fileName.ToExcelFileName(account.RequireTimeZoneIanaId(), timeProvider.GetUtcNow().UtcDateTime);
+        string name = fileName.ToExcelFileName(policyService, account.RequireTimeZoneIanaId(), timeProvider.GetUtcNow().UtcDateTime);
         return File(stream, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", name);
     }
 
@@ -242,7 +241,7 @@ public class AccountBookController(
             Content = incomeInputViewModel.Content ?? "",
             Amount = amount,
             DepositMyAssetProductName = incomeInputViewModel.DepositMyAssetProductName,
-            Created = incomeInputViewModel.ToCreatedUtc(account.RequireTimeZoneIanaId()),
+            Created = incomeInputViewModel.ToCreatedUtc(policyService, account.RequireTimeZoneIanaId()),
             Note = incomeInputViewModel.Note ?? ""
         };
 
@@ -276,7 +275,7 @@ public class AccountBookController(
                 ? await incomeService.GetIncomesAsync(account.RequireEmail(), ct)
                 : await incomeService.SearchIncomesAsync(account.RequireEmail(), wholeSearch, ct);
             var viewModels = incomes
-                .ToDisplayViewModels(assets, key => localizer[key].Value, account.RequireTimeZoneIanaId())
+                .ToDisplayViewModels(policyService, assets, key => localizer[key].Value, account.RequireTimeZoneIanaId())
                 .OrderByDescending(m => m.Created)
                 .ThenByDescending(m => m.Updated)
                 .AsQueryable();
@@ -294,7 +293,7 @@ public class AccountBookController(
                 .Where(x => !x.Deleted).OrderBy(x => x.ProductName)
             ]
         };
-        vm.PopulateTimeData(tz, timeProvider.GetUtcNow().UtcDateTime);
+        vm.PopulateTimeData(policyService, tz, timeProvider.GetUtcNow().UtcDateTime);
         return View(vm);
     }
 
@@ -313,7 +312,7 @@ public class AccountBookController(
             if (income == null)
                 return Json(new { result = false, error = localizer["Input is invalid"].Value });
 
-            income.Created = income.Created.ToTimeZone(tz);
+            income.Created = policyService.ToTimeZone(income.Created, tz);
             return Json(new { result = true, income });
         }
         catch (Exception ex)
@@ -371,7 +370,7 @@ public class AccountBookController(
             Content = incomeInputViewModel.Content,
             Amount = amount,
             DepositMyAssetProductName = incomeInputViewModel.DepositMyAssetProductName,
-            Created = incomeInputViewModel.ToCreatedUtc(account.RequireTimeZoneIanaId()),
+            Created = incomeInputViewModel.ToCreatedUtc(policyService, account.RequireTimeZoneIanaId()),
             Note = incomeInputViewModel.Note
         };
 
@@ -428,7 +427,7 @@ public class AccountBookController(
         var assets = await assetService.GetAssetsAsync(account.RequireEmail(), ct);
         var incomes = await incomeService.GetIncomesAsync(account.RequireEmail(), ct);
         var stream = excelExportService.CreateIncomeExcel(incomes, assets, key => localizer[key].Value, account.RequireTimeZoneIanaId());
-        string name = fileName.ToExcelFileName(account.RequireTimeZoneIanaId(), timeProvider.GetUtcNow().UtcDateTime);
+        string name = fileName.ToExcelFileName(policyService, account.RequireTimeZoneIanaId(), timeProvider.GetUtcNow().UtcDateTime);
         return File(stream, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", name);
     }
 
@@ -460,7 +459,7 @@ public class AccountBookController(
             Amount = amount,
             PaymentMethod = expenditureInputViewModel.PaymentMethod,
             MyDepositAsset = expenditureInputViewModel.MyDepositAsset,
-            Created = expenditureInputViewModel.ToCreatedUtc(account.RequireTimeZoneIanaId()),
+            Created = expenditureInputViewModel.ToCreatedUtc(policyService, account.RequireTimeZoneIanaId()),
             Note = expenditureInputViewModel.Note ?? ""
         };
 
@@ -494,7 +493,7 @@ public class AccountBookController(
                 ? await expenditureService.GetExpendituresAsync(account.RequireEmail(), ct)
                 : await expenditureService.SearchExpendituresAsync(account.RequireEmail(), wholeSearch, ct);
             var viewModels = expenditures
-                .ToDisplayViewModels(assets, key => localizer[key].Value, account.RequireTimeZoneIanaId())
+                .ToDisplayViewModels(policyService, assets, key => localizer[key].Value, account.RequireTimeZoneIanaId())
                 .OrderByDescending(m => m.Created)
                 .ThenByDescending(m => m.Updated)
                 .AsQueryable();
@@ -512,7 +511,7 @@ public class AccountBookController(
                 .Where(x => !x.Deleted).OrderBy(x => x.ProductName)
             ]
         };
-        vm.PopulateTimeData(tz, timeProvider.GetUtcNow().UtcDateTime);
+        vm.PopulateTimeData(policyService, tz, timeProvider.GetUtcNow().UtcDateTime);
         return View(vm);
     }
 
@@ -531,7 +530,7 @@ public class AccountBookController(
             if (expenditure == null)
                 return Json(new { result = false, error = localizer["Input is invalid"].Value });
 
-            expenditure.Created = expenditure.Created.ToTimeZone(tz);
+            expenditure.Created = policyService.ToTimeZone(expenditure.Created, tz);
             return Json(new { result = true, expenditure });
         }
         catch (Exception ex)
@@ -591,7 +590,7 @@ public class AccountBookController(
             Amount = amount,
             PaymentMethod = expenditureInputViewModel.PaymentMethod,
             MyDepositAsset = expenditureInputViewModel.MyDepositAsset,
-            Created = expenditureInputViewModel.ToCreatedUtc(account.RequireTimeZoneIanaId()),
+            Created = expenditureInputViewModel.ToCreatedUtc(policyService, account.RequireTimeZoneIanaId()),
             Note = expenditureInputViewModel.Note ?? ""
         };
 
@@ -649,7 +648,7 @@ public class AccountBookController(
         var assets = await assetService.GetAssetsAsync(account.RequireEmail(), ct);
         var expenditures = await expenditureService.GetExpendituresAsync(account.RequireEmail(), ct);
         var stream = excelExportService.CreateExpenditureExcel(expenditures, assets, key => localizer[key].Value, account.RequireTimeZoneIanaId());
-        string name = fileName.ToExcelFileName(account.RequireTimeZoneIanaId(), timeProvider.GetUtcNow().UtcDateTime);
+        string name = fileName.ToExcelFileName(policyService, account.RequireTimeZoneIanaId(), timeProvider.GetUtcNow().UtcDateTime);
         return File(stream, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", name);
     }
 
@@ -666,7 +665,7 @@ public class AccountBookController(
     {
         AccountResponse account = HttpContext.GetLoggedInAccount();
         var assets = await assetService.GetAssetsAsync(account.RequireEmail(), ct);
-        return View("Budget", BudgetViewModelMapper.Page(BudgetSheetKind.Income, policyService.GetBudgetPageRules(BudgetSheetKind.Income), assets, timeProvider.GetUtcNow().UtcDateTime, account.RequireTimeZoneIanaId(), key => localizer[key].Value, budgetService.GetFixedInitialYear(account.RequireEmail())));
+        return View("Budget", BudgetViewModelMapper.Page(policyService, BudgetSheetKind.Income, policyService.GetBudgetPageRules(BudgetSheetKind.Income), assets, timeProvider.GetUtcNow().UtcDateTime, account.RequireTimeZoneIanaId(), key => localizer[key].Value, budgetService.GetFixedInitialYear(account.RequireEmail())));
     }
 
     /// <summary>The Expenditure Budget page (the budget sheet view, told its kind).</summary>
@@ -675,7 +674,7 @@ public class AccountBookController(
     {
         AccountResponse account = HttpContext.GetLoggedInAccount();
         var assets = await assetService.GetAssetsAsync(account.RequireEmail(), ct);
-        return View("Budget", BudgetViewModelMapper.Page(BudgetSheetKind.Expenditure, policyService.GetBudgetPageRules(BudgetSheetKind.Expenditure), assets, timeProvider.GetUtcNow().UtcDateTime, account.RequireTimeZoneIanaId(), key => localizer[key].Value, budgetService.GetFixedInitialYear(account.RequireEmail())));
+        return View("Budget", BudgetViewModelMapper.Page(policyService, BudgetSheetKind.Expenditure, policyService.GetBudgetPageRules(BudgetSheetKind.Expenditure), assets, timeProvider.GetUtcNow().UtcDateTime, account.RequireTimeZoneIanaId(), key => localizer[key].Value, budgetService.GetFixedInitialYear(account.RequireEmail())));
     }
 
     /// <summary>A budget sheet, ready to draw.</summary>
@@ -848,7 +847,7 @@ public class AccountBookController(
         var (result, sheet) = await budgetService.GetSheetAsync(account.RequireEmail(), budgetKind, year, account.RequireTimeZoneIanaId(), ct);
         if (!result.Success) return BadRequest();
         var stream = excelExportService.CreateBudgetExcel(sheet!, key => localizer[key].Value);
-        string name = fileName.ToExcelFileName(account.RequireTimeZoneIanaId(), timeProvider.GetUtcNow().UtcDateTime);
+        string name = fileName.ToExcelFileName(policyService, account.RequireTimeZoneIanaId(), timeProvider.GetUtcNow().UtcDateTime);
         return File(stream, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", name);
     }
 

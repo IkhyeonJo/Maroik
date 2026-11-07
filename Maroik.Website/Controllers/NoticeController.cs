@@ -1,4 +1,4 @@
-using Maroik.Core.Contract.Constants;
+using Maroik.Core.Service.Constants;
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Contract.Settings;
@@ -252,7 +252,7 @@ public class NoticeController(
         var assets = await assetService.GetAssetsAsync(account.RequireEmail(), ct);
         var incomes = await fixedIncomeService.GetFixedIncomesAsync(account.RequireEmail(), ct);
         var stream = excelExportService.CreateFixedIncomeExcel(incomes, assets, key => localizer[key].Value, account.RequireTimeZoneIanaId(), settings.Value.NoticeMaturityDateDay);
-        string name = fileName.ToExcelFileName(account.RequireTimeZoneIanaId(), timeProvider.GetUtcNow().UtcDateTime);
+        string name = fileName.ToExcelFileName(policyService, account.RequireTimeZoneIanaId(), timeProvider.GetUtcNow().UtcDateTime);
         return File(stream, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", name);
     }
     #endregion
@@ -480,7 +480,7 @@ public class NoticeController(
         var assets = await assetService.GetAssetsAsync(account.RequireEmail(), ct);
         var expenditures = await fixedExpenditureService.GetFixedExpendituresAsync(account.RequireEmail(), ct);
         var stream = excelExportService.CreateFixedExpenditureExcel(expenditures, assets, key => localizer[key].Value, account.RequireTimeZoneIanaId(), settings.Value.NoticeMaturityDateDay);
-        string name = fileName.ToExcelFileName(account.RequireTimeZoneIanaId(), timeProvider.GetUtcNow().UtcDateTime);
+        string name = fileName.ToExcelFileName(policyService, account.RequireTimeZoneIanaId(), timeProvider.GetUtcNow().UtcDateTime);
         return File(stream, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", name);
     }
     #endregion

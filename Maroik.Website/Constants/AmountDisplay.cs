@@ -1,4 +1,4 @@
-using Maroik.Core.Contract.Constants;
+using Maroik.Core.Service.Constants;
 
 namespace Maroik.Website.Constants;
 

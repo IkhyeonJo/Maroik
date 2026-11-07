@@ -1,5 +1,5 @@
-using Maroik.Core.Contract.Extensions;
-using Maroik.Core.Contract.Constants;
+using Maroik.Core.Contract.Interfaces;
+using Maroik.Core.Service.Constants;
 using System.Globalization;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -24,6 +24,7 @@ public static class CalendarViewModelMapper
         /// A timed event's instants are converted to its own start / end time zone (falling back to the
         /// viewer's); an all-day event's stored dates are used as-is (no conversion). Populates all display strings.
         /// </summary>
+        /// <param name="policy">Converts the dates and names the time zones.</param>
         /// <param name="userTimeZoneIanaId">Viewer's IANA timezone ID (used for all-day events and as fallback).</param>
         /// <param name="htmlColorCode">Parent calendar color code for chip/badge styling.</param>
         /// <param name="calendarType">Optional "My" / "Other" label; omit for single-owner views.</param>
@@ -34,7 +35,7 @@ public static class CalendarViewModelMapper
         /// detail / edit views that only need the display strings.
         /// </param>
         public CalendarEventOutputViewModel ToDisplayViewModel(
-            string userTimeZoneIanaId,
+            IPolicyService policy, string userTimeZoneIanaId,
             string? htmlColorCode,
             string? calendarType = null,
             bool forGrid = true)
@@ -82,15 +83,15 @@ public static class CalendarViewModelMapper
                 string startTzId = calendarEvent.StartDateTimeZoneIanaId ?? userTimeZoneIanaId;
                 string endTzId = calendarEvent.EndDateTimeZoneIanaId ?? userTimeZoneIanaId;
 
-                DateTime localStart = calendarEvent.StartDate.ToTimeZone(startTzId);
-                DateTime localEnd = calendarEvent.EndDate.ToTimeZone(endTzId);
+                DateTime localStart = policy.ToTimeZone(calendarEvent.StartDate, startTzId);
+                DateTime localEnd = policy.ToTimeZone(calendarEvent.EndDate, endTzId);
 
                 item.StartDateTimeZoneIanaId = startTzId;
                 item.EndDateTimeZoneIanaId = endTzId;
                 item.DisplayStartDate = localStart.ToString("yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture);
                 item.DisplayEndDate = localEnd.ToString("yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture);
-                item.DisplayStartDateTimeZone = startTzId.ToTimeZoneDisplayName();
-                item.DisplayEndDateTimeZone = endTzId.ToTimeZoneDisplayName();
+                item.DisplayStartDateTimeZone = policy.GetTimeZoneDisplayName(startTzId);
+                item.DisplayEndDateTimeZone = policy.GetTimeZoneDisplayName(endTzId);
 
                 if (!forGrid)
                 {
@@ -145,9 +146,9 @@ public static class CalendarViewModelMapper
         /// <c>CurrentInterval</c>) for the viewer's current local time: <paramref name="utcNow"/> (the request's
         /// clock reading) shown in <paramref name="timeZoneIanaId"/>.
         /// </summary>
-        public void PopulateTimeData(string timeZoneIanaId, DateTime utcNow)
+        public void PopulateTimeData(IPolicyService policy, string timeZoneIanaId, DateTime utcNow)
         {
-            DateTime ct = utcNow.ToTimeZone(timeZoneIanaId);
+            DateTime ct = policy.ToTimeZone(utcNow, timeZoneIanaId);
             vm.CurrentDate = ct.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
             vm.CurrentHour = ct.Hour;
             vm.CurrentMinute = ct.Minute;
@@ -171,7 +172,7 @@ public static class CalendarViewModelMapper
         /// All-day events are stored as UTC midnight; timed events are converted from the
         /// user-supplied IANA timezone to UTC.
         /// </summary>
-        public CalendarEventRequest ToCalendarEventRequest()
+        public CalendarEventRequest ToCalendarEventRequest(IPolicyService policy)
         {
             CalendarEventRequest req = new() { Id = vm.Id };
 
@@ -186,8 +187,8 @@ public static class CalendarViewModelMapper
             }
             else
             {
-                req.StartDate = ParseLocalDateTime(vm.StartDate!).ToUtcFromTimeZone(vm.StartDateTimeZoneIanaId!);
-                req.EndDate = ParseLocalDateTime(vm.EndDate!).ToUtcFromTimeZone(vm.EndDateTimeZoneIanaId!);
+                req.StartDate = policy.ToUtcFromTimeZone(ParseLocalDateTime(vm.StartDate!), vm.StartDateTimeZoneIanaId!);
+                req.EndDate = policy.ToUtcFromTimeZone(ParseLocalDateTime(vm.EndDate!), vm.EndDateTimeZoneIanaId!);
                 req.StartDateTimeZoneIanaId = vm.StartDateTimeZoneIanaId;
                 req.EndDateTimeZoneIanaId = vm.EndDateTimeZoneIanaId;
             }

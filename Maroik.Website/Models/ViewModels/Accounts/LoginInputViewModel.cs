@@ -1,4 +1,4 @@
-using Maroik.Core.Contract.Constants;
+using Maroik.Core.Service.Constants;
 using System.ComponentModel.DataAnnotations;
 using Maroik.Website.Attributes;
 using Maroik.Website.Constants;

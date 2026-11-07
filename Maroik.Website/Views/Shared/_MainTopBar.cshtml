@@ -59,7 +59,7 @@
                             <img src="@Model.AvatarImagePath" class="img-circle elevation-2" alt="@Localizer["User Image"].Value">
                             <p>
                                 @Model.Nickname
-                                <small>@Localizer["Member since"] @Model.Created.ToTimeZone(Model.TimeZoneIanaId ?? "").ToString("d")</small>
+                                <small>@Localizer["Member since"] @((ViewBag.MemberSinceDate as DateTime?)?.ToString("d"))</small>
                             </p>
                         </li>
                         @*<!-- Menu Footer-->*@
@@ -125,7 +125,7 @@
                             <img src="@Model.AvatarImagePath" class="img-circle elevation-2" alt="@Localizer["User Image"].Value">
                             <p>
                                 @Model.Nickname
-                                <small>@Localizer["Member since"] @Model.Created.ToTimeZone(Model.TimeZoneIanaId ?? "").ToString("d")</small>
+                                <small>@Localizer["Member since"] @((ViewBag.MemberSinceDate as DateTime?)?.ToString("d"))</small>
                             </p>
                         </li>
                         @*<!-- Menu Footer-->*@

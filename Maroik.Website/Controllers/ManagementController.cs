@@ -1,6 +1,5 @@
-using Maroik.Core.Contract.Constants;
+using Maroik.Core.Service.Constants;
 using Maroik.Core.Contract.Dtos;
-using Maroik.Core.Contract.Extensions;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Contract.Settings;
 using Maroik.Website.Attributes;
@@ -79,7 +78,7 @@ public class ManagementController(
             Email = tempAccount!.Email,
             AvatarImagePath = tempAccount.AvatarImagePath,
             Nickname = tempAccount.Nickname,
-            Created = tempAccount.Created.ToTimeZone(loggedInAccountTimeZoneIanaId!),
+            Created = policyService.ToTimeZone(tempAccount.Created, loggedInAccountTimeZoneIanaId!),
             TimeZoneIanaId = tempAccount.TimeZoneIanaId,
             MustChangePassword = tempAccount.MustChangePassword
         });
@@ -313,7 +312,7 @@ public class ManagementController(
             ? await managementAccountService.GetAllAccountsAsync(HttpContext.RequestAborted)
             : await managementAccountService.SearchAccountsAsync(wholeSearch, HttpContext.RequestAborted);
         var viewModels = accounts
-            .ToDisplayViewModels(tz)
+            .ToDisplayViewModels(policyService, tz)
             .OrderBy(m => m.Email) // the e-mail address is the account's unique key, so no tie-breaker is needed
             .AsQueryable();
         return PartialView("_AccountGrid", viewModels);
@@ -450,7 +449,7 @@ public class ManagementController(
         AccountResponse account = HttpContext.GetLoggedInAccount();
         var accounts = await managementAccountService.GetAllAccountsAsync(HttpContext.RequestAborted);
         var stream = excelExportService.CreateAccountExcel(accounts, key => localizer[key].Value, account.RequireTimeZoneIanaId());
-        string name = fileName.ToExcelFileName(account.RequireTimeZoneIanaId(), timeProvider.GetUtcNow().UtcDateTime);
+        string name = fileName.ToExcelFileName(policyService, account.RequireTimeZoneIanaId(), timeProvider.GetUtcNow().UtcDateTime);
         return File(stream, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", name);
     }
 
@@ -824,7 +823,7 @@ public class ManagementController(
         var categories = await menuService.GetAllCategoriesAsync(HttpContext.RequestAborted);
         var subCats = await menuService.GetAllSubCategoriesAsync(HttpContext.RequestAborted);
         var stream = excelExportService.CreateMenuExcel(categories, subCats, key => localizer[key].Value);
-        string name = fileName.ToExcelFileName(account.RequireTimeZoneIanaId(), timeProvider.GetUtcNow().UtcDateTime);
+        string name = fileName.ToExcelFileName(policyService, account.RequireTimeZoneIanaId(), timeProvider.GetUtcNow().UtcDateTime);
         return File(stream, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", name);
     }
 
@@ -969,6 +968,7 @@ public class ManagementController(
                 // The view picks the role's page script (the editor) from LoggedInAccount.
                 PrivateNoteOutputViewModel privateNoteOutputViewModel = new()
                 {
+                    FormatViewerTime = policyService.FormatForViewer,
                     Method = method,
                     LoggedInAccount = loggedInAccount,
                     LoggedInAccountTimeZoneIanaId = loggedInAccount.RequireTimeZoneIanaId()
@@ -991,6 +991,7 @@ public class ManagementController(
 
                 PrivateNoteOutputViewModel privateNoteOutputViewModel = new()
                 {
+                    FormatViewerTime = policyService.FormatForViewer,
                     Method = method,
                     DetailCurrentPage = page,
                     DetailBoardId = boardId.Value
@@ -1021,10 +1022,10 @@ public class ManagementController(
                             BoardAttachedFileSize = attachedFile?.Size ?? 0,
                             BoardAttachedFilePath = attachedFile?.Path ?? "",
                             IsImgTagIncluded = isImgTagIncluded,
-                            CanModify = loggedInAccount.IsOwner(privateNoteBoard.Writer),
+                            CanModify = policyService.IsContentOwner(loggedInAccount, privateNoteBoard.Writer),
                             // Private notes are single-owner: unlike the free forum, an admin may not
                             // delete another account's private note (server enforces this in DeleteBoard).
-                            CanDelete = loggedInAccount.IsOwner(privateNoteBoard.Writer)
+                            CanDelete = policyService.IsContentOwner(loggedInAccount, privateNoteBoard.Writer)
                         };
 
                     // Preload comments and accounts for detail view
@@ -1036,13 +1037,13 @@ public class ManagementController(
                         .Where(w => !string.IsNullOrEmpty(w))
                         .Select(w => w!)
                         .Distinct();
-                    HashSet<string> adminNicknames = (await accountService.GetAccountsByNicknamesAsync(detailNicknames, HttpContext.RequestAborted)).ToAdminNicknameSet();
+                    HashSet<string> adminNicknames = policyService.GetAdminNicknames(await accountService.GetAccountsByNicknamesAsync(detailNicknames, HttpContext.RequestAborted));
                     // Only its writer may delete a private-note comment, admins included (BoardService.DeleteCommentAsync checks again).
                     privateNoteOutputViewModel.DetailBoardComments =
-                        [.. comments.Select(c => c.ToCommentRow(privateNoteBoard.Writer, loggedInAccount.IsOwner(c.Writer), adminNicknames))];
+                        [.. comments.Select(c => c.ToCommentRow(privateNoteBoard.Writer, policyService.IsContentOwner(loggedInAccount, c.Writer), adminNicknames))];
                     privateNoteOutputViewModel.LoggedInAccount = loggedInAccount;
                     privateNoteOutputViewModel.LoggedInAccountTimeZoneIanaId = loggedInAccount.RequireTimeZoneIanaId();
-                    privateNoteOutputViewModel.ViewerSeesLocalTime = loggedInAccount.SeesLocalTime();
+                    privateNoteOutputViewModel.ViewerSeesLocalTime = policyService.SeesLocalTime(loggedInAccount);
 
                     return View(privateNoteOutputViewModel);
                 }
@@ -1059,6 +1060,7 @@ public class ManagementController(
             {
                 PrivateNoteOutputViewModel privateNoteOutputViewModel = new()
                 {
+                    FormatViewerTime = policyService.FormatForViewer,
                     Method = method,
                     EditCurrentPage = page,
                     EditBoardId = boardId.Value
@@ -1073,7 +1075,7 @@ public class ManagementController(
                     BoardResponse? privateNoteBoard = await boardService.GetBoardByIdAsync(boardId.Value, BoardKinds.PrivateNote, HttpContext.RequestAborted);
                     BoardAttachedFileDto? attachedFile = await boardService.GetAttachedFileByBoardIdAsync(boardId.Value, HttpContext.RequestAborted);
 
-                    if (privateNoteBoard == null || privateNoteBoard.Deleted || !loggedInAccount.IsOwner(privateNoteBoard.Writer))
+                    if (privateNoteBoard == null || privateNoteBoard.Deleted || !policyService.IsContentOwner(loggedInAccount, privateNoteBoard.Writer))
                     {
                         return RedirectToAction(BoardKinds.PrivateNote, "Management");
                     }
@@ -1143,7 +1145,7 @@ public class ManagementController(
 
                 #endregion
 
-                PrivateNoteOutputViewModel privateNoteOutputViewModel = new();
+                PrivateNoteOutputViewModel privateNoteOutputViewModel = new() { FormatViewerTime = policyService.FormatForViewer };
 
                 #region Board list
 
@@ -1166,13 +1168,13 @@ public class ManagementController(
                 #region Preload comment counts and attached files for view
                 privateNoteOutputViewModel.LoggedInAccount = loggedInAccount;
                 privateNoteOutputViewModel.LoggedInAccountTimeZoneIanaId = loggedInAccount.RequireTimeZoneIanaId();
-                privateNoteOutputViewModel.ViewerSeesLocalTime = loggedInAccount.SeesLocalTime();
+                privateNoteOutputViewModel.ViewerSeesLocalTime = policyService.SeesLocalTime(loggedInAccount);
                 // Only the writers on this page are needed (to highlight admin-authored notes).
                 var listNicknames = boardResponses.Select(b => b.Writer)
                     .Where(w => !string.IsNullOrEmpty(w))
                     .Select(w => w!)
                     .Distinct();
-                HashSet<string> adminNicknames = (await accountService.GetAccountsByNicknamesAsync(listNicknames, HttpContext.RequestAborted)).ToAdminNicknameSet();
+                HashSet<string> adminNicknames = policyService.GetAdminNicknames(await accountService.GetAccountsByNicknamesAsync(listNicknames, HttpContext.RequestAborted));
                 List<long> boardIds = [.. boardResponses.Select(b => b.Id)];
                 Dictionary<long, int> commentCounts = await boardService.GetCommentCountsForBoardsAsync(boardIds, HttpContext.RequestAborted);
                 Dictionary<long, BoardAttachedFileDto?> attachedFiles = await boardService.GetAttachedFilesForBoardsAsync(boardIds, HttpContext.RequestAborted);
@@ -1181,7 +1183,7 @@ public class ManagementController(
                 privateNoteOutputViewModel.Boards =
                 [
                     .. boardResponses.Select(board => board.ToListRow(
-                        board.IsTitleVisibleToOwner(loggedInAccount), adminNicknames,
+                        policyService.IsTitleVisibleToOwner(board, loggedInAccount), adminNicknames,
                         commentCounts.GetValueOrDefault(board.Id, 0), attachedFiles.GetValueOrDefault(board.Id)))
                 ];
                 #endregion

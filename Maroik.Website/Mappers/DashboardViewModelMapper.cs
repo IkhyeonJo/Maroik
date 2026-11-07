@@ -1,4 +1,4 @@
-using Maroik.Core.Contract.Constants;
+using Maroik.Core.Service.Constants;
 using Maroik.Core.Contract.Dtos;
 using Maroik.Website.Models.ViewModels.Dashboards;
 

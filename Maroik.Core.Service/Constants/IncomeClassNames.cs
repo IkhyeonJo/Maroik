@@ -1,6 +1,6 @@
 using Maroik.Core.Domain.Finances;
 
-namespace Maroik.Core.Contract.Constants;
+namespace Maroik.Core.Service.Constants;
 
 /// <summary>The income class names, as the finance breakdowns key them, for the code outside the Service layer; each is the name of the Domain's own enum member.</summary>
 public static class IncomeClassNames

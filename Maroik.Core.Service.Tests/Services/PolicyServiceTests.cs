@@ -16,6 +16,9 @@ public class PolicyServiceTests
     /// <summary>The service under test.</summary>
     private readonly PolicyService _sut = new();
 
+    /// <summary>Noon UTC, away from any daylight-saving change in the zones used here.</summary>
+    private static readonly DateTime _utcNoon = new(2026, 6, 1, 12, 0, 0, DateTimeKind.Utc);
+
     /// <summary>An amount field's text is read, and anything else refused.</summary>
     [Theory]
     [InlineData("1,234.5", true, 1234.5)]
@@ -37,7 +40,7 @@ public class PolicyServiceTests
 
     /// <summary>The allowed content types are the policy's.</summary>
     [Fact]
-    public void GetAllowedImageContentTypes_AreThePolicys() =>
+    public void GetAllowedImageContentTypes_AreThePolicies() =>
         Assert.Equal(ImageUploadPolicy.AllowedContentTypes, _sut.GetAllowedImageContentTypes());
 
     /// <summary>A valid quota comes back in bytes with a successful result.</summary>
@@ -135,6 +138,29 @@ public class PolicyServiceTests
     /// <summary>A new account's message is the domain's "Success".</summary>
     [Fact]
     public void GetAccountCreatedMessage_IsSuccess() => Assert.Equal("Success", _sut.GetAccountCreatedMessage());
+
+    /// <summary>A UTC value moves into the zone.</summary>
+    [Fact]
+    public void ToTimeZone_MovesUtcIntoTheZone() =>
+        Assert.Equal(new DateTime(2026, 6, 1, 21, 0, 0, DateTimeKind.Unspecified), _sut.ToTimeZone(_utcNoon, "Asia/Seoul"));
+
+    /// <summary>A local value moves back to UTC.</summary>
+    [Fact]
+    public void ToUtcFromTimeZone_MovesTheLocalValueToUtc() =>
+        Assert.Equal(_utcNoon, _sut.ToUtcFromTimeZone(new DateTime(2026, 6, 1, 21, 0, 0, DateTimeKind.Unspecified), "Asia/Seoul"));
+
+    /// <summary>A viewer who sees local time gets it; another gets ISO-8601 UTC.</summary>
+    [Fact]
+    public void FormatForViewer_FollowsWhatTheViewerSees()
+    {
+        Assert.Contains("21:00:00", _sut.FormatForViewer(_utcNoon, true, "Asia/Seoul"), StringComparison.Ordinal);
+        Assert.Equal("2026-06-01T12:00:00Z", _sut.FormatForViewer(_utcNoon, false, "Asia/Seoul"));
+    }
+
+    /// <summary>An unknown zone falls back to its own ID.</summary>
+    [Fact]
+    public void GetTimeZoneDisplayName_FallsBackToTheId() =>
+        Assert.Equal("Not/AZone", _sut.GetTimeZoneDisplayName("Not/AZone"));
 
     /// <summary>The finance rules carry the policies' taxonomies and schedule values.</summary>
     [Fact]

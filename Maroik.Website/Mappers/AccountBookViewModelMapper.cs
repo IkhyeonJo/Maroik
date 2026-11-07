@@ -1,4 +1,4 @@
-using Maroik.Core.Contract.Extensions;
+using Maroik.Core.Contract.Interfaces;
 using System.Globalization;
 using Maroik.Core.Contract.Dtos;
 using Maroik.Website.Models.ViewModels.AccountBooks;
@@ -27,7 +27,7 @@ public static class AccountBookViewModelMapper
 
     /// <summary>
     /// Parses a "yyyy-MM-dd HH:mm:ss" local wall-clock string (no time zone of its own — the
-    /// caller applies one via <see cref="TimeZoneDisplayExtensions.ToUtcFromTimeZone"/>).
+    /// caller applies one via <see cref="IPolicyService.ToUtcFromTimeZone"/>).
     /// </summary>
     private static DateTime ParseLocalDateTime(string value) =>
         DateTime.ParseExact(value, LocalDateTimeFormat, CultureInfo.InvariantCulture, DateTimeStyles.None);
@@ -40,28 +40,28 @@ public static class AccountBookViewModelMapper
         /// logged-in account's own <c>TimeZoneIanaId</c>, already known server-side). The client
         /// never computes or transmits a UTC instant or a time zone itself.
         /// </summary>
-        public DateTime ToCreatedUtc(string accountTimeZoneIanaId) =>
-            ParseLocalDateTime(vm.Created!).ToUtcFromTimeZone(accountTimeZoneIanaId);
+        public DateTime ToCreatedUtc(IPolicyService policy, string accountTimeZoneIanaId) =>
+            policy.ToUtcFromTimeZone(ParseLocalDateTime(vm.Created!), accountTimeZoneIanaId);
     }
 
     extension(ExpenditureInputViewModel vm)
     {
         /// <summary>Same conversion as the <c>IncomeInputViewModel</c> overload above, for an expenditure.</summary>
-        public DateTime ToCreatedUtc(string accountTimeZoneIanaId) =>
-            ParseLocalDateTime(vm.Created!).ToUtcFromTimeZone(accountTimeZoneIanaId);
+        public DateTime ToCreatedUtc(IPolicyService policy, string accountTimeZoneIanaId) =>
+            policy.ToUtcFromTimeZone(ParseLocalDateTime(vm.Created!), accountTimeZoneIanaId);
     }
 
     extension(AssetResponse item)
     {
         /// <summary>Maps a single <see cref="AssetResponse"/> to an <see cref="AssetOutputViewModel"/> for display.</summary>
-        public AssetOutputViewModel ToDisplayViewModel(Func<string, string> localize, string timeZoneIanaId) => new()
+        public AssetOutputViewModel ToDisplayViewModel(IPolicyService policy, Func<string, string> localize, string timeZoneIanaId) => new()
         {
             ProductName = item.ProductName,
             Item = localize(item.Item ?? ""),
             Amount = item.Amount,
             MonetaryUnit = item.MonetaryUnit,
-            Created = item.Created.ToTimeZone(timeZoneIanaId),
-            Updated = item.Updated.ToTimeZone(timeZoneIanaId),
+            Created = policy.ToTimeZone(item.Created, timeZoneIanaId),
+            Updated = policy.ToTimeZone(item.Updated, timeZoneIanaId),
             Note = item.Note,
             Deleted = item.Deleted
         };
@@ -70,10 +70,10 @@ public static class AccountBookViewModelMapper
     extension(IEnumerable<AssetResponse> items)
     {
         /// <summary>Maps all <see cref="AssetResponse"/> items to display view models.</summary>
-        public List<AssetOutputViewModel> ToDisplayViewModels(Func<string, string> localize, string timeZoneIanaId)
+        public List<AssetOutputViewModel> ToDisplayViewModels(IPolicyService policy, Func<string, string> localize, string timeZoneIanaId)
             =>
             [
-                .. items.Select(i => i.ToDisplayViewModel(localize, timeZoneIanaId))
+                .. items.Select(i => i.ToDisplayViewModel(policy, localize, timeZoneIanaId))
             ];
     }
 
@@ -85,7 +85,7 @@ public static class AccountBookViewModelMapper
         /// and is used to populate <see cref="IncomeOutputViewModel.MonetaryUnit"/>.
         /// </summary>
         public IncomeOutputViewModel ToDisplayViewModel(
-            IReadOnlyDictionary<string, string?> currencyByProduct,
+            IPolicyService policy, IReadOnlyDictionary<string, string?> currencyByProduct,
             Func<string, string> localize,
             string timeZoneIanaId) => new()
             {
@@ -96,8 +96,8 @@ public static class AccountBookViewModelMapper
                 Amount = item.Amount,
                 MonetaryUnit = currencyByProduct.GetValueOrDefault(item.DepositMyAssetProductName ?? ""),
                 DepositMyAssetProductName = item.DepositMyAssetProductName,
-                Created = item.Created.ToTimeZone(timeZoneIanaId),
-                Updated = item.Updated.ToTimeZone(timeZoneIanaId),
+                Created = policy.ToTimeZone(item.Created, timeZoneIanaId),
+                Updated = policy.ToTimeZone(item.Updated, timeZoneIanaId),
                 Note = item.Note
             };
     }
@@ -106,7 +106,7 @@ public static class AccountBookViewModelMapper
     {
         /// <summary>Maps all <see cref="IncomeResponse"/> items to display view models.</summary>
         public List<IncomeOutputViewModel> ToDisplayViewModels(
-            IEnumerable<AssetResponse> assets,
+            IPolicyService policy, IEnumerable<AssetResponse> assets,
             Func<string, string> localize,
             string timeZoneIanaId)
         {
@@ -115,7 +115,7 @@ public static class AccountBookViewModelMapper
                 .ToDictionary(g => g.Key, g => g.Last().MonetaryUnit);
             return
             [
-                .. items.Select(i => i.ToDisplayViewModel(currencyByProduct, localize, timeZoneIanaId))
+                .. items.Select(i => i.ToDisplayViewModel(policy, currencyByProduct, localize, timeZoneIanaId))
             ];
         }
     }
@@ -127,7 +127,7 @@ public static class AccountBookViewModelMapper
         /// <paramref name="currencyByProduct"/> maps asset product names to their monetary unit.
         /// </summary>
         public ExpenditureOutputViewModel ToDisplayViewModel(
-            IReadOnlyDictionary<string, string?> currencyByProduct,
+            IPolicyService policy, IReadOnlyDictionary<string, string?> currencyByProduct,
             Func<string, string> localize,
             string timeZoneIanaId) => new()
             {
@@ -140,8 +140,8 @@ public static class AccountBookViewModelMapper
                 PaymentMethod = item.PaymentMethod,
                 Note = item.Note,
                 MyDepositAsset = item.MyDepositAsset,
-                Created = item.Created.ToTimeZone(timeZoneIanaId),
-                Updated = item.Updated.ToTimeZone(timeZoneIanaId)
+                Created = policy.ToTimeZone(item.Created, timeZoneIanaId),
+                Updated = policy.ToTimeZone(item.Updated, timeZoneIanaId)
             };
     }
 
@@ -149,7 +149,7 @@ public static class AccountBookViewModelMapper
     {
         /// <summary>Maps all <see cref="ExpenditureResponse"/> items to display view models.</summary>
         public List<ExpenditureOutputViewModel> ToDisplayViewModels(
-            IEnumerable<AssetResponse> assets,
+            IPolicyService policy, IEnumerable<AssetResponse> assets,
             Func<string, string> localize,
             string timeZoneIanaId)
         {
@@ -158,7 +158,7 @@ public static class AccountBookViewModelMapper
                 .ToDictionary(g => g.Key, g => g.Last().MonetaryUnit);
             return
             [
-                .. items.Select(i => i.ToDisplayViewModel(currencyByProduct, localize, timeZoneIanaId))
+                .. items.Select(i => i.ToDisplayViewModel(policy, currencyByProduct, localize, timeZoneIanaId))
             ];
         }
     }
@@ -169,9 +169,9 @@ public static class AccountBookViewModelMapper
         /// Fills the current local time fields on <paramref name="vm"/> for pre-populating date/time pickers:
         /// <paramref name="utcNow"/> (the request's clock reading) shown in <paramref name="timeZoneIanaId"/>.
         /// </summary>
-        public void PopulateTimeData(string timeZoneIanaId, DateTime utcNow)
+        public void PopulateTimeData(IPolicyService policy, string timeZoneIanaId, DateTime utcNow)
         {
-            DateTime ct = utcNow.ToTimeZone(timeZoneIanaId);
+            DateTime ct = policy.ToTimeZone(utcNow, timeZoneIanaId);
             vm.CurrentDate = ct.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
             vm.CurrentHour = ct.Hour;
             vm.CurrentMinute = ct.Minute;

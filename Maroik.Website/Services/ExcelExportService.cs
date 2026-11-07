@@ -1,4 +1,3 @@
-using Maroik.Core.Contract.Extensions;
 ﻿using System.Globalization;
 using System.Text;
 using DocumentFormat.OpenXml;
@@ -49,8 +48,8 @@ public class ExcelExportService(TimeProvider timeProvider, IPolicyService policy
             localize(item.Item ?? ""),
             item.MonetaryUnit ?? "",
             XlsxCell.Number(item.Amount),
-            Timestamp(item.Created.ToTimeZone(timeZoneIanaId)),
-            Timestamp(item.Updated.ToTimeZone(timeZoneIanaId)),
+            Timestamp(policyService.ToTimeZone(item.Created, timeZoneIanaId)),
+            Timestamp(policyService.ToTimeZone(item.Updated, timeZoneIanaId)),
             item.Note ?? "",
             item.Deleted.ToString()
         ]);
@@ -91,8 +90,8 @@ public class ExcelExportService(TimeProvider timeProvider, IPolicyService policy
             currencyByProduct.GetValueOrDefault(item.DepositMyAssetProductName ?? "", ""),
             XlsxCell.Number(item.Amount),
             item.DepositMyAssetProductName ?? "",
-            Timestamp(item.Created.ToTimeZone(timeZoneIanaId)),
-            Timestamp(item.Updated.ToTimeZone(timeZoneIanaId)),
+            Timestamp(policyService.ToTimeZone(item.Created, timeZoneIanaId)),
+            Timestamp(policyService.ToTimeZone(item.Updated, timeZoneIanaId)),
             item.Note ?? ""
         ]);
 
@@ -135,8 +134,8 @@ public class ExcelExportService(TimeProvider timeProvider, IPolicyService policy
             item.PaymentMethod ?? "",
             item.Note ?? "",
             item.MyDepositAsset ?? "",
-            Timestamp(item.Created.ToTimeZone(timeZoneIanaId)),
-            Timestamp(item.Updated.ToTimeZone(timeZoneIanaId))
+            Timestamp(policyService.ToTimeZone(item.Created, timeZoneIanaId)),
+            Timestamp(policyService.ToTimeZone(item.Updated, timeZoneIanaId))
         ]);
 
         return BuildExcel(headers, rows);
@@ -259,7 +258,7 @@ public class ExcelExportService(TimeProvider timeProvider, IPolicyService policy
         string timeZoneIanaId)
     {
         var ordered = items
-            .ToDisplayViewModels(timeZoneIanaId)
+            .ToDisplayViewModels(policyService, timeZoneIanaId)
             .OrderBy(m => m.Email).ThenBy(m => m.Nickname)
             .ThenByDescending(m => m.Created).ThenByDescending(m => m.Updated)
             .ToList();

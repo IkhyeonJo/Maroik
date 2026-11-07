@@ -52,6 +52,9 @@ public class PrivateNoteOutputViewModel
     /// <summary>True when the viewer sees times in their own time zone (<c>AccountViewPolicy.SeesLocalTime</c>), false for UTC.</summary>
     public bool ViewerSeesLocalTime { get; set; }
 
+    /// <summary>Formats a UTC date for the viewer: the date, whether the viewer sees local time, and the viewer's time zone. Set by the controller from the policy service.</summary>
+    public required Func<DateTime, bool, string, string> FormatViewerTime { get; init; }
+
     /// <summary>Comments on the currently open detail post, rendered in the detail panel.</summary>
     public List<BoardCommentRowViewModel> DetailBoardComments { get; set; } = [];
 

@@ -1,3 +1,4 @@
+using Maroik.Core.Service.Services;
 using System.Text.RegularExpressions;
 using Maroik.Website.Extensions;
 
@@ -10,7 +11,7 @@ public class ExportExcelExtensionsTests
     [Fact]
     public void ToExcelFileName_StartsWithPrefixAndEndsWithXlsxExtension()
     {
-        string fileName = "AccountBook".ToExcelFileName("UTC", DateTime.UtcNow);
+        string fileName = "AccountBook".ToExcelFileName(new PolicyService(), "UTC", DateTime.UtcNow);
 
         Assert.StartsWith("AccountBook-", fileName, StringComparison.Ordinal);
         Assert.EndsWith(".xlsx", fileName, StringComparison.Ordinal);
@@ -20,7 +21,7 @@ public class ExportExcelExtensionsTests
     [Fact]
     public void ToExcelFileName_MatchesTimestampPattern()
     {
-        string fileName = "Menu".ToExcelFileName("UTC", DateTime.UtcNow);
+        string fileName = "Menu".ToExcelFileName(new PolicyService(), "UTC", DateTime.UtcNow);
 
         Assert.Matches(new Regex(@"^Menu-\d{4}-\d{2}-\d{2}-\d{2}-\d{2}-\d{2}-\d{3}\.xlsx$"), fileName);
     }
@@ -32,7 +33,7 @@ public class ExportExcelExtensionsTests
     [Fact]
     public void ToExcelFileName_StampsTheGivenInstantInTheViewersTimeZone()
     {
-        string fileName = "Menu".ToExcelFileName("Asia/Seoul", new DateTime(2031, 2, 3, 4, 5, 6, 789, DateTimeKind.Utc));
+        string fileName = "Menu".ToExcelFileName(new PolicyService(), "Asia/Seoul", new DateTime(2031, 2, 3, 4, 5, 6, 789, DateTimeKind.Utc));
 
         Assert.Equal("Menu-2031-02-03-13-05-06-789.xlsx", fileName);
     }
@@ -50,7 +51,7 @@ public class ExportExcelExtensionsTests
         char[] invalidChars = Path.GetInvalidFileNameChars();
         string prefix = "Bad" + new string(invalidChars) + "Name";
 
-        string fileName = prefix.ToExcelFileName("UTC", DateTime.UtcNow);
+        string fileName = prefix.ToExcelFileName(new PolicyService(), "UTC", DateTime.UtcNow);
 
         Assert.StartsWith("BadName-", fileName, StringComparison.Ordinal);
         foreach (char c in invalidChars)

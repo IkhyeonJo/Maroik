@@ -1,5 +1,5 @@
+using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Contract.Enums;
-using Maroik.Core.Contract.Extensions;
 using System.Globalization;
 using Maroik.Core.Contract.Dtos;
 using Maroik.Website.Constants;
@@ -20,11 +20,11 @@ public static class BudgetViewModelMapper
     /// the captions of the month and year-total columns (localized; which column is which comes from <c>BudgetSheetLayout</c>).
     /// <paramref name="fixedInitialYear"/> is the year to open on instead of the current one, if any.
     /// </summary>
-    public static BudgetPageViewModel Page(BudgetSheetKind kind, BudgetPageRules rules, IEnumerable<AssetResponse> assets, DateTime utcNow, string timeZoneIanaId, Func<string, string> localize, int? fixedInitialYear = null) => new()
+    public static BudgetPageViewModel Page(IPolicyService policy, BudgetSheetKind kind, BudgetPageRules rules, IEnumerable<AssetResponse> assets, DateTime utcNow, string timeZoneIanaId, Func<string, string> localize, int? fixedInitialYear = null) => new()
     {
         Kind = kind.ToString(),
-        Year = utcNow.ToTimeZone(timeZoneIanaId).Year,
-        InitialYear = fixedInitialYear ?? utcNow.ToTimeZone(timeZoneIanaId).Year,
+        Year = policy.ToTimeZone(utcNow, timeZoneIanaId).Year,
+        InitialYear = fixedInitialYear ?? policy.ToTimeZone(utcNow, timeZoneIanaId).Year,
         MainClasses = rules.MainClasses,
         SubClassesByMainClass = rules.SubClassesByMainClass,
         Functions = rules.Functions,

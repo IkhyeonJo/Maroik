@@ -1,13 +1,12 @@
 using Maroik.Core.Contract.Dtos;
-using Maroik.Core.Contract.Extensions;
 using Maroik.Website.Models.ViewModels.Boards;
 
 namespace Maroik.Website.Mappers;
 
 /// <summary>
 /// Builds the rows a post list and a comment thread draw. The controller passes in what it decided for the viewer (whether a title
-/// is visible, whether a comment may be deleted — from the domain's rules via <see cref="AccountResponseExtensions"/> and
-/// <see cref="BoardResponseExtensions"/>), so the views only render flags.
+/// is visible, whether a comment may be deleted — from the domain's rules via <see cref="Maroik.Core.Contract.Interfaces.IPolicyService"/> and
+/// <see cref="Maroik.Core.Contract.Interfaces.IPolicyService"/>), so the views only render flags.
 /// </summary>
 public static class BoardViewModelMapper
 {
@@ -26,7 +25,7 @@ public static class BoardViewModelMapper
             View = board.View,
             Created = board.Created,
             TitleVisible = titleVisible,
-            IsWriterAdmin = board.Writer.IsAdmin(adminNicknames),
+            IsWriterAdmin = adminNicknames.Contains(board.Writer ?? ""),
             CommentCount = commentCount,
             HasAttachment = !string.IsNullOrEmpty(attachedFile?.Name)
         };
@@ -45,7 +44,7 @@ public static class BoardViewModelMapper
             AvatarImagePath = comment.AvatarImagePath,
             Content = comment.Content,
             Created = comment.Created,
-            IsWriterAdmin = comment.Writer.IsAdmin(adminNicknames),
+            IsWriterAdmin = adminNicknames.Contains(comment.Writer ?? ""),
             IsByPostWriter = postWriter == comment.Writer,
             CanDelete = canDelete
         };

@@ -1,3 +1,4 @@
+using Maroik.Core.Service.Services;
 using Maroik.Core.Contract.Dtos;
 using Maroik.Website.Mappers;
 using Maroik.Website.Models.ViewModels.AccountBooks;
@@ -18,7 +19,7 @@ public class AccountBookViewModelMapperTests
     public void AssetToDisplayViewModel_LocalizesItem()
     {
         var response = new AssetResponse { Item = "Deposit" };
-        var vm = response.ToDisplayViewModel(Prefix("L:"), "UTC");
+        var vm = response.ToDisplayViewModel(new PolicyService(), Prefix("L:"), "UTC");
         Assert.Equal("L:Deposit", vm.Item);
     }
 
@@ -34,7 +35,7 @@ public class AccountBookViewModelMapperTests
             Note = "test note",
             Deleted = true
         };
-        var vm = response.ToDisplayViewModel(Identity, "UTC");
+        var vm = response.ToDisplayViewModel(new PolicyService(), Identity, "UTC");
         Assert.Equal("Savings", vm.ProductName);
         Assert.Equal(1234.5m, vm.Amount);
         Assert.Equal("KRW", vm.MonetaryUnit);
@@ -49,7 +50,7 @@ public class AccountBookViewModelMapperTests
         // 2025-01-01 00:00:00 UTC → 2025-01-01 09:00:00 KST (UTC+9)
         var utc = new DateTime(2025, 1, 1, 0, 0, 0, DateTimeKind.Utc);
         var vm = new AssetResponse { Created = utc, Updated = utc }
-            .ToDisplayViewModel(Identity, "Asia/Seoul");
+            .ToDisplayViewModel(new PolicyService(), Identity, "Asia/Seoul");
         Assert.Equal(9, vm.Created.Hour);
         Assert.Equal(9, vm.Updated.Hour);
     }
@@ -63,7 +64,7 @@ public class AccountBookViewModelMapperTests
             new AssetResponse { ProductName = "A" },
             new AssetResponse { ProductName = "B" }
         };
-        var vms = responses.ToDisplayViewModels(Identity, "UTC");
+        var vms = responses.ToDisplayViewModels(new PolicyService(), Identity, "UTC");
         Assert.Equal(2, vms.Count);
     }
 
@@ -74,7 +75,7 @@ public class AccountBookViewModelMapperTests
     public void IncomeToDisplayViewModel_LocalizesClassFields()
     {
         var response = new IncomeResponse { MainClass = "RegularIncome", SubClass = "LaborIncome" };
-        var vm = response.ToDisplayViewModel(
+        var vm = response.ToDisplayViewModel(new PolicyService(), 
             new Dictionary<string, string?> { ["prod"] = "KRW" },
             Prefix("L:"),
             "UTC");
@@ -88,7 +89,7 @@ public class AccountBookViewModelMapperTests
     {
         var response = new IncomeResponse { DepositMyAssetProductName = "MyBank" };
         var currency = new Dictionary<string, string?> { ["MyBank"] = "USD" };
-        var vm = response.ToDisplayViewModel(currency, Identity, "UTC");
+        var vm = response.ToDisplayViewModel(new PolicyService(), currency, Identity, "UTC");
         Assert.Equal("USD", vm.MonetaryUnit);
     }
 
@@ -97,7 +98,7 @@ public class AccountBookViewModelMapperTests
     public void IncomeToDisplayViewModel_MonetaryUnit_NullWhenAssetNotFound()
     {
         var response = new IncomeResponse { DepositMyAssetProductName = "Unknown" };
-        var vm = response.ToDisplayViewModel(new Dictionary<string, string?>(), Identity, "UTC");
+        var vm = response.ToDisplayViewModel(new PolicyService(), new Dictionary<string, string?>(), Identity, "UTC");
         Assert.Null(vm.MonetaryUnit);
     }
 
@@ -108,7 +109,7 @@ public class AccountBookViewModelMapperTests
     public void ExpenditureToDisplayViewModel_LocalizesClassFields()
     {
         var response = new ExpenditureResponse { MainClass = "ConsumerSpending", SubClass = "MealOrEatOutExpenses" };
-        var vm = response.ToDisplayViewModel(
+        var vm = response.ToDisplayViewModel(new PolicyService(), 
             new Dictionary<string, string?> { ["card"] = "KRW" },
             Prefix("L:"),
             "UTC");
@@ -122,7 +123,7 @@ public class AccountBookViewModelMapperTests
     {
         var response = new ExpenditureResponse { PaymentMethod = "CreditCard" };
         var currency = new Dictionary<string, string?> { ["CreditCard"] = "KRW" };
-        var vm = response.ToDisplayViewModel(currency, Identity, "UTC");
+        var vm = response.ToDisplayViewModel(new PolicyService(), currency, Identity, "UTC");
         Assert.Equal("KRW", vm.MonetaryUnit);
     }
 
@@ -159,7 +160,7 @@ public class AccountBookViewModelMapperTests
     public void IncomeInputViewModel_ToCreatedUtc_ConvertsUsingGivenTimeZone()
     {
         var vm = new IncomeInputViewModel { Created = "2026-01-15 09:30:00" };
-        DateTime utc = vm.ToCreatedUtc("Asia/Seoul");
+        DateTime utc = vm.ToCreatedUtc(new PolicyService(), "Asia/Seoul");
         // 09:30 KST (UTC+9) -> 00:30 UTC the same day.
         Assert.Equal(new DateTime(2026, 1, 15, 0, 30, 0, DateTimeKind.Utc), utc);
     }
@@ -169,7 +170,7 @@ public class AccountBookViewModelMapperTests
     public void ExpenditureInputViewModel_ToCreatedUtc_ConvertsUsingGivenTimeZone()
     {
         var vm = new ExpenditureInputViewModel { Created = "2026-01-15 09:30:00" };
-        DateTime utc = vm.ToCreatedUtc("Asia/Seoul");
+        DateTime utc = vm.ToCreatedUtc(new PolicyService(), "Asia/Seoul");
         Assert.Equal(new DateTime(2026, 1, 15, 0, 30, 0, DateTimeKind.Utc), utc);
     }
 
@@ -184,7 +185,7 @@ public class AccountBookViewModelMapperTests
     {
         var vm = new AccountBookPageViewModel();
 
-        vm.PopulateTimeData("Asia/Seoul", new DateTime(2031, 2, 3, 23, 50, 7, DateTimeKind.Utc));
+        vm.PopulateTimeData(new PolicyService(), "Asia/Seoul", new DateTime(2031, 2, 3, 23, 50, 7, DateTimeKind.Utc));
 
         Assert.Equal("2031-02-04", vm.CurrentDate);
         Assert.Equal((8, 50, 7), (vm.CurrentHour, vm.CurrentMinute, vm.CurrentSecond));

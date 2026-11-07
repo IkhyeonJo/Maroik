@@ -84,7 +84,7 @@
                         <span class="mailbox-read-time float-left">@Localizer["Views"].Value: @Model.BoardOutputViewModel!.Views</span>
 
                         <span class="mailbox-read-time float-right">
-                            @Localizer["Updated"].Value: [<span id="free_forum_detail_updated">@Model.BoardOutputViewModel.Updated.ToViewerText(Model.ViewerSeesLocalTime, loggedInAccountTimeZoneIanaId)</span>]
+                            @Localizer["Updated"].Value: [<span id="free_forum_detail_updated">@Model.FormatViewerTime(Model.BoardOutputViewModel.Updated, Model.ViewerSeesLocalTime, loggedInAccountTimeZoneIanaId)</span>]
                         </span>
                         <br />
                     </div>
@@ -146,7 +146,7 @@
                                                 <span>@comment.Writer</span>
                                             }
                                             <span class="text-muted float-middle">
-                                                @Localizer["Created"].Value: [<span class="free_forum_detail_comment_created">@comment.Created.ToViewerText(Model.ViewerSeesLocalTime, loggedInAccountTimeZoneIanaId)</span>]
+                                                @Localizer["Created"].Value: [<span class="free_forum_detail_comment_created">@Model.FormatViewerTime(comment.Created, Model.ViewerSeesLocalTime, loggedInAccountTimeZoneIanaId)</span>]
                                             </span>
                                             @{
                                                 if (comment.CanDelete)/*If the visitor is the author or admin*/
@@ -175,7 +175,7 @@
                                                 <span>@comment.Writer</span>
                                             }
                                             <span class="text-muted float-middle">
-                                                @Localizer["Created"].Value: [<span class="free_forum_detail_comment_created">@comment.Created.ToViewerText(Model.ViewerSeesLocalTime, loggedInAccountTimeZoneIanaId)</span>]
+                                                @Localizer["Created"].Value: [<span class="free_forum_detail_comment_created">@Model.FormatViewerTime(comment.Created, Model.ViewerSeesLocalTime, loggedInAccountTimeZoneIanaId)</span>]
                                             </span>
                                             @{
                                                 if (comment.CanDelete)/*If the visitor is the author or admin*/
@@ -344,7 +344,7 @@
 
                                         <td><span style="font-weight:bold; color:green;">@noticeBoard.Writer</span></td>
 
-                                        <td class="free_forum_board_created"><span style="font-weight:bold; color:green;">@noticeBoard.Created.ToViewerText(Model.ViewerSeesLocalTime, loggedInAccountTimeZoneIanaId)</span></td>
+                                        <td class="free_forum_board_created"><span style="font-weight:bold; color:green;">@Model.FormatViewerTime(noticeBoard.Created, Model.ViewerSeesLocalTime, loggedInAccountTimeZoneIanaId)</span></td>
 
                                         <td><span style="font-weight:bold; color:green;">@noticeBoard.View</span></td>
                                         @if (noticeBoard.HasAttachment)
@@ -386,7 +386,7 @@
                                             <td><span>@board.Writer</span></td>
                                         }
 
-                                        <td class="free_forum_board_created">@board.Created.ToViewerText(Model.ViewerSeesLocalTime, loggedInAccountTimeZoneIanaId)</td>
+                                        <td class="free_forum_board_created">@Model.FormatViewerTime(board.Created, Model.ViewerSeesLocalTime, loggedInAccountTimeZoneIanaId)</td>
 
                                         <td>@board.View</td>
                                         @if (board.HasAttachment)

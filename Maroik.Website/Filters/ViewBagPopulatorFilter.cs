@@ -1,5 +1,4 @@
-using Maroik.Core.Contract.Extensions;
-using Maroik.Core.Contract.Constants;
+using Maroik.Core.Service.Constants;
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Contract.Settings;
@@ -24,6 +23,7 @@ namespace Maroik.Website.Filters;
 public class ViewBagPopulatorFilter(
     IDashboardService dashboardService,
     ITimeZoneCatalogService timeZoneCatalogService,
+    IPolicyService policyService,
     IOptions<ServerSetting> serverSettings,
     TimeProvider timeProvider,
     ILogger<ViewBagPopulatorFilter> logger) : IAsyncActionFilter
@@ -48,7 +48,8 @@ public class ViewBagPopulatorFilter(
         // HttpContext.GetLoggedInAccount() — never null from here on (anonymous placeholder at worst).
         context.HttpContext.Items[HttpContextItemKeys.LoggedInAccount] = loggedInAccount;
         controller.ViewBag.TimeZoneOptions = timeZoneCatalogService.GetTimeZoneOptions();
-        controller.ViewBag.CopyrightYear = timeProvider.GetUtcNow().UtcDateTime.ToTimeZone(loggedInAccount.RequireTimeZoneIanaId()).Year;
+        controller.ViewBag.CopyrightYear = policyService.ToTimeZone(timeProvider.GetUtcNow().UtcDateTime, loggedInAccount.RequireTimeZoneIanaId()).Year;
+        controller.ViewBag.MemberSinceDate = policyService.ToTimeZone(loggedInAccount.Created, loggedInAccount.TimeZoneIanaId ?? "");
 
         PublishActiveMenuItem(context, controller, loggedInAccount);
 

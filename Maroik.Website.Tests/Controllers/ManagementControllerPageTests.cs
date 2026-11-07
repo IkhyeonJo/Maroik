@@ -438,4 +438,26 @@ public class ManagementControllerPageTests(MaroikWebApplicationFactory factory)
         Assert.Contains("\"result\":false", json, StringComparison.Ordinal);
         Assert.DoesNotContain("filePath", json, StringComparison.Ordinal);
     }
+    /// <summary>
+    /// The profile shows the creation date converted to the account's time zone once. 10:00 UTC is 19:00 on the same day in Seoul;
+    /// converting twice would move it on to 04:00 the next day.
+    /// </summary>
+    [Fact]
+    public async Task Profile_ShowsTheCreationDate_ConvertedToTheTimeZoneOnce()
+    {
+        var owner = await LoginAsync("mgmt-page-profile-created@test.com");
+        using (var scope = factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+            await db.Accounts.Where(a => a.Email == "mgmt-page-profile-created@test.com").ExecuteUpdateAsync(
+                s => s.SetProperty(a => a.Created, new DateTime(2026, 1, 1, 10, 0, 0, DateTimeKind.Utc))
+                    .SetProperty(a => a.TimeZoneIanaId, "Asia/Seoul"),
+                TestContext.Current.CancellationToken);
+        }
+
+        string html = await BodyAsync(await GetAsync("/Management/Profile", owner));
+
+        Assert.Contains("1/1/2026", html, StringComparison.Ordinal);
+        Assert.DoesNotContain("1/2/2026", html, StringComparison.Ordinal);
+    }
 }

@@ -1,6 +1,6 @@
 using Maroik.Core.Domain.Accounts;
 
-namespace Maroik.Core.Contract.Constants;
+namespace Maroik.Core.Service.Constants;
 
 /// <summary>
 /// The account roles, for the code outside the Service layer that may not read the Domain. An attribute argument such as

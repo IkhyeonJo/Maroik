@@ -1,16 +1,19 @@
 using Maroik.Core.Contract.Dtos;
-using Maroik.Core.Contract.Extensions;
+using Maroik.Core.Service.Services;
 using Maroik.Core.Domain.Accounts;
 
-namespace Maroik.Core.Contract.Tests.Extensions;
+namespace Maroik.Core.Service.Tests.Services;
 
 /// <summary>
-/// Unit tests for <see cref="AccountResponseExtensions"/> — the owner / owner-or-admin
+/// Unit tests for <see cref="PolicyService"/> — the owner / owner-or-admin
 /// authorization rules used to gate edit/delete UI affordances for board posts, comments,
 /// and private notes.
 /// </summary>
-public class AccountResponseExtensionsTests
+public class PolicyServiceAccountRulesTests
 {
+    /// <summary>The service under test.</summary>
+    private readonly PolicyService _sut = new();
+
     // -- IsOwner ----------------------------------------------------------------
 
     /// <summary>Is owner same nickname true.</summary>
@@ -18,7 +21,7 @@ public class AccountResponseExtensionsTests
     public void IsOwner_SameNickname_True()
     {
         var viewer = new AccountResponse { Nickname = "Alice", Role = Role.User };
-        Assert.True(viewer.IsOwner("Alice"));
+        Assert.True(_sut.IsContentOwner(viewer, "Alice"));
     }
 
     /// <summary>Is owner different nickname false.</summary>
@@ -26,7 +29,7 @@ public class AccountResponseExtensionsTests
     public void IsOwner_DifferentNickname_False()
     {
         var viewer = new AccountResponse { Nickname = "Alice", Role = Role.User };
-        Assert.False(viewer.IsOwner("Bob"));
+        Assert.False(_sut.IsContentOwner(viewer, "Bob"));
     }
 
     /// <summary>Is owner admin but not writer false.</summary>
@@ -35,7 +38,7 @@ public class AccountResponseExtensionsTests
     {
         // Unlike IsOwnerOrAdmin, IsOwner never grants access based on role alone.
         var admin = new AccountResponse { Nickname = "AdminUser", Role = Role.Admin };
-        Assert.False(admin.IsOwner("Bob"));
+        Assert.False(_sut.IsContentOwner(admin, "Bob"));
     }
 
     /// <summary>Is owner null viewer nickname false.</summary>
@@ -43,7 +46,7 @@ public class AccountResponseExtensionsTests
     public void IsOwner_NullViewerNickname_False()
     {
         var anonymous = new AccountResponse { Nickname = null, Role = Role.Anonymous };
-        Assert.False(anonymous.IsOwner("Bob"));
+        Assert.False(_sut.IsContentOwner(anonymous, "Bob"));
     }
 
     // -- IsOwnerOrAdmin -----------------------------------------------------------
@@ -53,7 +56,7 @@ public class AccountResponseExtensionsTests
     public void IsOwnerOrAdmin_SameNickname_True()
     {
         var viewer = new AccountResponse { Nickname = "Alice", Role = Role.User };
-        Assert.True(viewer.IsOwnerOrAdmin("Alice"));
+        Assert.True(_sut.IsContentOwnerOrAdmin(viewer, "Alice"));
     }
 
     /// <summary>Is owner or admin not writer true.</summary>
@@ -61,7 +64,7 @@ public class AccountResponseExtensionsTests
     public void IsOwnerOrAdmin_AdminNotWriter_True()
     {
         var admin = new AccountResponse { Nickname = "AdminUser", Role = Role.Admin };
-        Assert.True(admin.IsOwnerOrAdmin("Bob"));
+        Assert.True(_sut.IsContentOwnerOrAdmin(admin, "Bob"));
     }
 
     /// <summary>Is owner or admin regular user not writer false.</summary>
@@ -69,7 +72,7 @@ public class AccountResponseExtensionsTests
     public void IsOwnerOrAdmin_RegularUserNotWriter_False()
     {
         var viewer = new AccountResponse { Nickname = "Alice", Role = Role.User };
-        Assert.False(viewer.IsOwnerOrAdmin("Bob"));
+        Assert.False(_sut.IsContentOwnerOrAdmin(viewer, "Bob"));
     }
 
     /// <summary>Is owner or admin anonymous not writer false.</summary>
@@ -77,7 +80,7 @@ public class AccountResponseExtensionsTests
     public void IsOwnerOrAdmin_AnonymousNotWriter_False()
     {
         var anonymous = new AccountResponse { Nickname = null, Role = Role.Anonymous };
-        Assert.False(anonymous.IsOwnerOrAdmin("Bob"));
+        Assert.False(_sut.IsContentOwnerOrAdmin(anonymous, "Bob"));
     }
 
     // -- SeesLocalTime ------------------------------------------------------------
@@ -87,7 +90,7 @@ public class AccountResponseExtensionsTests
     public void SeesLocalTime_Admin_True()
     {
         var viewer = new AccountResponse { Nickname = "AdminUser", Role = Role.Admin };
-        Assert.True(viewer.SeesLocalTime());
+        Assert.True(_sut.SeesLocalTime(viewer));
     }
 
     /// <summary>A regular User viewer sees local time, same as Admin.</summary>
@@ -95,7 +98,7 @@ public class AccountResponseExtensionsTests
     public void SeesLocalTime_User_True()
     {
         var viewer = new AccountResponse { Nickname = "Alice", Role = Role.User };
-        Assert.True(viewer.SeesLocalTime());
+        Assert.True(_sut.SeesLocalTime(viewer));
     }
 
     /// <summary>An Anonymous viewer does not see local time (raw UTC instead).</summary>
@@ -103,7 +106,7 @@ public class AccountResponseExtensionsTests
     public void SeesLocalTime_Anonymous_False()
     {
         var anonymous = new AccountResponse { Nickname = null, Role = Role.Anonymous };
-        Assert.False(anonymous.SeesLocalTime());
+        Assert.False(_sut.SeesLocalTime(anonymous));
     }
 
     /// <summary>A null role (unauthenticated default) does not see local time.</summary>
@@ -111,14 +114,14 @@ public class AccountResponseExtensionsTests
     public void SeesLocalTime_NullRole_False()
     {
         var viewer = new AccountResponse { Nickname = null, Role = null };
-        Assert.False(viewer.SeesLocalTime());
+        Assert.False(_sut.SeesLocalTime(viewer));
     }
 
-    // -- ToAdminNicknameSet -------------------------------------------------------
+    // -- GetAdminNicknames -------------------------------------------------------
 
     /// <summary>To admin nickname set returns only admin nicknames.</summary>
     [Fact]
-    public void ToAdminNicknameSet_ReturnsOnlyAdminNicknames()
+    public void GetAdminNicknames_ReturnsOnlyAdminNicknames()
     {
         var accounts = new[]
         {
@@ -127,7 +130,7 @@ public class AccountResponseExtensionsTests
             new AccountResponse { Nickname = "Carol", Role = Role.Admin }
         };
 
-        var result = accounts.ToAdminNicknameSet();
+        var result = _sut.GetAdminNicknames(accounts);
 
         Assert.Equal([
             "Alice", "Carol"
@@ -136,7 +139,7 @@ public class AccountResponseExtensionsTests
 
     /// <summary>To admin nickname set excludes admins with null or empty nickname.</summary>
     [Fact]
-    public void ToAdminNicknameSet_ExcludesAdminsWithNullOrEmptyNickname()
+    public void GetAdminNicknames_ExcludesAdminsWithNullOrEmptyNickname()
     {
         var accounts = new[]
         {
@@ -145,7 +148,7 @@ public class AccountResponseExtensionsTests
             new AccountResponse { Nickname = "Dave", Role = Role.Admin }
         };
 
-        var result = accounts.ToAdminNicknameSet();
+        var result = _sut.GetAdminNicknames(accounts);
 
         Assert.Equal([
             "Dave"
@@ -154,9 +157,9 @@ public class AccountResponseExtensionsTests
 
     /// <summary>To admin nickname set empty collection returns empty set.</summary>
     [Fact]
-    public void ToAdminNicknameSet_EmptyCollection_ReturnsEmptySet()
+    public void GetAdminNicknames_EmptyCollection_ReturnsEmptySet()
     {
-        var result = Array.Empty<AccountResponse>().ToAdminNicknameSet();
+        var result = _sut.GetAdminNicknames(Array.Empty<AccountResponse>());
 
         Assert.Empty(result);
     }

@@ -1,3 +1,4 @@
+using Maroik.Core.Service.Services;
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Contract.Settings;
@@ -46,7 +47,7 @@ public class ViewBagPopulatorFilterTests
 
     /// <summary>The filter under test over the mocked dependencies.</summary>
     private ViewBagPopulatorFilter CreateSut() =>
-        new(_dashboardService.Object, _timeZoneCatalogService.Object, _serverSettings, _timeProvider, _logger);
+        new(_dashboardService.Object, _timeZoneCatalogService.Object, new PolicyService(), _serverSettings, _timeProvider, _logger);
 
     /// <summary>
     /// Signs <paramref name="account"/> in for this request the way production does: AuthorizationFilter,

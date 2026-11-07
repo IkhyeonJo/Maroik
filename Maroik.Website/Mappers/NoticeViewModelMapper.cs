@@ -1,6 +1,5 @@
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Contract.Enums;
-using Maroik.Core.Contract.Extensions;
 using Maroik.Core.Contract.Dtos;
 using Maroik.Website.Extensions;
 using Maroik.Website.Models.ViewModels.Notices;
@@ -52,8 +51,8 @@ public static class NoticeViewModelMapper
                 MaturityDate = item.MaturityDate.ToMaturityDateString(),
                 Note = item.Note,
                 DepositMyAssetProductName = item.DepositMyAssetProductName,
-                Created = item.Created.ToTimeZone(timeZoneIanaId),
-                Updated = item.Updated.ToTimeZone(timeZoneIanaId),
+                Created = policy.ToTimeZone(item.Created, timeZoneIanaId),
+                Updated = policy.ToTimeZone(item.Updated, timeZoneIanaId),
                 Noticed = policy.IsFixedScheduleNoticed(item.DepositMonth, item.DepositDay, today, noticeWindowDays, item.Unpunctuality),
                 Expired = policy.IsFixedScheduleExpired(item.MaturityDate, today),
                 RowCssClass = policy.GetFixedScheduleRowState(
@@ -80,7 +79,7 @@ public static class NoticeViewModelMapper
             var currencyByProduct = assets
                 .GroupBy(a => a.ProductName ?? "")
                 .ToDictionary(g => g.Key, g => g.Last().MonetaryUnit);
-            var today = utcNow.ToTimeZone(timeZoneIanaId).Date;
+            var today = policy.ToTimeZone(utcNow, timeZoneIanaId).Date;
             return
             [
                 .. items.Select(i => i.ToDisplayViewModel(policy, currencyByProduct, localize, timeZoneIanaId, today, noticeWindowDays))
@@ -111,8 +110,8 @@ public static class NoticeViewModelMapper
                 DepositDay = item.DepositDay,
                 MaturityDate = item.MaturityDate.ToMaturityDateString(),
                 Note = item.Note,
-                Created = item.Created.ToTimeZone(timeZoneIanaId),
-                Updated = item.Updated.ToTimeZone(timeZoneIanaId),
+                Created = policy.ToTimeZone(item.Created, timeZoneIanaId),
+                Updated = policy.ToTimeZone(item.Updated, timeZoneIanaId),
                 Noticed = policy.IsFixedScheduleNoticed(item.DepositMonth, item.DepositDay, today, noticeWindowDays, item.Unpunctuality),
                 Expired = policy.IsFixedScheduleExpired(item.MaturityDate, today),
                 RowCssClass = policy.GetFixedScheduleRowState(
@@ -139,7 +138,7 @@ public static class NoticeViewModelMapper
             var currencyByProduct = assets
                 .GroupBy(a => a.ProductName ?? "")
                 .ToDictionary(g => g.Key, g => g.Last().MonetaryUnit);
-            var today = utcNow.ToTimeZone(timeZoneIanaId).Date;
+            var today = policy.ToTimeZone(utcNow, timeZoneIanaId).Date;
             return
             [
                 .. items.Select(i => i.ToDisplayViewModel(policy, currencyByProduct, localize, timeZoneIanaId, today, noticeWindowDays))

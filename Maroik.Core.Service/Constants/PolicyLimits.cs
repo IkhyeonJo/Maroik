@@ -4,12 +4,12 @@ using Maroik.Core.Domain.Finances;
 using Maroik.Core.Domain.Menus;
 using Maroik.Core.Domain.Primitives;
 
-namespace Maroik.Core.Contract.Constants;
+namespace Maroik.Core.Service.Constants;
 
 /// <summary>
-/// The Domain's compile-time limits, for the code outside the Service layer that may not read the Domain. A validation attribute
-/// such as <c>[StringLength(PolicyLimits.PasswordMaxByteLength)]</c> takes only a constant, so it cannot ask a service; everything
-/// that is not a constant comes from <c>IPolicyService</c>. Each value is the Domain's own constant, not a copy of it.
+/// The Domain's compile-time limits, exposed by the Service layer to the Website, which may not read the Domain. A validation attribute
+/// such as <c>[StringLength(PolicyLimits.PasswordMaxByteLength)]</c> takes only a constant, so it cannot call <c>IPolicyService</c>;
+/// everything that is not a constant comes from there. Each value is the Domain's own constant, not a copy of it.
 /// </summary>
 public static class PolicyLimits
 {

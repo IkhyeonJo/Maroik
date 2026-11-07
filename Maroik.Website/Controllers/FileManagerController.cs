@@ -1,4 +1,4 @@
-using Maroik.Core.Contract.Constants;
+using Maroik.Core.Service.Constants;
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Enums;
 using Maroik.Core.Contract.Interfaces;
@@ -55,7 +55,7 @@ public class FileManagerController(
         try
         {
             FileManagerDriveResponse drive = await fileManagerService.GetDriveAsync(Email, ct);
-            return Json(new { result = true, drive = drive.ToViewModel(TimeZone, RootName) });
+            return Json(new { result = true, drive = drive.ToViewModel(policyService, TimeZone, RootName) });
         }
         catch (Exception ex)
         {
@@ -74,7 +74,7 @@ public class FileManagerController(
         try
         {
             var (result, folder) = await fileManagerService.GetFolderAsync(Email, input.FolderId, ct);
-            return result.Success ? Json(new { result = true, folder = folder!.ToViewModel(TimeZone, RootName) }) : Json(new { result = false, error = localizer[result.ErrorKey, result.ErrorArgs].ToPlainString() });
+            return result.Success ? Json(new { result = true, folder = folder!.ToViewModel(policyService, TimeZone, RootName) }) : Json(new { result = false, error = localizer[result.ErrorKey, result.ErrorArgs].ToPlainString() });
         }
         catch (Exception ex)
         {
@@ -93,7 +93,7 @@ public class FileManagerController(
         try
         {
             List<FileManagerItemResponse> items = await fileManagerService.SearchAsync(Email, input.Query, ct);
-            return Json(new { result = true, items = items.Select(i => i.ToViewModel(TimeZone, RootName, withLocation: true)) });
+            return Json(new { result = true, items = items.Select(i => i.ToViewModel(policyService, TimeZone, RootName, withLocation: true)) });
         }
         catch (Exception ex)
         {
