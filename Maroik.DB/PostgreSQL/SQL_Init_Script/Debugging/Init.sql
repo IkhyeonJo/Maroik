@@ -2733,8 +2733,8 @@ ALTER TABLE ONLY public."SubCategory" ALTER COLUMN "Id" SET DEFAULT nextval('pub
 --
 
 COPY public."Account" ("Email", "HashedPassword", "Nickname", "AvatarImagePath", "Role", "TimeZoneIanaId", "DefaultMonetaryUnit", "Locked", "LoginAttempt", "EmailConfirmed", "AgreedServiceTerms", "RegistrationToken", "ResetPasswordToken", "Created", "Updated", "Message", "Deleted", "SecurityStamp", "MustChangePassword", "FileManagerQuotaBytes") FROM stdin;
-demo@maroik.com	$2a$13$e06KyPwRiFlJSgUeYoCv6uxedAHR1COyg9HsemA40xQbDVRQp/xfa	Demo	/upload/Management/Profile/Avatar/56EEF375-6DE8-49C2-BD23-673F2513F6D5.jpeg	User	Asia/Seoul	KRW	f	0	t	t	\N	\N	2021-07-12 22:46:59	2025-08-24 13:32:49.471924	This account is locked	f	5f69576a-557e-4d91-b810-9ba8930ae02a	f	0
-admin@maroik.com	$2a$13$e06KyPwRiFlJSgUeYoCv6uxedAHR1COyg9HsemA40xQbDVRQp/xfa	Admin	/upload/Management/Profile/Avatar/DB0DDBD8-4AF9-4219-B034-F19773209AD0.png	Admin	Asia/Seoul	\N	f	0	t	t	\N	\N	2021-07-12 22:37:36	2026-04-29 23:11:46.589216	Success	f	31c7d654-a52d-4573-a4b1-84fd30c3ebbb	f	0
+demo@maroik.com	$2a$13$e06KyPwRiFlJSgUeYoCv6uxedAHR1COyg9HsemA40xQbDVRQp/xfa	Demo	/upload/Management/Profile/default-avatar.jpg	User	Asia/Seoul	KRW	f	0	t	t	\N	\N	2021-07-12 22:46:59	2025-08-24 13:32:49.471924	This account is locked	f	5f69576a-557e-4d91-b810-9ba8930ae02a	f	0
+admin@maroik.com	$2a$13$e06KyPwRiFlJSgUeYoCv6uxedAHR1COyg9HsemA40xQbDVRQp/xfa	Admin	/upload/Management/Profile/default-avatar.jpg	Admin	Asia/Seoul	\N	f	0	t	t	\N	\N	2021-07-12 22:37:36	2026-04-29 23:11:46.589216	Success	f	31c7d654-a52d-4573-a4b1-84fd30c3ebbb	f	0
 \.
 
 

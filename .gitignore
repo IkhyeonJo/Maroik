@@ -453,6 +453,11 @@ file-storage-upload-*.tar.xz
 
 # Upload directories (user uploaded files)
 Maroik.Website/wwwroot/upload/**
+# The shared default avatar is a static asset the seed scripts point at, not a user upload. Its parent folders must be
+# re-included too: git cannot re-include a file whose folder stays excluded.
+!Maroik.Website/wwwroot/upload/Management/
+!Maroik.Website/wwwroot/upload/Management/Profile/
+!Maroik.Website/wwwroot/upload/Management/Profile/default-avatar.jpg
 Maroik.FileStorage/upload/**
 
 # TypeScript client-scripts toolchain (Maroik.Website/TypeScripts, see its README).
