@@ -67,7 +67,7 @@ public class AccountControllerRegistrationTests(MaroikWebApplicationFactory fact
     /// Inserts a User account for <paramref name="email"/> directly into the database with the given confirmation state and
     /// tokens. The tokens are the ones a mail would carry; the row stores their <see cref="GuidToken.Hash"/>, as the site does.
     /// </summary>
-    private async Task SeedAccountAsync(string email, bool emailConfirmed, string? registrationToken = null, string? resetPasswordToken = null, string? nickname = null, bool agreedServiceTerms = true)
+    private async Task SeedAccountAsync(string email, bool emailConfirmed, string? registrationToken = null, string? resetPasswordToken = null, string? nickname = null, bool agreedServiceTerms = true, bool deleted = false)
     {
         using var scope = factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
@@ -85,7 +85,7 @@ public class AccountControllerRegistrationTests(MaroikWebApplicationFactory fact
             AgreedServiceTerms = agreedServiceTerms,
             RegistrationToken = registrationToken is null ? null : GuidToken.Hash(registrationToken),
             ResetPasswordToken = resetPasswordToken is null ? null : GuidToken.Hash(resetPasswordToken),
-            Deleted = false,
+            Deleted = deleted,
             Created = DateTime.UtcNow,
             Updated = DateTime.UtcNow
         });
@@ -461,6 +461,37 @@ public class AccountControllerRegistrationTests(MaroikWebApplicationFactory fact
         Assert.True(passwords.VerifyPassword("OwnersPassword1!", account.HashedPassword));
         Assert.False(passwords.VerifyPassword("OldPassword1!", account.HashedPassword));
         Assert.False(account.EmailConfirmed);
+    }
+
+    /// <summary>
+    /// A deleted account is not re-registrable, even when its email was never confirmed. Regression: the unconfirmed path replaced
+    /// its password and nickname for anyone who knew the address, and mailed a new confirmation link.
+    /// </summary>
+    [Fact]
+    public async Task Register_DeletedUnconfirmedEmail_DoesNotOverwriteAccount()
+    {
+        string email = UniqueEmail();
+        await SeedAccountAsync(email, emailConfirmed: false, registrationToken: GuidToken.Generate(DateTime.UtcNow), deleted: true);
+        string nicknameBefore;
+        using (var before = factory.Services.CreateScope())
+            nicknameBefore = before.ServiceProvider.GetRequiredService<ApplicationDbContext>().Accounts.Single(a => a.Email == email).Nickname;
+
+        var response = await PostFormAsync("/Account/Register", new Dictionary<string, string>
+        {
+            ["Email"] = email,
+            ["Password"] = "AnotherPassword1!",
+            ["Nickname"] = "RegOver_" + Guid.NewGuid().ToString("N")[..8],
+            ["AgreedServiceTerms"] = "true",
+            ["TimeZoneIanaId"] = "UTC"
+        });
+
+        Assert.Equal(System.Net.HttpStatusCode.OK, response.StatusCode);
+        using var scope = factory.Services.CreateScope();
+        var passwords = scope.ServiceProvider.GetRequiredService<IPasswordService>();
+        var account = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>().Accounts.Single(a => a.Email == email);
+        Assert.True(passwords.VerifyPassword("OldPassword1!", account.HashedPassword));
+        Assert.Equal(nicknameBefore, account.Nickname);
+        Assert.True(account.Deleted);
     }
 
     /// <summary>Confirm email already confirmed does not error.</summary>

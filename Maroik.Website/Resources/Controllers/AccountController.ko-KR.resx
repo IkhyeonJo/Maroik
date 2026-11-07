@@ -201,6 +201,9 @@
   <data name="Email address is already confirmed." xml:space="preserve">
     <value>이메일 주소가 이미 인증되었습니다.</value>
   </data>
+  <data name="A deleted account cannot be registered again." xml:space="preserve">
+    <value>삭제된 계정은 다시 가입할 수 없습니다.</value>
+  </data>
   <data name="Email must be confirmed before resetting the password." xml:space="preserve">
     <value>비밀번호를 재설정하기 전에 이메일 인증을 완료해야 합니다.</value>
   </data>

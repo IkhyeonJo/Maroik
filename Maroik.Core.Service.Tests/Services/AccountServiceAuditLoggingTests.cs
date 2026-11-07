@@ -248,6 +248,23 @@ public class AccountServiceAuditLoggingTests
         AssertNoSecretLogged("PlainPass1!", "$2a$13$replaced", "enc-token");
     }
 
+    /// <summary>A registration refused because the unconfirmed account is deleted leaves one Warning naming the account, with no password or hash.</summary>
+    [Fact]
+    public async Task Register_LogsWarning_WhenTheUnconfirmedAccountIsDeleted()
+    {
+        Account deleted = ExistingAccount(deleted: true, emailConfirmed: false);
+        _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(deleted);
+        _accountRepo.Setup(r => r.FindByEmailForUpdateAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(deleted);
+        _passwordService.Setup(p => p.HashPassword(It.IsAny<string>())).Returns("$2a$13$replaced");
+
+        await CreateSut().RegisterAsync(
+            new RegisterAccountRequest { Email = Email, PlainPassword = "PlainPass1!", Nickname = "Owner", TimeZoneIanaId = "UTC", AgreedServiceTerms = true },
+            _emailTemplate, TestContext.Current.CancellationToken);
+
+        Only(LogLevel.Warning, "Registration refused: the account is deleted");
+        AssertNoSecretLogged("PlainPass1!", "$2a$13$replaced");
+    }
+
     /// <summary>Verifies that an unknown confirmation token logs a Warning without the token or its ciphertext.</summary>
     [Fact]
     public async Task ConfirmEmail_LogsWarning_WhenTheTokenIsRejected()

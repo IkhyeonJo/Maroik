@@ -1277,6 +1277,27 @@ public class AccountServiceTests
     }
 
     /// <summary>
+    /// A deleted account is not re-registrable: a never-confirmed one answers "already exists" like a confirmed one, and nothing is
+    /// written or mailed. Judged on the locked row, so a delete that wins the lock counts too.
+    /// </summary>
+    [Fact]
+    public async Task RegisterAsync_Unconfirmed_ReportsAlreadyCreated_AndChangesNothing_WhenTheAccountIsDeleted()
+    {
+        Account deleted = ActiveAccount(deleted: true, emailConfirmed: false);
+        SetupUnconfirmedAccountForRegister(ActiveAccount(emailConfirmed: false), lockedRead: deleted);
+
+        RegisterResult result = await CreateSut().RegisterAsync(NewRegistration(nickname: "Owner"), _emailTemplate, TestContext.Current.CancellationToken);
+
+        Assert.False(result.Success);
+        Assert.Equal(AccountMessage.UserAlreadyCreated.GetDescription(), result.ErrorKey);
+        Assert.Equal("User", deleted.Nickname);
+        _accountRepo.Verify(r => r.UpdateEntityAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>()), Times.Never);
+        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
+        _unitOfWork.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Never);
+        _emailPublisher.Verify(p => p.PublishAsync(It.IsAny<SendEmailMessage>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    /// <summary>
     /// An expired registration token is regenerated on re-registration so the mailed link is alive; the mail carries the
     /// fresh token and the row only its hash.
     /// </summary>

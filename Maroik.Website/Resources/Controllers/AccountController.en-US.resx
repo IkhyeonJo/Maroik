@@ -201,6 +201,9 @@
   <data name="Email address is already confirmed." xml:space="preserve">
     <value>Email address is already confirmed.</value>
   </data>
+  <data name="A deleted account cannot be registered again." xml:space="preserve">
+    <value>A deleted account cannot be registered again.</value>
+  </data>
   <data name="Email must be confirmed before resetting the password." xml:space="preserve">
     <value>Email must be confirmed before resetting the password.</value>
   </data>

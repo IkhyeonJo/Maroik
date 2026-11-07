@@ -45,7 +45,8 @@ that specific change. Check every candidate review finding in this area against 
   password, it also lifts a lock and clears the failed-login counter (`Account.ChangePassword`) — otherwise an owner
   locked by someone else's guesses, still signed in, would change the password and then be refused at that sign-in.
 - A deleted account's login answers "Your Account is Deleted. Please contact the administrator." — it is not
-  re-registrable.
+  re-registrable: a registration for its address answers "already exists" and changes nothing, even when its email was
+  never confirmed (pinned by `Register_DeletedUnconfirmedEmail_DoesNotOverwriteAccount`).
 - An administrator can confirm an account's email (for a user whose confirmation fails) but cannot take a confirmation back
   (owner's decision, 2026-11-07): `Management/Account` disables the ticked box and `ManagementAccountService` ignores a request
   without the tick. A confirmed account therefore never goes back to the state `ReplaceUnconfirmedRegistration` may overwrite. Do not add it back.

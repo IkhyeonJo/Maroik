@@ -259,6 +259,15 @@ public class AccountService(
                 return RegisterResult.Fail(AccountMessage.UserAlreadyCreated.GetDescription());
             }
 
+            if (found.Deleted)
+            {
+                // Not re-registrable. It answers like a confirmed address, deleted or not: the deletion is only
+                // disclosed to a caller who proved the password (at sign-in).
+                await unitOfWork.RollbackAsync(ct);
+                logger.LogWarning("Registration refused: the account is deleted for {Email}", found.Email.Value);
+                return RegisterResult.Fail(AccountMessage.UserAlreadyCreated.GetDescription());
+            }
+
             // The account's own nickname (in any letter case) is not a conflict — only another
             // account holding it is. The case-insensitive unique index still backstops a race.
             if (!string.Equals(found.Nickname, nickname, StringComparison.OrdinalIgnoreCase)

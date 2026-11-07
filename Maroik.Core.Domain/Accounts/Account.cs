@@ -488,13 +488,17 @@ public sealed class Account : AggregateRoot<string>
     /// registrant's password, nickname, time zone and terms acceptance win, and the fresh
     /// <paramref name="registrationToken"/> invalidates every confirmation link mailed earlier.
     /// This is the one place a nickname changes after <see cref="Create"/>: an unconfirmed account
-    /// has not finished registering. Refused once the email is confirmed.
+    /// has not finished registering. Refused once the email is confirmed, and for a deleted account,
+    /// which is not re-registrable.
     /// </summary>
     public ErrorOr<Success> ReplaceUnconfirmedRegistration(
         string hashedPassword, string nickname, string timeZoneValue, string registrationToken, bool agreedServiceTerms, DateTime utcNow)
     {
         if (EmailConfirmed)
             return DomainError.Conflict("Account.AlreadyConfirmed", "Email address is already confirmed.");
+
+        if (Deleted)
+            return DomainError.Conflict("Account.Deleted", "A deleted account cannot be registered again.");
 
         var nicknameResult = NicknamePolicy.Validate(nickname);
         if (nicknameResult.IsError) return nicknameResult.Errors;

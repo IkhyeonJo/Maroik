@@ -664,6 +664,23 @@ public class AccountTests
         Assert.False(account.ConfirmEmail(newToken, _now).IsError);
     }
 
+    /// <summary>A deleted account is not re-registrable, even when its email was never confirmed: a registration leaves it untouched.</summary>
+    [Fact]
+    public void ReplaceUnconfirmedRegistration_ReturnsConflict_AndChangesNothing_WhenDeleted()
+    {
+        string token = GuidToken.Generate(_now);
+        var account = ValidAccount(hashedPassword: "owner-hash", nickname: "Owner", registrationToken: token);
+        account.SoftDelete(_now);
+
+        var result = account.ReplaceUnconfirmedRegistration("attacker-hash", "Attacker", "UTC", GuidToken.Generate(_now), agreedServiceTerms: true, _now);
+
+        Assert.True(result.IsError);
+        Assert.Equal("Account.Deleted", result.FirstError.Code);
+        Assert.Equal("owner-hash", account.HashedPassword);
+        Assert.Equal("Owner", account.Nickname);
+        Assert.False(account.ConfirmEmail(token, _now).IsError); // the earlier token still stands
+    }
+
     /// <summary>A confirmed account's credentials can never be replaced by a registration.</summary>
     [Fact]
     public void ReplaceUnconfirmedRegistration_ReturnsConflict_AndChangesNothing_WhenAlreadyConfirmed()
