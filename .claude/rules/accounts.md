@@ -58,6 +58,9 @@ that specific change. Check every candidate review finding in this area against 
   cost and registration / reset mail volume are infrastructure concerns in the same way.
 - The public demo account has no server-side write protection: anyone can change its password, lock it or post
   as it. Anyone can also lock any account with `MaxLoginAttempt` wrong guesses. Both are accepted.
+- The repository is public on purpose, and the seed accounts' credentials are published deliberately: `README.md` lists
+  `admin@maroik.com` and `demo@maroik.com` with the password `Debugging/Init.sql` seeds for them (`demoO12!!`), and the seed
+  does not force a change (`MustChangePassword` false; owner's decision, 2026-11-07). Do not raise them as a finding.
 - The demo account's 2025 sample data lives in `Maroik.DB/PostgreSQL/SQL_Init_Script/SeedDemo.sql`, which both compose files
   mount to run after `Init.sql`, so every rebuild of the database restores it, including what a visitor changed. It also
   restores the account's login state and replaces its Kanban cards; it leaves other accounts and the demo account's posts
