@@ -1,3 +1,4 @@
+using Maroik.Website.Models.ViewModels.Layouts;
 using Maroik.Core.Service.Services;
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
@@ -415,6 +416,47 @@ public class ViewBagPopulatorFilterTests
         CategoryResponse activeCategory = controller.ViewBag.ActiveCategory;
         Assert.Equal(1, activeCategory.Id);
         Assert.Null(controller.ViewBag.ActiveSubCategory);
+    }
+
+    /// <summary>The sidebar menu is built from the signed-in role's categories, with the current route's entry active.</summary>
+    [Fact]
+    public async Task OnActionExecutionAsync_SetsSidebarMenu_FromTheRolesCategories_WithTheCurrentRouteActive()
+    {
+        var (context, controller) = BuildContext(controllerName: "AccountBook", actionName: "Income");
+        SignIn(context, new AccountResponse { Email = "admin@test.com", Role = Role.Admin, TimeZoneIanaId = "UTC" });
+        controller.ViewBag.AdminCategories = new List<CategoryResponse>
+        {
+            new() { Id = 1, DisplayName = "AccountBook", Controller = "AccountBook", Action = "Income" }
+        };
+        controller.ViewBag.AdminSubCategories = new List<SubCategoryResponse>();
+        controller.ViewBag.UserCategories = new List<CategoryResponse>
+        {
+            new() { Id = 2, DisplayName = "NotTheAdminsMenu", Controller = "Forum", Action = "FreeForum" }
+        };
+        controller.ViewBag.UserSubCategories = new List<SubCategoryResponse>();
+
+        await CreateSut().OnActionExecutionAsync(context, EmptyNext());
+
+        SidebarMenuViewModel menu = controller.ViewBag.SidebarMenu;
+        var category = Assert.Single(menu.Categories);
+        Assert.Equal(1, category.Category.Id);
+        Assert.True(category.IsActive);
+    }
+
+    /// <summary>The top bar's "Member since" date is the account's creation date in its own time zone, converted once.</summary>
+    [Fact]
+    public async Task OnActionExecutionAsync_SetsMemberSinceDate_InTheAccountsTimeZone()
+    {
+        var created = new DateTime(2026, 1, 1, 20, 0, 0, DateTimeKind.Utc);
+        _dashboardService
+            .Setup(d => d.GetNoticeCountsAsync("user@test.com", It.IsAny<int>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new NotificationDto());
+        var (context, controller) = BuildContext();
+        SignIn(context, new AccountResponse { Email = "user@test.com", Role = Role.User, TimeZoneIanaId = "Asia/Seoul", Created = created });
+
+        await CreateSut().OnActionExecutionAsync(context, EmptyNext());
+
+        Assert.Equal(new DateTime(2026, 1, 2, 5, 0, 0, DateTimeKind.Unspecified), (DateTime)controller.ViewBag.MemberSinceDate);
     }
 
     /// <summary>Verifies that ViewBag.ActiveCategory is left unset when the current route matches no published category.</summary>

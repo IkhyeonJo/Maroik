@@ -3,32 +3,12 @@
     AdminLTE left sidebar partial rendered once per page via _Layout.
     Model: AccountResponse of the logged-in user.
     Renders the brand logo (links to the role-appropriate dashboard) and the dynamic navigation menu.
-    Menu items come from ViewBag.{Role}Categories / ViewBag.{Role}SubCategories, resolved into a
-    sorted, active-flagged tree by MenuNavigationMapper.ToSidebarMenu (shared with _BodyPageHeader
-    and the matching logic in AuthorizationFilter) — this partial only renders the result.
+    The menu is ViewBag.SidebarMenu: ViewBagPopulatorFilter resolves the role's categories into a sorted,
+    active-flagged tree with MenuNavigationMapper.ToSidebarMenu, and this partial only renders the result.
 *@
-@using Maroik.Website.Mappers
+@using Maroik.Website.Models.ViewModels.Layouts
 @model Maroik.Core.Contract.Dtos.AccountResponse
 
-@{
-    string currentControllerName = ViewContext.RouteData.Values["Controller"]?.ToString() ?? "";
-    string currentActionName = ViewContext.RouteData.Values["Action"]?.ToString() ?? "";
-
-    var roleCategories = Model.Role switch
-    {
-        AccountRoles.Admin => (IEnumerable<CategoryResponse>)ViewBag.AdminCategories,
-        AccountRoles.User => (IEnumerable<CategoryResponse>)ViewBag.UserCategories,
-        _ => (IEnumerable<CategoryResponse>)ViewBag.AnonymousCategories
-    };
-    var roleSubCategories = Model.Role switch
-    {
-        AccountRoles.Admin => (IEnumerable<SubCategoryResponse>)ViewBag.AdminSubCategories,
-        AccountRoles.User => (IEnumerable<SubCategoryResponse>)ViewBag.UserSubCategories,
-        _ => (IEnumerable<SubCategoryResponse>)ViewBag.AnonymousSubCategories
-    };
-
-    var sidebarMenu = roleCategories.ToSidebarMenu(roleSubCategories, currentControllerName, currentActionName);
-}
 
 <aside class="main-sidebar sidebar-dark-primary elevation-4">
     @*<!-- Brand Logo -->*@
@@ -64,7 +44,7 @@
                 @*<!-- Add icons to the links using the .nav-icon class
                 with font-awesome or any other icon font library -->*@
 
-                @foreach (var categoryItem in sidebarMenu.Categories)
+                @foreach (var categoryItem in ((SidebarMenuViewModel)ViewBag.SidebarMenu).Categories)
                 {
                     if (categoryItem.SubCategories.Count == 0)
                     {

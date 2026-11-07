@@ -4,6 +4,7 @@ using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Contract.Settings;
 using Maroik.Website.Constants;
 using Maroik.Website.Extensions;
+using Maroik.Website.Mappers;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
@@ -114,6 +115,7 @@ public class ViewBagPopulatorFilter(
         {
             context.ActionDescriptor.RouteValues.TryGetValue("controller", out var currentControllerName);
             context.ActionDescriptor.RouteValues.TryGetValue("action", out var currentActionName);
+            controller.ViewBag.SidebarMenu = roleCategories.ToSidebarMenu(roleSubCategories, currentControllerName ?? "", currentActionName ?? "");
             var activeMenuMatch = roleCategories.ResolveActiveMenuItem(roleSubCategories, currentControllerName ?? "", currentActionName ?? "");
             if (activeMenuMatch.IsMatch)
             {

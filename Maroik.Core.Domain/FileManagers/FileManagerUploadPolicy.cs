@@ -51,6 +51,15 @@ public static class FileManagerUploadPolicy
     /// <summary>Bytes in one GB, the unit the quota is shown and refused in.</summary>
     private const decimal BytesPerGb = 1024m * 1024 * 1024;
 
+    /// <summary>The smallest quota, in GB.</summary>
+    public const int MinQuotaGb = 0;
+
+    /// <summary>The decimal places a quota in GB is shown and edited with.</summary>
+    public const int QuotaGbDecimalPlaces = 2;
+
+    /// <summary>The step of the quota field, <see cref="QuotaGbDecimalPlaces"/> decimal places, as HTML reads it (invariant, so a culture's decimal comma cannot break it).</summary>
+    public const string QuotaGbStep = "0.01";
+
     /// <summary>
     /// Accepts a declared file size of 0 bytes or more. One larger than <see cref="MaxScannableBytes"/> can never be scanned, so it is
     /// accepted only when <paramref name="scanDisabled"/> (<c>Account.FileManagerScanDisabled</c>, stored without a scan): an account
@@ -92,7 +101,7 @@ public static class FileManagerUploadPolicy
     /// </summary>
     public static ErrorOr<long> QuotaBytesFromGb(decimal gb)
     {
-        if (gb < 0)
+        if (gb < MinQuotaGb)
             return DomainError.Validation("Account.FileManagerQuotaNegative", "The storage quota cannot be negative.");
 
         decimal bytes = Math.Round(gb * BytesPerGb, MidpointRounding.AwayFromZero);
@@ -103,5 +112,5 @@ public static class FileManagerUploadPolicy
     }
 
     /// <summary>The quota in GB, to two decimal places, as the administrator's edit form shows it.</summary>
-    public static decimal QuotaGbFromBytes(long bytes) => Math.Round(bytes / BytesPerGb, 2);
+    public static decimal QuotaGbFromBytes(long bytes) => Math.Round(bytes / BytesPerGb, QuotaGbDecimalPlaces);
 }

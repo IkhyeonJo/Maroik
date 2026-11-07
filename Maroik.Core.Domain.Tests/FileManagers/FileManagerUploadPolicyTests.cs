@@ -160,4 +160,23 @@ public class FileManagerUploadPolicyTests
     {
         Assert.Equal(decimal.Parse(gb, System.Globalization.CultureInfo.InvariantCulture), FileManagerUploadPolicy.QuotaGbFromBytes(bytes));
     }
+
+    /// <summary>The quota field's step is one unit of the decimal places a quota is rounded to, so the form cannot offer a value it would not show back.</summary>
+    [Fact]
+    public void QuotaGbStep_IsOneUnitOfTheQuotasDecimalPlaces()
+    {
+        decimal step = decimal.Parse(FileManagerUploadPolicy.QuotaGbStep, System.Globalization.CultureInfo.InvariantCulture);
+
+        Assert.Equal(FileManagerUploadPolicy.QuotaGbDecimalPlaces, step.Scale);
+        Assert.Equal(1m, step * (decimal)Math.Pow(10, FileManagerUploadPolicy.QuotaGbDecimalPlaces));
+    }
+
+    /// <summary>The quota is shown with the policy's decimal places, and nothing under its smallest value is accepted.</summary>
+    [Fact]
+    public void Quota_FollowsItsDecimalPlacesAndItsMinimum()
+    {
+        Assert.Equal(1.33m, FileManagerUploadPolicy.QuotaGbFromBytes(1_431_655_766));
+        Assert.False(FileManagerUploadPolicy.QuotaBytesFromGb(FileManagerUploadPolicy.MinQuotaGb).IsError);
+        Assert.True(FileManagerUploadPolicy.QuotaBytesFromGb(FileManagerUploadPolicy.MinQuotaGb - 0.01m).IsError);
+    }
 }

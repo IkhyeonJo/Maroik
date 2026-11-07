@@ -86,7 +86,7 @@
                     </div>
                     <div class="form-group">
                         <label for="budgetLineCurrency">@Localizer["Currency"].Value</label>
-                        <input class="form-control form-control-sm" type="text" id="budgetLineCurrency" name="budgetLineCurrency" list="budgetCurrencies" maxlength="45" autocomplete="off"
+                        <input class="form-control form-control-sm" type="text" id="budgetLineCurrency" name="budgetLineCurrency" list="budgetCurrencies" maxlength="@PolicyLimits.CurrencyMaxLength" autocomplete="off"
                                data-val="true" data-val-required="@Localizer["Please enter a currency"].Value">
                         <datalist id="budgetCurrencies">
                             @foreach (string currency in Model.Currencies)

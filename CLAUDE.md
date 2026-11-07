@@ -16,7 +16,7 @@ Layer map (dependency direction: Website → Service → Domain; Domain depends 
 
 - `Maroik.Core.Domain` — entities, invariants, value objects, **policies / business rules**
 - `Maroik.Core.Service` — use-case orchestration, transactions, DTO mapping
-- `Maroik.Core.Contract` — interfaces + DTOs
+- `Maroik.Core.Contract` — interfaces, DTOs, enums, messages, settings
 - `Maroik.Core.Repository` — EF Core persistence
 - `Maroik.Core.Client` — external systems (SMTP mail, file storage, ClamAV, RabbitMQ)
 - `Maroik.Website` — controllers (HTTP surface), views, static assets

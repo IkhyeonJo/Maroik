@@ -1,8 +1,10 @@
 using Maroik.Core.Domain.Accounts;
 using Maroik.Core.Domain.Calendars;
+using Maroik.Core.Domain.FileManagers;
 using Maroik.Core.Domain.Finances;
 using Maroik.Core.Domain.Menus;
 using Maroik.Core.Domain.Primitives;
+using Maroik.Core.Domain.ValueObjects;
 
 namespace Maroik.Core.Service.Constants;
 
@@ -33,6 +35,15 @@ public static class PolicyLimits
 
     /// <summary><see cref="TitledContentPolicy.MaxBodyLength"/>.</summary>
     public const int BodyMaxLength = TitledContentPolicy.MaxBodyLength;
+
+    /// <summary><see cref="FileManagerUploadPolicy.MinQuotaGb"/>.</summary>
+    public const int FileManagerMinQuotaGb = FileManagerUploadPolicy.MinQuotaGb;
+
+    /// <summary><see cref="FileManagerUploadPolicy.QuotaGbStep"/>.</summary>
+    public const string FileManagerQuotaGbStep = FileManagerUploadPolicy.QuotaGbStep;
+
+    /// <summary><see cref="CurrencyCode.MaxLength"/>.</summary>
+    public const int CurrencyMaxLength = CurrencyCode.MaxLength;
 
     /// <summary><see cref="MenuFieldPolicy.MinOrder"/>.</summary>
     public const long MenuMinOrder = MenuFieldPolicy.MinOrder;

@@ -110,13 +110,22 @@ public class ManagementController(
         }
 
         IFormFile file = profileInputViewModel.ProfileAvatarFiles[0];
+        string? email = HttpContext.GetLoggedInAccount().Email;
 
         if (file.Length <= 0 || file.Length > serverSettings.Value.MaxAttachedFileSizeBytes)
+        {
+            // A refused upload is a security event: record who sent what.
+            logger.LogWarning("Avatar upload refused: size {Size} bytes is outside the {MaxBytes}-byte limit for {Email}",
+                file.Length, serverSettings.Value.MaxAttachedFileSizeBytes, email);
             return Ok(new { result = false, errorMessage = localizer["File Size must be smaller than {0}MB.", serverSettings.Value.MaxAttachedFileSizeBytes / (1024 * 1024)].ToPlainString() });
+        }
 
         var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
         if (!uploadPolicy.IsAllowedImageExtension(extension))
+        {
+            logger.LogWarning("Avatar upload refused: extension not allowed ({Extension}) for {Email}", extension, email);
             return Ok(new { result = false, errorMessage = localizer["Only .jpg or jpeg or .png file allowed"].Value });
+        }
 
         byte[] imageBytes;
         using (var ms = new MemoryStream())
@@ -124,8 +133,6 @@ public class ManagementController(
             await file.CopyToAsync(ms);
             imageBytes = ms.ToArray();
         }
-
-        string? email = HttpContext.GetLoggedInAccount().Email;
 
         ServiceResult avatarResult;
         try

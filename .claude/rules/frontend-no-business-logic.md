@@ -24,7 +24,7 @@ See `Maroik.Website/TypeScripts/README.md`.
 |---|---|
 | Entities, invariants, value objects, **policies / business rules / allowed-value taxonomies** | `Maroik.Core.Domain` |
 | Use-case orchestration, transactions, cross-aggregate rules, DTO mapping | `Maroik.Core.Service` |
-| Interfaces, DTOs | `Maroik.Core.Contract` |
+| Interfaces, DTOs, enums, messages, settings | `Maroik.Core.Contract` |
 | Persistence, EF Core, queries | `Maroik.Core.Repository` |
 | External systems (SMTP mail, file storage, ClamAV, RabbitMQ…) | `Maroik.Core.Client` |
 | HTTP surface: model-bind → call a service → return a result | `Maroik.Website/Controllers` |
