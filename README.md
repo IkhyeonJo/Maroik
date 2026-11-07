@@ -39,10 +39,10 @@ restored from a backup keeps the backup's admin password.
 <img width="1851" height="958" alt="image" src="https://github.com/user-attachments/assets/2548e81b-6745-46bf-b90a-a98abf9f1f96" />
 
 ### Budget
-<img width="1897" height="944" alt="7" src="https://github.com/user-attachments/assets/d1df24a3-e67e-4051-93b0-a9414c62765e" />
+<img width="1851" height="958" alt="image" src="https://github.com/user-attachments/assets/4d2f7ca8-ade9-4d4e-bb90-c56be6f79faa" />
 
 ### User Profile
-<img width="1899" height="942" alt="8" src="https://github.com/user-attachments/assets/b167e3c8-aa32-40ff-8332-748a8412f96d" />
+<img width="1851" height="958" alt="image" src="https://github.com/user-attachments/assets/c0bc9513-82f5-41e7-b4e8-4b032dbb5373" />
 
 ## How to Deploy
 
