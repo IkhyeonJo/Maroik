@@ -46,6 +46,9 @@ that specific change. Check every candidate review finding in this area against 
   locked by someone else's guesses, still signed in, would change the password and then be refused at that sign-in.
 - A deleted account's login answers "Your Account is Deleted. Please contact the administrator." — it is not
   re-registrable.
+- An administrator can confirm an account's email (for a user whose confirmation fails) but cannot take a confirmation back
+  (owner's decision, 2026-11-07): `Management/Account` disables the ticked box and `ManagementAccountService` ignores a request
+  without the tick. A confirmed account therefore never goes back to the state `ReplaceUnconfirmedRegistration` may overwrite. Do not add it back.
 - The Login page is pre-filled with the public demo account (`demo@maroik.com` / `demoO12!!`), and the demo
   account's dashboard always shows the fixed period from `ServerSetting.DemoDashboardYear/Month`. Its calendar first
   opens on that same period (`ICalendarService.GetFixedInitialDate`) and its budget pages on that year

@@ -574,18 +574,6 @@ public class AccountTests
         Assert.Equal(before, account.TimeZone.Value);
     }
 
-    /// <summary>RevokeEmailConfirmation marks a confirmed account unconfirmed again.</summary>
-    [Fact]
-    public void RevokeEmailConfirmation_ClearsTheConfirmedFlag()
-    {
-        var account = ValidAccount();
-        account.ForceConfirmEmail(_now);
-
-        account.RevokeEmailConfirmation(_now);
-
-        Assert.False(account.EmailConfirmed);
-    }
-
     /// <summary>RevokeServiceTerms clears the accepted-terms flag.</summary>
     [Fact]
     public void RevokeServiceTerms_ClearsTheAcceptedFlag()

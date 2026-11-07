@@ -205,7 +205,8 @@
                     $editAccountRole.val(data.account.role).trigger("change");
                     $editAccountTimeZone.val(data.account.timeZoneIanaId).trigger("change");
                     $editAccountLocked.prop("checked", data.account.locked);
-                    $editAccountEmailConfirmed.prop("checked", data.account.emailConfirmed);
+                    // A confirmation cannot be taken back. Authoritative in ManagementAccountService (server); mirrored here for form UX only.
+                    $editAccountEmailConfirmed.prop({ checked: data.account.emailConfirmed, disabled: data.account.emailConfirmed });
                     $editAccountAgreedServiceTerms.prop("checked", data.account.agreedServiceTerms);
                     $editMessage.val(data.account.message);
                     $editAccountDeleted.prop("checked", data.account.deleted);

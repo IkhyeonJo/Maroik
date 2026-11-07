@@ -247,15 +247,9 @@ public class ManagementAccountService(
                 break;
         }
 
-        switch (request.EmailConfirmed)
-        {
-            case true when !account.EmailConfirmed:
-                account.ForceConfirmEmail(utcNow);
-                break;
-            case false when account.EmailConfirmed:
-                account.RevokeEmailConfirmation(utcNow);
-                break;
-        }
+        // One way only: an unconfirmed registration can be replaced by anyone who knows the address, so a confirmation is never taken back.
+        if (request.EmailConfirmed)
+            account.ForceConfirmEmail(utcNow);
 
         if (request.AgreedServiceTerms)
             account.AcceptServiceTerms(utcNow);

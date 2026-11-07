@@ -483,7 +483,43 @@ public class ManagementAccountServiceTests
         Account.Reconstitute("user@example.com", "$2a$13$placeholder", "User", null, Role.User, "UTC", null, false, 0,
             false, false, "reg-token", null, DateTime.UtcNow, DateTime.UtcNow, null, true, "stamp", false);
 
-    /// <summary>Every admin toggle is applied in both directions: role, time zone, confirmation, terms, deletion and message.</summary>
+    /// <summary>
+    /// An administrator can confirm an email address but not take a confirmation back: a request that does not tick it keeps a
+    /// confirmed account confirmed. An unconfirmed registration may be replaced by anyone who knows the address, so an account
+    /// that had gone back to unconfirmed could have its password and nickname overwritten by an anonymous request.
+    /// </summary>
+    [Fact]
+    public async Task UpdateAccountAsync_KeepsTheConfirmation_WhenTheRequestDoesNotTickIt()
+    {
+        Account account = ActiveAccount();
+        Assert.True(account.EmailConfirmed);
+        _accountRepo.Setup(r => r.FindByEmailForUpdateAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(account);
+
+        ServiceResult result = await CreateSut().UpdateAccountAsync(
+            new AdminUpdateAccountRequest { Email = "user@example.com", EmailConfirmed = false, AgreedServiceTerms = true },
+            null, Actor, TestContext.Current.CancellationToken);
+
+        Assert.True(result.Success);
+        Assert.True(account.EmailConfirmed);
+    }
+
+    /// <summary>An unconfirmed account stays unconfirmed, with its registration token, while the request does not tick the confirmation.</summary>
+    [Fact]
+    public async Task UpdateAccountAsync_LeavesAnUnconfirmedAccountUnconfirmed_WhenTheRequestDoesNotTickIt()
+    {
+        Account account = DeletedUnconfirmedAccount();
+        _accountRepo.Setup(r => r.FindByEmailForUpdateAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(account);
+
+        ServiceResult result = await CreateSut().UpdateAccountAsync(
+            new AdminUpdateAccountRequest { Email = "user@example.com", EmailConfirmed = false, Deleted = true },
+            null, Actor, TestContext.Current.CancellationToken);
+
+        Assert.True(result.Success);
+        Assert.False(account.EmailConfirmed);
+        Assert.Equal("reg-token", account.RegistrationToken);
+    }
+
+    /// <summary>Every admin change is applied: role, time zone, confirmation, terms, deletion and message. All but the confirmation go both ways.</summary>
     [Fact]
     public async Task UpdateAccountAsync_AppliesEveryAdminChange()
     {
@@ -514,7 +550,7 @@ public class ManagementAccountServiceTests
         Assert.True(result.Success);
         Assert.Equal(Role.Admin, account.Role.Value); // a null role keeps the current one
         Assert.Equal("Asia/Seoul", account.TimeZone.Value); // so does a null time zone
-        Assert.False(account.EmailConfirmed);
+        Assert.True(account.EmailConfirmed); // a confirmation cannot be taken back
         Assert.False(account.AgreedServiceTerms);
         Assert.True(account.Deleted);
         Assert.Null(account.Message);

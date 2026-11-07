@@ -19,7 +19,7 @@ public class AdminUpdateAccountRequest
     /// <summary>Whether the account is locked and cannot log in.</summary>
     public bool Locked { get; set; }
 
-    /// <summary>Whether the account's email address is confirmed.</summary>
+    /// <summary>True confirms the account's email address; false changes nothing (a confirmation cannot be taken back).</summary>
     public bool EmailConfirmed { get; set; }
 
     /// <summary>Whether the account has accepted the service terms of use.</summary>

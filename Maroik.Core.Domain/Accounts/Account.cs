@@ -534,7 +534,8 @@ public sealed class Account : AggregateRoot<string>
 
     /// <summary>
     /// Admin bypass: confirms the email without token validation.
-    /// Use only when an admin creates an account that should be immediately active.
+    /// Use only when an admin creates an account that should be immediately active, or confirms one
+    /// whose user cannot complete the mailed confirmation. There is no way back to unconfirmed.
     /// </summary>
     public void ForceConfirmEmail(DateTime utcNow)
     {
@@ -569,17 +570,6 @@ public sealed class Account : AggregateRoot<string>
         TimeZone = tzResult.Value;
         Updated = utcNow;
         return Result.Success;
-    }
-
-    /// <summary>
-    /// Administrator operation: marks the email address as not confirmed again. The account cannot
-    /// log in until it is confirmed (by an administrator, or through a freshly requested
-    /// confirmation mail).
-    /// </summary>
-    public void RevokeEmailConfirmation(DateTime utcNow)
-    {
-        EmailConfirmed = false;
-        Updated = utcNow;
     }
 
     /// <summary>Administrator operation: withdraws the account's acceptance of the service terms.</summary>

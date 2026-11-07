@@ -539,9 +539,9 @@ public class ManagementControllerAccountTests(MaroikWebApplicationFactory factor
     }
 
     /// <summary>
-    /// The admin edit form can switch every account flag off and back on: confirmation, terms,
-    /// deletion and lock, plus role, time zone and message. Each round trip is read back from the
-    /// database.
+    /// The admin edit form can switch the account flags off and back on: terms, deletion and lock,
+    /// plus role, time zone and message. Each round trip is read back from the database. The email
+    /// confirmation is the exception: a request without it leaves a confirmed account confirmed.
     /// </summary>
     [Fact]
     public async Task UpdateAccount_TogglesEveryAdminFlag_BothWays()
@@ -576,7 +576,7 @@ public class ManagementControllerAccountTests(MaroikWebApplicationFactory factor
 
         await UpdateAsync(on: true);
         var flagged = Read();
-        Assert.Equal((Role.Admin, "Asia/Seoul", true, false, false, "sanctioned", true),
+        Assert.Equal((Role.Admin, "Asia/Seoul", true, true, false, "sanctioned", true),
             (flagged.Role, flagged.TimeZoneIanaId, flagged.Locked, flagged.EmailConfirmed, flagged.AgreedServiceTerms, flagged.Message, flagged.Deleted));
 
         await UpdateAsync(on: false);

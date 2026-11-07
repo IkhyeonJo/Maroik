@@ -13,7 +13,7 @@ function fixture(): string {
        <tr class="clsGridRow" data-email="b@x.com"></tr>
        <tr class="clsGridRow" data-email="a+b&amp;c@x.com"></tr>
      </tbody></table>
-     <form id="formCreateAccount"></form><form id="formEditAccount"><input type="number" id="editAccountFileManagerQuotaGb" value="0" /><input type="checkbox" id="editAccountFileManagerScanDisabled" /></form>
+     <form id="formCreateAccount"></form><form id="formEditAccount"><input type="number" id="editAccountFileManagerQuotaGb" value="0" /><input type="checkbox" id="editAccountFileManagerScanDisabled" /><input type="checkbox" id="editAccountEmailConfirmed" /></form>
      <button id="btnExportExcelAccount"></button>
      <button id="btnEditAccountGridRow" data-errorMessageSelectGridRow="select a row"></button>
      <button id="btnConfirmDeleteAccount" data-errorMessageSelectGridRow="select a row"></button>
@@ -83,6 +83,30 @@ describe("Management/Account (admin)", () => {
         h.respond(0, { result: true, account: { ...ACCOUNT, fileManagerScanDisabled: true }, fileManagerQuotaGb: 0 });
 
         expect(h.$("#editAccountFileManagerScanDisabled").is(":checked")).toBe(true);
+    });
+
+    it("a confirmed account's email confirmation is ticked and cannot be changed", () => {
+        const h = loadSite("admin", "Management", "Account", fixture());
+        fireNative(h.win.document, "rowclick", { data: { Email: "a@x.com" } });
+        h.$("#btnEditAccountGridRow").trigger("click");
+
+        h.respond(0, { result: true, account: { ...ACCOUNT, emailConfirmed: true }, fileManagerQuotaGb: 0 });
+
+        expect(h.$("#editAccountEmailConfirmed").is(":checked")).toBe(true);
+        expect(h.$("#editAccountEmailConfirmed").prop("disabled")).toBe(true);
+    });
+
+    it("an unconfirmed account's email confirmation can be ticked, also after a confirmed account was opened", () => {
+        const h = loadSite("admin", "Management", "Account", fixture());
+        fireNative(h.win.document, "rowclick", { data: { Email: "a@x.com" } });
+        h.$("#btnEditAccountGridRow").trigger("click");
+        h.respond(0, { result: true, account: { ...ACCOUNT, emailConfirmed: true }, fileManagerQuotaGb: 0 });
+
+        h.$("#btnEditAccountGridRow").trigger("click");
+        h.respond(1, { result: true, account: { ...ACCOUNT, emailConfirmed: false }, fileManagerQuotaGb: 0 });
+
+        expect(h.$("#editAccountEmailConfirmed").is(":checked")).toBe(false);
+        expect(h.$("#editAccountEmailConfirmed").prop("disabled")).toBe(false);
     });
 
     it("sends whether the virus scan is turned off with the update", () => {
