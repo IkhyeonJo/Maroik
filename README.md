@@ -281,7 +281,7 @@ Maroik has been built by one developer since May 2021. It was developed in a pri
 ### Layers — DDD + Clean Architecture
 
 Solid arrows show which project calls which; calls to Service, Repository and Client always go through an interface in
-`Maroik.Core.Contract` (interfaces and DTOs only, so it calls nothing and is not drawn). The Website communicates only
+`Maroik.Core.Contract` (interfaces and data shapes the layers share; it runs no use case, so it is not drawn). The Website communicates only
 with the Service layer. Maroik.Worker and Maroik.FileStorage are separate processes: when a use case sends mail or
 touches a stored file, the Service hands it to Client, and Client puts the mail job on RabbitMQ for the Worker (which sends it over
 SMTP) or calls FileStorage over HTTP (upload, download, and the File Manager's chunks, complete, abort and delete) —
