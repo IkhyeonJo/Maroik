@@ -281,10 +281,9 @@ Maroik has been built by one developer since May 2021. It was developed in a pri
 ### Layers — DDD + Clean Architecture
 
 Solid arrows show which project calls which; calls to Service, Repository and Client always go through an interface in
-`Maroik.Core.Contract` (interfaces and DTOs only, so it calls nothing and is not drawn). The Website runs every use
-case through the Service layer; it uses the Domain directly only for its type names, taxonomies and stateless policy
-helpers. Maroik.Worker and Maroik.FileStorage are separate processes: when a use case sends mail or touches a stored
-file, the Service hands it to Client, and Client puts the mail job on RabbitMQ for the Worker (which sends it over
+`Maroik.Core.Contract` (interfaces and DTOs only, so it calls nothing and is not drawn). The Website communicates only
+with the Service layer. Maroik.Worker and Maroik.FileStorage are separate processes: when a use case sends mail or
+touches a stored file, the Service hands it to Client, and Client puts the mail job on RabbitMQ for the Worker (which sends it over
 SMTP) or calls FileStorage over HTTP (upload, download, and the File Manager's chunks, complete, abort and delete) —
 the dotted lines. The Worker also runs use cases of its own on a timer, through the same Service layer: the due
 calendar reminders every minute and, every hour, the sweep of abandoned File Manager uploads, which removes their rows
@@ -293,17 +292,16 @@ host's composition root (`Program.cs`, `WorkerHost`), never called from controll
 
 ```mermaid
 flowchart TB
+    Worker["Maroik.Worker<br/>e-mail consumer · dead-letter redrive<br/>reminder scheduler · upload sweep"]
     Website["Maroik.Website<br/>MVC controllers · views · TypeScript"]
+    FileStorage["Maroik.FileStorage<br/>internal file API · background virus scan"]
     Service["Maroik.Core.Service<br/>use cases · transactions · logging"]
     Domain["Maroik.Core.Domain<br/>aggregates · value objects · policies"]
     Repository["Maroik.Core.Repository<br/>EF Core repositories"]
     PostgreSQL["Maroik.Core.PostgreSQL<br/>DbContext · mapped models"]
     Client["Maroik.Core.Client<br/>file storage · RabbitMQ · SMTP · ClamAV"]
-    Worker["Maroik.Worker<br/>e-mail consumer · dead-letter redrive<br/>reminder scheduler · upload sweep"]
-    FileStorage["Maroik.FileStorage<br/>internal file API · background virus scan"]
 
     Website --> Service
-    Website -- "types · policy helpers" --> Domain
     Service --> Domain
     Service --> Repository
     Service -- "files · mail body · mail queue" --> Client
