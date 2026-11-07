@@ -169,7 +169,7 @@ Maroik is a modern web application built with ASP.NET Core MVC, featuring a comp
 ### 3. Calendar and Schedule Management
 - Monthly calendar view
 - Event creation and management, with a file attachment and inline images per event
-- Calendars shared with other users or the public
+- Administrators can share their calendars with signed-in users (who subscribe to them) and/or with anonymous visitors
 - Event reminders by e-mail, scheduled when the event is saved (time zone and daylight-saving aware) and sent by the
   worker through the mail queue
 
