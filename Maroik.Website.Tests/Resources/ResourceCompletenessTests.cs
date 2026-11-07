@@ -126,6 +126,45 @@ public class ResourceCompletenessTests
         Assert.True(missing.Count == 0, string.Join(Environment.NewLine, missing));
     }
 
+    /// <summary>
+    /// The shared editor image upload looks its messages up through the localizer its caller hands in, so its keys belong in the
+    /// resx pair of every controller that calls it, which the literal-key check above cannot see: they are not written in the controller.
+    /// </summary>
+    [Fact]
+    public void EveryKey_OfTheEditorImageUpload_ExistsInTheResxPairOfEachCaller()
+    {
+        // (the literal scan only sees a key that comes first in the brackets, and the temporary error is a constant)
+        List<string> keys =
+        [
+            .. LiteralKeys(Path.Combine(_websiteDir, "Extensions", "EditorImageUploadExtensions.cs")),
+            "Input is invalid",
+            Core.Contract.Dtos.ServiceResult.TemporaryErrorKey,
+        ];
+        Assert.Contains("Please attach a file.", keys);
+
+        var callers = Directory.EnumerateFiles(Path.Combine(_websiteDir, "Controllers"), "*Controller.cs")
+            .Where(file => File.ReadAllText(file).Contains("UploadEditorImageAsync(", StringComparison.Ordinal))
+            .Select(Path.GetFileNameWithoutExtension)
+            .OfType<string>()
+            .Order(StringComparer.Ordinal)
+            .ToList();
+        Assert.Contains("ForumController", callers);
+        Assert.Contains("ManagementController", callers);
+        Assert.Contains("CalendarController", callers);
+
+        var missing = new List<string>();
+        foreach (string caller in callers)
+        {
+            foreach (string culture in new[] { "en-US", "ko-KR" })
+            {
+                var defined = ReadResx(Path.Combine(_resourcesDir, "Controllers", $"{caller}.{culture}.resx"));
+                missing.AddRange(keys.Where(key => !defined.ContainsKey(key)).Select(key => $"'{key}' missing in {caller}.{culture}.resx"));
+            }
+        }
+
+        Assert.True(missing.Count == 0, string.Join(Environment.NewLine, missing));
+    }
+
     /// <summary>Every literal key a view asks its localizer for is defined in <c>Resources/Views/{path of the view}</c>.</summary>
     [Fact]
     public void EveryLiteralKey_UsedByAView_ExistsInItsResxPair()

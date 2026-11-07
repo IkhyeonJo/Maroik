@@ -13,20 +13,20 @@ public class AccountSessionPolicyTests
     /// <summary>A session whose account has no row any more ends.</summary>
     [Fact]
     public void InvalidationReason_NamesAMissingAccount() =>
-        Assert.Equal("account no longer exists", AccountSessionPolicy.InvalidationReason(accountExists: false, deleted: false, currentStamp: null, sessionStamp: "stamp"));
+        Assert.Equal(SessionInvalidationReason.AccountMissing, AccountSessionPolicy.InvalidationReason(accountExists: false, deleted: false, currentStamp: null, sessionStamp: "stamp"));
 
     /// <summary>A session of a soft-deleted account ends, even when the stamp still matches.</summary>
     [Fact]
     public void InvalidationReason_NamesADeletedAccount() =>
-        Assert.Equal("account is deleted", AccountSessionPolicy.InvalidationReason(accountExists: true, deleted: true, currentStamp: "stamp", sessionStamp: "stamp"));
+        Assert.Equal(SessionInvalidationReason.AccountDeleted, AccountSessionPolicy.InvalidationReason(accountExists: true, deleted: true, currentStamp: "stamp", sessionStamp: "stamp"));
 
     /// <summary>A stamp that moved on (password change, admin lock) ends the session.</summary>
     [Fact]
     public void InvalidationReason_NamesAChangedStamp() =>
-        Assert.Equal("security stamp changed", AccountSessionPolicy.InvalidationReason(accountExists: true, deleted: false, currentStamp: "new", sessionStamp: "old"));
+        Assert.Equal(SessionInvalidationReason.SecurityStampChanged, AccountSessionPolicy.InvalidationReason(accountExists: true, deleted: false, currentStamp: "new", sessionStamp: "old"));
 
     /// <summary>The stamp is compared exactly: one differing only in letter case is another stamp.</summary>
     [Fact]
     public void InvalidationReason_ComparesTheStampExactly() =>
-        Assert.Equal("security stamp changed", AccountSessionPolicy.InvalidationReason(accountExists: true, deleted: false, currentStamp: "STAMP", sessionStamp: "stamp"));
+        Assert.Equal(SessionInvalidationReason.SecurityStampChanged, AccountSessionPolicy.InvalidationReason(accountExists: true, deleted: false, currentStamp: "STAMP", sessionStamp: "stamp"));
 }

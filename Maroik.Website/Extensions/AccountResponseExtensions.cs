@@ -38,7 +38,7 @@ public static class AccountResponseExtensions
         /// <see langword="null"/> while it still does: <see cref="AccountSessionPolicy"/> over the two DTOs.
         /// </summary>
         /// <param name="session">The account the session captured at login.</param>
-        public string? SessionInvalidationReason(AccountResponse session) => AccountSessionPolicy.InvalidationReason(
+        public SessionInvalidationReason? SessionInvalidationReason(AccountResponse session) => AccountSessionPolicy.InvalidationReason(
             current != null, current?.Deleted ?? false, current?.SecurityStamp, session.SecurityStamp);
     }
 

@@ -14,10 +14,10 @@ public static class AccountSessionPolicy
     /// <param name="deleted">Whether that account is soft-deleted.</param>
     /// <param name="currentStamp">The account's current security stamp.</param>
     /// <param name="sessionStamp">The security stamp the session captured at login.</param>
-    public static string? InvalidationReason(bool accountExists, bool deleted, string? currentStamp, string? sessionStamp)
+    public static SessionInvalidationReason? InvalidationReason(bool accountExists, bool deleted, string? currentStamp, string? sessionStamp)
     {
-        if (!accountExists) return "account no longer exists";
-        if (deleted) return "account is deleted";
-        return currentStamp == sessionStamp ? null : "security stamp changed";
+        if (!accountExists) return SessionInvalidationReason.AccountMissing;
+        if (deleted) return SessionInvalidationReason.AccountDeleted;
+        return currentStamp == sessionStamp ? null : SessionInvalidationReason.SecurityStampChanged;
     }
 }

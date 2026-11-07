@@ -700,7 +700,7 @@ public class AuthorizationFilterTests
         await CreateSut().OnAuthorizationAsync(BuildContext("Dashboard", "UserIndex"));
 
         Assert.Contains("gone@test.com", OnlyWarning("Session invalidated").Message, StringComparison.Ordinal);
-        Assert.Contains("account is deleted", OnlyWarning("Session invalidated").Message, StringComparison.Ordinal);
+        Assert.Contains("AccountDeleted", OnlyWarning("Session invalidated").Message, StringComparison.Ordinal);
     }
 
     /// <summary>Verifies that a session whose security stamp changed is invalidated with a Warning that names the email but not the stamp.</summary>
@@ -716,7 +716,7 @@ public class AuthorizationFilterTests
 
         FakeLogRecord record = OnlyWarning("Session invalidated");
         Assert.Contains("user@test.com", record.Message, StringComparison.Ordinal);
-        Assert.Contains("security stamp changed", record.Message, StringComparison.Ordinal);
+        Assert.Contains("SecurityStampChanged", record.Message, StringComparison.Ordinal);
         Assert.DoesNotContain("old", record.Message.Replace("Session invalidated", "", StringComparison.Ordinal), StringComparison.Ordinal);
     }
 

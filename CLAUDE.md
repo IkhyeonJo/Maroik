@@ -32,9 +32,11 @@ The items below look like gaps or smells but are deliberate. Do not change them,
 them, or refactor them away unless the owner explicitly asks for that specific change.
 
 Deployment and schema
-- Every deployment wipes the server data and recreates the database from `Init.sql`. There are no
-  production migrations, no data back-fills and no backward-compatibility concerns. A schema change
-  means editing `Init.sql` (every variant) and the EF Core model so they match — nothing else.
+- A code-only deployment (`AutoDeploy.sh`) replaces the app containers and keeps the database. A commit that changes
+  `Maroik.DB/` waits for the manual redeploy, which removes every Docker volume and recreates the database from `Init.sql`
+  (README, "Redeploy after a schema change"). There are no production migrations, no data back-fills and no
+  backward-compatibility concerns. A schema change means editing `Init.sql` (every variant) and the EF Core model so they
+  match — nothing else.
 - Judge code against the schema, the seed scripts and the tests only. The production data is the owner's
   responsibility: do not raise checks against existing production rows, ask for queries to be run against it, or
   add safeguards for hypothetical legacy rows.
