@@ -1,16 +1,18 @@
 // Spell check, run by `dotnet test` (SpellingDictionaryArchitectureTests.TheRepository_HasNoSpellingErrors, which pins the
 // cspell version and passes the files git does not ignore).
-// American English, like Rider's default. Project words live in one place, Rider's project dictionary, which "Save to
-// project-level dictionary" writes; this file is JavaScript instead of YAML so that cspell can read them from there.
+// American English, like Rider's default. Project words live in one place, the shared ReSharper settings, where saving a word
+// to Rider's "team-shared" layer writes it; this file is JavaScript instead of YAML so that cspell can read them from there.
 import { readFileSync } from "node:fs";
 
-const riderDictionary = new URL("./.idea/.idea.Maroik/.idea/dictionaries/project.xml", import.meta.url);
+const riderSettings = new URL("./Maroik.slnx.DotSettings", import.meta.url);
 
 export default {
   version: "0.2",
   language: "en-US",
   useGitignore: true,
-  words: [...readFileSync(riderDictionary, "utf8").matchAll(/<w>(.*?)<\/w>/g)].map((match) => match[1]),
+  // A settings key spells a character outside A-Z and 0-9 as _XXXX, its hexadecimal code: clamd's is clamd_0027s.
+  words: [...readFileSync(riderSettings, "utf8").matchAll(/\/UserDictionary\/Words\/=(.*?)\/@EntryIndexedValue/g)].map((match) =>
+    match[1].replace(/_([0-9A-F]{4})/g, (_, code) => String.fromCharCode(parseInt(code, 16)))),
   dictionaries: [
     "csharp",
     "dotnet",

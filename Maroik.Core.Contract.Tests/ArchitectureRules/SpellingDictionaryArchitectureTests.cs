@@ -5,8 +5,8 @@ namespace Maroik.Core.Contract.Tests.ArchitectureRules;
 
 /// <summary>
 /// The repository is spelled in American English, checked by cspell (<c>cspell.config.mjs</c>) as part of <c>dotnet test</c>,
-/// so the spelling needs no step of its own in CI and no git hook. The project's words live once, in Rider's project dictionary
-/// (<c>.idea/.idea.Maroik/.idea/dictionaries/project.xml</c>), which the cspell configuration reads.
+/// so the spelling needs no step of its own in CI and no git hook. The project's words live once, in the shared ReSharper settings
+/// (<c>UserDictionary</c> in <c>Maroik.slnx.DotSettings</c>), which the cspell configuration reads.
 /// </summary>
 public class SpellingDictionaryArchitectureTests
 {
@@ -20,21 +20,9 @@ public class SpellingDictionaryArchitectureTests
     private const string NodeImage = "node:22-alpine";
 
     /// <summary>
-    /// The shared ReSharper settings hold no spelling words of their own (<c>UserDictionary</c>): a third list would drift from the
-    /// two above unseen. A project word goes into Rider's project dictionary.
-    /// </summary>
-    [Fact]
-    public void TheSharedRiderSettings_KeepNoWordListOfTheirOwn()
-    {
-        string settings = File.ReadAllText(Path.Combine(RepositoryPaths.Root, "Maroik.slnx.DotSettings"));
-
-        Assert.DoesNotContain("/UserDictionary/", settings, StringComparison.Ordinal);
-    }
-
-    /// <summary>
     /// cspell finds no unknown word in the repository. The files are the ones git does not ignore (tracked, or new and not yet
     /// added), filtered by the configuration's <c>files</c> globs and <c>ignorePaths</c>. A new word that is spelled right goes
-    /// into Rider's project dictionary; the failure message lists every finding.
+    /// into the shared ReSharper settings (Rider's "team-shared" layer); the failure message lists every finding.
     /// </summary>
     [Fact]
     public async Task TheRepository_HasNoSpellingErrors()

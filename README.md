@@ -500,7 +500,7 @@ dotnet test --project Maroik.Core.Service.Tests            # any single project
 #### Rider settings
 
 Opening the solution brings what Rider reads from a solution: the run configurations (`.run`), the required plugins, the
-inspection profile and dictionary (`.idea`), and the code style (`.editorconfig`, `Maroik.slnx.DotSettings`).
+inspection profile (`.idea`), and the code style and spelling words (`.editorconfig`, `Maroik.slnx.DotSettings`).
 
 The keymap, color scheme, theme, editor options and tool-window layout are IDE-level: Rider reads them only from its own
 configuration folder, so a solution cannot apply them. `.config/rider/install.sh` copies them there, on Linux, macOS and

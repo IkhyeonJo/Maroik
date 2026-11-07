@@ -27,8 +27,8 @@ CI (`.github/workflows/ci-cd.yml`, on pull requests into `main`) runs the same s
 Comments, docs and identifiers are American English (`behavior`, `canceled`, `color`). `dotnet test` checks them with
 cspell (`cspell.config.mjs`, in `SpellingDictionaryArchitectureTests.TheRepository_HasNoSpellingErrors`, which lists every
 unknown word with its file and line); a project word that is not in the dictionary — a product name, a protocol keyword, a piece of test
-data — goes into Rider's project dictionary (`.idea/.idea.Maroik/.idea/dictionaries/project.xml`, which "Save to
-project-level dictionary" in Rider writes), the one list cspell reads too. Before adding a word, check it is not a typo.
+data — goes into the shared ReSharper settings (`UserDictionary` in `Maroik.slnx.DotSettings`, which saving the word to the
+"team-shared" layer in Rider writes), the one list cspell reads too. Before adding a word, check it is not a typo.
 
 The test checks every file git does not ignore (tracked, or new and not yet added), through `npx` or, on a machine without
 Node, in the `node:22-alpine` image (Docker, which the test suites need anyway). It takes about ten seconds.
@@ -43,7 +43,7 @@ Node, in the `node:22-alpine` image (Docker, which the test suites need anyway).
 | Plural folder names, one type per file, folder roles (`Interfaces/`, `Extensions/`, `Fixtures/`, …) | `MAROIK0001`, SA1402 / SA1649, `FolderRoleArchitectureTests` |
 | Domain errors through `DomainError`, service error keys from `ServiceErrorKeys`, resx completeness | `DomainArchitectureTests`, `ServiceErrorKeyArchitectureTests`, `ServiceErrorKeyResxTests`, `ResourceCompletenessTests` |
 | No `any` / type assertions in the client scripts | `noExplicitAny.test.ts`, `noImplicitAny.test.ts` |
-| American spelling, with Rider's project dictionary as the word list | `SpellingDictionaryArchitectureTests` (cspell, pinned version) |
+| American spelling, with the shared ReSharper settings as the word list | `SpellingDictionaryArchitectureTests` (cspell, pinned version) |
 | Every POST action has a failure-contract test | `ControllerFailureContractTests` |
 
 ## What is left to you
