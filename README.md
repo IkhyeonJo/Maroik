@@ -1,11 +1,14 @@
 # Maroik
 
-## Seed accounts (`Init.sql`)
+## Seed accounts
 
-| Role | Email | Password |
-|---|---|---|
-| Admin | `admin@maroik.com` | `demoO12!!` |
-| User (public demo) | `demo@maroik.com` | `demoO12!!` |
+| Role | Email | Password | Seeded by |
+|---|---|---|---|
+| Admin | `admin@maroik.com` | `demoO12!!` | `Debugging/Init.sql` |
+| User (public demo) | `demo@maroik.com` | `demoO12!!` | `Debugging/Init.sql`, then `SeedDemo.sql` |
+
+`SeedDemo.sql` runs after `Init.sql` on every database rebuild and puts the demo account back to these values. A database
+restored from a backup keeps the backup's admin password.
 
 # [https://www.maroik.com]
 
