@@ -35,8 +35,8 @@ restored from a backup keeps the backup's admin password.
 <img width="1851" height="958" alt="image" src="https://github.com/user-attachments/assets/8b87326f-7403-4800-9740-dc08d9b34ea4" />
 
 ### NonfactorGrid
-<img width="1917" height="933" alt="5" src="https://github.com/user-attachments/assets/8271558d-037e-45d6-a6a8-8e1a92958570" />
-<img width="1914" height="942" alt="6" src="https://github.com/user-attachments/assets/c6231b7a-6d87-44fe-aed4-cc1ba9bb6921" />
+<img width="1851" height="958" alt="image" src="https://github.com/user-attachments/assets/d414d399-eadf-49f5-a883-c221c661388c" />
+<img width="1851" height="958" alt="image" src="https://github.com/user-attachments/assets/2548e81b-6745-46bf-b90a-a98abf9f1f96" />
 
 ### Budget
 <img width="1897" height="944" alt="7" src="https://github.com/user-attachments/assets/d1df24a3-e67e-4051-93b0-a9414c62765e" />
