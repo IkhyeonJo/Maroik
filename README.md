@@ -23,16 +23,16 @@ restored from a backup keeps the backup's admin password.
 <img width="1851" height="958" alt="image" src="https://github.com/user-attachments/assets/7e90f7a1-5d45-4cc1-8444-4cb0bdd0cd3e" />
 
 ### File Manager
-<img width="1851" height="958" alt="image" src="https://github.com/user-attachments/assets/d9a33ad6-e34a-407b-b886-dde2e2d17936" />
+<img width="1851" height="958" alt="image" src="https://github.com/user-attachments/assets/ce7120a4-e275-492d-b7fb-1df55f136cdf" />
 
 ### Kanban Board
-<img width="1851" height="958" alt="image" src="https://github.com/user-attachments/assets/866840d6-a129-4399-a6f9-c9e181b477a3" />
+<img width="1851" height="958" alt="image" src="https://github.com/user-attachments/assets/08524a20-addf-44ec-9c84-8ebc4cb0da94" />
 
 ### Calendar
-<img width="1851" height="958" alt="image" src="https://github.com/user-attachments/assets/883466c3-12a9-48b3-8daf-0192318eacf7" />
+<img width="1851" height="958" alt="image" src="https://github.com/user-attachments/assets/c326056f-deac-4d48-b1aa-f6e2c21c29d2" />
 
 ### Forum
-<img width="1914" height="940" alt="4" src="https://github.com/user-attachments/assets/76894805-ac2e-4416-bba6-670b62133fa3" />
+<img width="1851" height="958" alt="image" src="https://github.com/user-attachments/assets/8b87326f-7403-4800-9740-dc08d9b34ea4" />
 
 ### NonfactorGrid
 <img width="1917" height="933" alt="5" src="https://github.com/user-attachments/assets/8271558d-037e-45d6-a6a8-8e1a92958570" />
