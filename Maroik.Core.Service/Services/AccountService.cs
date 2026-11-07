@@ -410,6 +410,14 @@ public class AccountService(
                 return RegisterResult.Fail(AccountMessage.UserAlreadyCreated.GetDescription());
             }
 
+            if (found.Deleted)
+            {
+                // No mail for a deleted account. It answers like the registration does, without disclosing the deletion.
+                await unitOfWork.RollbackAsync(ct);
+                logger.LogWarning("Confirmation resend refused: the account is deleted for {Email}", found.Email.Value);
+                return RegisterResult.Fail(AccountMessage.UserAlreadyCreated.GetDescription());
+            }
+
             // A fresh token on every resend: the row keeps only the earlier token's hash, so that
             // token cannot be mailed again. The links of earlier mails stop working.
             found.RegenerateRegistrationToken(registrationToken, utcNow);
@@ -462,7 +470,7 @@ public class AccountService(
 
         Account? account = await FindByRegistrationTokenAsync(rawToken, ct);
         // A live link: show the password form, echoing the still-encrypted token back into it.
-        if (account != null && GuidToken.IsTokenAlive(rawToken, utcNow))
+        if (account is { Deleted: false } && GuidToken.IsTokenAlive(rawToken, utcNow))
             return new ConfirmEmailResult
             {
                 InvalidToken = false, AccountCreated = false, RegistrationToken = encryptedToken

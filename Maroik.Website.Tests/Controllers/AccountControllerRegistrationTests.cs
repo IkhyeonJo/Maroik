@@ -494,6 +494,45 @@ public class AccountControllerRegistrationTests(MaroikWebApplicationFactory fact
         Assert.True(account.Deleted);
     }
 
+    /// <summary>A resend for a deleted account sends nothing and keeps the stored token.</summary>
+    [Fact]
+    public async Task Register_ResendRequest_DeletedAccount_SendsNothing_AndKeepsTheToken()
+    {
+        string email = UniqueEmail();
+        string rawToken = GuidToken.Generate(DateTime.UtcNow);
+        await SeedAccountAsync(email, emailConfirmed: false, registrationToken: rawToken, deleted: true);
+
+        var response = await PostFormAsync("/Account/Register", new Dictionary<string, string>
+        {
+            ["Email"] = email,
+            ["Password"] = "",
+            ["Nickname"] = "",
+            ["AgreedServiceTerms"] = "false",
+            ["TimeZoneIanaId"] = ""
+        });
+
+        Assert.Equal(System.Net.HttpStatusCode.OK, response.StatusCode);
+        using var scope = factory.Services.CreateScope();
+        Assert.Equal(GuidToken.Hash(rawToken), scope.ServiceProvider.GetRequiredService<ApplicationDbContext>().Accounts.Single(a => a.Email == email).RegistrationToken);
+        Assert.DoesNotContain(scope.ServiceProvider.GetRequiredService<FakeEmailPublisher>().PublishedMessages, m => m.ToEmail == email);
+    }
+
+    /// <summary>A deleted account's mailed link shows no password form, and posting to it with the right password activates nothing.</summary>
+    [Fact]
+    public async Task ConfirmEmail_DeletedAccount_ShowsNoForm_AndDoesNotActivate()
+    {
+        string email = UniqueEmail();
+        string rawToken = GuidToken.Generate(DateTime.UtcNow);
+        await SeedAccountAsync(email, emailConfirmed: false, registrationToken: rawToken, deleted: true);
+
+        var page = await _client.GetAsync($"/Account/ConfirmEmail?registrationToken={Uri.EscapeDataString(EncryptToken(rawToken))}", TestContext.Current.CancellationToken);
+        string html = await page.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        await SubmitConfirmationAsync(EncryptToken(rawToken), "OldPassword1!");
+
+        Assert.DoesNotContain("id=\"confirmEmailForm\"", html, StringComparison.Ordinal);
+        Assert.False(IsEmailConfirmed(email));
+    }
+
     /// <summary>Confirm email already confirmed does not error.</summary>
     [Fact]
     public async Task ConfirmEmail_AlreadyConfirmed_DoesNotError()

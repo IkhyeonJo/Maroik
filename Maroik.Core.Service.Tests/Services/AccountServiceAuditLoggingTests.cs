@@ -265,6 +265,19 @@ public class AccountServiceAuditLoggingTests
         AssertNoSecretLogged("PlainPass1!", "$2a$13$replaced");
     }
 
+    /// <summary>A resend refused because the account is deleted leaves one Warning naming the account.</summary>
+    [Fact]
+    public async Task ResendConfirmation_LogsWarning_WhenTheAccountIsDeleted()
+    {
+        Account deleted = ExistingAccount(deleted: true, emailConfirmed: false);
+        _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(deleted);
+        _accountRepo.Setup(r => r.FindByEmailForUpdateAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(deleted);
+
+        await CreateSut().ResendConfirmationEmailAsync(Email, _emailTemplate, TestContext.Current.CancellationToken);
+
+        Only(LogLevel.Warning, "Confirmation resend refused: the account is deleted");
+    }
+
     /// <summary>Verifies that an unknown confirmation token logs a Warning without the token or its ciphertext.</summary>
     [Fact]
     public async Task ConfirmEmail_LogsWarning_WhenTheTokenIsRejected()

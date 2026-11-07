@@ -1521,6 +1521,25 @@ public class AccountServiceTests
     }
 
     /// <summary>
+    /// A deleted account gets no confirmation mail: the resend answers "already exists" like the registration does, and writes
+    /// and sends nothing. Judged on the locked row, so a delete that wins the lock counts too.
+    /// </summary>
+    [Fact]
+    public async Task ResendConfirmationEmailAsync_ReportsAlreadyCreated_AndChangesNothing_WhenTheAccountIsDeleted()
+    {
+        SetupUnconfirmedAccountForRegister(ActiveAccount(emailConfirmed: false), lockedRead: ActiveAccount(deleted: true, emailConfirmed: false));
+
+        RegisterResult result = await CreateSut().ResendConfirmationEmailAsync("user@example.com", _emailTemplate, TestContext.Current.CancellationToken);
+
+        Assert.False(result.Success);
+        Assert.Equal(AccountMessage.UserAlreadyCreated.GetDescription(), result.ErrorKey);
+        _accountRepo.Verify(r => r.UpdateRegistrationTokenAsync(It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()), Times.Never);
+        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
+        _unitOfWork.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Never);
+        _emailPublisher.Verify(p => p.PublishAsync(It.IsAny<SendEmailMessage>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    /// <summary>
     /// A resend always mints a fresh token, even while the stored one is still live: only its hash is stored, so the
     /// earlier token cannot be mailed again. The mail carries the fresh token, the row its hash, and the outcome is a repeat.
     /// </summary>
@@ -1708,6 +1727,43 @@ public class AccountServiceTests
         _dataProtection.Setup(r => r.Unprotect(ProtectedValue.MailToken, "enc")).Returns(rawToken);
         _accountRepo.Setup(r => r.FindByRegistrationTokenAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(found);
         _accountRepo.Setup(r => r.FindByEmailForUpdateAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(locked);
+    }
+
+    /// <summary>A deleted account's live link is a dead link: no password form.</summary>
+    [Fact]
+    public async Task ValidateRegistrationTokenAsync_ReturnsInvalidToken_WhenTheAccountIsDeleted()
+    {
+        string token = GuidToken.Generate(_now);
+        Account deleted = ActiveAccount(deleted: true, emailConfirmed: false, registrationToken: GuidToken.Hash(token));
+        SetupConfirmLookup(deleted, deleted, token);
+
+        ConfirmEmailResult result = await CreateSut().ValidateRegistrationTokenAsync("enc", TestContext.Current.CancellationToken);
+
+        Assert.True(result.InvalidToken);
+        Assert.False(result.AccountCreated);
+        Assert.Null(result.RegistrationToken);
+    }
+
+    /// <summary>
+    /// A deleted account's live link with the right password confirms nothing, and it answers like any invalid link. Judged on the
+    /// locked row, so a delete that wins the lock counts too.
+    /// </summary>
+    [Fact]
+    public async Task ConfirmEmailAsync_ReturnsInvalidToken_AndConfirmsNothing_WhenTheAccountIsDeleted()
+    {
+        string token = GuidToken.Generate(_now);
+        Account deleted = ActiveAccount(deleted: true, emailConfirmed: false, registrationToken: GuidToken.Hash(token));
+        SetupConfirmLookup(ActiveAccount(emailConfirmed: false, registrationToken: GuidToken.Hash(token)), deleted, token);
+
+        ConfirmEmailResult result = await CreateSut().ConfirmEmailAsync("enc", ConfirmPassword, TestContext.Current.CancellationToken);
+
+        Assert.True(result.InvalidToken);
+        Assert.False(result.AccountCreated);
+        Assert.False(deleted.EmailConfirmed);
+        _accountRepo.Verify(r => r.UpdateEmailConfirmationAsync(
+            It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<string?>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()), Times.Never);
+        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
+        _unitOfWork.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Never);
     }
 
     /// <summary>The row vanishing between the token lookup and the FOR UPDATE re-read is an invalid token, nothing created.</summary>

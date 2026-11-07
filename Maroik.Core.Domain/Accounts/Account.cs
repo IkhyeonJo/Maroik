@@ -295,7 +295,8 @@ public sealed class Account : AggregateRoot<string>
         if (EmailConfirmed)
             return DomainError.Conflict("Account.AlreadyConfirmed", "Email address is already confirmed.");
 
-        if (!TokensMatch(RegistrationToken, token) || !GuidToken.IsTokenAlive(token, utcNow))
+        // A deleted account's link is simply invalid; the token stays stored, so it works again if the account is restored.
+        if (Deleted || !TokensMatch(RegistrationToken, token) || !GuidToken.IsTokenAlive(token, utcNow))
             return DomainError.Validation("Account.InvalidToken", "Invalid email confirmation token.");
 
         EmailConfirmed = true;
@@ -523,11 +524,11 @@ public sealed class Account : AggregateRoot<string>
     /// Unconditionally replaces the registration token (stored as its hash) — the resend flow calls
     /// this on every resend: only the hash is kept, so the earlier token cannot be mailed again, and
     /// the links of earlier mails stop working. No-op once the email is confirmed
-    /// (there is nothing left to confirm).
+    /// (there is nothing left to confirm) and for a deleted account (it cannot be confirmed).
     /// </summary>
     public void RegenerateRegistrationToken(string newToken, DateTime utcNow)
     {
-        if (EmailConfirmed)
+        if (EmailConfirmed || Deleted)
         {
             return;
         }

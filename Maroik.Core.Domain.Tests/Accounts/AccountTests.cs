@@ -217,6 +217,25 @@ public class AccountTests
         Assert.Null(account.RegistrationToken);
     }
 
+    /// <summary>A deleted account's live link confirms nothing: the token is refused and stays stored, so a restored account's link still works.</summary>
+    [Fact]
+    public void ConfirmEmail_ReturnsError_AndChangesNothing_WhenDeleted()
+    {
+        string token = GuidToken.Generate(_now);
+        var account = ValidAccount(registrationToken: token);
+        account.SoftDelete(_now);
+
+        var result = account.ConfirmEmail(token, _now);
+
+        Assert.True(result.IsError);
+        Assert.Equal("Account.InvalidToken", result.FirstError.Code);
+        Assert.False(account.EmailConfirmed);
+        Assert.Equal(GuidToken.Hash(token), account.RegistrationToken);
+
+        account.Restore(_now);
+        Assert.False(account.ConfirmEmail(token, _now).IsError);
+    }
+
     /// <summary>Confirm email returns error, when already confirmed.</summary>
     [Fact]
     public void ConfirmEmail_ReturnsError_WhenAlreadyConfirmed()
@@ -678,7 +697,7 @@ public class AccountTests
         Assert.Equal("Account.Deleted", result.FirstError.Code);
         Assert.Equal("owner-hash", account.HashedPassword);
         Assert.Equal("Owner", account.Nickname);
-        Assert.False(account.ConfirmEmail(token, _now).IsError); // the earlier token still stands
+        Assert.Equal(GuidToken.Hash(token), account.RegistrationToken); // the earlier token still stands
     }
 
     /// <summary>A confirmed account's credentials can never be replaced by a registration.</summary>
@@ -984,6 +1003,19 @@ public class AccountTests
     }
 
     // -- RegenerateRegistrationToken -------------------------------------------
+
+    /// <summary>A deleted account gets no new confirmation token.</summary>
+    [Fact]
+    public void RegenerateRegistrationToken_IsANoOp_WhenDeleted()
+    {
+        string token = GuidToken.Generate(_now);
+        var account = ValidAccount(registrationToken: token);
+        account.SoftDelete(_now);
+
+        account.RegenerateRegistrationToken("fresh-token", _now);
+
+        Assert.Equal(GuidToken.Hash(token), account.RegistrationToken);
+    }
 
     /// <summary>Regenerate registration token replaces the stored token for an unconfirmed account (even one that is still valid).</summary>
     [Fact]
