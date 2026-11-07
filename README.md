@@ -280,13 +280,16 @@ Maroik has been built by one developer since May 2021. It was developed in a pri
 
 ### Layers — DDD + Clean Architecture
 
-Solid arrows show which project calls which, always through an interface in `Maroik.Core.Contract`
-(interfaces and DTOs only, so it calls nothing and is not drawn). The Website calls the Service layer and nothing
-else. Maroik.Worker and Maroik.FileStorage are separate processes: when a use case sends mail or stores a file,
-the Service hands it to Client, and Client puts the mail job on RabbitMQ for the Worker (which sends it over SMTP)
-or uploads / downloads the file over HTTP to FileStorage — the dotted lines. Repository and Client implementations
-are registered only in each host's composition root (`Program.cs`, `WorkerHost`), never called from controllers,
-views or handlers.
+Solid arrows show which project calls which; calls to Service, Repository and Client always go through an interface in
+`Maroik.Core.Contract` (interfaces and DTOs only, so it calls nothing and is not drawn). The Website runs every use
+case through the Service layer; it uses the Domain directly only for its type names, taxonomies and stateless policy
+helpers. Maroik.Worker and Maroik.FileStorage are separate processes: when a use case sends mail or touches a stored
+file, the Service hands it to Client, and Client puts the mail job on RabbitMQ for the Worker (which sends it over
+SMTP) or calls FileStorage over HTTP (upload, download, and the File Manager's chunks, complete, abort and delete) —
+the dotted lines. The Worker also runs use cases of its own on a timer, through the same Service layer: the due
+calendar reminders every minute and, every hour, the sweep of abandoned File Manager uploads, which removes their rows
+and aborts their staging files in FileStorage. Repository and Client implementations are registered only in each
+host's composition root (`Program.cs`, `WorkerHost`), never called from controllers, views or handlers.
 
 ```mermaid
 flowchart TB
@@ -296,10 +299,11 @@ flowchart TB
     Repository["Maroik.Core.Repository<br/>EF Core repositories"]
     PostgreSQL["Maroik.Core.PostgreSQL<br/>DbContext · mapped models"]
     Client["Maroik.Core.Client<br/>file storage · RabbitMQ · SMTP · ClamAV"]
-    Worker["Maroik.Worker<br/>e-mail consumer · reminder scheduler"]
-    FileStorage["Maroik.FileStorage<br/>internal file API"]
+    Worker["Maroik.Worker<br/>e-mail consumer · dead-letter redrive<br/>reminder scheduler · upload sweep"]
+    FileStorage["Maroik.FileStorage<br/>internal file API · background virus scan"]
 
     Website --> Service
+    Website -- "types · policy helpers" --> Domain
     Service --> Domain
     Service --> Repository
     Service -- "files · mail body · mail queue" --> Client
@@ -307,17 +311,17 @@ flowchart TB
     Repository --> PostgreSQL
 
     Client -. "mail jobs (RabbitMQ)" .-> Worker
-    Client -. "HTTP upload / download" .-> FileStorage
+    Client -. "HTTP upload / download<br/>chunks · complete · abort · delete" .-> FileStorage
 
-    Worker -- "mail status · due reminders" --> Service
+    Worker -- "mail status · due reminders<br/>abandoned uploads" --> Service
     Worker -- "send mail (SMTP)" --> Client
     FileStorage -- "virus scan (ClamAV)" --> Client
 ```
 
 - **Domain** holds the business rules — aggregates, value objects (`Email`, `Money`, `CurrencyCode`, …), policies
-  (finance class taxonomies, reminder limits and schedules, fixed schedules, passwords, uploads, File Manager quotas
-  and names, Kanban lanes) and the budget formula engine. It calls no other
-  project, logs nothing, never reads the clock (the current time is passed in) and reports every error through
+  (finance class taxonomies, amounts and history, asset usage, reminder limits and schedules, calendar access, fixed
+  schedules, passwords, nicknames, sessions, admin and menu safeguards, uploads, File Manager quotas and names, Kanban
+  lanes) and the budget formula engine. It calls no other project, logs nothing, never reads the clock (the current time is passed in) and reports every error through
   `DomainError`, so the outer layers can translate it.
 - **Service** orchestrates a use case: it loads aggregates through repository interfaces, calls domain methods, owns
   the transaction (each write spells out `BeginAsync` / `CommitAsync` / `RollbackAsync`), maps to DTOs and logs. It
@@ -347,19 +351,29 @@ flowchart LR
     cloudflared -- "HTTP :80" --> Website["Maroik.Website"]
     Website --> PostgreSQL[("PostgreSQL 17")]
     Website --> Valkey[("Valkey<br/>session · Data Protection keys")]
-    Website -- "HTTP upload / download" --> FileStorage["Maroik.FileStorage"]
+    Website -- "HTTP upload / download<br/>chunks · complete · abort · delete" --> FileStorage["Maroik.FileStorage"]
     FileStorage -- "scan (TCP 3310)" --> ClamAV["ClamAV"]
     Website -- "publish mail jobs" --> RabbitMQ[("RabbitMQ")]
     RabbitMQ -- "deliver mail jobs" --> Worker["Maroik.Worker"]
-    Worker -- "mail status · due reminders" --> PostgreSQL
+    Worker -- "publish reminder mail jobs" --> RabbitMQ
+    Worker -- "mail status · due reminders<br/>abandoned uploads" --> PostgreSQL
+    Worker -- "abort abandoned uploads" --> FileStorage
     Worker -- "send mail" --> SMTP["SMTP relay"]
 ```
 
 Every service runs as a container under Docker Compose. Uploads are scanned by ClamAV before they are stored (File
 Manager uploads in the background; an administrator can turn the scan off for one account's File Manager), the file
 storage is reachable only on the internal network, and outgoing mail is queued in RabbitMQ and sent by the worker,
-which also sends the due calendar reminders once a minute. In production the site is reached through a Cloudflare Tunnel, so the host publishes no port (a build deployed with
+which also sends the due calendar reminders once a minute and removes abandoned File Manager uploads once an hour. In
+production the site is reached through a Cloudflare Tunnel, so the host publishes no port (a build deployed with
 `Deploy.sh` choice 1 can instead use port forwarding behind Caddy, or plain HTTP without a domain).
+
+Mail that runs out of retries lands in a dead-letter queue. Once the cause is fixed (an SMTP outage longer than the
+retry delays, a wrong mail setting), an operator moves it back into the mail queue with a fresh retry budget:
+
+```bash
+docker exec Maroik.Worker dotnet Maroik.Worker.dll redrive-email-dead-letters
+```
 
 ### Client scripts
 
