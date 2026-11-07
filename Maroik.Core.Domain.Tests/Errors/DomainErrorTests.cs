@@ -1,6 +1,5 @@
 using ErrorOr;
 using Maroik.Core.Domain.Errors;
-// ReSharper disable InvalidXmlDocComment
 namespace Maroik.Core.Domain.Tests.Errors;
 
 /// <summary>Unit tests for <see cref="DomainError"/>.</summary>

@@ -1,11 +1,8 @@
-// ReSharper disable PropertyCanBeMadeInitOnly.Global
-// ReSharper disable UnusedAutoPropertyAccessor.Global
 namespace Maroik.Core.Contract.Dtos;
 
 /// <summary>
 /// Data transfer object used to set the sharing permissions of a calendar.
 /// </summary>
-// ReSharper disable once ClassNeverInstantiated.Global
 public class CalendarSharedRequest
 {
     /// <summary>ID of the calendar whose sharing settings are being updated (primary key).</summary>

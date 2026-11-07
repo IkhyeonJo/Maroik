@@ -43,17 +43,8 @@ public class DashboardService(
             month = settings.Value.DemoDashboardMonth ?? month;
         }
 
-        // Normalize year/month
         DateTime accountToday = utcNow.ConvertTimeByTimeZoneIanaId(timeZoneId);
-        if (!int.TryParse(year, out int yearInt)) yearInt = accountToday.Year;
-        if (!int.TryParse(month, out int monthInt)) monthInt = accountToday.Month;
-
-        // An out-of-range month (or year outside DateTime's valid range) is replaced here with the
-        // account's current one, so the `new DateTime(yearInt, monthInt, 1)` calls below can never throw
-        // on a hand-edited query string.
-        if (monthInt is < 1 or > 12) monthInt = accountToday.Month;
-        // Capped one below DateTime.MaxValue's year: yearEnd below computes `new DateTime(yearInt + 1, ...)`.
-        if (yearInt is < 1 or > 9998) yearInt = accountToday.Year;
+        (int yearInt, int monthInt) = NormalizePeriod(year, month, accountToday);
 
         // DefaultMonetaryUnit/MonetaryUnits are computed from the account's full asset list,
         // including deleted ones (AssetRepository.GetAssetsAsync never filters Deleted) — so a
@@ -90,41 +81,69 @@ public class DashboardService(
         };
 
         if (summary.DefaultMonetaryUnit != null)
-        {
-            DateTime yearStart = new DateTime(yearInt, 1, 1).ConvertToUtcByTimeZoneIanaId(timeZoneId);
-            DateTime yearEnd = new DateTime(yearInt + 1, 1, 1).ConvertToUtcByTimeZoneIanaId(timeZoneId);
-            DateTime ymStart = new DateTime(yearInt, monthInt, 1).ConvertToUtcByTimeZoneIanaId(timeZoneId);
-            DateTime ymEnd = new DateTime(yearInt, monthInt, 1).AddMonths(1).ConvertToUtcByTimeZoneIanaId(timeZoneId);
+            await FillBreakdownsAsync(summary, summary.DefaultMonetaryUnit, accountEmail, yearInt, monthInt, timeZoneId, allAssets, ct);
 
-            List<Income> yearIncomes = await incomeRepository.GetByAccountEmailAndDateRangeAsync(accountEmail, yearStart, yearEnd, ct);
-            List<Expenditure> yearExpenditures = await expenditureRepository.GetByAccountEmailAndDateRangeAsync(accountEmail, yearStart, yearEnd, ct);
+        summary.StartYear = await GetStartYearAsync(accountEmail, utcNow, timeZoneId, ct);
 
-            // ymStart/ymEnd always fall within [yearStart, yearEnd), so the year-month totals can
-            // be derived from the year totals already fetched above instead of two more DB round
-            // trips (repositories share a single scoped DbContext, so these calls cannot run
-            // concurrently via Task.WhenAll either).
-            List<Income> ymIncomes = [.. yearIncomes.Where(x => x.Created >= ymStart && x.Created < ymEnd)];
-            List<Expenditure> ymExpenditures = [.. yearExpenditures.Where(x => x.Created >= ymStart && x.Created < ymEnd)];
+        return summary;
+    }
 
-            // Only the records whose asset carries the default unit count (DefaultUnitScope, looked up
-            // among allAssets so a record tied to a since-deleted asset keeps its currency).
-            DefaultUnitScope scope = DefaultUnitScope.Of(summary.DefaultMonetaryUnit, allAssets);
+    /// <summary>The requested year and month, with the account's current one in place of a value that does not parse or is out of range.</summary>
+    private static (int Year, int Month) NormalizePeriod(string year, string month, DateTime accountToday)
+    {
+        if (!int.TryParse(year, out int yearInt)) yearInt = accountToday.Year;
+        if (!int.TryParse(month, out int monthInt)) monthInt = accountToday.Month;
 
-            // Per-main-class subClass amount/percentage breakdowns (labor/business/pension income,
-            // meal/housing/education spending, ...) the dashboard view displays. Computed here, from
-            // IncomeClassPolicy/ExpenditureClassPolicy's own main-class list, so the view model
-            // mapper only reads pre-computed numbers instead of re-deriving these sums itself.
-            summary.YearIncomeBreakdown = BuildBreakdown(
-                yearIncomes.Where(scope.Includes).Select(i => (i.MainClass, i.SubClass, i.Amount.Amount)), IncomeClassPolicy.SubClassesByMainClass.Keys);
-            summary.YearMonthIncomeBreakdown = BuildBreakdown(
-                ymIncomes.Where(scope.Includes).Select(i => (i.MainClass, i.SubClass, i.Amount.Amount)), IncomeClassPolicy.SubClassesByMainClass.Keys);
-            summary.YearExpenditureBreakdown = BuildBreakdown(
-                yearExpenditures.Where(scope.Includes).Select(e => (e.MainClass, e.SubClass, e.Amount.Amount)), ExpenditureClassPolicy.SubClassesByMainClass.Keys);
-            summary.YearMonthExpenditureBreakdown = BuildBreakdown(
-                ymExpenditures.Where(scope.Includes).Select(e => (e.MainClass, e.SubClass, e.Amount.Amount)), ExpenditureClassPolicy.SubClassesByMainClass.Keys);
-        }
+        // An out-of-range month (or year outside DateTime's valid range) is replaced here with the
+        // account's current one, so the `new DateTime(yearInt, monthInt, 1)` calls can never throw
+        // on a hand-edited query string.
+        if (monthInt is < 1 or > 12) monthInt = accountToday.Month;
+        // Capped one below DateTime.MaxValue's year: FillBreakdownsAsync computes `new DateTime(yearInt + 1, ...)`.
+        if (yearInt is < 1 or > 9998) yearInt = accountToday.Year;
 
-        // Compute StartYear
+        return (yearInt, monthInt);
+    }
+
+    /// <summary>Fills the year and year-month income / expenditure breakdowns of <paramref name="summary"/>, in the default unit.</summary>
+    private async Task FillBreakdownsAsync(DashboardDto summary, string defaultMonetaryUnit, string accountEmail, int yearInt, int monthInt,
+        string timeZoneId, List<Asset> allAssets, CancellationToken ct)
+    {
+        DateTime yearStart = new DateTime(yearInt, 1, 1).ConvertToUtcByTimeZoneIanaId(timeZoneId);
+        DateTime yearEnd = new DateTime(yearInt + 1, 1, 1).ConvertToUtcByTimeZoneIanaId(timeZoneId);
+        DateTime ymStart = new DateTime(yearInt, monthInt, 1).ConvertToUtcByTimeZoneIanaId(timeZoneId);
+        DateTime ymEnd = new DateTime(yearInt, monthInt, 1).AddMonths(1).ConvertToUtcByTimeZoneIanaId(timeZoneId);
+
+        List<Income> yearIncomes = await incomeRepository.GetByAccountEmailAndDateRangeAsync(accountEmail, yearStart, yearEnd, ct);
+        List<Expenditure> yearExpenditures = await expenditureRepository.GetByAccountEmailAndDateRangeAsync(accountEmail, yearStart, yearEnd, ct);
+
+        // ymStart/ymEnd always fall within [yearStart, yearEnd), so the year-month totals can
+        // be derived from the year totals already fetched above instead of two more DB round
+        // trips (repositories share a single scoped DbContext, so these calls cannot run
+        // concurrently via Task.WhenAll either).
+        List<Income> ymIncomes = [.. yearIncomes.Where(x => x.Created >= ymStart && x.Created < ymEnd)];
+        List<Expenditure> ymExpenditures = [.. yearExpenditures.Where(x => x.Created >= ymStart && x.Created < ymEnd)];
+
+        // Only the records whose asset carries the default unit count (DefaultUnitScope, looked up
+        // among allAssets so a record tied to a since-deleted asset keeps its currency).
+        DefaultUnitScope scope = DefaultUnitScope.Of(defaultMonetaryUnit, allAssets);
+
+        // Per-main-class subClass amount/percentage breakdowns (labor/business/pension income,
+        // meal/housing/education spending, ...) the dashboard view displays. Computed here, from
+        // IncomeClassPolicy/ExpenditureClassPolicy's own main-class list, so the view model
+        // mapper only reads pre-computed numbers instead of re-deriving these sums itself.
+        summary.YearIncomeBreakdown = BuildBreakdown(
+            yearIncomes.Where(scope.Includes).Select(i => (i.MainClass, i.SubClass, i.Amount.Amount)), IncomeClassPolicy.SubClassesByMainClass.Keys);
+        summary.YearMonthIncomeBreakdown = BuildBreakdown(
+            ymIncomes.Where(scope.Includes).Select(i => (i.MainClass, i.SubClass, i.Amount.Amount)), IncomeClassPolicy.SubClassesByMainClass.Keys);
+        summary.YearExpenditureBreakdown = BuildBreakdown(
+            yearExpenditures.Where(scope.Includes).Select(e => (e.MainClass, e.SubClass, e.Amount.Amount)), ExpenditureClassPolicy.SubClassesByMainClass.Keys);
+        summary.YearMonthExpenditureBreakdown = BuildBreakdown(
+            ymExpenditures.Where(scope.Includes).Select(e => (e.MainClass, e.SubClass, e.Amount.Amount)), ExpenditureClassPolicy.SubClassesByMainClass.Keys);
+    }
+
+    /// <summary>The year, in the account's time zone, of the account's first income or expenditure.</summary>
+    private async Task<int> GetStartYearAsync(string accountEmail, DateTime utcNow, string timeZoneId, CancellationToken ct)
+    {
         var firstIncome = await incomeRepository.GetFirstByAccountEmailOrderedByCreatedAsync(accountEmail, ct);
         var firstExpenditure = await expenditureRepository.GetFirstByAccountEmailOrderedByCreatedAsync(accountEmail, ct);
 
@@ -134,11 +153,7 @@ public class DashboardService(
         // required here: firstCreated is DateTimeKind.Unspecified as returned by Npgsql but
         // actually represents a UTC instant, and the raw API infers its source zone from Kind,
         // silently falling back to the OS-local zone instead of UTC for Unspecified values.
-        firstCreated = firstCreated.ConvertTimeByTimeZoneIanaId(timeZoneId);
-
-        summary.StartYear = firstCreated.Year;
-
-        return summary;
+        return firstCreated.ConvertTimeByTimeZoneIanaId(timeZoneId).Year;
     }
 
     /// <inheritdoc />

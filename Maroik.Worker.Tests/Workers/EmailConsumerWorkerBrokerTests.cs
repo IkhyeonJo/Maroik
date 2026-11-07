@@ -8,7 +8,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Moq;
 using RabbitMQ.Client;
-// ReSharper disable ClassNeverInstantiated.Global
 
 namespace Maroik.Worker.Tests.Workers;
 

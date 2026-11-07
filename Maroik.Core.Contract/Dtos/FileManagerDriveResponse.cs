@@ -1,5 +1,3 @@
-// ReSharper disable PropertyCanBeMadeInitOnly.Global
-// ReSharper disable UnusedAutoPropertyAccessor.Global
 namespace Maroik.Core.Contract.Dtos;
 
 /// <summary>A user's whole File Manager drive as the left panel shows it: the folder tree and the storage usage.</summary>

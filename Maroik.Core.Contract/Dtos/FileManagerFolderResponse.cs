@@ -1,5 +1,3 @@
-// ReSharper disable PropertyCanBeMadeInitOnly.Global
-// ReSharper disable UnusedAutoPropertyAccessor.Global
 namespace Maroik.Core.Contract.Dtos;
 
 /// <summary>An open File Manager folder: its place in the drive and its items (folders first, then by name).</summary>

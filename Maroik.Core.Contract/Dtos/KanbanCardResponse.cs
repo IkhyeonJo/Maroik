@@ -1,5 +1,3 @@
-// ReSharper disable PropertyCanBeMadeInitOnly.Global
-// ReSharper disable UnusedAutoPropertyAccessor.Global
 namespace Maroik.Core.Contract.Dtos;
 
 /// <summary>Data transfer object returned for one card of a Kanban board.</summary>

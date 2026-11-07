@@ -1,4 +1,3 @@
-// ReSharper disable PropertyCanBeMadeInitOnly.Global
 namespace Maroik.Core.Contract.Dtos;
 
 /// <summary>

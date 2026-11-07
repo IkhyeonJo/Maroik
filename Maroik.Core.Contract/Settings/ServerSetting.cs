@@ -1,6 +1,3 @@
-// ReSharper disable PropertyCanBeMadeInitOnly.Global
-// ReSharper disable UnusedAutoPropertyAccessor.Global
-
 namespace Maroik.Core.Contract.Settings;
 
 /// <summary>
@@ -44,7 +41,6 @@ public class ServerSetting
     /// counting it as noticed (see <c>FixedSchedulePolicy.IsNoticed</c>) — not its maturity date.
     /// </summary>
     public int NoticeMaturityDateDay { get; set; }
-
 
     /// <summary>Base URL of the Maroik.FileStorage microservice used for file upload/download.</summary>
     public string? FileStorageBaseUrl { get; set; }

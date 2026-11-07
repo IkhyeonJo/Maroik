@@ -1,4 +1,3 @@
-// ReSharper disable InvalidXmlDocComment
 namespace Maroik.FileStorage;
 
 /// <summary>
@@ -7,6 +6,4 @@ namespace Maroik.FileStorage;
 /// projects (e.g. <c>Maroik.FileStorage.Tests</c> / <c>Maroik.E2E.Tests</c>) to reference it
 /// as the entry-point anchor for <c>Microsoft.AspNetCore.Mvc.Testing.WebApplicationFactory&lt;TEntryPoint&gt;</c> (a test-only package this project does not reference).
 /// </summary>
-// ReSharper disable once PartialTypeWithSinglePart
-// ReSharper disable once ClassNeverInstantiated.Global
 public partial class Program;

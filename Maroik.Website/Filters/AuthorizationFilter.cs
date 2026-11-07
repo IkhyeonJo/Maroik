@@ -11,7 +11,6 @@ using Maroik.Website.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.Extensions.Caching.Distributed;
-// ReSharper disable InvalidXmlDocComment
 
 namespace Maroik.Website.Filters;
 

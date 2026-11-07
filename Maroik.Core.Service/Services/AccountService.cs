@@ -467,20 +467,20 @@ public class AccountService(
     {
         DateTime utcNow = timeProvider.GetUtcNow().UtcDateTime;
         if (TryUnprotectRegistrationToken(encryptedToken) is not { } rawToken)
-            return new ConfirmEmailResult { InvalidToken = true, AccountCreated = false };
+            return InvalidConfirmationToken();
 
         Account? account = await FindByRegistrationTokenAsync(rawToken, ct);
         if (account == null)
         {
             logger.LogWarning("Email confirmation rejected: invalid or expired token");
-            return new ConfirmEmailResult { InvalidToken = true, AccountCreated = false };
+            return InvalidConfirmationToken();
         }
 
         // Reject tokens that have passed their time-to-live window.
         if (!GuidToken.IsTokenAlive(rawToken, utcNow))
         {
             logger.LogWarning("Email confirmation rejected: invalid or expired token for {Email}", account.Email.Value);
-            return new ConfirmEmailResult { InvalidToken = true, AccountCreated = false };
+            return InvalidConfirmationToken();
         }
 
         await unitOfWork.BeginAsync(ct: ct);
@@ -495,7 +495,7 @@ public class AccountService(
             {
                 await unitOfWork.RollbackAsync(ct);
                 logger.LogWarning("Email confirmation rejected: invalid or expired token for {Email}", account.Email.Value);
-                return new ConfirmEmailResult { InvalidToken = true, AccountCreated = false };
+                return InvalidConfirmationToken();
             }
 
             // ConfirmEmail enforces its own invariant against the freshly-locked row: it rejects a
@@ -522,62 +522,77 @@ public class AccountService(
                 {
                     await unitOfWork.RollbackAsync(ct);
                     logger.LogWarning("Email confirmation rejected: invalid or expired token for {Email}", locked.Email.Value);
-                    return new ConfirmEmailResult { InvalidToken = true, AccountCreated = false };
+                    return InvalidConfirmationToken();
                 }
 
                 // Email was already confirmed by a previous request.
-                locked.SetMessage(AccountMessage.UserAlreadyCreated.GetDescription(), utcNow);
-                try
-                {
-                    await accountRepository.UpdateMessageAsync(locked.Email.Value, locked.Message, locked.Updated, ct);
-                    await unitOfWork.CommitAsync(ct);
-                }
-                catch (Exception e)
-                {
-                    logger.LogError(e, "Failed to update account status for {Email}", locked.Email.Value);
-                    await unitOfWork.RollbackAsync(ct);
-                }
-                return new ConfirmEmailResult { InvalidToken = false, AccountCreated = false };
+                return await RecordAlreadyConfirmedAsync(locked, utcNow, ct);
             }
 
-            locked.SetMessage(AccountMessage.Success.GetDescription(), utcNow);
-            int rowsAffected;
-            try
-            {
-                rowsAffected = await accountRepository.UpdateEmailConfirmationAsync(
-                    locked.Email.Value, locked.RegistrationToken, locked.Message, locked.Updated, ct);
-                await unitOfWork.CommitAsync(ct);
-            }
-            catch (Exception e)
-            {
-                logger.LogError(e, "Failed to confirm email for account {Email}", locked.Email.Value);
-                await unitOfWork.RollbackAsync(ct);
-                return new ConfirmEmailResult
-                {
-                    InvalidToken = true,
-                    AccountCreated = true,
-                    ErrorKey = ServiceErrorKeys.ConfirmEmailFailed
-                };
-            }
-
-            // ExecuteUpdateAsync doesn't throw on a missing row -- it just matches zero rows. If the
-            // account was deleted concurrently, nothing was actually persisted; report it the same
-            // way as "account not found" rather than a false AccountCreated success.
-            if (rowsAffected != 0)
-            {
-                logger.LogInformation("Email confirmed for {Email}", locked.Email.Value);
-                return new ConfirmEmailResult { InvalidToken = false, AccountCreated = true };
-            }
-
-            logger.LogWarning(
-                "Account {Email} no longer existed when its email confirmation was written", locked.Email.Value);
-            return new ConfirmEmailResult { InvalidToken = true, AccountCreated = false };
+            return await PersistEmailConfirmationAsync(locked, utcNow, ct);
         }
         catch
         {
             await unitOfWork.RollbackAsync(ct);
             throw;
         }
+    }
+
+    /// <summary>The answer to a confirmation link that is invalid, expired or superseded, or whose account is gone.</summary>
+    private static ConfirmEmailResult InvalidConfirmationToken() => new() { InvalidToken = true, AccountCreated = false };
+
+    /// <summary>Records on the locked row that the address was confirmed before, and ends the transaction of <see cref="ConfirmEmailAsync"/>.</summary>
+    private async Task<ConfirmEmailResult> RecordAlreadyConfirmedAsync(Account locked, DateTime utcNow, CancellationToken ct)
+    {
+        locked.SetMessage(AccountMessage.UserAlreadyCreated.GetDescription(), utcNow);
+        try
+        {
+            await accountRepository.UpdateMessageAsync(locked.Email.Value, locked.Message, locked.Updated, ct);
+            await unitOfWork.CommitAsync(ct);
+        }
+        catch (Exception e)
+        {
+            logger.LogError(e, "Failed to update account status for {Email}", locked.Email.Value);
+            await unitOfWork.RollbackAsync(ct);
+        }
+        return new ConfirmEmailResult { InvalidToken = false, AccountCreated = false };
+    }
+
+    /// <summary>Writes the confirmation of the locked row, and ends the transaction of <see cref="ConfirmEmailAsync"/>.</summary>
+    private async Task<ConfirmEmailResult> PersistEmailConfirmationAsync(Account locked, DateTime utcNow, CancellationToken ct)
+    {
+        locked.SetMessage(AccountMessage.Success.GetDescription(), utcNow);
+        int rowsAffected;
+        try
+        {
+            rowsAffected = await accountRepository.UpdateEmailConfirmationAsync(
+                locked.Email.Value, locked.RegistrationToken, locked.Message, locked.Updated, ct);
+            await unitOfWork.CommitAsync(ct);
+        }
+        catch (Exception e)
+        {
+            logger.LogError(e, "Failed to confirm email for account {Email}", locked.Email.Value);
+            await unitOfWork.RollbackAsync(ct);
+            return new ConfirmEmailResult
+            {
+                InvalidToken = true,
+                AccountCreated = true,
+                ErrorKey = ServiceErrorKeys.ConfirmEmailFailed
+            };
+        }
+
+        // ExecuteUpdateAsync doesn't throw on a missing row -- it just matches zero rows. If the
+        // account was deleted concurrently, nothing was actually persisted; report it the same
+        // way as "account not found" rather than a false AccountCreated success.
+        if (rowsAffected != 0)
+        {
+            logger.LogInformation("Email confirmed for {Email}", locked.Email.Value);
+            return new ConfirmEmailResult { InvalidToken = false, AccountCreated = true };
+        }
+
+        logger.LogWarning(
+            "Account {Email} no longer existed when its email confirmation was written", locked.Email.Value);
+        return InvalidConfirmationToken();
     }
 
     /// <summary>An address no account can have (the primary key is never empty): the target of the timing-equalization write.</summary>

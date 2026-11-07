@@ -1,6 +1,5 @@
 using Maroik.Website.Extensions;
 using Microsoft.AspNetCore.Mvc.Localization;
-// ReSharper disable InvalidXmlDocComment
 
 namespace Maroik.Website.Tests.Extensions;
 

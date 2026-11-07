@@ -10,6 +10,5 @@ namespace Maroik.Website.Models.ViewModels.Calendars;
 public class CalendarInputViewModel
 {
     /// <summary>The calendar(s) the request is about, as posted by the client script.</summary>
-    // ReSharper disable once AutoPropertyCanBeMadeGetOnly.Global
     public IEnumerable<CalendarRequest> Calendars { get; set; } = [];
 }

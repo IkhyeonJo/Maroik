@@ -1,6 +1,3 @@
-// ReSharper disable InvalidXmlDocComment
-// ReSharper disable PartialTypeWithSinglePart
-// ReSharper disable ClassNeverInstantiated.Global
 namespace Maroik.Website;
 
 /// <summary>

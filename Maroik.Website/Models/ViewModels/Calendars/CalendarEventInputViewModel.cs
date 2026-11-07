@@ -1,7 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.Globalization;
 using Maroik.Core.Domain.Calendars;
-// ReSharper disable InvalidXmlDocComment
 
 namespace Maroik.Website.Models.ViewModels.Calendars;
 

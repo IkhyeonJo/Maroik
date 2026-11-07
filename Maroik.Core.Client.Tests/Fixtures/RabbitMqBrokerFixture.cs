@@ -7,7 +7,6 @@ namespace Maroik.Core.Client.Tests.Fixtures;
 /// One throwaway RabbitMQ 4 container for a test class (xUnit class fixture). Tests share it, so each starts by
 /// calling <see cref="ResetQueuesAsync"/> to delete the two well-known queues and get a clean slate.
 /// </summary>
-// ReSharper disable once ClassNeverInstantiated.Global
 public sealed class RabbitMqBrokerFixture : IAsyncLifetime
 {
     /// <summary>The throwaway RabbitMQ broker container shared by the assembly's tests.</summary>

@@ -2,7 +2,6 @@ using Docker.DotNet;
 using DotNet.Testcontainers.Configurations;
 using DotNet.Testcontainers.Containers;
 using Microsoft.Playwright;
-// ReSharper disable ClassNeverInstantiated.Global
 // ReSharper disable MethodHasAsyncOverload
 
 namespace Maroik.E2E.Tests.Fixtures;

@@ -10,7 +10,6 @@ using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Testcontainers.PostgreSql;
-// ReSharper disable ClassNeverInstantiated.Global
 
 namespace Maroik.Website.Tests.Fixtures;
 

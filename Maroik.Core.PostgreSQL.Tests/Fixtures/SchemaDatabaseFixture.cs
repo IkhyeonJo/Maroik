@@ -1,6 +1,5 @@
 using Npgsql;
 using Testcontainers.PostgreSql;
-// ReSharper disable ClassNeverInstantiated.Global
 
 namespace Maroik.Core.PostgreSQL.Tests.Fixtures;
 

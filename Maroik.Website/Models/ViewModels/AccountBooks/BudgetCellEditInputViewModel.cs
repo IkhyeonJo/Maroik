@@ -1,4 +1,3 @@
-// ReSharper disable ClassNeverInstantiated.Global
 using System.ComponentModel.DataAnnotations;
 
 namespace Maroik.Website.Models.ViewModels.AccountBooks;

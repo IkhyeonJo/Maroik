@@ -2,7 +2,6 @@ using Maroik.Core.Domain.Finances;
 using Maroik.Core.Repository.Repositories;
 using Microsoft.EntityFrameworkCore;
 using OrmIncome = Maroik.Core.PostgreSQL.Models.Income;
-// ReSharper disable InvalidXmlDocComment
 
 namespace Maroik.Core.Repository.Tests.Repositories;
 

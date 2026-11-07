@@ -9,7 +9,6 @@ using Microsoft.Extensions.Logging.Testing;
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Time.Testing;
 using Moq;
-// ReSharper disable InvalidXmlDocComment
 
 namespace Maroik.Core.Service.Tests.Services;
 

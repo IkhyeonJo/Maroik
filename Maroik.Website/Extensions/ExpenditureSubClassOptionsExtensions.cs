@@ -2,7 +2,6 @@ using Maroik.Core.Domain.Finances;
 using Microsoft.AspNetCore.Html;
 using Microsoft.AspNetCore.Mvc.Localization;
 using Microsoft.AspNetCore.Mvc.Rendering;
-// ReSharper disable InvalidXmlDocComment
 
 namespace Maroik.Website.Extensions;
 
