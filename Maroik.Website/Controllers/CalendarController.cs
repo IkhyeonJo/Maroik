@@ -24,7 +24,8 @@ public class CalendarController(
     ICalendarService calendarService,
     IDataProtectionService dataProtection,
     IOptions<ServerSetting> serverSettings,
-    IPolicyService policyService,
+    ITimeZoneDisplayService timeZones,
+    ICalendarPolicyService calendarPolicy,
     TimeProvider timeProvider) : Controller
 {
     /// <summary>Shared extension-to-MIME-type lookup for attachment downloads (safe for concurrent reads).</summary>
@@ -91,7 +92,7 @@ public class CalendarController(
                 return Json(new { result = false, error = localizer["Please Login to create calendar event"].Value });
 
             ServiceResult createEventResult = await calendarService.CreateCalendarEventAsync(
-                calendarEventInputViewModel.ToCalendarEventRequest(policyService),
+                calendarEventInputViewModel.ToCalendarEventRequest(timeZones),
                 loggedInAccount.RequireEmail(),
                 $"{loggedInAccount.Role}Index",
                 calendarEventInputViewModel.SerializedCalendarReminders.ToReminderInfoList(),
@@ -152,13 +153,13 @@ public class CalendarController(
 
         CalendarOutputViewModel vm = new()
         {
-            ReminderRules = policyService.GetCalendarFormRules(),
+            ReminderRules = calendarPolicy.GetCalendarFormRules(),
             Calendars = calendars,
-            CalendarEventOutputViewModels = await calendarService.GetCalendarEventViewModelsAsync(policyService, calendars, userTimezone, null, HttpContext.RequestAborted),
+            CalendarEventOutputViewModels = await calendarService.GetCalendarEventViewModelsAsync(timeZones, calendars, userTimezone, null, HttpContext.RequestAborted),
             LoggedInAccount = loggedInAccount,
             LoggedInAccountTimeZoneIanaId = userTimezone
         };
-        vm.PopulateTimeData(policyService, userTimezone, timeProvider.GetUtcNow().UtcDateTime);
+        vm.PopulateTimeData(timeZones, userTimezone, timeProvider.GetUtcNow().UtcDateTime);
         return View(vm);
     }
 
@@ -186,16 +187,16 @@ public class CalendarController(
 
         CalendarOutputViewModel vm = new()
         {
-            ReminderRules = policyService.GetCalendarFormRules(),
+            ReminderRules = calendarPolicy.GetCalendarFormRules(),
             Calendars = calendars,
-            CalendarEventOutputViewModels = await calendarService.GetCalendarEventViewModelsAsync(policyService, calendars, userTimezone, null, HttpContext.RequestAborted),
+            CalendarEventOutputViewModels = await calendarService.GetCalendarEventViewModelsAsync(timeZones, calendars, userTimezone, null, HttpContext.RequestAborted),
             OtherCalendars = otherCalendars,
-            OtherCalendarEventOutputViewModels = await calendarService.GetCalendarEventViewModelsAsync(policyService, otherCalendars, userTimezone, null, HttpContext.RequestAborted),
+            OtherCalendarEventOutputViewModels = await calendarService.GetCalendarEventViewModelsAsync(timeZones, otherCalendars, userTimezone, null, HttpContext.RequestAborted),
             LoggedInAccount = loggedInAccount,
             LoggedInAccountTimeZoneIanaId = userTimezone,
             InitialDate = calendarService.GetFixedInitialDate(loggedInAccount.RequireEmail())
         };
-        vm.PopulateTimeData(policyService, userTimezone, timeProvider.GetUtcNow().UtcDateTime);
+        vm.PopulateTimeData(timeZones, userTimezone, timeProvider.GetUtcNow().UtcDateTime);
         return View(vm);
     }
 
@@ -210,13 +211,13 @@ public class CalendarController(
 
         CalendarOutputViewModel vm = new()
         {
-            ReminderRules = policyService.GetCalendarFormRules(),
+            ReminderRules = calendarPolicy.GetCalendarFormRules(),
             OtherCalendars = otherCalendars,
-            OtherCalendarEventOutputViewModels = await calendarService.GetCalendarEventViewModelsAsync(policyService, otherCalendars, userTimezone, null, HttpContext.RequestAborted),
+            OtherCalendarEventOutputViewModels = await calendarService.GetCalendarEventViewModelsAsync(timeZones, otherCalendars, userTimezone, null, HttpContext.RequestAborted),
             LoggedInAccount = loggedInAccount,
             LoggedInAccountTimeZoneIanaId = userTimezone
         };
-        vm.PopulateTimeData(policyService, userTimezone, timeProvider.GetUtcNow().UtcDateTime);
+        vm.PopulateTimeData(timeZones, userTimezone, timeProvider.GetUtcNow().UtcDateTime);
         return View(vm);
     }
 
@@ -308,7 +309,7 @@ public class CalendarController(
             AccountResponse loggedInAccount = HttpContext.GetLoggedInAccount();
             List<CalendarResponse> calendars = await calendarService.GetCalendarsAsync(loggedInAccount.RequireEmail(), HttpContext.RequestAborted);
 
-            CalendarEventOutputViewModel? calendarEvent = await calendarService.GetCalendarEventDetailViewModelAsync(policyService, 
+            CalendarEventOutputViewModel? calendarEvent = await calendarService.GetCalendarEventDetailViewModelAsync(timeZones, 
                 calendars, loggedInAccount.RequireTimeZoneIanaId(), id, includeReminders: true, HttpContext.RequestAborted);
 
             return calendarEvent == null
@@ -339,7 +340,7 @@ public class CalendarController(
             List<CalendarResponse> calendars =
                 await calendarService.GetVisibleOtherCalendarsAsync(sessionAccount, HttpContext.RequestAborted);
 
-            CalendarEventOutputViewModel? calendarEvent = await calendarService.GetCalendarEventDetailViewModelAsync(policyService, 
+            CalendarEventOutputViewModel? calendarEvent = await calendarService.GetCalendarEventDetailViewModelAsync(timeZones, 
                 calendars, loggedInAccount.RequireTimeZoneIanaId(), id, includeReminders: false, HttpContext.RequestAborted);
 
             return calendarEvent == null
@@ -435,7 +436,7 @@ public class CalendarController(
                     ? ownedCalendars.FirstOrDefault(x => x.Id == inputCalendar.Id)?.HtmlColorCode
                     : otherCalendars.FirstOrDefault(x => x.Id == inputCalendar.Id)?.HtmlColorCode
                 from evt in eventsByCalendarId.GetValueOrDefault(inputCalendar.Id, [])
-                select evt.ToDisplayViewModel(policyService, userTimezone, htmlColorCode, calendarType));
+                select evt.ToDisplayViewModel(timeZones, userTimezone, htmlColorCode, calendarType));
 
             // Matches main: an empty result set for the requested range/calendars is reported the
             // same way as any other "nothing to return" case, not as a distinct success payload.
@@ -544,7 +545,7 @@ public class CalendarController(
                 return Json(new { result = false, error = localizer["Please Login to update calendar event"].Value });
 
             ServiceResult updateEventResult = await calendarService.UpdateCalendarEventAsync(
-                calendarEventInputViewModel.ToCalendarEventRequest(policyService),
+                calendarEventInputViewModel.ToCalendarEventRequest(timeZones),
                 loggedInAccount.RequireEmail(),
                 $"{loggedInAccount.Role}Index",
                 calendarEventInputViewModel.SerializedCalendarReminders.ToReminderInfoList(),

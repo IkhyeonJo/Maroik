@@ -39,7 +39,7 @@ public class ManagementViewModelMapperTests
         var created = new DateTime(2025, 6, 10, 0, 0, 0, DateTimeKind.Utc);
         var account = SampleAccount(created, created);
 
-        var vms = new[] { account }.ToDisplayViewModels(new PolicyService(), "UTC");
+        var vms = new[] { account }.ToDisplayViewModels(new TimeZoneDisplayService(), "UTC");
 
         var item = Assert.Single(vms);
         Assert.Equal("user@example.com", item.Email);
@@ -65,7 +65,7 @@ public class ManagementViewModelMapperTests
         var updated = new DateTime(2025, 6, 11, 4, 30, 0, DateTimeKind.Utc);
         var account = SampleAccount(created, updated);
 
-        var vm = new[] { account }.ToDisplayViewModels(new PolicyService(), "UTC")[0];
+        var vm = new[] { account }.ToDisplayViewModels(new TimeZoneDisplayService(), "UTC")[0];
 
         Assert.Equal(created, vm.Created);
         Assert.Equal(updated, vm.Updated);
@@ -79,7 +79,7 @@ public class ManagementViewModelMapperTests
         var updated = new DateTime(2025, 6, 10, 15, 0, 0, DateTimeKind.Utc);
         var account = SampleAccount(created, updated);
 
-        var vm = new[] { account }.ToDisplayViewModels(new PolicyService(), "Asia/Seoul")[0];
+        var vm = new[] { account }.ToDisplayViewModels(new TimeZoneDisplayService(), "Asia/Seoul")[0];
 
         // Asia/Seoul is UTC+9 with no daylight saving.
         Assert.Equal(new DateTime(2025, 6, 10, 9, 0, 0), vm.Created);
@@ -95,8 +95,8 @@ public class ManagementViewModelMapperTests
         var created = new DateTime(2025, 6, 10, 12, 0, 0, DateTimeKind.Utc);
         var account = SampleAccount(created, created);
 
-        var utcVm = new[] { account }.ToDisplayViewModels(new PolicyService(), "UTC")[0];
-        var seoulVm = new[] { account }.ToDisplayViewModels(new PolicyService(), "Asia/Seoul")[0];
+        var utcVm = new[] { account }.ToDisplayViewModels(new TimeZoneDisplayService(), "UTC")[0];
+        var seoulVm = new[] { account }.ToDisplayViewModels(new TimeZoneDisplayService(), "Asia/Seoul")[0];
 
         Assert.NotEqual(utcVm.Created, seoulVm.Created);
         Assert.Equal(created, utcVm.Created);
@@ -114,7 +114,7 @@ public class ManagementViewModelMapperTests
         var account2 = SampleAccount(DateTime.UtcNow, DateTime.UtcNow);
         account2.Email = "b@example.com";
 
-        var vms = new[] { account1, account2 }.ToDisplayViewModels(new PolicyService(), "UTC");
+        var vms = new[] { account1, account2 }.ToDisplayViewModels(new TimeZoneDisplayService(), "UTC");
 
         Assert.Equal(2, vms.Count);
         Assert.Equal("a@example.com", vms[0].Email);
@@ -125,7 +125,7 @@ public class ManagementViewModelMapperTests
     [Fact]
     public void ToDisplayViewModels_EmptySequence_ReturnsEmptyList()
     {
-        var vms = Array.Empty<AccountResponse>().ToDisplayViewModels(new PolicyService(), "UTC");
+        var vms = Array.Empty<AccountResponse>().ToDisplayViewModels(new TimeZoneDisplayService(), "UTC");
 
         Assert.Empty(vms);
     }

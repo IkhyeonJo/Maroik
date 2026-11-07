@@ -13,7 +13,7 @@ public static class ManagementViewModelMapper
     extension(AccountResponse item)
     {
         /// <summary>Maps a single <see cref="AccountResponse"/> to an <see cref="AccountOutputViewModel"/> for display.</summary>
-        private AccountOutputViewModel ToDisplayViewModel(IPolicyService policy, string timeZoneIanaId) => new()
+        private AccountOutputViewModel ToDisplayViewModel(ITimeZoneDisplayService timeZones, string timeZoneIanaId) => new()
         {
             Email = item.Email,
             Nickname = item.Nickname,
@@ -24,8 +24,8 @@ public static class ManagementViewModelMapper
             LoginAttempt = item.LoginAttempt,
             EmailConfirmed = item.EmailConfirmed,
             AgreedServiceTerms = item.AgreedServiceTerms,
-            Created = policy.ToTimeZone(item.Created, timeZoneIanaId),
-            Updated = policy.ToTimeZone(item.Updated, timeZoneIanaId),
+            Created = timeZones.ToTimeZone(item.Created, timeZoneIanaId),
+            Updated = timeZones.ToTimeZone(item.Updated, timeZoneIanaId),
             Message = item.Message,
             Deleted = item.Deleted,
             FileManagerScanDisabled = item.FileManagerScanDisabled
@@ -35,10 +35,10 @@ public static class ManagementViewModelMapper
     extension(IEnumerable<AccountResponse> items)
     {
         /// <summary>Maps all <see cref="AccountResponse"/> items to display view models.</summary>
-        public List<AccountOutputViewModel> ToDisplayViewModels(IPolicyService policy, string timeZoneIanaId)
+        public List<AccountOutputViewModel> ToDisplayViewModels(ITimeZoneDisplayService timeZones, string timeZoneIanaId)
             =>
             [
-                .. items.Select(i => i.ToDisplayViewModel(policy, timeZoneIanaId))
+                .. items.Select(i => i.ToDisplayViewModel(timeZones, timeZoneIanaId))
             ];
     }
 }

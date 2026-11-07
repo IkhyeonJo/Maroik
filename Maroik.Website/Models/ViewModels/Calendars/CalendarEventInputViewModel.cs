@@ -68,19 +68,19 @@ public class CalendarEventInputViewModel : IValidatableObject
     /// </summary>
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {
-        IPolicyService policy = validationContext.GetRequiredService<IPolicyService>();
+        ICalendarPolicyService calendarPolicy = validationContext.GetRequiredService<ICalendarPolicyService>();
         if (AllDay)
         {
-            if (!IsValidDateOnly(policy, StartDate))
+            if (!IsValidDateOnly(calendarPolicy, StartDate))
                 yield return new ValidationResult("Please enter a valid StartDate", [nameof(StartDate)]);
-            if (!IsValidDateOnly(policy, EndDate))
+            if (!IsValidDateOnly(calendarPolicy, EndDate))
                 yield return new ValidationResult("Please enter a valid EndDate", [nameof(EndDate)]);
         }
         else
         {
-            if (!IsValidLocalDateTime(policy, StartDate))
+            if (!IsValidLocalDateTime(calendarPolicy, StartDate))
                 yield return new ValidationResult("Please enter a valid StartDate", [nameof(StartDate)]);
-            if (!IsValidLocalDateTime(policy, EndDate))
+            if (!IsValidLocalDateTime(calendarPolicy, EndDate))
                 yield return new ValidationResult("Please enter a valid EndDate", [nameof(EndDate)]);
             if (string.IsNullOrWhiteSpace(StartDateTimeZoneIanaId))
                 yield return new ValidationResult("Please enter StartDateTimeZoneIanaId", [nameof(StartDateTimeZoneIanaId)]);
@@ -90,14 +90,14 @@ public class CalendarEventInputViewModel : IValidatableObject
     }
 
     /// <summary>Matches the "yyyy-M-d" shape <c>ToCalendarEventRequest</c> splits an all-day date on.</summary>
-    private static bool IsValidDateOnly(IPolicyService policy, string? value) =>
+    private static bool IsValidDateOnly(ICalendarPolicyService calendarPolicy, string? value) =>
         DateTime.TryParseExact(value, "yyyy-M-d", CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime date)
-        && policy.IsWithinCalendarEventYears(date);
+        && calendarPolicy.IsWithinCalendarEventYears(date);
 
     /// <summary>Matches the "yyyy-M-d H:m" shape <c>ParseLocalDateTime</c> splits a timed date on.</summary>
     // Within the domain's years too (CalendarEvent.IsWithinYears): the controller converts a timed date to UTC before the domain sees
     // it, and around year 1 that conversion threw, so the user saw a "temporary error" instead of a refused input.
-    private static bool IsValidLocalDateTime(IPolicyService policy, string? value) =>
+    private static bool IsValidLocalDateTime(ICalendarPolicyService calendarPolicy, string? value) =>
         DateTime.TryParseExact(value, "yyyy-M-d H:m", CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime date)
-        && policy.IsWithinCalendarEventYears(date);
+        && calendarPolicy.IsWithinCalendarEventYears(date);
 }

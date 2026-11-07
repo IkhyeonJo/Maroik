@@ -5,8 +5,8 @@ namespace Maroik.Website.Mappers;
 
 /// <summary>
 /// Builds the rows a post list and a comment thread draw. The controller passes in what it decided for the viewer (whether a title
-/// is visible, whether a comment may be deleted — from the domain's rules via <see cref="Maroik.Core.Contract.Interfaces.IPolicyService"/> and
-/// <see cref="Maroik.Core.Contract.Interfaces.IPolicyService"/>), so the views only render flags.
+/// is visible, whether a comment may be deleted — from the domain's rules via <see cref="Maroik.Core.Contract.Interfaces.IBoardPolicyService"/> and
+/// <see cref="Maroik.Core.Contract.Interfaces.IBoardPolicyService"/>), so the views only render flags.
 /// </summary>
 public static class BoardViewModelMapper
 {

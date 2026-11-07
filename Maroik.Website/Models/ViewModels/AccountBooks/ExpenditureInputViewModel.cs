@@ -75,7 +75,7 @@ public class ExpenditureInputViewModel : IValidatableObject
     /// </summary>
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {
-        if (validationContext.GetRequiredService<IPolicyService>().IsDepositAssetSubClass(SubClass)
+        if (validationContext.GetRequiredService<IFinancePolicyService>().IsDepositAssetSubClass(SubClass)
             && string.IsNullOrWhiteSpace(MyDepositAsset))
         {
             yield return new ValidationResult("Please enter MyDepositAsset", [nameof(MyDepositAsset)]);

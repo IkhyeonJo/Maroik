@@ -22,7 +22,7 @@ public class FileManagerViewModelMapperTests
     [Fact]
     public void ToViewModel_MapsAFile()
     {
-        FileManagerItemViewModel vm = File("Report.PDF").ToViewModel(new PolicyService(), "Asia/Seoul", "My Drive", withLocation: false);
+        FileManagerItemViewModel vm = File("Report.PDF").ToViewModel(new TimeZoneDisplayService(), "Asia/Seoul", "My Drive", withLocation: false);
 
         Assert.Equal((5L, (long?)2, "Report.PDF", false, "1.5 KB", "2026-05-25 00:30", "fas fa-file-pdf text-danger", true, ""),
             (vm.Id, vm.ParentId, vm.Name, vm.IsFolder, vm.Size, vm.Modified, vm.Icon, vm.Previewable, vm.Location));
@@ -32,7 +32,7 @@ public class FileManagerViewModelMapperTests
     [Fact]
     public void ToViewModel_CarriesTheFilesSizeInBytes()
     {
-        FileManagerItemViewModel vm = File("big.zip", size: 3_000_000_000).ToViewModel(new PolicyService(), "UTC", "My Drive", withLocation: false);
+        FileManagerItemViewModel vm = File("big.zip", size: 3_000_000_000).ToViewModel(new TimeZoneDisplayService(), "UTC", "My Drive", withLocation: false);
 
         Assert.Equal(3_000_000_000L, vm.Bytes);
     }
@@ -43,7 +43,7 @@ public class FileManagerViewModelMapperTests
     {
         var folder = new FileManagerItemResponse { Id = 2, Name = "Docs", IsFolder = true, ItemCount = 4, Updated = new DateTime(2026, 5, 24) };
 
-        FileManagerItemViewModel vm = folder.ToViewModel(new PolicyService(), "UTC", "My Drive", withLocation: false);
+        FileManagerItemViewModel vm = folder.ToViewModel(new TimeZoneDisplayService(), "UTC", "My Drive", withLocation: false);
 
         Assert.Equal(("", "fas fa-folder text-warning", 4), (vm.Size, vm.Icon, vm.ItemCount));
     }
@@ -64,7 +64,7 @@ public class FileManagerViewModelMapperTests
     [InlineData("README", "fas fa-file text-muted")]
     public void ToViewModel_PicksTheIcon_ByFileType(string name, string icon)
     {
-        Assert.Equal(icon, File(name).ToViewModel(new PolicyService(), "UTC", "My Drive", false).Icon);
+        Assert.Equal(icon, File(name).ToViewModel(new TimeZoneDisplayService(), "UTC", "My Drive", false).Icon);
     }
 
     /// <summary>A search result's location starts at the root's (localized) name.</summary>
@@ -74,8 +74,8 @@ public class FileManagerViewModelMapperTests
         FileManagerItemResponse item = File("a.txt");
         item.Location = ["Documents", "Work"];
 
-        Assert.Equal("My Drive / Documents / Work", item.ToViewModel(new PolicyService(), "UTC", "My Drive", withLocation: true).Location);
-        Assert.Equal("내 드라이브", File("b.txt").ToViewModel(new PolicyService(), "UTC", "내 드라이브", withLocation: true).Location);
+        Assert.Equal("My Drive / Documents / Work", item.ToViewModel(new TimeZoneDisplayService(), "UTC", "My Drive", withLocation: true).Location);
+        Assert.Equal("내 드라이브", File("b.txt").ToViewModel(new TimeZoneDisplayService(), "UTC", "내 드라이브", withLocation: true).Location);
     }
 
     /// <summary>A folder keeps its breadcrumb and items in order.</summary>
@@ -89,7 +89,7 @@ public class FileManagerViewModelMapperTests
             Items = [File("x.txt"), File("y.txt")],
         };
 
-        FileManagerFolderViewModel vm = folder.ToViewModel(new PolicyService(), "UTC", "My Drive");
+        FileManagerFolderViewModel vm = folder.ToViewModel(new TimeZoneDisplayService(), "UTC", "My Drive");
 
         Assert.Equal(2, vm.FolderId);
         Assert.Equal([(1L, "A"), (2L, "B")], vm.Breadcrumb.Select(c => (c.Id, c.Name)));
@@ -110,7 +110,7 @@ public class FileManagerViewModelMapperTests
             Folders = [new() { Id = 1, Name = "Docs", IsFolder = true, ItemCount = 2 }],
         };
 
-        FileManagerDriveViewModel vm = drive.ToViewModel(new PolicyService(), "UTC", "My Drive");
+        FileManagerDriveViewModel vm = drive.ToViewModel(new TimeZoneDisplayService(), "UTC", "My Drive");
 
         Assert.Equal((usage, percent, 3), (vm.Usage, vm.UsedPercent, vm.RootItemCount));
         FileManagerItemViewModel folder = Assert.Single(vm.Folders);

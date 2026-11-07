@@ -25,7 +25,9 @@ public class ForumController(
     IBoardService boardService,
     IAccountService accountService,
     IDataProtectionService dataProtection,
-    IPolicyService policyService,
+    ITimeZoneDisplayService timeZones,
+    IAccountPolicyService accountPolicy,
+    IBoardPolicyService boardPolicy,
     IOptions<ServerSetting> serverSettings) : Controller
 {
     /// <summary>Shared extension-to-MIME-type lookup for attachment downloads (safe for concurrent reads).</summary>
@@ -165,7 +167,7 @@ public class ForumController(
                 // The view picks the role's page script (the editor) from LoggedInAccount.
                 FreeForumOutputViewModel freeForumOutputViewModel = new()
                 {
-                    FormatViewerTime = policyService.FormatForViewer,
+                    FormatViewerTime = timeZones.FormatForViewer,
                     Method = method,
                     LoggedInAccount = loggedInAccount,
                     LoggedInAccountTimeZoneIanaId = loggedInAccount.RequireTimeZoneIanaId()
@@ -181,7 +183,7 @@ public class ForumController(
             {
                 FreeForumOutputViewModel freeForumOutputViewModel = new()
                 {
-                    FormatViewerTime = policyService.FormatForViewer,
+                    FormatViewerTime = timeZones.FormatForViewer,
                     Method = method,
                     DetailCurrentPage = page,
                     DetailBoardId = boardId.Value
@@ -209,7 +211,7 @@ public class ForumController(
 
                     freeForumOutputViewModel.LoggedInAccount = loggedInAccount;
                     freeForumOutputViewModel.LoggedInAccountTimeZoneIanaId = freeForumOutputViewModel.LoggedInAccount.TimeZoneIanaId ?? "";
-                    freeForumOutputViewModel.ViewerSeesLocalTime = policyService.SeesLocalTime(loggedInAccount);
+                    freeForumOutputViewModel.ViewerSeesLocalTime = accountPolicy.SeesLocalTime(loggedInAccount);
 
                     freeForumOutputViewModel.BoardOutputViewModel = new BoardOutputViewModel
                     {
@@ -223,8 +225,8 @@ public class ForumController(
                         BoardAttachedFileSize = boardAttachedFile?.Size ?? 0,
                         BoardAttachedFilePath = boardAttachedFile?.Path ?? "",
                         IsImgTagIncluded = isImgTagIncluded,
-                        CanModify = policyService.IsContentOwner(freeForumOutputViewModel.LoggedInAccount, freeBoard.Writer),
-                        CanDelete = policyService.IsContentOwnerOrAdmin(freeForumOutputViewModel.LoggedInAccount, freeBoard.Writer)
+                        CanModify = boardPolicy.IsContentOwner(freeForumOutputViewModel.LoggedInAccount, freeBoard.Writer),
+                        CanDelete = boardPolicy.IsContentOwnerOrAdmin(freeForumOutputViewModel.LoggedInAccount, freeBoard.Writer)
                     };
 
                     List<BoardCommentResponse> comments = [.. await boardService.GetCommentsByBoardIdAsync(boardId.Value, ct)];
@@ -233,10 +235,10 @@ public class ForumController(
                         .Where(w => !string.IsNullOrEmpty(w))
                         .Select(w => w!)
                         .Distinct();
-                    HashSet<string> adminNicknames = policyService.GetAdminNicknames(await accountService.GetAccountsByNicknamesAsync(detailNicknames, ct));
+                    HashSet<string> adminNicknames = accountPolicy.GetAdminNicknames(await accountService.GetAccountsByNicknamesAsync(detailNicknames, ct));
                     // The writer or an admin may delete a forum comment (BoardService.DeleteCommentAsync checks again).
                     freeForumOutputViewModel.DetailBoardComments =
-                        [.. comments.Select(c => c.ToCommentRow(freeBoard.Writer, policyService.IsContentOwnerOrAdmin(loggedInAccount, c.Writer), adminNicknames))];
+                        [.. comments.Select(c => c.ToCommentRow(freeBoard.Writer, boardPolicy.IsContentOwnerOrAdmin(loggedInAccount, c.Writer), adminNicknames))];
 
                     return View(freeForumOutputViewModel);
                 }
@@ -253,7 +255,7 @@ public class ForumController(
             {
                 FreeForumOutputViewModel freeForumOutputViewModel = new()
                 {
-                    FormatViewerTime = policyService.FormatForViewer,
+                    FormatViewerTime = timeZones.FormatForViewer,
                     Method = method,
                     EditCurrentPage = page,
                     EditBoardId = boardId.Value
@@ -271,7 +273,7 @@ public class ForumController(
                     // on every request (not the session-cached snapshot), so ownership is always checked
                     // against the account's current state. The edit page is owner-only (no admin bypass).
                     AccountResponse loggedInAccount = HttpContext.GetLoggedInAccount();
-                    if (!policyService.IsContentOwner(loggedInAccount, freeBoard.Writer))
+                    if (!boardPolicy.IsContentOwner(loggedInAccount, freeBoard.Writer))
                         return RedirectToAction(BoardKinds.FreeForum, "Forum");
 
                     (freeBoard.Content, bool isImgTagIncluded) = await boardService.PrepareHtmlForDisplayAsync(freeBoard.Content ?? "", ct);
@@ -334,7 +336,7 @@ public class ForumController(
                     .Where(w => !string.IsNullOrEmpty(w))
                     .Select(w => w!)
                     .Distinct();
-                HashSet<string> adminNicknames = policyService.GetAdminNicknames(await accountService.GetAccountsByNicknamesAsync(listNicknames, ct));
+                HashSet<string> adminNicknames = accountPolicy.GetAdminNicknames(await accountService.GetAccountsByNicknamesAsync(listNicknames, ct));
 
                 List<long> allBoardIds =
                 [
@@ -349,14 +351,14 @@ public class ForumController(
                 // A locked forum post's title is shown to its writer and to admins only (Board.CanBeViewedBy).
                 FreeForumOutputViewModel freeForumOutputViewModel = new()
                 {
-                    FormatViewerTime = policyService.FormatForViewer,
+                    FormatViewerTime = timeZones.FormatForViewer,
                     NoticeBoards = [.. noticeBoards.Select(ToRow)],
                     Method = "list",
                     Pager = new Pager(totalCount, page, pageSize),
                     Boards = [.. boardResponses.Select(ToRow)],
                     LoggedInAccount = loggedInAccountForQuery,
                     LoggedInAccountTimeZoneIanaId = loggedInAccountForQuery.TimeZoneIanaId ?? "",
-                    ViewerSeesLocalTime = policyService.SeesLocalTime(loggedInAccountForQuery),
+                    ViewerSeesLocalTime = accountPolicy.SeesLocalTime(loggedInAccountForQuery),
                     SelectedSearchType = searchType,
                     TypedSearchText = searchText
                 };
@@ -364,7 +366,7 @@ public class ForumController(
                 return View(freeForumOutputViewModel);
 
                 BoardListRowViewModel ToRow(BoardResponse board) => board.ToListRow(
-                    policyService.IsTitleVisibleToOwnerOrAdmin(board, loggedInAccountForQuery), adminNicknames,
+                    boardPolicy.IsTitleVisibleToOwnerOrAdmin(board, loggedInAccountForQuery), adminNicknames,
                     commentCounts.GetValueOrDefault(board.Id, 0), attachedFiles.GetValueOrDefault(board.Id));
             }
         }
@@ -426,7 +428,7 @@ public class ForumController(
 
             // Re-fetched from the database by ViewBagPopulatorFilter on every request.
             AccountResponse loggedInAccount = HttpContext.GetLoggedInAccount();
-            return !policyService.IsContentOwnerOrAdmin(loggedInAccount, board.Writer) ? Json(new { result = false, error = localizer["Input is invalid"].Value }) : Json(new { result = true, freeBoard = new { id = board.Id } });
+            return !boardPolicy.IsContentOwnerOrAdmin(loggedInAccount, board.Writer) ? Json(new { result = false, error = localizer["Input is invalid"].Value }) : Json(new { result = true, freeBoard = new { id = board.Id } });
 
         }
         catch (Exception ex)

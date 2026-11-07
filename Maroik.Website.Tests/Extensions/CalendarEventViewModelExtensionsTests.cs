@@ -51,7 +51,7 @@ public class CalendarEventViewModelExtensionsTests
     [Fact]
     public async Task NoCalendars_ReturnsEmptyList()
     {
-        var result = await _calendarService.Object.GetCalendarEventViewModelsAsync(new PolicyService(), 
+        var result = await _calendarService.Object.GetCalendarEventViewModelsAsync(new TimeZoneDisplayService(), 
             [], "UTC", null, TestContext.Current.CancellationToken);
 
         Assert.Empty(result);
@@ -64,7 +64,7 @@ public class CalendarEventViewModelExtensionsTests
         var calendar = MakeCalendar(1);
         SetUpEvents(MakeEvent(100, 1, "Trip"), MakeEvent(101, 1, "Meeting"));
 
-        var result = await _calendarService.Object.GetCalendarEventViewModelsAsync(new PolicyService(), 
+        var result = await _calendarService.Object.GetCalendarEventViewModelsAsync(new TimeZoneDisplayService(), 
             [calendar], "UTC", null, TestContext.Current.CancellationToken);
 
         Assert.Equal(2, result.Count);
@@ -80,7 +80,7 @@ public class CalendarEventViewModelExtensionsTests
         var calendar2 = MakeCalendar(2);
         SetUpEvents(MakeEvent(100, 1, "FromCal1"), MakeEvent(200, 2, "FromCal2"));
 
-        var result = await _calendarService.Object.GetCalendarEventViewModelsAsync(new PolicyService(), 
+        var result = await _calendarService.Object.GetCalendarEventViewModelsAsync(new TimeZoneDisplayService(), 
             [calendar1, calendar2], "UTC", null, TestContext.Current.CancellationToken);
 
         Assert.Equal(2, result.Count);
@@ -99,7 +99,7 @@ public class CalendarEventViewModelExtensionsTests
         var calendar2 = MakeCalendar(2, "#222222");
         SetUpEvents(MakeEvent(100, 1, "FromCal1"), MakeEvent(200, 2, "FromCal2"));
 
-        var result = await _calendarService.Object.GetCalendarEventViewModelsAsync(new PolicyService(), 
+        var result = await _calendarService.Object.GetCalendarEventViewModelsAsync(new TimeZoneDisplayService(), 
             [calendar1, calendar2], "UTC", null, TestContext.Current.CancellationToken);
 
         Assert.Equal("#111111", result[0].HtmlColorCode);
@@ -113,7 +113,7 @@ public class CalendarEventViewModelExtensionsTests
         var calendar = MakeCalendar(1);
         SetUpEvents(MakeEvent(100, 1, "Trip"));
 
-        var result = await _calendarService.Object.GetCalendarEventViewModelsAsync(new PolicyService(), 
+        var result = await _calendarService.Object.GetCalendarEventViewModelsAsync(new TimeZoneDisplayService(), 
             [calendar], "UTC", "Other", TestContext.Current.CancellationToken);
 
         Assert.Equal("Other", result[0].CalendarType);
@@ -126,7 +126,7 @@ public class CalendarEventViewModelExtensionsTests
         var calendar = MakeCalendar(1);
         SetUpEvents(MakeEvent(100, 1, "Trip"));
 
-        var result = await _calendarService.Object.GetCalendarEventViewModelsAsync(new PolicyService(), 
+        var result = await _calendarService.Object.GetCalendarEventViewModelsAsync(new TimeZoneDisplayService(), 
             [calendar], "Asia/Seoul", null, TestContext.Current.CancellationToken);
 
         // All-day event: DisplayStartDate is derived from StartDate converted to the viewer's time zone.
@@ -146,7 +146,7 @@ public class CalendarEventViewModelExtensionsTests
             .Setup(s => s.GetCalendarEventsAsync(It.IsAny<IEnumerable<long>>(), cancellationToken))
             .ReturnsAsync(new Dictionary<long, List<CalendarEventResponse>>());
 
-        await _calendarService.Object.GetCalendarEventViewModelsAsync(new PolicyService(), [calendar], "UTC", null, cancellationToken);
+        await _calendarService.Object.GetCalendarEventViewModelsAsync(new TimeZoneDisplayService(), [calendar], "UTC", null, cancellationToken);
 
         _calendarService.Verify(
             s => s.GetCalendarEventsAsync(It.IsAny<IEnumerable<long>>(), cancellationToken),
@@ -178,7 +178,7 @@ public class CalendarEventViewModelExtensionsTests
     {
         SetUpDetailEvent(null);
 
-        var result = await _calendarService.Object.GetCalendarEventDetailViewModelAsync(new PolicyService(), 
+        var result = await _calendarService.Object.GetCalendarEventDetailViewModelAsync(new TimeZoneDisplayService(), 
             [MakeCalendar(1)], "UTC", 999, true, TestContext.Current.CancellationToken);
 
         Assert.Null(result);
@@ -190,7 +190,7 @@ public class CalendarEventViewModelExtensionsTests
     {
         SetUpDetailEvent(MakeEvent(100, calendarId: 2, "Trip"));
 
-        var result = await _calendarService.Object.GetCalendarEventDetailViewModelAsync(new PolicyService(), 
+        var result = await _calendarService.Object.GetCalendarEventDetailViewModelAsync(new TimeZoneDisplayService(), 
             [MakeCalendar(1)], "UTC", 100, true, TestContext.Current.CancellationToken);
 
         Assert.Null(result);
@@ -202,7 +202,7 @@ public class CalendarEventViewModelExtensionsTests
     {
         SetUpDetailEvent(MakeEvent(100, calendarId: 1, "Trip"));
 
-        var result = await _calendarService.Object.GetCalendarEventDetailViewModelAsync(new PolicyService(), 
+        var result = await _calendarService.Object.GetCalendarEventDetailViewModelAsync(new TimeZoneDisplayService(), 
             [MakeCalendar(1)], "UTC", 100, true, TestContext.Current.CancellationToken);
 
         Assert.NotNull(result);
@@ -224,7 +224,7 @@ public class CalendarEventViewModelExtensionsTests
             .Setup(s => s.GetCalendarEventAttachedFileAsync(100, It.IsAny<CancellationToken>()))
             .ReturnsAsync(attachment);
 
-        var result = await _calendarService.Object.GetCalendarEventDetailViewModelAsync(new PolicyService(), 
+        var result = await _calendarService.Object.GetCalendarEventDetailViewModelAsync(new TimeZoneDisplayService(), 
             [MakeCalendar(1)], "UTC", 100, true, TestContext.Current.CancellationToken);
 
         Assert.NotNull(result);
@@ -245,8 +245,8 @@ public class CalendarEventViewModelExtensionsTests
         _calendarService.Setup(s => s.GetCalendarEventRemindersAsync(100, It.IsAny<CancellationToken>()))
             .ReturnsAsync([new CalendarEventReminderDto { Id = 1, CalendarEventId = 100, MinutesBeforeEvent = 15 }]);
 
-        var owners = await _calendarService.Object.GetCalendarEventDetailViewModelAsync(new PolicyService(), [MakeCalendar(1)], "UTC", 100, true, TestContext.Current.CancellationToken);
-        var others = await _calendarService.Object.GetCalendarEventDetailViewModelAsync(new PolicyService(), [MakeCalendar(1)], "UTC", 100, false, TestContext.Current.CancellationToken);
+        var owners = await _calendarService.Object.GetCalendarEventDetailViewModelAsync(new TimeZoneDisplayService(), [MakeCalendar(1)], "UTC", 100, true, TestContext.Current.CancellationToken);
+        var others = await _calendarService.Object.GetCalendarEventDetailViewModelAsync(new TimeZoneDisplayService(), [MakeCalendar(1)], "UTC", 100, false, TestContext.Current.CancellationToken);
 
         Assert.Contains("\"MinutesBeforeEvent\":15", owners!.SerializedCalendarReminders, StringComparison.Ordinal);
         Assert.Equal("[]", others!.SerializedCalendarReminders);
@@ -273,7 +273,7 @@ public class CalendarEventViewModelExtensionsTests
             .Setup(s => s.GetCalendarEventRemindersAsync(It.IsAny<long>(), cancellationToken))
             .ReturnsAsync([]);
 
-        await _calendarService.Object.GetCalendarEventDetailViewModelAsync(new PolicyService(), [MakeCalendar(1)], "UTC", 100, true, cancellationToken);
+        await _calendarService.Object.GetCalendarEventDetailViewModelAsync(new TimeZoneDisplayService(), [MakeCalendar(1)], "UTC", 100, true, cancellationToken);
 
         _calendarService.Verify(s => s.GetCalendarEventAsync(100, cancellationToken), Times.Once);
     }

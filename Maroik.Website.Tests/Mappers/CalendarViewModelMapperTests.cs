@@ -78,7 +78,7 @@ public class CalendarViewModelMapperTests
             new DateTime(2025, 6, 10, 0, 0, 0, DateTimeKind.Utc),
             new DateTime(2025, 6, 12, 0, 0, 0, DateTimeKind.Utc));
 
-        var vm = evt.ToDisplayViewModel(new PolicyService(), "UTC", "#3788d8");
+        var vm = evt.ToDisplayViewModel(new TimeZoneDisplayService(), "UTC", "#3788d8");
 
         Assert.Equal(new DateTime(2025, 6, 10), vm.StartDate);
         Assert.Equal(new DateTime(2025, 6, 13), vm.EndDate); // exclusive end: day after the local end date
@@ -92,7 +92,7 @@ public class CalendarViewModelMapperTests
             new DateTime(2025, 6, 10, 0, 0, 0, DateTimeKind.Utc),
             new DateTime(2025, 6, 10, 0, 0, 0, DateTimeKind.Utc));
 
-        var vm = evt.ToDisplayViewModel(new PolicyService(), "UTC", "#3788d8");
+        var vm = evt.ToDisplayViewModel(new TimeZoneDisplayService(), "UTC", "#3788d8");
 
         Assert.Equal("2025-06-10", vm.DisplayStartDate);
         Assert.Equal("2025-06-10", vm.DisplayEndDate);
@@ -110,7 +110,7 @@ public class CalendarViewModelMapperTests
             new DateTime(2025, 6, 10, 0, 0, 0, DateTimeKind.Utc),
             new DateTime(2025, 6, 12, 0, 0, 0, DateTimeKind.Utc));
 
-        var vm = evt.ToDisplayViewModel(new PolicyService(), "UTC", "#3788d8", forGrid: false);
+        var vm = evt.ToDisplayViewModel(new TimeZoneDisplayService(), "UTC", "#3788d8", forGrid: false);
 
         Assert.Equal(default, vm.StartDate);
         Assert.Equal(default, vm.EndDate);
@@ -132,7 +132,7 @@ public class CalendarViewModelMapperTests
             new DateTime(2025, 6, 10, 17, 30, 0, DateTimeKind.Utc),
             "UTC", "UTC");
 
-        var vm = evt.ToDisplayViewModel(new PolicyService(), "UTC", "#3788d8");
+        var vm = evt.ToDisplayViewModel(new TimeZoneDisplayService(), "UTC", "#3788d8");
 
         Assert.Equal(new DateTime(2025, 6, 10, 9, 0, 0), vm.StartDate);
         Assert.Equal(new DateTime(2025, 6, 10, 17, 30, 0), vm.EndDate);
@@ -152,7 +152,7 @@ public class CalendarViewModelMapperTests
             new DateTime(2026, 1, 15, 0, 0, 0, DateTimeKind.Utc),
             new DateTime(2026, 1, 15, 0, 0, 0, DateTimeKind.Utc));
 
-        var vm = evt.ToDisplayViewModel(new PolicyService(), "America/New_York", "#3788d8");
+        var vm = evt.ToDisplayViewModel(new TimeZoneDisplayService(), "America/New_York", "#3788d8");
 
         Assert.Equal("2026-01-15", vm.DisplayStartDate);
         Assert.Equal("2026-01-15", vm.DisplayEndDate);
@@ -169,7 +169,7 @@ public class CalendarViewModelMapperTests
             new DateTime(2025, 6, 10, 17, 30, 0, DateTimeKind.Utc),
             "UTC", "UTC");
 
-        var vm = evt.ToDisplayViewModel(new PolicyService(), "UTC", "#3788d8", forGrid: false);
+        var vm = evt.ToDisplayViewModel(new TimeZoneDisplayService(), "UTC", "#3788d8", forGrid: false);
 
         Assert.Equal(default, vm.StartDate);
         Assert.Equal(default, vm.EndDate);
@@ -184,7 +184,7 @@ public class CalendarViewModelMapperTests
             new DateTime(2025, 6, 10, 17, 0, 0, DateTimeKind.Utc),
             startTz: null, endTz: null);
 
-        var vm = evt.ToDisplayViewModel(new PolicyService(), "UTC", "#3788d8");
+        var vm = evt.ToDisplayViewModel(new TimeZoneDisplayService(), "UTC", "#3788d8");
 
         Assert.Equal("UTC", vm.StartDateTimeZoneIanaId);
         Assert.Equal("UTC", vm.EndDateTimeZoneIanaId);
@@ -199,7 +199,7 @@ public class CalendarViewModelMapperTests
             new DateTime(2025, 6, 10, 17, 0, 0, DateTimeKind.Utc),
             "Not/ARealZone", "Not/ARealZone");
 
-        var vm = evt.ToDisplayViewModel(new PolicyService(), "UTC", "#3788d8");
+        var vm = evt.ToDisplayViewModel(new TimeZoneDisplayService(), "UTC", "#3788d8");
 
         Assert.Equal("Not/ARealZone", vm.DisplayStartDateTimeZone);
         Assert.Equal("Not/ARealZone", vm.DisplayEndDateTimeZone);
@@ -216,7 +216,7 @@ public class CalendarViewModelMapperTests
         evt.Id = 42;
         evt.CalendarId = 7;
 
-        var vm = evt.ToDisplayViewModel(new PolicyService(), "UTC", "#abcdef", calendarType: "Other");
+        var vm = evt.ToDisplayViewModel(new TimeZoneDisplayService(), "UTC", "#abcdef", calendarType: "Other");
 
         Assert.Equal(42, vm.Id);
         Assert.Equal(7, vm.CalendarId);
@@ -261,7 +261,7 @@ public class CalendarViewModelMapperTests
     {
         var vm = new CalendarOutputViewModel();
 
-        vm.PopulateTimeData(new PolicyService(), "UTC", DateTime.UtcNow);
+        vm.PopulateTimeData(new TimeZoneDisplayService(), "UTC", DateTime.UtcNow);
 
         Assert.Equal(96, vm.TimeIntervals.Count); // 24h * 4 (15-min slots)
         Assert.Equal("00:00", vm.TimeIntervals[0]);
@@ -274,7 +274,7 @@ public class CalendarViewModelMapperTests
     {
         var vm = new CalendarOutputViewModel();
 
-        vm.PopulateTimeData(new PolicyService(), "UTC", DateTime.UtcNow);
+        vm.PopulateTimeData(new TimeZoneDisplayService(), "UTC", DateTime.UtcNow);
 
         int roundedMinute = (int)Math.Round(vm.CurrentMinute / 15.0) * 15;
         int expectedHour = vm.CurrentHour;
@@ -294,7 +294,7 @@ public class CalendarViewModelMapperTests
     {
         var vm = new CalendarOutputViewModel();
 
-        vm.PopulateTimeData(new PolicyService(), "Asia/Seoul", new DateTime(2031, 2, 3, 23, 50, 7, DateTimeKind.Utc));
+        vm.PopulateTimeData(new TimeZoneDisplayService(), "Asia/Seoul", new DateTime(2031, 2, 3, 23, 50, 7, DateTimeKind.Utc));
 
         Assert.Equal("2031-02-04", vm.CurrentDate);
         Assert.Equal((8, 50, 7), (vm.CurrentHour, vm.CurrentMinute, vm.CurrentSecond));
@@ -316,7 +316,7 @@ public class CalendarViewModelMapperTests
             EndDateTimeZoneIanaId = "Asia/Seoul"
         };
 
-        var req = vm.ToCalendarEventRequest(new PolicyService());
+        var req = vm.ToCalendarEventRequest(new TimeZoneDisplayService());
 
         Assert.Equal(new DateTime(2025, 6, 10, 0, 0, 0, DateTimeKind.Utc), req.StartDate);
         Assert.Equal(new DateTime(2025, 6, 12, 0, 0, 0, DateTimeKind.Utc), req.EndDate);
@@ -339,7 +339,7 @@ public class CalendarViewModelMapperTests
             EndDateTimeZoneIanaId = "UTC"
         };
 
-        var req = vm.ToCalendarEventRequest(new PolicyService());
+        var req = vm.ToCalendarEventRequest(new TimeZoneDisplayService());
 
         Assert.Equal(new DateTime(2025, 6, 10, 9, 0, 0, DateTimeKind.Utc), req.StartDate);
         Assert.Equal(new DateTime(2025, 6, 10, 17, 0, 0, DateTimeKind.Utc), req.EndDate);
@@ -359,7 +359,7 @@ public class CalendarViewModelMapperTests
             EndDateTimeZoneIanaId = "Not/ARealZone"
         };
 
-        var req = vm.ToCalendarEventRequest(new PolicyService());
+        var req = vm.ToCalendarEventRequest(new TimeZoneDisplayService());
 
         Assert.Equal(new DateTime(2025, 6, 10, 9, 0, 0), req.StartDate);
     }
@@ -381,7 +381,7 @@ public class CalendarViewModelMapperTests
             Status = "Confirmed"
         };
 
-        var req = vm.ToCalendarEventRequest(new PolicyService());
+        var req = vm.ToCalendarEventRequest(new TimeZoneDisplayService());
 
         Assert.Equal(5, req.Id);
         Assert.Equal(2, req.CalendarId);

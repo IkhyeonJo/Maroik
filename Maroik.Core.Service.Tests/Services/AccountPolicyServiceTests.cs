@@ -5,83 +5,18 @@ using Maroik.Core.Domain.Accounts;
 namespace Maroik.Core.Service.Tests.Services;
 
 /// <summary>
-/// Unit tests for <see cref="PolicyService"/> — the owner / owner-or-admin
+/// Unit tests for <see cref="AccountPolicyService"/> — the owner / owner-or-admin
 /// authorization rules used to gate edit/delete UI affordances for board posts, comments,
 /// and private notes.
 /// </summary>
-public class PolicyServiceAccountRulesTests
+public class AccountPolicyServiceTests
 {
     /// <summary>The service under test.</summary>
-    private readonly PolicyService _sut = new();
+    private readonly AccountPolicyService _sut = new();
 
     // -- IsOwner ----------------------------------------------------------------
 
-    /// <summary>Is owner same nickname true.</summary>
-    [Fact]
-    public void IsOwner_SameNickname_True()
-    {
-        var viewer = new AccountResponse { Nickname = "Alice", Role = Role.User };
-        Assert.True(_sut.IsContentOwner(viewer, "Alice"));
-    }
-
-    /// <summary>Is owner different nickname false.</summary>
-    [Fact]
-    public void IsOwner_DifferentNickname_False()
-    {
-        var viewer = new AccountResponse { Nickname = "Alice", Role = Role.User };
-        Assert.False(_sut.IsContentOwner(viewer, "Bob"));
-    }
-
-    /// <summary>Is owner admin but not writer false.</summary>
-    [Fact]
-    public void IsOwner_AdminButNotWriter_False()
-    {
-        // Unlike IsOwnerOrAdmin, IsOwner never grants access based on role alone.
-        var admin = new AccountResponse { Nickname = "AdminUser", Role = Role.Admin };
-        Assert.False(_sut.IsContentOwner(admin, "Bob"));
-    }
-
-    /// <summary>Is owner null viewer nickname false.</summary>
-    [Fact]
-    public void IsOwner_NullViewerNickname_False()
-    {
-        var anonymous = new AccountResponse { Nickname = null, Role = Role.Anonymous };
-        Assert.False(_sut.IsContentOwner(anonymous, "Bob"));
-    }
-
     // -- IsOwnerOrAdmin -----------------------------------------------------------
-
-    /// <summary>Is owner or admin same nickname true.</summary>
-    [Fact]
-    public void IsOwnerOrAdmin_SameNickname_True()
-    {
-        var viewer = new AccountResponse { Nickname = "Alice", Role = Role.User };
-        Assert.True(_sut.IsContentOwnerOrAdmin(viewer, "Alice"));
-    }
-
-    /// <summary>Is owner or admin not writer true.</summary>
-    [Fact]
-    public void IsOwnerOrAdmin_AdminNotWriter_True()
-    {
-        var admin = new AccountResponse { Nickname = "AdminUser", Role = Role.Admin };
-        Assert.True(_sut.IsContentOwnerOrAdmin(admin, "Bob"));
-    }
-
-    /// <summary>Is owner or admin regular user not writer false.</summary>
-    [Fact]
-    public void IsOwnerOrAdmin_RegularUserNotWriter_False()
-    {
-        var viewer = new AccountResponse { Nickname = "Alice", Role = Role.User };
-        Assert.False(_sut.IsContentOwnerOrAdmin(viewer, "Bob"));
-    }
-
-    /// <summary>Is owner or admin anonymous not writer false.</summary>
-    [Fact]
-    public void IsOwnerOrAdmin_AnonymousNotWriter_False()
-    {
-        var anonymous = new AccountResponse { Nickname = null, Role = Role.Anonymous };
-        Assert.False(_sut.IsContentOwnerOrAdmin(anonymous, "Bob"));
-    }
 
     // -- SeesLocalTime ------------------------------------------------------------
 
@@ -163,4 +98,28 @@ public class PolicyServiceAccountRulesTests
 
         Assert.Empty(result);
     }
+
+    /// <summary>The byte limit counts bytes, not characters.</summary>
+    [Fact]
+    public void IsPasswordWithinMaxByteLength_CountsBytes()
+    {
+        Assert.True(_sut.IsPasswordWithinMaxByteLength(new string('a', 72)));
+        Assert.False(_sut.IsPasswordWithinMaxByteLength(new string('가', 25)));
+    }
+
+    /// <summary>A session holds while the account exists, is not deleted and keeps its stamp.</summary>
+    [Fact]
+    public void GetSessionInvalidationReason_NamesWhyASessionEnded()
+    {
+        AccountResponse session = new() { SecurityStamp = "a" };
+
+        Assert.Null(_sut.GetSessionInvalidationReason(new AccountResponse { SecurityStamp = "a" }, session));
+        Assert.Equal("AccountMissing", _sut.GetSessionInvalidationReason(null, session));
+        Assert.Equal("AccountDeleted", _sut.GetSessionInvalidationReason(new AccountResponse { SecurityStamp = "a", Deleted = true }, session));
+        Assert.Equal("SecurityStampChanged", _sut.GetSessionInvalidationReason(new AccountResponse { SecurityStamp = "b" }, session));
+    }
+
+    /// <summary>A new account's message is the domain's "Success".</summary>
+    [Fact]
+    public void GetAccountCreatedMessage_IsSuccess() => Assert.Equal("Success", _sut.GetAccountCreatedMessage());
 }

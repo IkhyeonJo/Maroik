@@ -37,7 +37,7 @@ namespace Maroik.Website.Filters;
 /// controllers (see <see cref="_postActionRoles"/>) rather than re-reflected on every request.
 /// </summary>
 public class AuthorizationFilter(IMenuService menuService, IDistributedCache cache,
-    ISessionService sessionService, IAccountService accountService, IPolicyService policyService,
+    ISessionService sessionService, IAccountService accountService, IAccountPolicyService accountPolicy,
     ILogger<AuthorizationFilter> logger) : IAsyncAuthorizationFilter
 {
     // Local aliases of the NavigationCacheKeys entries, one per role x (categories | sub-categories).
@@ -197,7 +197,7 @@ public class AuthorizationFilter(IMenuService menuService, IDistributedCache cac
         {
             loggedInAccount = await accountService.GetAccountByEmailAsync(sessionAccount.Email ?? "", context.HttpContext.RequestAborted); // Re-check account state from DB so that Deleted/Role/SecurityStamp changes take effect on the next request, not only at login
 
-            if (policyService.GetSessionInvalidationReason(loggedInAccount, sessionAccount) is { } reason)
+            if (accountPolicy.GetSessionInvalidationReason(loggedInAccount, sessionAccount) is { } reason)
             {
                 logger.LogWarning("Session invalidated for {Email}: {Reason}", sessionAccount.Email, reason);
                 sessionService.RemoveAccount(); // Invalidate this session immediately

@@ -53,7 +53,7 @@ public static class FileManagerViewModelMapper
         /// The item as the page draws it; <paramref name="withLocation"/> fills its location ("My Drive / Documents") for a search
         /// result, starting at <paramref name="rootName"/>.
         /// </summary>
-        public FileManagerItemViewModel ToViewModel(IPolicyService policy, string timeZoneIanaId, string rootName, bool withLocation) => new()
+        public FileManagerItemViewModel ToViewModel(ITimeZoneDisplayService timeZones, string timeZoneIanaId, string rootName, bool withLocation) => new()
         {
             Id = item.Id,
             ParentId = item.ParentId,
@@ -61,7 +61,7 @@ public static class FileManagerViewModelMapper
             IsFolder = item.IsFolder,
             Size = item.IsFolder ? "" : item.Size.ToSizeLabel(),
             Bytes = item.Size,
-            Modified = policy.ToTimeZone(item.Updated, timeZoneIanaId).ToString("yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture),
+            Modified = timeZones.ToTimeZone(item.Updated, timeZoneIanaId).ToString("yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture),
             Icon = IconOf(item.Name, item.IsFolder),
             Previewable = item.Previewable,
             Location = withLocation ? string.Join(" / ", [rootName, .. item.Location]) : "",
@@ -72,25 +72,25 @@ public static class FileManagerViewModelMapper
     extension(FileManagerFolderResponse folder)
     {
         /// <summary>The open folder as the page draws it.</summary>
-        public FileManagerFolderViewModel ToViewModel(IPolicyService policy, string timeZoneIanaId, string rootName) => new()
+        public FileManagerFolderViewModel ToViewModel(ITimeZoneDisplayService timeZones, string timeZoneIanaId, string rootName) => new()
         {
             FolderId = folder.FolderId,
             Breadcrumb = [.. folder.Breadcrumb.Select(c => new FileManagerCrumbViewModel { Id = c.Id, Name = c.Name })],
-            Items = [.. folder.Items.Select(i => i.ToViewModel(policy, timeZoneIanaId, rootName, withLocation: false))]
+            Items = [.. folder.Items.Select(i => i.ToViewModel(timeZones, timeZoneIanaId, rootName, withLocation: false))]
         };
     }
 
     extension(FileManagerDriveResponse drive)
     {
         /// <summary>The left panel's data: the folder tree (each folder with its location, for the Move list), the usage label and the usage bar's fill.</summary>
-        public FileManagerDriveViewModel ToViewModel(IPolicyService policy, string timeZoneIanaId, string rootName) => new()
+        public FileManagerDriveViewModel ToViewModel(ITimeZoneDisplayService timeZones, string timeZoneIanaId, string rootName) => new()
         {
             Usage = $"{drive.UsedBytes.ToSizeLabel()} / {drive.QuotaBytes.ToSizeLabel()}",
             UsedPercent = drive.QuotaBytes <= 0
                 ? (drive.UsedBytes > 0 ? 100 : 0)
                 : (int)Math.Min(100, drive.UsedBytes * 100 / drive.QuotaBytes),
             RootItemCount = drive.RootItemCount,
-            Folders = [.. drive.Folders.Select(f => f.ToViewModel(policy, timeZoneIanaId, rootName, withLocation: true))]
+            Folders = [.. drive.Folders.Select(f => f.ToViewModel(timeZones, timeZoneIanaId, rootName, withLocation: true))]
         };
     }
 }

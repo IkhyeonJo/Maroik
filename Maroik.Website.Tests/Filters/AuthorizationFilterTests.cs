@@ -48,7 +48,7 @@ public class AuthorizationFilterTests
 
     /// <summary>The filter under test over the mocked dependencies.</summary>
     private AuthorizationFilter CreateSut() =>
-        new(_menuService.Object, _cache.Object, _sessionService.Object, _accountService.Object, new PolicyService(), _logger);
+        new(_menuService.Object, _cache.Object, _sessionService.Object, _accountService.Object, new AccountPolicyService(), _logger);
 
     /// <summary>A category visible to <paramref name="role"/> for <paramref name="controller"/> (a parent when <paramref name="action"/> is <see langword="null"/>).</summary>
     private static CategoryResponse MakeCategory(long id, string role, string controller, string? action, long order = 0) => new()

@@ -20,18 +20,20 @@ namespace Maroik.Website.Controllers;
 /// <param name="localizer">Localizer for this controller's user-facing messages.</param>
 /// <param name="logger">Logger for unexpected failures in the File Manager actions.</param>
 /// <param name="fileManagerService">File Manager use cases.</param>
-/// <param name="policyService">The upload timings the page follows.</param>
+/// <param name="timeZones">Converts dates between time zones.</param>
+/// <param name="uploadPolicy">The upload rules.</param>
 public class FileManagerController(
     IHtmlLocalizer<FileManagerController> localizer,
     ILogger<FileManagerController> logger,
     IFileManagerService fileManagerService,
-    IPolicyService policyService) : Controller
+    ITimeZoneDisplayService timeZones,
+    IUploadPolicyService uploadPolicy) : Controller
 {
     #region Page
 
     /// <summary>Returns the File Manager page; the drive and the folders are fetched by the page script.</summary>
     [HttpGet]
-    public IActionResult UserIndex() => View(policyService.GetFileManagerFormRules());
+    public IActionResult UserIndex() => View(uploadPolicy.GetFileManagerFormRules());
 
     #endregion
 
@@ -55,7 +57,7 @@ public class FileManagerController(
         try
         {
             FileManagerDriveResponse drive = await fileManagerService.GetDriveAsync(Email, ct);
-            return Json(new { result = true, drive = drive.ToViewModel(policyService, TimeZone, RootName) });
+            return Json(new { result = true, drive = drive.ToViewModel(timeZones, TimeZone, RootName) });
         }
         catch (Exception ex)
         {
@@ -74,7 +76,7 @@ public class FileManagerController(
         try
         {
             var (result, folder) = await fileManagerService.GetFolderAsync(Email, input.FolderId, ct);
-            return result.Success ? Json(new { result = true, folder = folder!.ToViewModel(policyService, TimeZone, RootName) }) : Json(new { result = false, error = localizer[result.ErrorKey, result.ErrorArgs].ToPlainString() });
+            return result.Success ? Json(new { result = true, folder = folder!.ToViewModel(timeZones, TimeZone, RootName) }) : Json(new { result = false, error = localizer[result.ErrorKey, result.ErrorArgs].ToPlainString() });
         }
         catch (Exception ex)
         {
@@ -93,7 +95,7 @@ public class FileManagerController(
         try
         {
             List<FileManagerItemResponse> items = await fileManagerService.SearchAsync(Email, input.Query, ct);
-            return Json(new { result = true, items = items.Select(i => i.ToViewModel(policyService, TimeZone, RootName, withLocation: true)) });
+            return Json(new { result = true, items = items.Select(i => i.ToViewModel(timeZones, TimeZone, RootName, withLocation: true)) });
         }
         catch (Exception ex)
         {

@@ -16,7 +16,8 @@ namespace Maroik.Website.Controllers;
 /// <summary>Manages fixed-income and fixed-expenditure notice records (create, read, update, delete, export).</summary>
 /// <param name="localizer">Localizer for this controller's user-facing messages.</param>
 /// <param name="logger">Logger for unexpected failures in the Notice actions.</param>
-/// <param name="policyService">The Domain's stateless rules and the values the pages mirror.</param>
+/// <param name="financePolicy">The finance rules.</param>
+/// <param name="timeZones">Converts dates between time zones.</param>
 /// <param name="assetService">Asset reads (asset dropdowns, currency labels).</param>
 /// <param name="fixedIncomeService">Fixed-income use cases.</param>
 /// <param name="fixedExpenditureService">Fixed-expenditure use cases.</param>
@@ -29,7 +30,8 @@ public class NoticeController(
     IAssetService assetService,
     IFixedIncomeService fixedIncomeService,
     IFixedExpenditureService fixedExpenditureService,
-    IPolicyService policyService,
+    IFinancePolicyService financePolicy,
+    ITimeZoneDisplayService timeZones,
     IOptions<ServerSetting> settings,
     IExcelExportService excelExportService,
     TimeProvider timeProvider) : Controller
@@ -45,7 +47,7 @@ public class NoticeController(
         [FromBody] FixedIncomeInputViewModel fixedIncomeInputViewModel, CancellationToken ct)
     {
         if (!ModelState.IsValid || !fixedIncomeInputViewModel.MaturityDate.TryParseMaturityDate(out DateTime maturityDate)
-            || !policyService.TryParseAmount(fixedIncomeInputViewModel.Amount, out decimal amount))
+            || !financePolicy.TryParseAmount(fixedIncomeInputViewModel.Amount, out decimal amount))
             return Json(new { result = false, error = localizer["Input is invalid"].Value });
 
         try
@@ -94,7 +96,7 @@ public class NoticeController(
                 ? await fixedIncomeService.GetFixedIncomesAsync(account.RequireEmail(), ct)
                 : await fixedIncomeService.SearchFixedIncomesAsync(account.RequireEmail(), wholeSearch, ct);
             var viewModels = incomes
-                .ToDisplayViewModels(policyService, assets, key => localizer[key].Value, account.RequireTimeZoneIanaId(), settings.Value.NoticeMaturityDateDay, timeProvider.GetUtcNow().UtcDateTime)
+                .ToDisplayViewModels(financePolicy, timeZones, assets, key => localizer[key].Value, account.RequireTimeZoneIanaId(), settings.Value.NoticeMaturityDateDay, timeProvider.GetUtcNow().UtcDateTime)
                 .OrderByDescending(a => a.Expired).ThenByDescending(m => m.Noticed)
                 .ThenByDescending(m => m.Unpunctuality).ThenByDescending(a => a.Created)
                 .ThenByDescending(a => a.Updated)
@@ -107,7 +109,7 @@ public class NoticeController(
             .Where(x => !x.Deleted).OrderBy(x => x.ProductName).ToList();
         ViewBag.Assets = fixedIncomeAssets;
         ViewBag.DefaultAssetProductName = fixedIncomeAssets.FirstOrDefault()?.ProductName;
-        return View(policyService.GetFinanceFormRules());
+        return View(financePolicy.GetFinanceFormRules());
     }
 
     /// <summary>Checks whether a fixed-income record with the given ID exists.</summary>
@@ -182,7 +184,7 @@ public class NoticeController(
         [FromBody] FixedIncomeInputViewModel fixedIncomeInputViewModel, CancellationToken ct)
     {
         if (!ModelState.IsValid || !fixedIncomeInputViewModel.MaturityDate.TryParseMaturityDate(out DateTime maturityDate)
-            || !policyService.TryParseAmount(fixedIncomeInputViewModel.Amount, out decimal amount))
+            || !financePolicy.TryParseAmount(fixedIncomeInputViewModel.Amount, out decimal amount))
             return Json(new { result = false, error = localizer["Input is invalid"].Value });
 
         try
@@ -252,7 +254,7 @@ public class NoticeController(
         var assets = await assetService.GetAssetsAsync(account.RequireEmail(), ct);
         var incomes = await fixedIncomeService.GetFixedIncomesAsync(account.RequireEmail(), ct);
         var stream = excelExportService.CreateFixedIncomeExcel(incomes, assets, key => localizer[key].Value, account.RequireTimeZoneIanaId(), settings.Value.NoticeMaturityDateDay);
-        string name = fileName.ToExcelFileName(policyService, account.RequireTimeZoneIanaId(), timeProvider.GetUtcNow().UtcDateTime);
+        string name = fileName.ToExcelFileName(timeZones, account.RequireTimeZoneIanaId(), timeProvider.GetUtcNow().UtcDateTime);
         return File(stream, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", name);
     }
     #endregion
@@ -270,7 +272,7 @@ public class NoticeController(
         [FromBody] FixedExpenditureInputViewModel fixedExpenditureInputViewModel, CancellationToken ct)
     {
         if (!ModelState.IsValid || !fixedExpenditureInputViewModel.MaturityDate.TryParseMaturityDate(out DateTime maturityDate)
-            || !policyService.TryParseAmount(fixedExpenditureInputViewModel.Amount, out decimal amount))
+            || !financePolicy.TryParseAmount(fixedExpenditureInputViewModel.Amount, out decimal amount))
             return Json(new { result = false, error = localizer["Input is invalid"].Value });
 
         try
@@ -320,7 +322,7 @@ public class NoticeController(
                 ? await fixedExpenditureService.GetFixedExpendituresAsync(account.RequireEmail(), ct)
                 : await fixedExpenditureService.SearchFixedExpendituresAsync(account.RequireEmail(), wholeSearch, ct);
             var viewModels = expenditures
-                .ToDisplayViewModels(policyService, assets, key => localizer[key].Value, account.RequireTimeZoneIanaId(), settings.Value.NoticeMaturityDateDay, timeProvider.GetUtcNow().UtcDateTime)
+                .ToDisplayViewModels(financePolicy, timeZones, assets, key => localizer[key].Value, account.RequireTimeZoneIanaId(), settings.Value.NoticeMaturityDateDay, timeProvider.GetUtcNow().UtcDateTime)
                 .OrderByDescending(a => a.Expired).ThenByDescending(m => m.Noticed)
                 .ThenByDescending(m => m.Unpunctuality).ThenByDescending(a => a.Created)
                 .ThenByDescending(a => a.Updated)
@@ -333,7 +335,7 @@ public class NoticeController(
             .Where(x => !x.Deleted).OrderBy(x => x.ProductName).ToList();
         ViewBag.Assets = fixedExpenditureAssets;
         ViewBag.DefaultAssetProductName = fixedExpenditureAssets.FirstOrDefault()?.ProductName;
-        return View(policyService.GetFinanceFormRules());
+        return View(financePolicy.GetFinanceFormRules());
     }
 
     /// <summary>Checks whether a fixed-expenditure record with the given ID exists.</summary>
@@ -409,7 +411,7 @@ public class NoticeController(
         [FromBody] FixedExpenditureInputViewModel fixedExpenditureInputViewModel, CancellationToken ct)
     {
         if (!ModelState.IsValid || !fixedExpenditureInputViewModel.MaturityDate.TryParseMaturityDate(out DateTime maturityDate)
-            || !policyService.TryParseAmount(fixedExpenditureInputViewModel.Amount, out decimal amount))
+            || !financePolicy.TryParseAmount(fixedExpenditureInputViewModel.Amount, out decimal amount))
             return Json(new { result = false, error = localizer["Input is invalid"].Value });
 
         try
@@ -480,7 +482,7 @@ public class NoticeController(
         var assets = await assetService.GetAssetsAsync(account.RequireEmail(), ct);
         var expenditures = await fixedExpenditureService.GetFixedExpendituresAsync(account.RequireEmail(), ct);
         var stream = excelExportService.CreateFixedExpenditureExcel(expenditures, assets, key => localizer[key].Value, account.RequireTimeZoneIanaId(), settings.Value.NoticeMaturityDateDay);
-        string name = fileName.ToExcelFileName(policyService, account.RequireTimeZoneIanaId(), timeProvider.GetUtcNow().UtcDateTime);
+        string name = fileName.ToExcelFileName(timeZones, account.RequireTimeZoneIanaId(), timeProvider.GetUtcNow().UtcDateTime);
         return File(stream, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", name);
     }
     #endregion

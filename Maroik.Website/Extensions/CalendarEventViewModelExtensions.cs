@@ -18,13 +18,13 @@ public static class CalendarEventViewModelExtensions
         /// Fetches all events for each calendar in <paramref name="calendars"/> and returns
         /// them as grid-ready view models with timezone conversion applied.
         /// </summary>
-        /// <param name="policy">Converts the dates to the viewer's time zone.</param>
+        /// <param name="timeZones">Converts the dates to the viewer's time zone.</param>
         /// <param name="calendars">Calendars whose events should be loaded.</param>
         /// <param name="userTimeZoneIanaId">Viewer's IANA timezone ID for date conversion.</param>
         /// <param name="calendarType">Optional "My" / "Other" label passed through to each item.</param>
         /// <param name="ct">Cancellation token.</param>
         public async Task<List<CalendarEventOutputViewModel>> GetCalendarEventViewModelsAsync(
-            IPolicyService policy,
+            ITimeZoneDisplayService timeZones,
             IEnumerable<CalendarResponse> calendars,
             string userTimeZoneIanaId,
             string? calendarType,
@@ -40,7 +40,7 @@ public static class CalendarEventViewModelExtensions
             [
                 .. from calendar in calendarList
                    from evt in eventsByCalendarId.GetValueOrDefault(calendar.Id, [])
-                   select evt.ToDisplayViewModel(policy, userTimeZoneIanaId, calendar.HtmlColorCode, calendarType)
+                   select evt.ToDisplayViewModel(timeZones, userTimeZoneIanaId, calendar.HtmlColorCode, calendarType)
             ];
         }
 
@@ -51,7 +51,7 @@ public static class CalendarEventViewModelExtensions
         /// belong to any of the given calendars, so the controller can turn that into its own
         /// localized JSON error response.
         /// </summary>
-        /// <param name="policy">Converts the dates to the viewer's time zone.</param>
+        /// <param name="timeZones">Converts the dates to the viewer's time zone.</param>
         /// <param name="calendars">Calendars the caller is authorized to see.</param>
         /// <param name="userTimeZoneIanaId">Viewer's IANA timezone ID for date conversion.</param>
         /// <param name="calendarEventId">ID of the calendar event to load.</param>
@@ -61,7 +61,7 @@ public static class CalendarEventViewModelExtensions
         /// </param>
         /// <param name="ct">Cancellation token.</param>
         public async Task<CalendarEventOutputViewModel?> GetCalendarEventDetailViewModelAsync(
-            IPolicyService policy,
+            ITimeZoneDisplayService timeZones,
             IEnumerable<CalendarResponse> calendars,
             string userTimeZoneIanaId,
             long calendarEventId,
@@ -78,7 +78,7 @@ public static class CalendarEventViewModelExtensions
             if (!(tempCalendar.Id > 0))
                 return null;
 
-            CalendarEventOutputViewModel calendarEvent = tempCalendarEvent.ToDisplayViewModel(policy, userTimeZoneIanaId, null, forGrid: false);
+            CalendarEventOutputViewModel calendarEvent = tempCalendarEvent.ToDisplayViewModel(timeZones, userTimeZoneIanaId, null, forGrid: false);
 
             (calendarEvent.Description, _) = await calendarService.PrepareHtmlForDisplayAsync(tempCalendarEvent.Description ?? "", ct);
             calendarEvent.Location = tempCalendarEvent.Location;

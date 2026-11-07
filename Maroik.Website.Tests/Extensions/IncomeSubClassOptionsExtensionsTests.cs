@@ -37,7 +37,7 @@ public class IncomeSubClassOptionsExtensionsTests
     [Fact]
     public void IncomeSubClassOptions_RendersEachDistinctSubClassExactlyOnce()
     {
-        string html = Render(((IHtmlHelper)null!).IncomeSubClassOptions(MakeEchoLocalizer(), new PolicyService().GetFinanceFormRules().IncomeSubClassesByMainClass));
+        string html = Render(((IHtmlHelper)null!).IncomeSubClassOptions(MakeEchoLocalizer(), new FinancePolicyService().GetFinanceFormRules().IncomeSubClassesByMainClass));
 
         Assert.Equal(1, CountOccurrences(html, "value=\"LaborIncome\""));
         Assert.Equal(1, CountOccurrences(html, "value=\"OtherIncome\""));
@@ -51,7 +51,7 @@ public class IncomeSubClassOptionsExtensionsTests
     [Fact]
     public void IncomeSubClassOptions_MarksFirstSubClass_AsSelected()
     {
-        string html = Render(((IHtmlHelper)null!).IncomeSubClassOptions(MakeEchoLocalizer(), new PolicyService().GetFinanceFormRules().IncomeSubClassesByMainClass));
+        string html = Render(((IHtmlHelper)null!).IncomeSubClassOptions(MakeEchoLocalizer(), new FinancePolicyService().GetFinanceFormRules().IncomeSubClassesByMainClass));
 
         int optionStart = html.IndexOf("<option", StringComparison.Ordinal);
         int optionEnd = html.IndexOf('>', optionStart);

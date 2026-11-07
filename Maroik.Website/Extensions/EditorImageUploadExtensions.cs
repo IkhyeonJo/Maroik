@@ -45,7 +45,7 @@ public static class EditorImageUploadExtensions
             }
 
             var ext = Path.GetExtension(imageFile.FileName).ToLowerInvariant();
-            if (!controller.HttpContext.RequestServices.GetRequiredService<IPolicyService>().IsAllowedImageExtension(ext))
+            if (!controller.HttpContext.RequestServices.GetRequiredService<IUploadPolicyService>().IsAllowedImageExtension(ext))
             {
                 logger.LogWarning("Editor image upload refused: extension not allowed ({Extension}) for {Email}", ext, uploaderEmail);
                 return controller.Ok(new { result = false, errorMessage = localizer["Only .jpg or jpeg or .png file allowed."].Value });

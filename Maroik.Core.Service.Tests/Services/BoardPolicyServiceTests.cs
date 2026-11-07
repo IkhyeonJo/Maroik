@@ -6,13 +6,13 @@ using Maroik.Core.Domain.Boards;
 namespace Maroik.Core.Service.Tests.Services;
 
 /// <summary>
-/// Unit tests for <see cref="PolicyService"/> — the "can this viewer see a
+/// Unit tests for <see cref="BoardPolicyService"/> — the "can this viewer see a
 /// locked post's title" rule used by the FreeForum and PrivateNote board list views.
 /// </summary>
-public class PolicyServiceBoardRulesTests
+public class BoardPolicyServiceTests
 {
     /// <summary>The service under test.</summary>
-    private readonly PolicyService _sut = new();
+    private readonly BoardPolicyService _sut = new();
 
     // -- IsTitleVisibleToOwnerOrAdmin ---------------------------------------------
 
@@ -155,5 +155,70 @@ public class PolicyServiceBoardRulesTests
         var viewer = new AccountResponse { Nickname = "Alice", Role = Role.Admin };
 
         Assert.False(_sut.IsTitleVisibleToOwnerOrAdmin(board, viewer));
+    }
+
+    /// <summary>Is owner same nickname true.</summary>
+    [Fact]
+    public void IsOwner_SameNickname_True()
+    {
+        var viewer = new AccountResponse { Nickname = "Alice", Role = Role.User };
+        Assert.True(_sut.IsContentOwner(viewer, "Alice"));
+    }
+
+    /// <summary>Is owner different nickname false.</summary>
+    [Fact]
+    public void IsOwner_DifferentNickname_False()
+    {
+        var viewer = new AccountResponse { Nickname = "Alice", Role = Role.User };
+        Assert.False(_sut.IsContentOwner(viewer, "Bob"));
+    }
+
+    /// <summary>Is owner admin but not writer false.</summary>
+    [Fact]
+    public void IsOwner_AdminButNotWriter_False()
+    {
+        // Unlike IsOwnerOrAdmin, IsOwner never grants access based on role alone.
+        var admin = new AccountResponse { Nickname = "AdminUser", Role = Role.Admin };
+        Assert.False(_sut.IsContentOwner(admin, "Bob"));
+    }
+
+    /// <summary>Is owner null viewer nickname false.</summary>
+    [Fact]
+    public void IsOwner_NullViewerNickname_False()
+    {
+        var anonymous = new AccountResponse { Nickname = null, Role = Role.Anonymous };
+        Assert.False(_sut.IsContentOwner(anonymous, "Bob"));
+    }
+
+    /// <summary>Is owner or admin same nickname true.</summary>
+    [Fact]
+    public void IsOwnerOrAdmin_SameNickname_True()
+    {
+        var viewer = new AccountResponse { Nickname = "Alice", Role = Role.User };
+        Assert.True(_sut.IsContentOwnerOrAdmin(viewer, "Alice"));
+    }
+
+    /// <summary>Is owner or admin not writer true.</summary>
+    [Fact]
+    public void IsOwnerOrAdmin_AdminNotWriter_True()
+    {
+        var admin = new AccountResponse { Nickname = "AdminUser", Role = Role.Admin };
+        Assert.True(_sut.IsContentOwnerOrAdmin(admin, "Bob"));
+    }
+
+    /// <summary>Is owner or admin regular user not writer false.</summary>
+    [Fact]
+    public void IsOwnerOrAdmin_RegularUserNotWriter_False()
+    {
+        var viewer = new AccountResponse { Nickname = "Alice", Role = Role.User };
+        Assert.False(_sut.IsContentOwnerOrAdmin(viewer, "Bob"));
+    }
+
+    /// <summary>Is owner or admin anonymous not writer false.</summary>
+    [Fact]
+    public void IsOwnerOrAdmin_AnonymousNotWriter_False()
+    {
+        var anonymous = new AccountResponse { Nickname = null, Role = Role.Anonymous };
+        Assert.False(_sut.IsContentOwnerOrAdmin(anonymous, "Bob"));
     }
 }

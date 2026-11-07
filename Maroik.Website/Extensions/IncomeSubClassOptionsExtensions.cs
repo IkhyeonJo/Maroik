@@ -30,7 +30,7 @@ public static class IncomeSubClassOptionsExtensions
     /// </summary>
     /// <param name="html">The view's HTML helper (extension receiver; not otherwise used).</param>
     /// <param name="localizer">The calling view's localizer, used for each option's label.</param>
-    /// <param name="subClassesByMainClass">The subclasses of each main class, from <c>IPolicyService.GetFinanceFormRules</c>.</param>
+    /// <param name="subClassesByMainClass">The subclasses of each main class, from <c>IFinancePolicyService.GetFinanceFormRules</c>.</param>
     /// <returns>The rendered option list, ready to place inside the subclass <c>&lt;select&gt;</c>.</returns>
     // ReSharper disable once UnusedParameter.Global -- the receiver makes it callable as Html.X(...) from a view.
     public static IHtmlContent IncomeSubClassOptions(this IHtmlHelper html, IViewLocalizer localizer, IReadOnlyDictionary<string, IReadOnlyList<string>> subClassesByMainClass)

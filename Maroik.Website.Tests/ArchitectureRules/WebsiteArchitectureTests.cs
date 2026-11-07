@@ -26,7 +26,9 @@ namespace Maroik.Website.Tests.ArchitectureRules;
 /// Maroik.Core.Contract. Direct dependencies on Maroik.Core.Repository,
 /// Maroik.Core.Client, or Maroik.Core.Service (the implementations) are
 /// forbidden for all types except Program (the composition root), which
-/// wires up implementations into the DI container.
+/// wires up implementations into the DI container. The one thing the Website takes from
+/// Maroik.Core.Service directly is Maroik.Core.Service.Constants: an attribute argument must be a
+/// compile-time constant, so it cannot come through an interface.
 /// </summary>
 public class WebsiteArchitectureTests
 {
@@ -533,17 +535,9 @@ public class WebsiteArchitectureTests
     [Fact]
     public void WebsiteSources_ShouldNot_MentionDomainNamespace()
     {
-        string[] generatedFolders =
-        [
-            Path.Combine(RepositoryPaths.Website, "bin") + Path.DirectorySeparatorChar,
-            Path.Combine(RepositoryPaths.Website, "obj") + Path.DirectorySeparatorChar,
-        ];
-
         List<string> offendingFiles =
         [
-            .. Directory.EnumerateFiles(RepositoryPaths.Website, "*", SearchOption.AllDirectories)
-                .Where(path => path.EndsWith(".cs", StringComparison.Ordinal) || path.EndsWith(".cshtml", StringComparison.Ordinal))
-                .Where(path => !generatedFolders.Any(folder => path.StartsWith(folder, StringComparison.Ordinal)))
+            .. WebsiteSourceFiles()
                 .Where(path => File.ReadAllText(path).Contains("Maroik.Core.Domain", StringComparison.Ordinal))
                 .Select(path => Path.GetRelativePath(RepositoryPaths.Website, path))
                 .Order(StringComparer.Ordinal)
@@ -553,5 +547,45 @@ public class WebsiteArchitectureTests
             offendingFiles.Count == 0,
             "Maroik.Website must not mention Maroik.Core.Domain: get the value or decision from a service.\n" +
             "Offending files (" + offendingFiles.Count + "):\n" + string.Join("\n", offendingFiles));
+    }
+
+    /// <summary>
+    /// The IL rule on the Service namespace cannot see a <c>const</c>, which the compiler copies into the caller, so only the source
+    /// shows a constant taken from the Service project. <c>Maroik.Core.Service.Constants</c> is where the Website gets the constants
+    /// its attributes need; nothing else of that project appears in the Website's sources, Program (the composition root) aside.
+    /// </summary>
+    [Fact]
+    public void WebsiteSources_MayTakeOnlyConstants_FromTheServiceProject()
+    {
+        string program = Path.Combine(RepositoryPaths.Website, "Program.cs");
+
+        List<string> offendingFiles =
+        [
+            .. WebsiteSourceFiles()
+                .Where(path => path != program)
+                .Where(path => Regex.IsMatch(File.ReadAllText(path), @"Maroik\.Core\.Service(?!\.Constants\b)"))
+                .Select(path => Path.GetRelativePath(RepositoryPaths.Website, path))
+                .Order(StringComparer.Ordinal)
+        ];
+
+        Assert.True(
+            offendingFiles.Count == 0,
+            "Outside Program, Maroik.Website may take only Maroik.Core.Service.Constants from the Service project: " +
+            "call everything else through its interface in Maroik.Core.Contract.\n" +
+            "Offending files (" + offendingFiles.Count + "):\n" + string.Join("\n", offendingFiles));
+    }
+
+    /// <summary>The Website's C# and Razor sources, without what the build generates.</summary>
+    private static IEnumerable<string> WebsiteSourceFiles()
+    {
+        string[] generatedFolders =
+        [
+            Path.Combine(RepositoryPaths.Website, "bin") + Path.DirectorySeparatorChar,
+            Path.Combine(RepositoryPaths.Website, "obj") + Path.DirectorySeparatorChar,
+        ];
+
+        return Directory.EnumerateFiles(RepositoryPaths.Website, "*", SearchOption.AllDirectories)
+            .Where(path => path.EndsWith(".cs", StringComparison.Ordinal) || path.EndsWith(".cshtml", StringComparison.Ordinal))
+            .Where(path => !generatedFolders.Any(folder => path.StartsWith(folder, StringComparison.Ordinal)));
     }
 }

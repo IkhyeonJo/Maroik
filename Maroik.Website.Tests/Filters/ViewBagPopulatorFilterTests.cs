@@ -47,7 +47,7 @@ public class ViewBagPopulatorFilterTests
 
     /// <summary>The filter under test over the mocked dependencies.</summary>
     private ViewBagPopulatorFilter CreateSut() =>
-        new(_dashboardService.Object, _timeZoneCatalogService.Object, new PolicyService(), _serverSettings, _timeProvider, _logger);
+        new(_dashboardService.Object, _timeZoneCatalogService.Object, new TimeZoneDisplayService(), _serverSettings, _timeProvider, _logger);
 
     /// <summary>
     /// Signs <paramref name="account"/> in for this request the way production does: AuthorizationFilter,

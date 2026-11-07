@@ -20,7 +20,7 @@ namespace Maroik.Website.Services;
 /// caller-supplied time zone, so this class holds no localizer or session state of its own. The fixed
 /// income / expenditure exports judge their notice and expiry flags against <paramref name="timeProvider"/>.
 /// </summary>
-public class ExcelExportService(TimeProvider timeProvider, IPolicyService policyService) : IExcelExportService
+public class ExcelExportService(TimeProvider timeProvider, IFinancePolicyService financePolicy, ITimeZoneDisplayService timeZones) : IExcelExportService
 {
     /// <inheritdoc />
     public MemoryStream CreateAssetExcel(
@@ -48,8 +48,8 @@ public class ExcelExportService(TimeProvider timeProvider, IPolicyService policy
             localize(item.Item ?? ""),
             item.MonetaryUnit ?? "",
             XlsxCell.Number(item.Amount),
-            Timestamp(policyService.ToTimeZone(item.Created, timeZoneIanaId)),
-            Timestamp(policyService.ToTimeZone(item.Updated, timeZoneIanaId)),
+            Timestamp(timeZones.ToTimeZone(item.Created, timeZoneIanaId)),
+            Timestamp(timeZones.ToTimeZone(item.Updated, timeZoneIanaId)),
             item.Note ?? "",
             item.Deleted.ToString()
         ]);
@@ -90,8 +90,8 @@ public class ExcelExportService(TimeProvider timeProvider, IPolicyService policy
             currencyByProduct.GetValueOrDefault(item.DepositMyAssetProductName ?? "", ""),
             XlsxCell.Number(item.Amount),
             item.DepositMyAssetProductName ?? "",
-            Timestamp(policyService.ToTimeZone(item.Created, timeZoneIanaId)),
-            Timestamp(policyService.ToTimeZone(item.Updated, timeZoneIanaId)),
+            Timestamp(timeZones.ToTimeZone(item.Created, timeZoneIanaId)),
+            Timestamp(timeZones.ToTimeZone(item.Updated, timeZoneIanaId)),
             item.Note ?? ""
         ]);
 
@@ -134,8 +134,8 @@ public class ExcelExportService(TimeProvider timeProvider, IPolicyService policy
             item.PaymentMethod ?? "",
             item.Note ?? "",
             item.MyDepositAsset ?? "",
-            Timestamp(policyService.ToTimeZone(item.Created, timeZoneIanaId)),
-            Timestamp(policyService.ToTimeZone(item.Updated, timeZoneIanaId))
+            Timestamp(timeZones.ToTimeZone(item.Created, timeZoneIanaId)),
+            Timestamp(timeZones.ToTimeZone(item.Updated, timeZoneIanaId))
         ]);
 
         return BuildExcel(headers, rows);
@@ -151,7 +151,7 @@ public class ExcelExportService(TimeProvider timeProvider, IPolicyService policy
     {
         var assetList = assets.ToList();
         var ordered = items
-            .ToDisplayViewModels(policyService, assetList, localize, timeZoneIanaId, noticeWindowDays, timeProvider.GetUtcNow().UtcDateTime)
+            .ToDisplayViewModels(financePolicy, timeZones, assetList, localize, timeZoneIanaId, noticeWindowDays, timeProvider.GetUtcNow().UtcDateTime)
             .OrderByDescending(a => a.Expired).ThenByDescending(a => a.Noticed)
             .ThenByDescending(a => a.Unpunctuality).ThenByDescending(a => a.Created)
             .ThenByDescending(a => a.Updated).ToList();
@@ -205,7 +205,7 @@ public class ExcelExportService(TimeProvider timeProvider, IPolicyService policy
     {
         var assetList = assets.ToList();
         var ordered = items
-            .ToDisplayViewModels(policyService, assetList, localize, timeZoneIanaId, noticeWindowDays, timeProvider.GetUtcNow().UtcDateTime)
+            .ToDisplayViewModels(financePolicy, timeZones, assetList, localize, timeZoneIanaId, noticeWindowDays, timeProvider.GetUtcNow().UtcDateTime)
             .OrderByDescending(a => a.Expired).ThenByDescending(a => a.Noticed)
             .ThenByDescending(a => a.Unpunctuality).ThenByDescending(a => a.Created)
             .ThenByDescending(a => a.Updated).ToList();
@@ -258,7 +258,7 @@ public class ExcelExportService(TimeProvider timeProvider, IPolicyService policy
         string timeZoneIanaId)
     {
         var ordered = items
-            .ToDisplayViewModels(policyService, timeZoneIanaId)
+            .ToDisplayViewModels(timeZones, timeZoneIanaId)
             .OrderBy(m => m.Email).ThenBy(m => m.Nickname)
             .ThenByDescending(m => m.Created).ThenByDescending(m => m.Updated)
             .ToList();

@@ -23,7 +23,7 @@ namespace Maroik.Website.Filters;
 public class ViewBagPopulatorFilter(
     IDashboardService dashboardService,
     ITimeZoneCatalogService timeZoneCatalogService,
-    IPolicyService policyService,
+    ITimeZoneDisplayService timeZones,
     IOptions<ServerSetting> serverSettings,
     TimeProvider timeProvider,
     ILogger<ViewBagPopulatorFilter> logger) : IAsyncActionFilter
@@ -48,8 +48,8 @@ public class ViewBagPopulatorFilter(
         // HttpContext.GetLoggedInAccount() — never null from here on (anonymous placeholder at worst).
         context.HttpContext.Items[HttpContextItemKeys.LoggedInAccount] = loggedInAccount;
         controller.ViewBag.TimeZoneOptions = timeZoneCatalogService.GetTimeZoneOptions();
-        controller.ViewBag.CopyrightYear = policyService.ToTimeZone(timeProvider.GetUtcNow().UtcDateTime, loggedInAccount.RequireTimeZoneIanaId()).Year;
-        controller.ViewBag.MemberSinceDate = policyService.ToTimeZone(loggedInAccount.Created, loggedInAccount.TimeZoneIanaId ?? "");
+        controller.ViewBag.CopyrightYear = timeZones.ToTimeZone(timeProvider.GetUtcNow().UtcDateTime, loggedInAccount.RequireTimeZoneIanaId()).Year;
+        controller.ViewBag.MemberSinceDate = timeZones.ToTimeZone(loggedInAccount.Created, loggedInAccount.TimeZoneIanaId ?? "");
 
         PublishActiveMenuItem(context, controller, loggedInAccount);
 

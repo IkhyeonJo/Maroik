@@ -34,8 +34,8 @@ public sealed class InvariantDateFormatTests : IDisposable
         var income = new FixedIncomeResponse { MaturityDate = new DateTime(2030, 12, 31), DepositMonth = 1, DepositDay = 1 };
         var expenditure = new FixedExpenditureResponse { MaturityDate = new DateTime(2030, 12, 31), DepositMonth = 1, DepositDay = 1 };
 
-        Assert.Equal("2030-12-31", Assert.Single(new[] { income }.ToDisplayViewModels(new PolicyService(), [], k => k, "UTC", 3, _utcNow)).MaturityDate);
-        Assert.Equal("2030-12-31", Assert.Single(new[] { expenditure }.ToDisplayViewModels(new PolicyService(), [], k => k, "UTC", 3, _utcNow)).MaturityDate);
+        Assert.Equal("2030-12-31", Assert.Single(new[] { income }.ToDisplayViewModels(new FinancePolicyService(), new TimeZoneDisplayService(), [], k => k, "UTC", 3, _utcNow)).MaturityDate);
+        Assert.Equal("2030-12-31", Assert.Single(new[] { expenditure }.ToDisplayViewModels(new FinancePolicyService(), new TimeZoneDisplayService(), [], k => k, "UTC", 3, _utcNow)).MaturityDate);
     }
 
     /// <summary>Calendar event display dates (all-day and timed) are Gregorian.</summary>
@@ -45,8 +45,8 @@ public sealed class InvariantDateFormatTests : IDisposable
         var allDay = new CalendarEventResponse { AllDay = true, StartDate = new DateTime(2025, 6, 15), EndDate = new DateTime(2025, 6, 16) };
         var timed = new CalendarEventResponse { StartDate = new DateTime(2025, 6, 15, 9, 0, 0), EndDate = new DateTime(2025, 6, 15, 10, 30, 0) };
 
-        CalendarEventOutputViewModel allDayVm = allDay.ToDisplayViewModel(new PolicyService(), "UTC", null, forGrid: false);
-        CalendarEventOutputViewModel timedVm = timed.ToDisplayViewModel(new PolicyService(), "UTC", null, forGrid: false);
+        CalendarEventOutputViewModel allDayVm = allDay.ToDisplayViewModel(new TimeZoneDisplayService(), "UTC", null, forGrid: false);
+        CalendarEventOutputViewModel timedVm = timed.ToDisplayViewModel(new TimeZoneDisplayService(), "UTC", null, forGrid: false);
 
         Assert.Equal(("2025-06-15", "2025-06-16"), (allDayVm.DisplayStartDate, allDayVm.DisplayEndDate));
         Assert.Equal(("2025-06-15 09:00", "2025-06-15 10:30"), (timedVm.DisplayStartDate, timedVm.DisplayEndDate));
@@ -59,8 +59,8 @@ public sealed class InvariantDateFormatTests : IDisposable
         var calendar = new CalendarOutputViewModel();
         var accountBook = new AccountBookPageViewModel();
 
-        calendar.PopulateTimeData(new PolicyService(), "UTC", _utcNow);
-        accountBook.PopulateTimeData(new PolicyService(), "UTC", _utcNow);
+        calendar.PopulateTimeData(new TimeZoneDisplayService(), "UTC", _utcNow);
+        accountBook.PopulateTimeData(new TimeZoneDisplayService(), "UTC", _utcNow);
 
         Assert.Equal("2025-06-15", calendar.CurrentDate);
         Assert.Equal("2025-06-15", accountBook.CurrentDate);

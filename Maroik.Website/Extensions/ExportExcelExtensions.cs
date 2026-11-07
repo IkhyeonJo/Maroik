@@ -19,10 +19,10 @@ public static class ExportExcelExtensions
         /// Content-Disposition header — such characters are simply dropped from the name. The timestamp
         /// suffix is <paramref name="utcNow"/> (the request's clock reading) in <paramref name="timeZoneIanaId"/>.
         /// </summary>
-        public string ToExcelFileName(IPolicyService policy, string timeZoneIanaId, DateTime utcNow)
+        public string ToExcelFileName(ITimeZoneDisplayService timeZones, string timeZoneIanaId, DateTime utcNow)
         {
             string safePrefix = new(prefix.Where(c => Array.IndexOf(_invalidFileNameChars, c) < 0).ToArray());
-            return $"{safePrefix}-{policy.ToTimeZone(utcNow, timeZoneIanaId):yyyy-MM-dd-HH-mm-ss-fff}.xlsx";
+            return $"{safePrefix}-{timeZones.ToTimeZone(utcNow, timeZoneIanaId):yyyy-MM-dd-HH-mm-ss-fff}.xlsx";
         }
     }
 }

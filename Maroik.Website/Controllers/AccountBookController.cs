@@ -18,7 +18,9 @@ namespace Maroik.Website.Controllers;
 /// </summary>
 /// <param name="localizer">Localizer for this controller's user-facing messages.</param>
 /// <param name="logger">Logger for unexpected failures in the account-book actions.</param>
-/// <param name="policyService">The Domain's stateless rules and the values the pages mirror.</param>
+/// <param name="financePolicy">The finance rules.</param>
+/// <param name="timeZones">Converts dates between time zones.</param>
+/// <param name="budgetPolicy">What the budget page needs from the Domain.</param>
 /// <param name="assetService">Asset use cases.</param>
 /// <param name="incomeService">Income use cases.</param>
 /// <param name="expenditureService">Expenditure use cases.</param>
@@ -33,7 +35,9 @@ public class AccountBookController(
     IExpenditureService expenditureService,
     IBudgetService budgetService,
     IExcelExportService excelExportService,
-    IPolicyService policyService,
+    IFinancePolicyService financePolicy,
+    ITimeZoneDisplayService timeZones,
+    IBudgetPolicyService budgetPolicy,
     TimeProvider timeProvider) : Controller
 {
     #region Asset
@@ -46,7 +50,7 @@ public class AccountBookController(
     [RequiredHttpPostAccess(Role = AccountRoles.User)]
     public async Task<IActionResult> CreateAsset([FromBody] AssetInputViewModel assetInputViewModel, CancellationToken ct)
     {
-        if (!ModelState.IsValid || !policyService.TryParseAmount(assetInputViewModel.Amount, out decimal amount))
+        if (!ModelState.IsValid || !financePolicy.TryParseAmount(assetInputViewModel.Amount, out decimal amount))
             return Json(new { result = false, error = localizer["Input is invalid"].Value });
 
         string email = HttpContext.GetLoggedInEmail();
@@ -90,7 +94,7 @@ public class AccountBookController(
                 ? await assetService.GetAssetsAsync(account.RequireEmail(), ct)
                 : await assetService.SearchAssetsAsync(account.RequireEmail(), wholeSearch, ct);
             var viewModels = assets
-                .ToDisplayViewModels(policyService, key => localizer[key].Value, account.RequireTimeZoneIanaId())
+                .ToDisplayViewModels(timeZones, key => localizer[key].Value, account.RequireTimeZoneIanaId())
                 .OrderBy(m => m.ProductName)
                 .AsQueryable();
             return PartialView("_AssetGrid", viewModels);
@@ -100,14 +104,14 @@ public class AccountBookController(
         string tz = pageAccount.RequireTimeZoneIanaId();
         var vm = new AccountBookPageViewModel
         {
-            FinanceRules = policyService.GetFinanceFormRules(),
+            FinanceRules = financePolicy.GetFinanceFormRules(),
             Assets =
             [
                 .. (await assetService.GetAssetsAsync(pageAccount.RequireEmail(), ct))
                 .Where(x => !x.Deleted).OrderBy(x => x.ProductName)
             ]
         };
-        vm.PopulateTimeData(policyService, tz, timeProvider.GetUtcNow().UtcDateTime);
+        vm.PopulateTimeData(timeZones, tz, timeProvider.GetUtcNow().UtcDateTime);
         return View(vm);
     }
 
@@ -144,7 +148,7 @@ public class AccountBookController(
     public async Task<IActionResult> UpdateAsset([FromBody] AssetInputViewModel assetInputViewModel, CancellationToken ct)
     {
         _ = ModelState.Remove(nameof(assetInputViewModel.MonetaryUnit));
-        if (!ModelState.IsValid || !policyService.TryParseAmount(assetInputViewModel.Amount, out decimal amount))
+        if (!ModelState.IsValid || !financePolicy.TryParseAmount(assetInputViewModel.Amount, out decimal amount))
             return Json(new { result = false, error = localizer["Input is invalid"].Value });
 
         string email = HttpContext.GetLoggedInEmail();
@@ -211,7 +215,7 @@ public class AccountBookController(
         AccountResponse account = HttpContext.GetLoggedInAccount();
         var assets = await assetService.GetAssetsAsync(account.RequireEmail(), ct);
         var stream = excelExportService.CreateAssetExcel(assets, key => localizer[key].Value, account.RequireTimeZoneIanaId());
-        string name = fileName.ToExcelFileName(policyService, account.RequireTimeZoneIanaId(), timeProvider.GetUtcNow().UtcDateTime);
+        string name = fileName.ToExcelFileName(timeZones, account.RequireTimeZoneIanaId(), timeProvider.GetUtcNow().UtcDateTime);
         return File(stream, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", name);
     }
 
@@ -229,7 +233,7 @@ public class AccountBookController(
     [RequiredHttpPostAccess(Role = AccountRoles.User)]
     public async Task<IActionResult> CreateIncome([FromBody] IncomeInputViewModel incomeInputViewModel, CancellationToken ct)
     {
-        if (!ModelState.IsValid || !policyService.TryParseAmount(incomeInputViewModel.Amount, out decimal amount))
+        if (!ModelState.IsValid || !financePolicy.TryParseAmount(incomeInputViewModel.Amount, out decimal amount))
             return Json(new { result = false, error = localizer["Input is invalid"].Value });
 
         AccountResponse account = HttpContext.GetLoggedInAccount();
@@ -241,7 +245,7 @@ public class AccountBookController(
             Content = incomeInputViewModel.Content ?? "",
             Amount = amount,
             DepositMyAssetProductName = incomeInputViewModel.DepositMyAssetProductName,
-            Created = incomeInputViewModel.ToCreatedUtc(policyService, account.RequireTimeZoneIanaId()),
+            Created = incomeInputViewModel.ToCreatedUtc(timeZones, account.RequireTimeZoneIanaId()),
             Note = incomeInputViewModel.Note ?? ""
         };
 
@@ -275,7 +279,7 @@ public class AccountBookController(
                 ? await incomeService.GetIncomesAsync(account.RequireEmail(), ct)
                 : await incomeService.SearchIncomesAsync(account.RequireEmail(), wholeSearch, ct);
             var viewModels = incomes
-                .ToDisplayViewModels(policyService, assets, key => localizer[key].Value, account.RequireTimeZoneIanaId())
+                .ToDisplayViewModels(timeZones, assets, key => localizer[key].Value, account.RequireTimeZoneIanaId())
                 .OrderByDescending(m => m.Created)
                 .ThenByDescending(m => m.Updated)
                 .AsQueryable();
@@ -286,14 +290,14 @@ public class AccountBookController(
         string tz = pageAccount.RequireTimeZoneIanaId();
         var vm = new AccountBookPageViewModel
         {
-            FinanceRules = policyService.GetFinanceFormRules(),
+            FinanceRules = financePolicy.GetFinanceFormRules(),
             Assets =
             [
                 .. (await assetService.GetAssetsAsync(pageAccount.RequireEmail(), ct))
                 .Where(x => !x.Deleted).OrderBy(x => x.ProductName)
             ]
         };
-        vm.PopulateTimeData(policyService, tz, timeProvider.GetUtcNow().UtcDateTime);
+        vm.PopulateTimeData(timeZones, tz, timeProvider.GetUtcNow().UtcDateTime);
         return View(vm);
     }
 
@@ -312,7 +316,7 @@ public class AccountBookController(
             if (income == null)
                 return Json(new { result = false, error = localizer["Input is invalid"].Value });
 
-            income.Created = policyService.ToTimeZone(income.Created, tz);
+            income.Created = timeZones.ToTimeZone(income.Created, tz);
             return Json(new { result = true, income });
         }
         catch (Exception ex)
@@ -357,7 +361,7 @@ public class AccountBookController(
     [RequiredHttpPostAccess(Role = AccountRoles.User)]
     public async Task<IActionResult> UpdateIncome([FromBody] IncomeInputViewModel incomeInputViewModel, CancellationToken ct)
     {
-        if (!ModelState.IsValid || !policyService.TryParseAmount(incomeInputViewModel.Amount, out decimal amount))
+        if (!ModelState.IsValid || !financePolicy.TryParseAmount(incomeInputViewModel.Amount, out decimal amount))
             return Json(new { result = false, error = localizer["Input is invalid"].Value });
 
         AccountResponse account = HttpContext.GetLoggedInAccount();
@@ -370,7 +374,7 @@ public class AccountBookController(
             Content = incomeInputViewModel.Content,
             Amount = amount,
             DepositMyAssetProductName = incomeInputViewModel.DepositMyAssetProductName,
-            Created = incomeInputViewModel.ToCreatedUtc(policyService, account.RequireTimeZoneIanaId()),
+            Created = incomeInputViewModel.ToCreatedUtc(timeZones, account.RequireTimeZoneIanaId()),
             Note = incomeInputViewModel.Note
         };
 
@@ -427,7 +431,7 @@ public class AccountBookController(
         var assets = await assetService.GetAssetsAsync(account.RequireEmail(), ct);
         var incomes = await incomeService.GetIncomesAsync(account.RequireEmail(), ct);
         var stream = excelExportService.CreateIncomeExcel(incomes, assets, key => localizer[key].Value, account.RequireTimeZoneIanaId());
-        string name = fileName.ToExcelFileName(policyService, account.RequireTimeZoneIanaId(), timeProvider.GetUtcNow().UtcDateTime);
+        string name = fileName.ToExcelFileName(timeZones, account.RequireTimeZoneIanaId(), timeProvider.GetUtcNow().UtcDateTime);
         return File(stream, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", name);
     }
 
@@ -446,7 +450,7 @@ public class AccountBookController(
     public async Task<IActionResult> CreateExpenditure(
         [FromBody] ExpenditureInputViewModel expenditureInputViewModel, CancellationToken ct)
     {
-        if (!ModelState.IsValid || !policyService.TryParseAmount(expenditureInputViewModel.Amount, out decimal amount))
+        if (!ModelState.IsValid || !financePolicy.TryParseAmount(expenditureInputViewModel.Amount, out decimal amount))
             return Json(new { result = false, error = localizer["Input is invalid"].Value });
 
         AccountResponse account = HttpContext.GetLoggedInAccount();
@@ -459,7 +463,7 @@ public class AccountBookController(
             Amount = amount,
             PaymentMethod = expenditureInputViewModel.PaymentMethod,
             MyDepositAsset = expenditureInputViewModel.MyDepositAsset,
-            Created = expenditureInputViewModel.ToCreatedUtc(policyService, account.RequireTimeZoneIanaId()),
+            Created = expenditureInputViewModel.ToCreatedUtc(timeZones, account.RequireTimeZoneIanaId()),
             Note = expenditureInputViewModel.Note ?? ""
         };
 
@@ -493,7 +497,7 @@ public class AccountBookController(
                 ? await expenditureService.GetExpendituresAsync(account.RequireEmail(), ct)
                 : await expenditureService.SearchExpendituresAsync(account.RequireEmail(), wholeSearch, ct);
             var viewModels = expenditures
-                .ToDisplayViewModels(policyService, assets, key => localizer[key].Value, account.RequireTimeZoneIanaId())
+                .ToDisplayViewModels(timeZones, assets, key => localizer[key].Value, account.RequireTimeZoneIanaId())
                 .OrderByDescending(m => m.Created)
                 .ThenByDescending(m => m.Updated)
                 .AsQueryable();
@@ -504,14 +508,14 @@ public class AccountBookController(
         string tz = pageAccount.RequireTimeZoneIanaId();
         var vm = new AccountBookPageViewModel
         {
-            FinanceRules = policyService.GetFinanceFormRules(),
+            FinanceRules = financePolicy.GetFinanceFormRules(),
             Assets =
             [
                 .. (await assetService.GetAssetsAsync(pageAccount.RequireEmail(), ct))
                 .Where(x => !x.Deleted).OrderBy(x => x.ProductName)
             ]
         };
-        vm.PopulateTimeData(policyService, tz, timeProvider.GetUtcNow().UtcDateTime);
+        vm.PopulateTimeData(timeZones, tz, timeProvider.GetUtcNow().UtcDateTime);
         return View(vm);
     }
 
@@ -530,7 +534,7 @@ public class AccountBookController(
             if (expenditure == null)
                 return Json(new { result = false, error = localizer["Input is invalid"].Value });
 
-            expenditure.Created = policyService.ToTimeZone(expenditure.Created, tz);
+            expenditure.Created = timeZones.ToTimeZone(expenditure.Created, tz);
             return Json(new { result = true, expenditure });
         }
         catch (Exception ex)
@@ -576,7 +580,7 @@ public class AccountBookController(
     public async Task<IActionResult> UpdateExpenditure(
         [FromBody] ExpenditureInputViewModel expenditureInputViewModel, CancellationToken ct)
     {
-        if (!ModelState.IsValid || !policyService.TryParseAmount(expenditureInputViewModel.Amount, out decimal amount))
+        if (!ModelState.IsValid || !financePolicy.TryParseAmount(expenditureInputViewModel.Amount, out decimal amount))
             return Json(new { result = false, error = localizer["Input is invalid"].Value });
 
         AccountResponse account = HttpContext.GetLoggedInAccount();
@@ -590,7 +594,7 @@ public class AccountBookController(
             Amount = amount,
             PaymentMethod = expenditureInputViewModel.PaymentMethod,
             MyDepositAsset = expenditureInputViewModel.MyDepositAsset,
-            Created = expenditureInputViewModel.ToCreatedUtc(policyService, account.RequireTimeZoneIanaId()),
+            Created = expenditureInputViewModel.ToCreatedUtc(timeZones, account.RequireTimeZoneIanaId()),
             Note = expenditureInputViewModel.Note ?? ""
         };
 
@@ -648,7 +652,7 @@ public class AccountBookController(
         var assets = await assetService.GetAssetsAsync(account.RequireEmail(), ct);
         var expenditures = await expenditureService.GetExpendituresAsync(account.RequireEmail(), ct);
         var stream = excelExportService.CreateExpenditureExcel(expenditures, assets, key => localizer[key].Value, account.RequireTimeZoneIanaId());
-        string name = fileName.ToExcelFileName(policyService, account.RequireTimeZoneIanaId(), timeProvider.GetUtcNow().UtcDateTime);
+        string name = fileName.ToExcelFileName(timeZones, account.RequireTimeZoneIanaId(), timeProvider.GetUtcNow().UtcDateTime);
         return File(stream, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", name);
     }
 
@@ -665,7 +669,7 @@ public class AccountBookController(
     {
         AccountResponse account = HttpContext.GetLoggedInAccount();
         var assets = await assetService.GetAssetsAsync(account.RequireEmail(), ct);
-        return View("Budget", BudgetViewModelMapper.Page(policyService, BudgetSheetKind.Income, policyService.GetBudgetPageRules(BudgetSheetKind.Income), assets, timeProvider.GetUtcNow().UtcDateTime, account.RequireTimeZoneIanaId(), key => localizer[key].Value, budgetService.GetFixedInitialYear(account.RequireEmail())));
+        return View("Budget", BudgetViewModelMapper.Page(timeZones, BudgetSheetKind.Income, budgetPolicy.GetBudgetPageRules(BudgetSheetKind.Income), assets, timeProvider.GetUtcNow().UtcDateTime, account.RequireTimeZoneIanaId(), key => localizer[key].Value, budgetService.GetFixedInitialYear(account.RequireEmail())));
     }
 
     /// <summary>The Expenditure Budget page (the budget sheet view, told its kind).</summary>
@@ -674,7 +678,7 @@ public class AccountBookController(
     {
         AccountResponse account = HttpContext.GetLoggedInAccount();
         var assets = await assetService.GetAssetsAsync(account.RequireEmail(), ct);
-        return View("Budget", BudgetViewModelMapper.Page(policyService, BudgetSheetKind.Expenditure, policyService.GetBudgetPageRules(BudgetSheetKind.Expenditure), assets, timeProvider.GetUtcNow().UtcDateTime, account.RequireTimeZoneIanaId(), key => localizer[key].Value, budgetService.GetFixedInitialYear(account.RequireEmail())));
+        return View("Budget", BudgetViewModelMapper.Page(timeZones, BudgetSheetKind.Expenditure, budgetPolicy.GetBudgetPageRules(BudgetSheetKind.Expenditure), assets, timeProvider.GetUtcNow().UtcDateTime, account.RequireTimeZoneIanaId(), key => localizer[key].Value, budgetService.GetFixedInitialYear(account.RequireEmail())));
     }
 
     /// <summary>A budget sheet, ready to draw.</summary>
@@ -847,7 +851,7 @@ public class AccountBookController(
         var (result, sheet) = await budgetService.GetSheetAsync(account.RequireEmail(), budgetKind, year, account.RequireTimeZoneIanaId(), ct);
         if (!result.Success) return BadRequest();
         var stream = excelExportService.CreateBudgetExcel(sheet!, key => localizer[key].Value);
-        string name = fileName.ToExcelFileName(policyService, account.RequireTimeZoneIanaId(), timeProvider.GetUtcNow().UtcDateTime);
+        string name = fileName.ToExcelFileName(timeZones, account.RequireTimeZoneIanaId(), timeProvider.GetUtcNow().UtcDateTime);
         return File(stream, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", name);
     }
 

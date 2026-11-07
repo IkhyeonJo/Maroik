@@ -45,7 +45,13 @@ public static class ServiceCollectionExtensions
             services.AddSingleton<IHtmlContentSanitizerService, HtmlContentSanitizerService>();
             services.AddSingleton<IHtmlParserService, HtmlParserService>();
             services.AddSingleton<ITimeZoneCatalogService, TimeZoneCatalogService>();
-            services.AddSingleton<IPolicyService, PolicyService>();
+            services.AddSingleton<IFinancePolicyService, FinancePolicyService>();
+            services.AddSingleton<ITimeZoneDisplayService, TimeZoneDisplayService>();
+            services.AddSingleton<IAccountPolicyService, AccountPolicyService>();
+            services.AddSingleton<IBoardPolicyService, BoardPolicyService>();
+            services.AddSingleton<IUploadPolicyService, UploadPolicyService>();
+            services.AddSingleton<ICalendarPolicyService, CalendarPolicyService>();
+            services.AddSingleton<IBudgetPolicyService, BudgetPolicyService>();
         }
     }
 }

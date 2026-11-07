@@ -35,11 +35,12 @@ The dependency rule holds: `Website` → `Service` → `Domain`; `Domain` depend
 nothing. Repositories/Clients are wired through `Contract` interfaces.
 
 `Maroik.Website` never names the Domain (owner's decision, 2026-11-07): not in a controller, mapper, view model, filter,
-middleware or view. A rule or a page value comes from a service, the stateless ones from `IPolicyService`. Every path from the Website to the Domain goes through `Maroik.Core.Service`, including
+middleware or view. A rule or a page value comes from a service, the stateless ones from the area's policy service (`IFinancePolicyService`, `ITimeZoneDisplayService`, `IAccountPolicyService`, `IBoardPolicyService`, `IUploadPolicyService`, `ICalendarPolicyService`, `IBudgetPolicyService`). Every path from the Website to the Domain goes through `Maroik.Core.Service`, including
 constants: an attribute takes only a compile-time constant, e.g. `[StringLength(PolicyLimits.PasswordMaxByteLength)]`, so no
 method can be called there, and `Maroik.Core.Service/Constants/` exposes those as the Domain's own constants. `Maroik.Core.Contract`
-gives the Website interfaces and DTOs only: no constant or helper of it reads the Domain for the Website. Enforced by `WebsiteTypes_ShouldNot_DependOnDomainNamespace` (the IL) and
-`WebsiteSources_ShouldNot_MentionDomainNamespace` (the source, since a `const` leaves nothing in the IL).
+gives the Website the service interfaces, data shapes (DTOs, enums) and settings: no constant or helper of it reads the Domain for the Website. Enforced by
+`WebsiteTypes_ShouldNot_DependOnDomainNamespace` (the IL), `WebsiteSources_ShouldNot_MentionDomainNamespace` and
+`WebsiteSources_MayTakeOnlyConstants_FromTheServiceProject` (the source, since a `const` leaves nothing in the IL).
 
 ## What MUST NOT appear in `.cshtml`
 
@@ -48,7 +49,7 @@ gives the Website interfaces and DTOs only: no constant or helper of it reads th
   The view receives a ready-to-render view model.
 - Inline `<script>` containing anything beyond a one-line call into the page's script.
 - Hardcoded business constants (limits, thresholds, class lists, tax/rate tables).
-  They live in a Domain **policy**; the controller gets them from `IPolicyService`, passes them in the view model, and
+  They live in a Domain **policy**; the controller gets them from the policy service of its area, passes them in the view model, and
   the view serializes them into the page:
   `@Html.Hidden("maxDaysBeforeEvent", Model.ReminderRules.MaxDaysBeforeEvent)`
   `@Html.Hidden("incomeSubClassMap", ClientJsonSerializer.Serialize(Model.FinanceRules.IncomeSubClassesByMainClass))`

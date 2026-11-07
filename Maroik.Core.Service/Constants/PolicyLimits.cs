@@ -8,7 +8,7 @@ namespace Maroik.Core.Service.Constants;
 
 /// <summary>
 /// The Domain's compile-time limits, exposed by the Service layer to the Website, which may not read the Domain. A validation attribute
-/// such as <c>[StringLength(PolicyLimits.PasswordMaxByteLength)]</c> takes only a constant, so it cannot call <c>IPolicyService</c>;
+/// such as <c>[StringLength(PolicyLimits.PasswordMaxByteLength)]</c> takes only a constant, so it cannot call the policy services;
 /// everything that is not a constant comes from there. Each value is the Domain's own constant, not a copy of it.
 /// </summary>
 public static class PolicyLimits

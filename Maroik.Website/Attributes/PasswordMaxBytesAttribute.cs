@@ -18,7 +18,7 @@ public sealed class PasswordMaxBytesAttribute : ValidationAttribute
 
     /// <inheritdoc />
     protected override ValidationResult? IsValid(object? value, ValidationContext validationContext) =>
-        value is not string password || validationContext.GetRequiredService<IPolicyService>().IsPasswordWithinMaxByteLength(password)
+        value is not string password || validationContext.GetRequiredService<IAccountPolicyService>().IsPasswordWithinMaxByteLength(password)
             ? ValidationResult.Success
             : new ValidationResult(FormatErrorMessage(validationContext.DisplayName), validationContext.MemberName is { } member ? [member] : null);
 }

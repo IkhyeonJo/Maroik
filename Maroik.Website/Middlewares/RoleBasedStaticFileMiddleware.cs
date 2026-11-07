@@ -16,7 +16,7 @@ namespace Maroik.Website.Middlewares;
 public class RoleBasedStaticFileMiddleware(RequestDelegate next)
 {
     /// <summary>Checks the request path against the account's current role and either blocks (403) or forwards the request.</summary>
-    public async Task InvokeAsync(HttpContext context, ISessionService sessionService, IAccountService accountService, IPolicyService policyService)
+    public async Task InvokeAsync(HttpContext context, ISessionService sessionService, IAccountService accountService, IAccountPolicyService accountPolicy)
     {
         var path = context.Request.Path.Value;
 
@@ -47,7 +47,7 @@ public class RoleBasedStaticFileMiddleware(RequestDelegate next)
                 var account = sessionAccount == null
                     ? null
                     : await accountService.GetAccountByEmailAsync(sessionAccount.Email ?? "", context.RequestAborted);
-                bool sessionValid = sessionAccount != null && policyService.GetSessionInvalidationReason(account, sessionAccount) == null;
+                bool sessionValid = sessionAccount != null && accountPolicy.GetSessionInvalidationReason(account, sessionAccount) == null;
 
                 if (!sessionValid || account!.Role != requiredRole)
                 {
