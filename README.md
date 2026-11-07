@@ -287,7 +287,8 @@ touches a stored file, the Service hands it to Client, and Client puts the mail 
 SMTP) or calls FileStorage over HTTP (upload, download, and the File Manager's chunks, complete, abort and delete) —
 the dotted lines. The Worker also runs use cases of its own on a timer, through the same Service layer: the due
 calendar reminders every minute and, every hour, the sweep of abandoned File Manager uploads, which removes their rows
-and aborts their staging files in FileStorage. Repository and Client implementations are registered only in each
+and aborts their staging files in FileStorage. Its dead-letter redrive command uses no service: it moves failed mail
+from the dead-letter queue back into the mail queue on RabbitMQ itself. Repository and Client implementations are registered only in each
 host's composition root (`Program.cs`, `WorkerHost`), never called from controllers, views or handlers.
 
 ```mermaid
@@ -310,6 +311,7 @@ flowchart TB
 
     Client -. "mail jobs (RabbitMQ)" .-> Worker
     Client -. "HTTP upload / download<br/>chunks · complete · abort · delete" .-> FileStorage
+    Worker -. "dead-letter redrive (RabbitMQ)" .-> Worker
 
     Worker -- "mail status · due reminders<br/>abandoned uploads" --> Service
     Worker -- "send mail (SMTP)" --> Client
