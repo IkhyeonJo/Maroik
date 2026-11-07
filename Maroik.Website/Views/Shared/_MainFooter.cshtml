@@ -13,9 +13,9 @@
     <div id="mainFooterVersion" class="float-right" title="@Maroik.Website.Constants.AppVersion.Informational">@Maroik.Website.Constants.AppVersion.Display</div>
     @switch (Model.Role)
     {
-        case Role.Admin:
-        case Role.User:
-        case Role.Anonymous:
+        case AccountRoles.Admin:
+        case AccountRoles.User:
+        case AccountRoles.Anonymous:
             <strong><span id="mainFooterYear">Copyright &copy; 2021-@(ViewBag.CopyrightYear) </span><a href="@ViewBag.DomainName">Maroik</a>.</strong>
             break;
     }

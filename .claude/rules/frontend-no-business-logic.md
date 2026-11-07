@@ -34,6 +34,14 @@ See `Maroik.Website/TypeScripts/README.md`.
 The dependency rule holds: `Website` → `Service` → `Domain`; `Domain` depends on
 nothing. Repositories/Clients are wired through `Contract` interfaces.
 
+`Maroik.Website` never names the Domain (owner's decision, 2026-11-07): not in a controller, mapper, view model, filter,
+middleware or view. A rule or a page value comes from a service, the stateless ones from `IPolicyService`. Two exceptions
+live in `Maroik.Core.Contract`, because no service can be called there: `Constants/` for what a C# attribute argument needs
+(an attribute takes only a compile-time constant, e.g. `[StringLength(PolicyLimits.PasswordMaxByteLength)]`, each value being
+the Domain's own constant), and `Extensions/TimeZoneDisplayExtensions` for time-zone conversion in static mappers and Razor
+expressions. Enforced by `WebsiteTypes_ShouldNot_DependOnDomainNamespace` (the IL) and
+`WebsiteSources_ShouldNot_MentionDomainNamespace` (the source, since a `const` leaves nothing in the IL).
+
 ## What MUST NOT appear in `.cshtml`
 
 - `@{ ... }` / `@functions` blocks that compute, validate, branch on domain state,
@@ -41,10 +49,12 @@ nothing. Repositories/Clients are wired through `Contract` interfaces.
   The view receives a ready-to-render view model.
 - Inline `<script>` containing anything beyond a one-line call into the page's script.
 - Hardcoded business constants (limits, thresholds, class lists, tax/rate tables).
-  Expose them from a Domain **policy** and serialize into the page:
-  `@Html.Hidden("maxDaysBeforeEvent", CalendarReminderPolicy.MaxDaysBeforeEvent)`
-  `@Html.Hidden("incomeSubClassMap", ClientJsonSerializer.Serialize(IncomeClassPolicy.SubClassesByMainClass))`
+  They live in a Domain **policy**; the controller gets them from `IPolicyService`, passes them in the view model, and
+  the view serializes them into the page:
+  `@Html.Hidden("maxDaysBeforeEvent", Model.ReminderRules.MaxDaysBeforeEvent)`
+  `@Html.Hidden("incomeSubClassMap", ClientJsonSerializer.Serialize(Model.FinanceRules.IncomeSubClassesByMainClass))`
   (`ClientJsonSerializer` in `Maroik.Website/Serializers` — the one JSON setting for page payloads; no Newtonsoft)
+- Any mention of `Maroik.Core.Domain`. The Website reaches the Domain only through the Service layer (see below).
 
 ## What MUST NOT appear in `site.ts`
 
@@ -76,10 +86,10 @@ script (no `import`/`export`); keep it that way.
    in `Maroik.Core.Domain` with unit tests in `Maroik.Core.Domain.Tests`.
 2. Call it from the relevant `Maroik.Core.Service` service; add a `Contract`
    interface member + DTO if the shape changes.
-3. Have the controller return the computed result / expose the policy via the
-   view model.
+3. Have the controller return the computed result / pass the policy's values, read
+   from the service, in the view model.
 4. In `.cshtml`, replace the logic with a render of the view-model value, or a
-   `@Html.Hidden(...)` of the serialized policy.
+   `@Html.Hidden(...)` of the serialized view-model value.
 5. In the page's `site.ts`, delete the duplicated rule; read the hidden field
    instead and leave only the UX mirror with its "authoritative on server" comment.
    Never touch the generated `wwwroot/**/site.js` directly.

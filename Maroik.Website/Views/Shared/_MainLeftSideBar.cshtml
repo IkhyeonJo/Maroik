@@ -16,14 +16,14 @@
 
     var roleCategories = Model.Role switch
     {
-        Role.Admin => (IEnumerable<CategoryResponse>)ViewBag.AdminCategories,
-        Role.User => (IEnumerable<CategoryResponse>)ViewBag.UserCategories,
+        AccountRoles.Admin => (IEnumerable<CategoryResponse>)ViewBag.AdminCategories,
+        AccountRoles.User => (IEnumerable<CategoryResponse>)ViewBag.UserCategories,
         _ => (IEnumerable<CategoryResponse>)ViewBag.AnonymousCategories
     };
     var roleSubCategories = Model.Role switch
     {
-        Role.Admin => (IEnumerable<SubCategoryResponse>)ViewBag.AdminSubCategories,
-        Role.User => (IEnumerable<SubCategoryResponse>)ViewBag.UserSubCategories,
+        AccountRoles.Admin => (IEnumerable<SubCategoryResponse>)ViewBag.AdminSubCategories,
+        AccountRoles.User => (IEnumerable<SubCategoryResponse>)ViewBag.UserSubCategories,
         _ => (IEnumerable<SubCategoryResponse>)ViewBag.AnonymousSubCategories
     };
 
@@ -34,19 +34,19 @@
     @*<!-- Brand Logo -->*@
     @switch (Model.Role)
     {
-        case Role.Admin:
+        case AccountRoles.Admin:
             <a asp-controller="Dashboard" asp-action="AdminIndex" class="brand-link">
                 <img src="~/admin/dist/img/MaroikLogo.png" alt="Maroik Logo" class="brand-image img-circle elevation-3" style="opacity: .8">
                 <span class="brand-text font-weight-light">Maroik</span>
             </a>
             break;
-        case Role.User:
+        case AccountRoles.User:
             <a asp-controller="Dashboard" asp-action="UserIndex" class="brand-link">
                 <img src="~/user/dist/img/MaroikLogo.png" alt="Maroik Logo" class="brand-image img-circle elevation-3" style="opacity: .8">
                 <span class="brand-text font-weight-light">Maroik</span>
             </a>
             break;
-        case Role.Anonymous:
+        case AccountRoles.Anonymous:
             <a asp-controller="Dashboard" asp-action="AnonymousIndex" class="brand-link">
                 <img src="~/anonymous/dist/img/MaroikLogo.png" alt="Maroik Logo" class="brand-image img-circle elevation-3" style="opacity: .8">
                 <span class="brand-text font-weight-light">Maroik</span>

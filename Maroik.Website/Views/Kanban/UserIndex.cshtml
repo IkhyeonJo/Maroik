@@ -34,13 +34,13 @@
                     <div class="form-group">
                         <label for="kanbanCardTitle">@Localizer["Title"].Value</label>
                         <input class="form-control form-control-sm" type="text" id="kanbanCardTitle" name="kanbanCardTitle" value="" autocomplete="off"
-                               maxlength="@TitledContentPolicy.MaxTitleLength" data-val="true" data-val-required="@Localizer["Please enter a title"].Value">
+                               maxlength="@PolicyLimits.TitleMaxLength" data-val="true" data-val-required="@Localizer["Please enter a title"].Value">
                         <span class="field-validation-valid text-danger" data-valmsg-for="kanbanCardTitle" data-valmsg-replace="true"></span>
                     </div>
                     <div class="form-group">
                         <label for="kanbanCardDescription">@Localizer["Description"].Value</label>
                         <textarea class="form-control form-control-sm" id="kanbanCardDescription" name="kanbanCardDescription" rows="4"
-                                  maxlength="@TitledContentPolicy.MaxBodyLength"></textarea>
+                                  maxlength="@PolicyLimits.BodyMaxLength"></textarea>
                     </div>
                     <div class="form-group">
                         <label for="kanbanCardDueDate">@Localizer["Due date"].Value</label>

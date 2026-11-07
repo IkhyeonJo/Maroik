@@ -11,7 +11,6 @@
 *@
 
 @using Maroik.Website.Models.ViewModels.AccountBooks
-@using Maroik.Core.Domain.Finances
 @model AccountBookPageViewModel
 @{
     var assets = Model.Assets;
@@ -70,7 +69,7 @@
 @Html.Hidden("localizerYearSuffix", Localizer["YearSuffix"].Value)
 
 @* Income main→sub-class taxonomy — authoritative in IncomeClassPolicy; the form reads this instead of hardcoding the lists. *@
-@Html.Hidden("incomeSubClassMap", ClientJsonSerializer.Serialize(IncomeClassPolicy.SubClassesByMainClass))
+@Html.Hidden("incomeSubClassMap", ClientJsonSerializer.Serialize(Model.FinanceRules.IncomeSubClassesByMainClass))
 @Html.Hidden("localizerFailedToLoadAmountLabel", Localizer["Failed to load the amount label."].Value)
 
 <section class="content">
@@ -121,9 +120,9 @@
                                 <label for="createIncomeMainClass">@Localizer["MainClass"].Value</label>
                                 <br />
                                 <select id="createIncomeMainClass" name="createIncomeMainClass" class="form-control form-control-sm" style="max-width:100%;text-overflow:ellipsis;">
-                                    @foreach (string mainClass in IncomeClassPolicy.MainClasses)
+                                    @foreach (string mainClass in Model.FinanceRules.IncomeMainClasses)
                                     {
-                                        <option value="@mainClass" selected="@(mainClass == IncomeClassPolicy.MainClasses[0])">@Localizer[mainClass].Value</option>
+                                        <option value="@mainClass" selected="@(mainClass == Model.FinanceRules.IncomeMainClasses[0])">@Localizer[mainClass].Value</option>
                                     }
                                 </select>
                             </div>
@@ -131,7 +130,7 @@
                                 <label for="createIncomeSubClass">@Localizer["SubClass"].Value</label>
                                 <br />
                                 <select id="createIncomeSubClass" name="createIncomeSubClass" class="form-control form-control-sm" style="max-width:100%;text-overflow:ellipsis;">
-                                    @Html.IncomeSubClassOptions(Localizer)
+                                    @Html.IncomeSubClassOptions(Localizer, Model.FinanceRules.IncomeSubClassesByMainClass)
                                 </select>
                             </div>
                         </div>
@@ -257,9 +256,9 @@
                                 <label for="editIncomeMainClass">@Localizer["MainClass"].Value</label>
                                 <br />
                                 <select id="editIncomeMainClass" name="editIncomeMainClass" class="form-control form-control-sm" style="max-width:100%;text-overflow:ellipsis;">
-                                    @foreach (string mainClass in IncomeClassPolicy.MainClasses)
+                                    @foreach (string mainClass in Model.FinanceRules.IncomeMainClasses)
                                     {
-                                        <option value="@mainClass" selected="@(mainClass == IncomeClassPolicy.MainClasses[0])">@Localizer[mainClass].Value</option>
+                                        <option value="@mainClass" selected="@(mainClass == Model.FinanceRules.IncomeMainClasses[0])">@Localizer[mainClass].Value</option>
                                     }
                                 </select>
                             </div>
@@ -267,7 +266,7 @@
                                 <label for="editIncomeSubClass">@Localizer["SubClass"].Value</label>
                                 <br />
                                 <select id="editIncomeSubClass" name="editIncomeSubClass" class="form-control form-control-sm" style="max-width:100%;text-overflow:ellipsis;">
-                                    @Html.IncomeSubClassOptions(Localizer)
+                                    @Html.IncomeSubClassOptions(Localizer, Model.FinanceRules.IncomeSubClassesByMainClass)
                                 </select>
                             </div>
                         </div>

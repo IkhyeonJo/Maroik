@@ -1,5 +1,6 @@
 using ErrorOr;
 using Maroik.Core.Contract.Dtos;
+using Maroik.Core.Contract.Enums;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Contract.Settings;
 using Maroik.Core.Domain.Accounts;
@@ -65,16 +66,18 @@ public class BudgetService(
     }
 
     /// <inheritdoc />
-    public async Task<(ServiceResult Result, BudgetSheetResponse? Sheet)> GetSheetAsync(string accountEmail, BudgetKind kind, int year, string timeZoneIanaId, CancellationToken ct = default)
+    public async Task<(ServiceResult Result, BudgetSheetResponse? Sheet)> GetSheetAsync(string accountEmail, BudgetSheetKind sheetKind, int year, string timeZoneIanaId, CancellationToken ct = default)
     {
+        BudgetKind kind = BudgetMapper.ToDomain(sheetKind);
         if (Refusal(accountEmail, kind, year) is { } refused) return (refused, null);
         BudgetWorkbook workbook = await LoadAsync(accountEmail, kind, year, timeZoneIanaId, [], ct);
         return (ServiceResult.Ok(), BudgetMapper.ToResponse(workbook.View(kind, year)));
     }
 
     /// <inheritdoc />
-    public async Task<(ServiceResult Result, BudgetPreviewResponse? Preview)> PreviewAsync(string accountEmail, BudgetKind kind, int year, string timeZoneIanaId, string address, string input, CancellationToken ct = default)
+    public async Task<(ServiceResult Result, BudgetPreviewResponse? Preview)> PreviewAsync(string accountEmail, BudgetSheetKind sheetKind, int year, string timeZoneIanaId, string address, string input, CancellationToken ct = default)
     {
+        BudgetKind kind = BudgetMapper.ToDomain(sheetKind);
         if (Refusal(accountEmail, kind, year) is { } refused) return (refused, null);
         // Before the input is loaded against or parsed: the preview runs on every pause in typing, with no other bound on its length.
         if (BudgetCellInput.CheckLength(input) is { IsError: true } tooLong) return (ServiceResult.FromError(tooLong.FirstError), null);
@@ -83,22 +86,30 @@ public class BudgetService(
     }
 
     /// <inheritdoc />
-    public Task<(ServiceResult Result, BudgetEditResponse? Edit)> EditAsync(string accountEmail, BudgetKind kind, int year, string timeZoneIanaId, IReadOnlyList<BudgetCellEdit> edits, CancellationToken ct = default) =>
-        WriteAsync(accountEmail, kind, year, timeZoneIanaId, [.. edits.Select(e => e.Input ?? "")], workbook => workbook.Edit(kind, year, edits),
-            "edit", ct);
-
-    /// <inheritdoc />
-    public Task<(ServiceResult Result, BudgetEditResponse? Edit)> CopyAsync(string accountEmail, BudgetKind kind, int year, string timeZoneIanaId, string source, string target, CancellationToken ct = default) =>
-        WriteAsync(accountEmail, kind, year, timeZoneIanaId, [], workbook => workbook.Copy(kind, year, source, target),
-            "paste into", ct);
-
-    /// <inheritdoc />
-    public async Task<(ServiceResult Result, BudgetSheetResponse? Sheet, int Copied)> CarryOverAsync(string accountEmail, BudgetKind kind, int year, string timeZoneIanaId, CancellationToken ct = default)
+    public Task<(ServiceResult Result, BudgetEditResponse? Edit)> EditAsync(string accountEmail, BudgetSheetKind sheetKind, int year, string timeZoneIanaId, IReadOnlyList<BudgetCellEditRequest> edits, CancellationToken ct = default)
     {
+        BudgetKind kind = BudgetMapper.ToDomain(sheetKind);
+        return WriteAsync(accountEmail, kind, year, timeZoneIanaId, [.. edits.Select(e => e.Input ?? "")],
+            workbook => workbook.Edit(kind, year, [.. edits.Select(e => new BudgetCellEdit(e.Address, e.Input))]),
+            "edit", ct);
+    }
+
+    /// <inheritdoc />
+    public Task<(ServiceResult Result, BudgetEditResponse? Edit)> CopyAsync(string accountEmail, BudgetSheetKind sheetKind, int year, string timeZoneIanaId, string source, string target, CancellationToken ct = default)
+    {
+        BudgetKind kind = BudgetMapper.ToDomain(sheetKind);
+        return WriteAsync(accountEmail, kind, year, timeZoneIanaId, [], workbook => workbook.Copy(kind, year, source, target),
+            "paste into", ct);
+    }
+
+    /// <inheritdoc />
+    public async Task<(ServiceResult Result, BudgetSheetResponse? Sheet, int Copied)> CarryOverAsync(string accountEmail, BudgetSheetKind sheetKind, int year, string timeZoneIanaId, CancellationToken ct = default)
+    {
+        BudgetKind kind = BudgetMapper.ToDomain(sheetKind);
         var (result, edit) = await WriteAsync(accountEmail, kind, year, timeZoneIanaId, [], workbook => workbook.CarryOver(kind, year),
             "carry over into", ct);
         if (!result.Success) return (result, null, 0);
-        var (_, sheet) = await GetSheetAsync(accountEmail, kind, year, timeZoneIanaId, ct);
+        var (_, sheet) = await GetSheetAsync(accountEmail, sheetKind, year, timeZoneIanaId, ct);
         return (result, sheet, edit!.Written);
     }
 
@@ -198,8 +209,9 @@ public class BudgetService(
         (await sheetRepository.GetByAccountEmailAsync(accountEmail, ct)).Any(s => s.Kind == kind && s.Year == year);
 
     /// <inheritdoc />
-    public async Task<(ServiceResult Result, BudgetSheetResponse? Sheet)> AddLineAsync(string accountEmail, BudgetKind kind, int year, string timeZoneIanaId, string? mainClass, string? subClass, string? currency, CancellationToken ct = default)
+    public async Task<(ServiceResult Result, BudgetSheetResponse? Sheet)> AddLineAsync(string accountEmail, BudgetSheetKind sheetKind, int year, string timeZoneIanaId, string? mainClass, string? subClass, string? currency, CancellationToken ct = default)
     {
+        BudgetKind kind = BudgetMapper.ToDomain(sheetKind);
         if (Refusal(accountEmail, kind, year) is { } refused) return (refused, null);
         if (await EnsureSheetAsync(accountEmail, kind, year, ct) is { } notCreated) return (notCreated, null);
 
@@ -214,12 +226,13 @@ public class BudgetService(
             BudgetWorkbook workbook = await LoadAsync(accountEmail, kind, year, timeZoneIanaId, [], ct);
             return workbook.CheckReferences(kind, year) is { IsError: true } tooMany ? ServiceResult.FromError(tooMany.FirstError) : ServiceResult.Ok();
         }, ct);
-        return result.Success ? await GetSheetAsync(accountEmail, kind, year, timeZoneIanaId, ct) : (result, null);
+        return result.Success ? await GetSheetAsync(accountEmail, sheetKind, year, timeZoneIanaId, ct) : (result, null);
     }
 
     /// <inheritdoc />
-    public async Task<(ServiceResult Result, BudgetSheetResponse? Sheet)> RemoveLineAsync(string accountEmail, BudgetKind kind, int year, string timeZoneIanaId, string? mainClass, string? subClass, string? currency, CancellationToken ct = default)
+    public async Task<(ServiceResult Result, BudgetSheetResponse? Sheet)> RemoveLineAsync(string accountEmail, BudgetSheetKind sheetKind, int year, string timeZoneIanaId, string? mainClass, string? subClass, string? currency, CancellationToken ct = default)
     {
+        BudgetKind kind = BudgetMapper.ToDomain(sheetKind);
         if (Refusal(accountEmail, kind, year) is { } refused) return (refused, null);
 
         ServiceResult result = await ChangeLinesAsync(accountEmail, kind, year, async (sheet, lines) =>
@@ -230,7 +243,7 @@ public class BudgetService(
             await cellRepository.DeleteRowAsync(sheet.Id, line.Value.Key, ct);
             return ServiceResult.Ok();
         }, ct);
-        return result.Success ? await GetSheetAsync(accountEmail, kind, year, timeZoneIanaId, ct) : (result, null);
+        return result.Success ? await GetSheetAsync(accountEmail, sheetKind, year, timeZoneIanaId, ct) : (result, null);
     }
 
     /// <summary>The refusal of a line the sheet does not have.</summary>

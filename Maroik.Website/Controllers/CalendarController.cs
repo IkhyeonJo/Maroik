@@ -1,8 +1,7 @@
+using Maroik.Core.Contract.Constants;
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Contract.Settings;
-using Maroik.Core.Domain.Accounts;
-using Maroik.Core.Domain.Calendars;
 using Maroik.Website.Attributes;
 using Maroik.Website.Extensions;
 using Maroik.Website.Mappers;
@@ -25,6 +24,7 @@ public class CalendarController(
     ICalendarService calendarService,
     IDataProtectionService dataProtection,
     IOptions<ServerSetting> serverSettings,
+    IPolicyService policyService,
     TimeProvider timeProvider) : Controller
 {
     /// <summary>Shared extension-to-MIME-type lookup for attachment downloads (safe for concurrent reads).</summary>
@@ -38,8 +38,8 @@ public class CalendarController(
     /// <summary>Creates a new calendar.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [RequiredHttpPostAccess(Role = Role.Admin)]
-    [RequiredHttpPostAccess(Role = Role.User)]
+    [RequiredHttpPostAccess(Role = AccountRoles.Admin)]
+    [RequiredHttpPostAccess(Role = AccountRoles.User)]
     public async Task<IActionResult> CreateCalendar([FromBody] CalendarInputViewModel calendarInputViewModel)
     {
         try
@@ -74,8 +74,8 @@ public class CalendarController(
     /// <summary>Creates a new calendar event (with optional file attachment and reminders).</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [RequiredHttpPostAccess(Role = Role.Admin)]
-    [RequiredHttpPostAccess(Role = Role.User)]
+    [RequiredHttpPostAccess(Role = AccountRoles.Admin)]
+    [RequiredHttpPostAccess(Role = AccountRoles.User)]
     public async Task<IActionResult> CreateCalendarEvent([FromForm] CalendarEventInputViewModel calendarEventInputViewModel)
     {
         try
@@ -87,7 +87,7 @@ public class CalendarController(
 
             AccountResponse loggedInAccount = HttpContext.GetLoggedInAccount();
 
-            if (loggedInAccount.Role is not (Role.Admin or Role.User))
+            if (loggedInAccount.Role is not (AccountRoles.Admin or AccountRoles.User))
                 return Json(new { result = false, error = localizer["Please Login to create calendar event"].Value });
 
             ServiceResult createEventResult = await calendarService.CreateCalendarEventAsync(
@@ -115,8 +115,8 @@ public class CalendarController(
     /// </summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [RequiredHttpPostAccess(Role = Role.Admin)]
-    [RequiredHttpPostAccess(Role = Role.User)]
+    [RequiredHttpPostAccess(Role = AccountRoles.Admin)]
+    [RequiredHttpPostAccess(Role = AccountRoles.User)]
     public async Task<IActionResult> UploadImageFile(IFormFile? summernoteImageFile)
     {
         return await this.UploadEditorImageAsync(summernoteImageFile, serverSettings.Value.MaxAttachedFileSizeBytes, localizer, logger, dataProtection,
@@ -152,6 +152,7 @@ public class CalendarController(
 
         CalendarOutputViewModel vm = new()
         {
+            ReminderRules = policyService.GetCalendarFormRules(),
             Calendars = calendars,
             CalendarEventOutputViewModels = await calendarService.GetCalendarEventViewModelsAsync(calendars, userTimezone, null, HttpContext.RequestAborted),
             LoggedInAccount = loggedInAccount,
@@ -185,6 +186,7 @@ public class CalendarController(
 
         CalendarOutputViewModel vm = new()
         {
+            ReminderRules = policyService.GetCalendarFormRules(),
             Calendars = calendars,
             CalendarEventOutputViewModels = await calendarService.GetCalendarEventViewModelsAsync(calendars, userTimezone, null, HttpContext.RequestAborted),
             OtherCalendars = otherCalendars,
@@ -202,12 +204,13 @@ public class CalendarController(
     public async Task<IActionResult> AnonymousIndex()
     {
         const string userTimezone = "UTC";
-        AccountResponse loggedInAccount = new() { Role = Role.Anonymous, TimeZoneIanaId = userTimezone };
+        AccountResponse loggedInAccount = new() { Role = AccountRoles.Anonymous, TimeZoneIanaId = userTimezone };
 
         List<CalendarResponse> otherCalendars = await calendarService.GetVisibleOtherCalendarsAsync(null, HttpContext.RequestAborted);
 
         CalendarOutputViewModel vm = new()
         {
+            ReminderRules = policyService.GetCalendarFormRules(),
             OtherCalendars = otherCalendars,
             OtherCalendarEventOutputViewModels = await calendarService.GetCalendarEventViewModelsAsync(otherCalendars, userTimezone, null, HttpContext.RequestAborted),
             LoggedInAccount = loggedInAccount,
@@ -220,8 +223,8 @@ public class CalendarController(
     /// <summary>Checks whether the caller owns a calendar with the given ID, returning it when so.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [RequiredHttpPostAccess(Role = Role.Admin)]
-    [RequiredHttpPostAccess(Role = Role.User)]
+    [RequiredHttpPostAccess(Role = AccountRoles.Admin)]
+    [RequiredHttpPostAccess(Role = AccountRoles.User)]
     public async Task<IActionResult> IsCalendarExists(long id)
     {
         try
@@ -251,8 +254,8 @@ public class CalendarController(
     /// <summary>Returns the list of the current user's calendars as JSON.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [RequiredHttpPostAccess(Role = Role.Admin)]
-    [RequiredHttpPostAccess(Role = Role.User)]
+    [RequiredHttpPostAccess(Role = AccountRoles.Admin)]
+    [RequiredHttpPostAccess(Role = AccountRoles.User)]
     public async Task<IActionResult> GetCalendars()
     {
         try
@@ -271,8 +274,8 @@ public class CalendarController(
     /// <summary>Returns, as JSON, the other accounts' calendars the caller can see (its subscriptions, or the anonymously shared ones).</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [RequiredHttpPostAccess(Role = Role.User)]
-    [RequiredHttpPostAccess(Role = Role.Anonymous)]
+    [RequiredHttpPostAccess(Role = AccountRoles.User)]
+    [RequiredHttpPostAccess(Role = AccountRoles.Anonymous)]
     public async Task<IActionResult> GetOtherCalendars()
     {
         try
@@ -282,7 +285,7 @@ public class CalendarController(
             // actually-anonymous viewer is identified by Role instead and null is passed through explicitly.
             AccountResponse loggedInAccount = HttpContext.GetLoggedInAccount();
             List<CalendarResponse> tempOtherCalendars = await calendarService.GetVisibleOtherCalendarsAsync(
-                loggedInAccount.Role == Role.Anonymous ? null : loggedInAccount, HttpContext.RequestAborted);
+                loggedInAccount.Role == AccountRoles.Anonymous ? null : loggedInAccount, HttpContext.RequestAborted);
 
             return Json(new { result = true, tempOtherCalendars });
         }
@@ -296,8 +299,8 @@ public class CalendarController(
     /// <summary>Checks whether a calendar event with the given ID exists and returns its full detail.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [RequiredHttpPostAccess(Role = Role.Admin)]
-    [RequiredHttpPostAccess(Role = Role.User)]
+    [RequiredHttpPostAccess(Role = AccountRoles.Admin)]
+    [RequiredHttpPostAccess(Role = AccountRoles.User)]
     public async Task<IActionResult> IsCalendarEventExists(long id)
     {
         try
@@ -322,9 +325,9 @@ public class CalendarController(
     /// <summary>Checks whether an event in a shared/other calendar exists and returns its full detail.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [RequiredHttpPostAccess(Role = Role.Admin)]
-    [RequiredHttpPostAccess(Role = Role.User)]
-    [RequiredHttpPostAccess(Role = Role.Anonymous)]
+    [RequiredHttpPostAccess(Role = AccountRoles.Admin)]
+    [RequiredHttpPostAccess(Role = AccountRoles.User)]
+    [RequiredHttpPostAccess(Role = AccountRoles.Anonymous)]
     public async Task<IActionResult> IsOtherCalendarEventExists(long id)
     {
         try
@@ -332,7 +335,7 @@ public class CalendarController(
             // GetVisibleOtherCalendarsAsync treats a null account as anonymous; HttpContext.GetLoggedInAccount()
             // never returns null, so an actually-anonymous viewer is identified by Role instead.
             AccountResponse loggedInAccount = HttpContext.GetLoggedInAccount();
-            AccountResponse? sessionAccount = loggedInAccount.Role == Role.Anonymous ? null : loggedInAccount;
+            AccountResponse? sessionAccount = loggedInAccount.Role == AccountRoles.Anonymous ? null : loggedInAccount;
             List<CalendarResponse> calendars =
                 await calendarService.GetVisibleOtherCalendarsAsync(sessionAccount, HttpContext.RequestAborted);
 
@@ -357,16 +360,16 @@ public class CalendarController(
     /// </summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [RequiredHttpPostAccess(Role = Role.Admin)]
-    [RequiredHttpPostAccess(Role = Role.User)]
-    [RequiredHttpPostAccess(Role = Role.Anonymous)]
+    [RequiredHttpPostAccess(Role = AccountRoles.Admin)]
+    [RequiredHttpPostAccess(Role = AccountRoles.User)]
+    [RequiredHttpPostAccess(Role = AccountRoles.Anonymous)]
     public async Task<IActionResult> DownloadCalendarEventAttachedFile(long calendarEventId)
     {
         try
         {
             // HttpContext.GetLoggedInAccount() never returns null, so an actually-anonymous viewer is identified by Role.
             AccountResponse loggedInAccount = HttpContext.GetLoggedInAccount();
-            AccountResponse? viewer = loggedInAccount.Role == Role.Anonymous ? null : loggedInAccount;
+            AccountResponse? viewer = loggedInAccount.Role == AccountRoles.Anonymous ? null : loggedInAccount;
             (ServiceResult result, AttachmentDownload? file) = await calendarService.OpenCalendarEventAttachedFileAsync(
                 calendarEventId, viewer, HttpContext.RequestAborted);
             if (!result.Success)
@@ -385,9 +388,9 @@ public class CalendarController(
     /// <summary>Returns calendar events for the requested calendars as JSON.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [RequiredHttpPostAccess(Role = Role.Admin)]
-    [RequiredHttpPostAccess(Role = Role.User)]
-    [RequiredHttpPostAccess(Role = Role.Anonymous)]
+    [RequiredHttpPostAccess(Role = AccountRoles.Admin)]
+    [RequiredHttpPostAccess(Role = AccountRoles.User)]
+    [RequiredHttpPostAccess(Role = AccountRoles.Anonymous)]
     public async Task<IActionResult> GetCalendarEvents([FromBody] CalendarInputViewModel calendarInputViewModel)
     {
         try
@@ -398,7 +401,7 @@ public class CalendarController(
             // GetVisibleOtherCalendarsAsync treats a null account as anonymous; HttpContext.GetLoggedInAccount()
             // never returns null, so an actually-anonymous viewer is identified by Role instead.
             AccountResponse loggedInAccount = HttpContext.GetLoggedInAccount();
-            AccountResponse? sessionAccount = loggedInAccount.Role == Role.Anonymous ? null : loggedInAccount;
+            AccountResponse? sessionAccount = loggedInAccount.Role == AccountRoles.Anonymous ? null : loggedInAccount;
             List<CalendarResponse> ownedCalendars = sessionAccount != null
                 ? await calendarService.GetCalendarsAsync(sessionAccount.Email!, HttpContext.RequestAborted)
                 : [];
@@ -426,8 +429,8 @@ public class CalendarController(
                 let isOther = !isOwned && otherCalendars.Any(x => x.Id == inputCalendar.Id)
                 where isOwned || isOther
                 let calendarType = isOwned
-                    ? CalendarTypes.My
-                    : CalendarTypes.Other
+                    ? CalendarKinds.My
+                    : CalendarKinds.Other
                 let htmlColorCode = isOwned
                     ? ownedCalendars.FirstOrDefault(x => x.Id == inputCalendar.Id)?.HtmlColorCode
                     : otherCalendars.FirstOrDefault(x => x.Id == inputCalendar.Id)?.HtmlColorCode
@@ -450,7 +453,7 @@ public class CalendarController(
     /// <summary>Returns, as JSON, the sharing flags (user / guest) of each of the caller's own calendars, backfilling missing rows.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [RequiredHttpPostAccess(Role = Role.Admin)]
+    [RequiredHttpPostAccess(Role = AccountRoles.Admin)]
     public async Task<IActionResult> GetCalendarShareds()
     {
         try
@@ -470,7 +473,7 @@ public class CalendarController(
     /// <summary>Returns, as JSON, every calendar shared with registered users, marking the ones the caller already subscribes to.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [RequiredHttpPostAccess(Role = Role.User)]
+    [RequiredHttpPostAccess(Role = AccountRoles.User)]
     public async Task<IActionResult> GetBrowseCalendarsOfInterest()
     {
         try
@@ -494,8 +497,8 @@ public class CalendarController(
     /// <summary>Updates an existing calendar's properties.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [RequiredHttpPostAccess(Role = Role.Admin)]
-    [RequiredHttpPostAccess(Role = Role.User)]
+    [RequiredHttpPostAccess(Role = AccountRoles.Admin)]
+    [RequiredHttpPostAccess(Role = AccountRoles.User)]
     public async Task<IActionResult> UpdateCalendar([FromBody] CalendarInputViewModel calendarInputViewModel)
     {
         try
@@ -524,8 +527,8 @@ public class CalendarController(
     /// <summary>Updates an existing calendar event (with optional file attachment and reminder changes).</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [RequiredHttpPostAccess(Role = Role.Admin)]
-    [RequiredHttpPostAccess(Role = Role.User)]
+    [RequiredHttpPostAccess(Role = AccountRoles.Admin)]
+    [RequiredHttpPostAccess(Role = AccountRoles.User)]
     public async Task<IActionResult> UpdateCalendarEvent([FromForm] CalendarEventInputViewModel calendarEventInputViewModel)
     {
         try
@@ -537,7 +540,7 @@ public class CalendarController(
 
             AccountResponse loggedInAccount = HttpContext.GetLoggedInAccount();
 
-            if (loggedInAccount.Role is not (Role.Admin or Role.User))
+            if (loggedInAccount.Role is not (AccountRoles.Admin or AccountRoles.User))
                 return Json(new { result = false, error = localizer["Please Login to update calendar event"].Value });
 
             ServiceResult updateEventResult = await calendarService.UpdateCalendarEventAsync(
@@ -562,7 +565,7 @@ public class CalendarController(
     /// <summary>Saves the sharing flags of the posted calendars (all must be the caller's own); unsharing one drops its subscriptions.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [RequiredHttpPostAccess(Role = Role.Admin)]
+    [RequiredHttpPostAccess(Role = AccountRoles.Admin)]
     public async Task<IActionResult> UpdateCalendarShared([FromBody] IEnumerable<CalendarSharedRequest> calendarShareds)
     {
         try
@@ -588,7 +591,7 @@ public class CalendarController(
     /// <summary>Replaces the caller's whole set of subscriptions with the posted calendars (each must be shared with users).</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [RequiredHttpPostAccess(Role = Role.User)]
+    [RequiredHttpPostAccess(Role = AccountRoles.User)]
     public async Task<IActionResult> UpdateOtherCalendar([FromBody] IEnumerable<OtherCalendarResponse> otherCalendars)
     {
         try
@@ -597,7 +600,7 @@ public class CalendarController(
             {
                 AccountResponse loggedInAccount = HttpContext.GetLoggedInAccount();
 
-                if (loggedInAccount.Role is not (Role.Admin or Role.User))
+                if (loggedInAccount.Role is not (AccountRoles.Admin or AccountRoles.User))
                     return Json(new { result = false, error = localizer["Login required."].Value });
 
                 ServiceResult otherCalendarResult = await calendarService.UpdateOtherCalendarAsync(
@@ -624,8 +627,8 @@ public class CalendarController(
     /// <summary>Deletes one of the caller's calendars; its events, sharing row and subscriptions go with it (database cascade).</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [RequiredHttpPostAccess(Role = Role.Admin)]
-    [RequiredHttpPostAccess(Role = Role.User)]
+    [RequiredHttpPostAccess(Role = AccountRoles.Admin)]
+    [RequiredHttpPostAccess(Role = AccountRoles.User)]
     public async Task<IActionResult> DeleteCalendar([FromBody] CalendarInputViewModel calendarInputViewModel)
     {
         try
@@ -647,8 +650,8 @@ public class CalendarController(
     /// <summary>Deletes an event in one of the caller's calendars; its reminders and attachment go with it (database cascade).</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [RequiredHttpPostAccess(Role = Role.Admin)]
-    [RequiredHttpPostAccess(Role = Role.User)]
+    [RequiredHttpPostAccess(Role = AccountRoles.Admin)]
+    [RequiredHttpPostAccess(Role = AccountRoles.User)]
     public async Task<IActionResult> DeleteCalendarEvent(long id)
     {
         try

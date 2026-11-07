@@ -1,9 +1,9 @@
+using Maroik.Core.Contract.Constants;
 using System.Collections.Frozen;
 using System.Reflection;
 using System.Text.Json;
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
-using Maroik.Core.Domain.Accounts;
 using Maroik.Website.Attributes;
 using Maroik.Website.Constants;
 using Maroik.Website.Extensions;
@@ -37,7 +37,7 @@ namespace Maroik.Website.Filters;
 /// controllers (see <see cref="_postActionRoles"/>) rather than re-reflected on every request.
 /// </summary>
 public class AuthorizationFilter(IMenuService menuService, IDistributedCache cache,
-    ISessionService sessionService, IAccountService accountService,
+    ISessionService sessionService, IAccountService accountService, IPolicyService policyService,
     ILogger<AuthorizationFilter> logger) : IAsyncAuthorizationFilter
 {
     // Local aliases of the NavigationCacheKeys entries, one per role x (categories | sub-categories).
@@ -197,7 +197,7 @@ public class AuthorizationFilter(IMenuService menuService, IDistributedCache cac
         {
             loggedInAccount = await accountService.GetAccountByEmailAsync(sessionAccount.Email ?? "", context.HttpContext.RequestAborted); // Re-check account state from DB so that Deleted/Role/SecurityStamp changes take effect on the next request, not only at login
 
-            if (loggedInAccount.SessionInvalidationReason(sessionAccount) is { } reason)
+            if (policyService.GetSessionInvalidationReason(loggedInAccount, sessionAccount) is { } reason)
             {
                 logger.LogWarning("Session invalidated for {Email}: {Reason}", sessionAccount.Email, reason);
                 sessionService.RemoveAccount(); // Invalidate this session immediately
@@ -276,12 +276,12 @@ public class AuthorizationFilter(IMenuService menuService, IDistributedCache cac
             .SetSlidingExpiration(TimeSpan.FromMinutes(10));
 
         var menus = new NavigationMenus(
-            [.. categories.Where(c => c.Role == Role.Admin)],
-            [.. subCategories.Where(s => s.Role == Role.Admin)],
-            [.. categories.Where(c => c.Role == Role.User)],
-            [.. subCategories.Where(s => s.Role == Role.User)],
-            [.. categories.Where(c => c.Role == Role.Anonymous)],
-            [.. subCategories.Where(s => s.Role == Role.Anonymous)]);
+            [.. categories.Where(c => c.Role == AccountRoles.Admin)],
+            [.. subCategories.Where(s => s.Role == AccountRoles.Admin)],
+            [.. categories.Where(c => c.Role == AccountRoles.User)],
+            [.. subCategories.Where(s => s.Role == AccountRoles.User)],
+            [.. categories.Where(c => c.Role == AccountRoles.Anonymous)],
+            [.. subCategories.Where(s => s.Role == AccountRoles.Anonymous)]);
 
         await Task.WhenAll(
             cache.SetAsync(AdminCategoriesCacheKey, JsonSerializer.SerializeToUtf8Bytes(menus.AdminCategories), entryOptions),
@@ -363,8 +363,8 @@ public class AuthorizationFilter(IMenuService menuService, IDistributedCache cac
         // get an explicit denial.
         var match = account.Role switch
         {
-            Role.Admin => menus.AdminCategories.ResolveActiveMenuItem(menus.AdminSubCategories, target.Controller, target.Action),
-            Role.User => menus.UserCategories.ResolveActiveMenuItem(menus.UserSubCategories, target.Controller, target.Action),
+            AccountRoles.Admin => menus.AdminCategories.ResolveActiveMenuItem(menus.AdminSubCategories, target.Controller, target.Action),
+            AccountRoles.User => menus.UserCategories.ResolveActiveMenuItem(menus.UserSubCategories, target.Controller, target.Action),
             _ => null,
         };
 
@@ -379,7 +379,7 @@ public class AuthorizationFilter(IMenuService menuService, IDistributedCache cac
         if (_anonymousAccountPostActions.Contains((target.Controller, target.Action)))
             return AccessDecision.Allow;
 
-        return IsPostAllowedFor(Role.Anonymous, menus.AnonymousCategories, target) ? AccessDecision.Allow : AccessDecision.Deny;
+        return IsPostAllowedFor(AccountRoles.Anonymous, menus.AnonymousCategories, target) ? AccessDecision.Allow : AccessDecision.Deny;
     }
 
     /// <summary>A signed-in POST: logout, or an action marked for the account's role on a controller of that role's menu.</summary>
@@ -395,8 +395,8 @@ public class AuthorizationFilter(IMenuService menuService, IDistributedCache cac
         // explicit denial.
         return account.Role switch
         {
-            Role.Admin when IsPostAllowedFor(Role.Admin, menus.AdminCategories, target) => AccessDecision.Allow,
-            Role.User when IsPostAllowedFor(Role.User, menus.UserCategories, target) => AccessDecision.Allow,
+            AccountRoles.Admin when IsPostAllowedFor(AccountRoles.Admin, menus.AdminCategories, target) => AccessDecision.Allow,
+            AccountRoles.User when IsPostAllowedFor(AccountRoles.User, menus.UserCategories, target) => AccessDecision.Allow,
             _ => AccessDecision.Deny,
         };
     }

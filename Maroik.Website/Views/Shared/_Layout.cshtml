@@ -23,7 +23,7 @@
 
     @switch (loggedInAccount.Role)
     {
-        case Role.Admin:
+        case AccountRoles.Admin:
             @*HomePage Site Icon*@
             <link rel="Shortcut Icon" href="~/admin/favicon.ico" type="image/x-icon" asp-append-version="true"/>
             @*<!-- NonFactor DataGrid -->*@
@@ -59,7 +59,7 @@
             @*<!-- Custom Modal CSS -->*@
             <link rel="stylesheet" href="~/admin/custom/_Layout/css/site.css" asp-append-version="true">
             break;
-        case Role.User:
+        case AccountRoles.User:
             @*HomePage Site Icon*@
             <link rel="Shortcut Icon" href="~/user/favicon.ico" type="image/x-icon" asp-append-version="true"/>
             @*<!-- NonFactor DataGrid -->*@
@@ -95,7 +95,7 @@
             @*<!-- Custom Modal CSS -->*@
             <link rel="stylesheet" href="~/user/custom/_Layout/css/site.css" asp-append-version="true">
             break;
-        case Role.Anonymous:
+        case AccountRoles.Anonymous:
             @*HomePage Site Icon*@
             <link rel="Shortcut Icon" href="~/anonymous/favicon.ico" type="image/x-icon" asp-append-version="true"/>
             @*<!-- NonFactor DataGrid -->*@
@@ -187,7 +187,7 @@ to get the desired effect
             @RenderBody()
             @switch (loggedInAccount.Role)
             {
-                case Role.Admin:
+                case AccountRoles.Admin:
                     @*<!-- jQuery -->*@
                     <script src="~/admin/plugins/jquery/jquery.min.js" asp-append-version="true"></script>
                     <script src="~/admin/plugins/jquery-ui/jquery-ui.min.js" asp-append-version="true"></script>
@@ -214,7 +214,7 @@ to get the desired effect
 
                     <script src="~/admin/custom/_Layout/js/site.js" asp-append-version="true"></script>
                     break;
-                case Role.User:
+                case AccountRoles.User:
                     @*<!-- jQuery -->*@
                     <script src="~/user/plugins/jquery/jquery.min.js" asp-append-version="true"></script>
                     <script src="~/user/plugins/jquery-ui/jquery-ui.min.js" asp-append-version="true"></script>
@@ -243,7 +243,7 @@ to get the desired effect
 
                     <script src="~/user/custom/_Layout/js/site.js" asp-append-version="true"></script>
                     break;
-                case Role.Anonymous:
+                case AccountRoles.Anonymous:
                     @*<!-- jQuery -->*@
                     <script src="~/anonymous/plugins/jquery/jquery.min.js" asp-append-version="true"></script>
                     <script src="~/anonymous/plugins/jquery-ui/jquery-ui.min.js" asp-append-version="true"></script>

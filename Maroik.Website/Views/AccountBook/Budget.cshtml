@@ -6,14 +6,13 @@
     fill (CopyBudgetCells) and paints the changed cells it gets back, and asks for the coloring of the input being typed
     (PreviewBudgetCell). The function list, the class taxonomy and the class names are rendered from the domain policies.
 *@
-@using Maroik.Core.Domain.Formulas
 @using Maroik.Website.Models.ViewModels.AccountBooks
 @model BudgetPageViewModel
 
 @Html.Hidden("budgetKind", Model.Kind)
 @Html.Hidden("budgetYear", Model.Year)
 @Html.Hidden("budgetInitialYear", Model.InitialYear)
-@Html.Hidden("budgetFunctions", ClientJsonSerializer.Serialize(FormulaFunctions.All))
+@Html.Hidden("budgetFunctions", ClientJsonSerializer.Serialize(Model.Functions))
 @Html.Hidden("budgetSubClassMap", ClientJsonSerializer.Serialize(Model.SubClassesByMainClass))
 @Html.Hidden("budgetClassLabels", ClientJsonSerializer.Serialize(Model.ClassLabels))
 @Html.Hidden("budgetColumnCaptions", ClientJsonSerializer.Serialize(Model.ColumnCaptions))

@@ -1,6 +1,6 @@
+using Maroik.Core.Contract.Extensions;
 using System.Globalization;
 using Maroik.Core.Contract.Dtos;
-using Maroik.Core.Domain.Extensions;
 using Maroik.Website.Extensions;
 using Maroik.Website.Models.ViewModels.FileManagers;
 
@@ -61,7 +61,7 @@ public static class FileManagerViewModelMapper
             IsFolder = item.IsFolder,
             Size = item.IsFolder ? "" : item.Size.ToSizeLabel(),
             Bytes = item.Size,
-            Modified = item.Updated.ConvertTimeByTimeZoneIanaId(timeZoneIanaId).ToString("yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture),
+            Modified = item.Updated.ToTimeZone(timeZoneIanaId).ToString("yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture),
             Icon = IconOf(item.Name, item.IsFolder),
             Previewable = item.Previewable,
             Location = withLocation ? string.Join(" / ", [rootName, .. item.Location]) : "",

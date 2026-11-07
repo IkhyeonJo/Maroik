@@ -1,3 +1,5 @@
+using Maroik.Core.Contract.Enums;
+using Maroik.Core.Service.Services;
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Domain.Finances;
 using Maroik.Website.Mappers;
@@ -91,7 +93,7 @@ public class NoticeViewModelMapperTests
     [Fact]
     public void ToRowCssClass_Expired_ReturnsDangerClass()
     {
-        var result = FixedScheduleRowStatus.Expired.ToRowCssClass();
+        var result = FixedScheduleRowState.Expired.ToRowCssClass();
         Assert.Equal("table-danger clsGridRow", result);
     }
 
@@ -99,7 +101,7 @@ public class NoticeViewModelMapperTests
     [Fact]
     public void ToRowCssClass_Noticed_ReturnsInfoClass()
     {
-        var result = FixedScheduleRowStatus.Noticed.ToRowCssClass();
+        var result = FixedScheduleRowState.Noticed.ToRowCssClass();
         Assert.Equal("table-info clsGridRow", result);
     }
 
@@ -107,7 +109,7 @@ public class NoticeViewModelMapperTests
     [Fact]
     public void ToRowCssClass_Normal_ReturnsInactiveClass()
     {
-        var result = FixedScheduleRowStatus.Normal.ToRowCssClass();
+        var result = FixedScheduleRowState.Normal.ToRowCssClass();
         Assert.Equal("table-inactive clsGridRow", result);
     }
 
@@ -116,7 +118,7 @@ public class NoticeViewModelMapperTests
     public void FixedIncomesToDisplayViewModels_SetsRowCssClass_ForExpiredItem()
     {
         var items = new[] { new FixedIncomeResponse { MaturityDate = DateTime.UtcNow.AddDays(-1) } };
-        var vms = items.ToDisplayViewModels([], k => k, "UTC", 7, DateTime.UtcNow);
+        var vms = items.ToDisplayViewModels(new PolicyService(), [], k => k, "UTC", 7, DateTime.UtcNow);
         Assert.Equal("table-danger clsGridRow", vms[0].RowCssClass);
     }
 
@@ -134,7 +136,7 @@ public class NoticeViewModelMapperTests
     {
         var items = new[] { new FixedIncomeResponse { MaturityDate = new DateTime(2030, 6, 1), DepositMonth = 1, DepositDay = 1 } };
 
-        var vms = items.ToDisplayViewModels([], k => k, timeZone, 7, new DateTime(2030, 6, 1, 15, 30, 0, DateTimeKind.Utc));
+        var vms = items.ToDisplayViewModels(new PolicyService(), [], k => k, timeZone, 7, new DateTime(2030, 6, 1, 15, 30, 0, DateTimeKind.Utc));
 
         Assert.Equal(expired, vms[0].Expired);
     }
@@ -147,7 +149,7 @@ public class NoticeViewModelMapperTests
     {
         var items = new[] { new FixedExpenditureResponse { MaturityDate = new DateTime(2030, 6, 1), DepositMonth = 1, DepositDay = 1 } };
 
-        var vms = items.ToDisplayViewModels([], k => k, timeZone, 7, new DateTime(2030, 6, 1, 15, 30, 0, DateTimeKind.Utc));
+        var vms = items.ToDisplayViewModels(new PolicyService(), [], k => k, timeZone, 7, new DateTime(2030, 6, 1, 15, 30, 0, DateTimeKind.Utc));
 
         Assert.Equal(expired, vms[0].Expired);
     }
@@ -157,7 +159,7 @@ public class NoticeViewModelMapperTests
     public void FixedIncomesToDisplayViewModels_LocalizesClassFields()
     {
         var items = new[] { new FixedIncomeResponse { MainClass = "RegularIncome", SubClass = "LaborIncome", MaturityDate = DateTime.UtcNow.AddYears(1) } };
-        var vms = items.ToDisplayViewModels([], key => $"L:{key}", "UTC", 7, DateTime.UtcNow);
+        var vms = items.ToDisplayViewModels(new PolicyService(), [], key => $"L:{key}", "UTC", 7, DateTime.UtcNow);
         Assert.Equal("L:RegularIncome", vms[0].MainClass);
         Assert.Equal("L:LaborIncome", vms[0].SubClass);
     }
@@ -168,7 +170,7 @@ public class NoticeViewModelMapperTests
     {
         var assets = new[] { new AssetResponse { ProductName = "Bank", MonetaryUnit = "KRW" } };
         var items = new[] { new FixedIncomeResponse { DepositMyAssetProductName = "Bank", MaturityDate = DateTime.UtcNow.AddYears(1) } };
-        var vms = items.ToDisplayViewModels(assets, k => k, "UTC", 7, DateTime.UtcNow);
+        var vms = items.ToDisplayViewModels(new PolicyService(), assets, k => k, "UTC", 7, DateTime.UtcNow);
         Assert.Equal("KRW", vms[0].MonetaryUnit);
     }
 }

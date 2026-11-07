@@ -1,12 +1,8 @@
+using Maroik.Core.Contract.Constants;
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Extensions;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Contract.Settings;
-using Maroik.Core.Domain.Accounts;
-using Maroik.Core.Domain.Boards;
-using Maroik.Core.Domain.Extensions;
-using Maroik.Core.Domain.FileManagers;
-using Maroik.Core.Domain.Uploads;
 using Maroik.Website.Attributes;
 using Maroik.Website.Constants;
 using Maroik.Website.Extensions;
@@ -28,6 +24,7 @@ namespace Maroik.Website.Controllers;
 /// </summary>
 /// <param name="localizer">Localizer for this controller's user-facing messages.</param>
 /// <param name="logger">Logger for unexpected failures in the Management actions.</param>
+/// <param name="policyService">The Domain's stateless rules and the values the pages mirror.</param>
 /// <param name="profileService">Self-service profile use cases (avatar, time zone, password).</param>
 /// <param name="accountService">Account reads (writer nicknames of the private-note pages).</param>
 /// <param name="managementAccountService">Admin account-management use cases.</param>
@@ -48,6 +45,7 @@ public class ManagementController(
     IMenuService menuService,
     IBoardService boardService,
     IDataProtectionService dataProtection,
+    IPolicyService policyService,
     IOptions<ServerSetting> serverSettings,
     ISessionService sessionService,
     IExcelExportService excelExportService,
@@ -77,10 +75,11 @@ public class ManagementController(
 
         return View(new ProfileOutputViewModel
         {
+            AllowedImageContentTypes = policyService.GetAllowedImageContentTypes(),
             Email = tempAccount!.Email,
             AvatarImagePath = tempAccount.AvatarImagePath,
             Nickname = tempAccount.Nickname,
-            Created = tempAccount.Created.ConvertTimeByTimeZoneIanaId(loggedInAccountTimeZoneIanaId!),
+            Created = tempAccount.Created.ToTimeZone(loggedInAccountTimeZoneIanaId!),
             TimeZoneIanaId = tempAccount.TimeZoneIanaId,
             MustChangePassword = tempAccount.MustChangePassword
         });
@@ -95,8 +94,8 @@ public class ManagementController(
     /// <summary>Updates the current user's avatar image.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [RequiredHttpPostAccess(Role = Role.Admin)]
-    [RequiredHttpPostAccess(Role = Role.User)]
+    [RequiredHttpPostAccess(Role = AccountRoles.Admin)]
+    [RequiredHttpPostAccess(Role = AccountRoles.User)]
     public async Task<IActionResult> UpdateProfileAvatar(ProfileInputViewModel? profileInputViewModel)
     {
         // A request with no form fields at all (an empty multipart body) is not bound to a model — treat it as "no file".
@@ -111,7 +110,7 @@ public class ManagementController(
             return Ok(new { result = false, errorMessage = localizer["File Size must be smaller than {0}MB.", serverSettings.Value.MaxAttachedFileSizeBytes / (1024 * 1024)].ToPlainString() });
 
         var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
-        if (!ImageUploadPolicy.IsAllowedExtension(extension))
+        if (!policyService.IsAllowedImageExtension(extension))
             return Ok(new { result = false, errorMessage = localizer["Only .jpg or jpeg or .png file allowed"].Value });
 
         byte[] imageBytes;
@@ -157,8 +156,8 @@ public class ManagementController(
     /// <summary>Updates the current user's time-zone setting.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [RequiredHttpPostAccess(Role = Role.Admin)]
-    [RequiredHttpPostAccess(Role = Role.User)]
+    [RequiredHttpPostAccess(Role = AccountRoles.Admin)]
+    [RequiredHttpPostAccess(Role = AccountRoles.User)]
     public async Task<IActionResult> UpdateProfileTimeZone(ProfileInputViewModel profileInputViewModel)
     {
         _ = ModelState.Remove(nameof(profileInputViewModel.Nickname));
@@ -196,8 +195,8 @@ public class ManagementController(
     /// <summary>Changes the current user's password.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [RequiredHttpPostAccess(Role = Role.Admin)]
-    [RequiredHttpPostAccess(Role = Role.User)]
+    [RequiredHttpPostAccess(Role = AccountRoles.Admin)]
+    [RequiredHttpPostAccess(Role = AccountRoles.User)]
     public async Task<IActionResult> UpdateProfilePassword([FromBody] ProfileInputViewModel profileInputViewModel)
     {
         _ = ModelState.Remove(nameof(profileInputViewModel.Nickname));
@@ -247,7 +246,7 @@ public class ManagementController(
     /// <summary>Creates a new user account (admin action).</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [RequiredHttpPostAccess(Role = Role.Admin)]
+    [RequiredHttpPostAccess(Role = AccountRoles.Admin)]
     public async Task<IActionResult> CreateAccount([FromBody] AccountInputViewModel accountInputViewModel)
     {
         try
@@ -279,7 +278,7 @@ public class ManagementController(
                 TimeZoneIanaId = accountInputViewModel.TimeZoneIanaId,
                 EmailConfirmed = true,
                 AgreedServiceTerms = true,
-                Message = AccountMessage.Success.GetDescription()
+                Message = policyService.GetAccountCreatedMessage()
             }, AdminEmail, HttpContext.RequestAborted);
 
             return createResult.Success
@@ -324,7 +323,7 @@ public class ManagementController(
     /// <summary>Checks whether an account with the given email exists.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [RequiredHttpPostAccess(Role = Role.Admin)]
+    [RequiredHttpPostAccess(Role = AccountRoles.Admin)]
     public async Task<IActionResult> IsAccountExists(string email)
     {
         try
@@ -337,7 +336,7 @@ public class ManagementController(
                     result = false,
                     error = localizer["Fail to find the account by given email address"].Value
                 })
-                : (IActionResult)Json(new { result = true, account = tempAccount, fileManagerQuotaGb = FileManagerUploadPolicy.QuotaGbFromBytes(tempAccount.FileManagerQuotaBytes) });
+                : (IActionResult)Json(new { result = true, account = tempAccount, fileManagerQuotaGb = policyService.FileManagerQuotaGbFromBytes(tempAccount.FileManagerQuotaBytes) });
         }
         catch (Exception ex)
         {
@@ -353,7 +352,7 @@ public class ManagementController(
     /// <summary>Updates an existing account's fields.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [RequiredHttpPostAccess(Role = Role.Admin)]
+    [RequiredHttpPostAccess(Role = AccountRoles.Admin)]
     public async Task<IActionResult> UpdateAccount([FromBody] AccountInputViewModel accountInputViewModel)
     {
         try
@@ -375,13 +374,12 @@ public class ManagementController(
             long? quotaBytes = null;
             if (accountInputViewModel.FileManagerQuotaGb is { } quotaGb)
             {
-                var quotaResult = FileManagerUploadPolicy.QuotaBytesFromGb(quotaGb);
-                if (quotaResult.IsError)
+                (ServiceResult refusal, long bytes) = policyService.FileManagerQuotaBytesFromGb(quotaGb);
+                if (!refusal.Success)
                 {
-                    ServiceResult refusal = ServiceResult.FromError(quotaResult.FirstError);
                     return Json(new { result = false, error = localizer[refusal.ErrorKey, refusal.ErrorArgs].ToPlainString() });
                 }
-                quotaBytes = quotaResult.Value;
+                quotaBytes = bytes;
             }
 
             // Role validity is enforced by Account.ChangeRole in the Domain layer, which rejects
@@ -422,7 +420,7 @@ public class ManagementController(
     /// <summary>Soft-deletes an existing account.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [RequiredHttpPostAccess(Role = Role.Admin)]
+    [RequiredHttpPostAccess(Role = AccountRoles.Admin)]
     public async Task<IActionResult> DeleteAccount([FromBody] AccountInputViewModel accountInputViewModel)
     {
         try
@@ -446,7 +444,7 @@ public class ManagementController(
     /// <summary>Exports the account list to an Excel file.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [RequiredHttpPostAccess(Role = Role.Admin)]
+    [RequiredHttpPostAccess(Role = AccountRoles.Admin)]
     public async Task<IActionResult> ExportExcelAccount(string fileName = "")
     {
         AccountResponse account = HttpContext.GetLoggedInAccount();
@@ -467,7 +465,7 @@ public class ManagementController(
     /// <summary>Creates a new navigation category.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [RequiredHttpPostAccess(Role = Role.Admin)]
+    [RequiredHttpPostAccess(Role = AccountRoles.Admin)]
     public async Task<IActionResult> CreateCategory([FromBody] MenuInputViewModel menuInputViewModel)
     {
         try
@@ -503,7 +501,7 @@ public class ManagementController(
     /// <summary>Creates a new navigation sub-category.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [RequiredHttpPostAccess(Role = Role.Admin)]
+    [RequiredHttpPostAccess(Role = AccountRoles.Admin)]
     public async Task<IActionResult> CreateSubCategory([FromBody] MenuInputViewModel menuInputViewModel)
     {
         try
@@ -592,7 +590,7 @@ public class ManagementController(
     /// <summary>Checks whether a category with the given ID exists.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [RequiredHttpPostAccess(Role = Role.Admin)]
+    [RequiredHttpPostAccess(Role = AccountRoles.Admin)]
     public async Task<IActionResult> IsCategoryExists(long id)
     {
         try
@@ -625,7 +623,7 @@ public class ManagementController(
     /// <summary>Checks whether a sub-category with the given ID exists.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [RequiredHttpPostAccess(Role = Role.Admin)]
+    [RequiredHttpPostAccess(Role = AccountRoles.Admin)]
     public async Task<IActionResult> IsSubCategoryExists(long id)
     {
         try
@@ -662,7 +660,7 @@ public class ManagementController(
     /// <summary>Updates an existing navigation category.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [RequiredHttpPostAccess(Role = Role.Admin)]
+    [RequiredHttpPostAccess(Role = AccountRoles.Admin)]
     public async Task<IActionResult> UpdateCategory([FromBody] MenuInputViewModel menuInputViewModel)
     {
         try
@@ -699,7 +697,7 @@ public class ManagementController(
     /// <summary>Updates an existing navigation sub-category.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [RequiredHttpPostAccess(Role = Role.Admin)]
+    [RequiredHttpPostAccess(Role = AccountRoles.Admin)]
     public async Task<IActionResult> UpdateSubCategory([FromBody] MenuInputViewModel menuInputViewModel)
     {
         try
@@ -740,7 +738,7 @@ public class ManagementController(
     /// <summary>Deletes a navigation category.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [RequiredHttpPostAccess(Role = Role.Admin)]
+    [RequiredHttpPostAccess(Role = AccountRoles.Admin)]
     public async Task<IActionResult> DeleteCategory([FromBody] MenuInputViewModel menuInputViewModel)
     {
         try
@@ -777,7 +775,7 @@ public class ManagementController(
     /// <summary>Deletes a navigation sub-category.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [RequiredHttpPostAccess(Role = Role.Admin)]
+    [RequiredHttpPostAccess(Role = AccountRoles.Admin)]
     public async Task<IActionResult> DeleteSubCategory([FromBody] MenuInputViewModel menuInputViewModel)
     {
         try
@@ -819,7 +817,7 @@ public class ManagementController(
     /// <summary>Exports the navigation menu (categories and sub-categories) to an Excel file.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [RequiredHttpPostAccess(Role = Role.Admin)]
+    [RequiredHttpPostAccess(Role = AccountRoles.Admin)]
     public async Task<IActionResult> ExportExcelMenu(string fileName = "")
     {
         AccountResponse account = HttpContext.GetLoggedInAccount();
@@ -845,8 +843,8 @@ public class ManagementController(
     /// <summary>Creates a new private note (with optional file attachment) owned by the caller.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [RequiredHttpPostAccess(Role = Role.Admin)]
-    [RequiredHttpPostAccess(Role = Role.User)]
+    [RequiredHttpPostAccess(Role = AccountRoles.Admin)]
+    [RequiredHttpPostAccess(Role = AccountRoles.User)]
     public async Task<IActionResult> WritePrivateNoteBoard(BoardInputViewModel boardInputViewModel)
     {
         try
@@ -861,12 +859,12 @@ public class ManagementController(
             // session snapshot, so a mid-session role change takes effect here immediately.
             AccountResponse loggedInAccount = HttpContext.GetLoggedInAccount();
 
-            if (loggedInAccount.Role is not (Role.Admin or Role.User))
+            if (loggedInAccount.Role is not (AccountRoles.Admin or AccountRoles.User))
                 return Json(new { result = false, error = localizer["Please Login to write board"].Value });
 
             BoardRequest boardRequest = new()
             {
-                Type = BoardTypes.PrivateNote,
+                Type = BoardKinds.PrivateNote,
                 Title = boardInputViewModel.Title,
                 Content = boardInputViewModel.Content,
                 Writer = loggedInAccount.RequireNickname()
@@ -874,7 +872,7 @@ public class ManagementController(
 
             AttachedFileDto? attachedFile = await boardInputViewModel.UploadedFile.ToAttachedFileInfoAsync(serverSettings.Value.MaxAttachedFileSizeBytes, HttpContext.RequestAborted);
 
-            ServiceResult result = await boardService.WriteBoardAsync(boardRequest, loggedInAccount.Role == Role.Admin, attachedFile, HttpContext.RequestAborted);
+            ServiceResult result = await boardService.WriteBoardAsync(boardRequest, loggedInAccount.Role == AccountRoles.Admin, attachedFile, HttpContext.RequestAborted);
             return result.Success
                 ? Json(new { result = true, message = localizer["The board has been successfully created."].Value })
                 : Json(new { result = false, error = localizer[result.ErrorKey, result.ErrorArgs].ToPlainString() });
@@ -893,8 +891,8 @@ public class ManagementController(
     /// <summary>Submits a comment on one of the caller's own private notes.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [RequiredHttpPostAccess(Role = Role.Admin)]
-    [RequiredHttpPostAccess(Role = Role.User)]
+    [RequiredHttpPostAccess(Role = AccountRoles.Admin)]
+    [RequiredHttpPostAccess(Role = AccountRoles.User)]
     public async Task<IActionResult> WritePrivateNoteComment(
         [FromBody] BoardCommentInputViewModel boardCommentInputViewModel)
     {
@@ -908,7 +906,7 @@ public class ManagementController(
 
             // DB-fresh account already loaded by ViewBagPopulatorFilter for this request (see WritePrivateNoteBoard).
             AccountResponse loggedInAccount = HttpContext.GetLoggedInAccount();
-            if (loggedInAccount.Role is not (Role.Admin or Role.User))
+            if (loggedInAccount.Role is not (AccountRoles.Admin or AccountRoles.User))
                 return Json(new { result = false, error = localizer["Please Login to write comment."].Value });
 
             BoardCommentRequest commentRequest = new()
@@ -919,7 +917,7 @@ public class ManagementController(
                 Content = boardCommentInputViewModel.Content
             };
 
-            ServiceResult result = await boardService.WriteCommentAsync(commentRequest, loggedInAccount.RequireNickname(), requiredType: BoardTypes.PrivateNote, ct: HttpContext.RequestAborted);
+            ServiceResult result = await boardService.WriteCommentAsync(commentRequest, loggedInAccount.RequireNickname(), requiredType: BoardKinds.PrivateNote, ct: HttpContext.RequestAborted);
             return result.Success
                 ? Json(new { result = true, boardId = boardCommentInputViewModel.BoardId, page = boardCommentInputViewModel.DetailCurrentPage })
                 : Json(new { result = false, error = localizer[result.ErrorKey, result.ErrorArgs].ToPlainString() });
@@ -942,12 +940,12 @@ public class ManagementController(
     /// </summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [RequiredHttpPostAccess(Role = Role.Admin)]
-    [RequiredHttpPostAccess(Role = Role.User)]
+    [RequiredHttpPostAccess(Role = AccountRoles.Admin)]
+    [RequiredHttpPostAccess(Role = AccountRoles.User)]
     public async Task<IActionResult> UploadImageFile(IFormFile? summernoteImageFile)
     {
         return await this.UploadEditorImageAsync(summernoteImageFile, serverSettings.Value.MaxAttachedFileSizeBytes, localizer, logger, dataProtection,
-            (file, uploaderEmail, token) => boardService.UploadSummernoteImageAsync(file, "Management", BoardTypes.PrivateNote, uploaderEmail, token),
+            (file, uploaderEmail, token) => boardService.UploadSummernoteImageAsync(file, "Management", BoardKinds.PrivateNote, uploaderEmail, token),
             HttpContext.RequestAborted);
     }
     #endregion
@@ -988,7 +986,7 @@ public class ManagementController(
 
                 if (boardId == null)
                 {
-                    return RedirectToAction(BoardTypes.PrivateNote, "Management");
+                    return RedirectToAction(BoardKinds.PrivateNote, "Management");
                 }
 
                 PrivateNoteOutputViewModel privateNoteOutputViewModel = new()
@@ -1000,11 +998,11 @@ public class ManagementController(
 
                 try
                 {
-                    BoardResponse? privateNoteBoard = await boardService.GetBoardByIdAsync(boardId.Value, BoardTypes.PrivateNote, HttpContext.RequestAborted);
+                    BoardResponse? privateNoteBoard = await boardService.GetBoardByIdAsync(boardId.Value, BoardKinds.PrivateNote, HttpContext.RequestAborted);
                     BoardAttachedFileDto? attachedFile = await boardService.GetAttachedFileByBoardIdAsync(boardId.Value, HttpContext.RequestAborted);
 
                     if (privateNoteBoard == null || privateNoteBoard.Deleted || !boardService.CanView(privateNoteBoard, loggedInAccount))
-                        return RedirectToAction(BoardTypes.PrivateNote, "Management");
+                        return RedirectToAction(BoardKinds.PrivateNote, "Management");
 
                     await boardService.IncrementBoardViewAsync(boardId.Value, HttpContext.RequestAborted);
 
@@ -1051,12 +1049,12 @@ public class ManagementController(
                 catch (Exception ex)
                 {
                     logger.LogError(ex, "Failed to load private note board detail for board {BoardId}", boardId);
-                    return RedirectToAction(BoardTypes.PrivateNote, "Management");
+                    return RedirectToAction(BoardKinds.PrivateNote, "Management");
                 }
             }
             // Edit
             case "edit" when boardId == null:
-                return RedirectToAction(BoardTypes.PrivateNote, "Management");
+                return RedirectToAction(BoardKinds.PrivateNote, "Management");
             case "edit":
             {
                 PrivateNoteOutputViewModel privateNoteOutputViewModel = new()
@@ -1072,12 +1070,12 @@ public class ManagementController(
 
                 try
                 {
-                    BoardResponse? privateNoteBoard = await boardService.GetBoardByIdAsync(boardId.Value, BoardTypes.PrivateNote, HttpContext.RequestAborted);
+                    BoardResponse? privateNoteBoard = await boardService.GetBoardByIdAsync(boardId.Value, BoardKinds.PrivateNote, HttpContext.RequestAborted);
                     BoardAttachedFileDto? attachedFile = await boardService.GetAttachedFileByBoardIdAsync(boardId.Value, HttpContext.RequestAborted);
 
                     if (privateNoteBoard == null || privateNoteBoard.Deleted || !loggedInAccount.IsOwner(privateNoteBoard.Writer))
                     {
-                        return RedirectToAction(BoardTypes.PrivateNote, "Management");
+                        return RedirectToAction(BoardKinds.PrivateNote, "Management");
                     }
 
                     (privateNoteBoard.Content, bool isImgTagIncluded) = await boardService.PrepareHtmlForDisplayAsync(privateNoteBoard.Content ?? "", HttpContext.RequestAborted);
@@ -1104,7 +1102,7 @@ public class ManagementController(
                 catch (Exception ex)
                 {
                     logger.LogError(ex, "Failed to load private note board edit form for board {BoardId}", boardId);
-                    return RedirectToAction(BoardTypes.PrivateNote, "Management");
+                    return RedirectToAction(BoardKinds.PrivateNote, "Management");
                 }
             }
             // List
@@ -1133,7 +1131,7 @@ public class ManagementController(
                 // belongs to the caller (same "already scoped to the caller's own notes" behavior
                 // this replaced).
                 (IEnumerable<BoardResponse> pageItems, int totalCount) = await boardService.GetBoardPageAsync(new BoardPageQuery(
-                    Type: BoardTypes.PrivateNote,
+                    Type: BoardKinds.PrivateNote,
                     OwnerNickname: loggedInAccount.Nickname,
                     SearchType: searchType,
                     SearchText: searchText,
@@ -1206,8 +1204,8 @@ public class ManagementController(
     /// </summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [RequiredHttpPostAccess(Role = Role.Admin)]
-    [RequiredHttpPostAccess(Role = Role.User)]
+    [RequiredHttpPostAccess(Role = AccountRoles.Admin)]
+    [RequiredHttpPostAccess(Role = AccountRoles.User)]
     public async Task<IActionResult> DownloadPrivateNoteAttachedFile(long boardId)
     {
         try
@@ -1215,7 +1213,7 @@ public class ManagementController(
             // Re-fetched from the database by ViewBagPopulatorFilter on every request.
             AccountResponse loggedInAccount = HttpContext.GetLoggedInAccount();
             (ServiceResult result, AttachmentDownload? file) = await boardService.OpenAttachedFileAsync(
-                boardId, BoardTypes.PrivateNote, loggedInAccount, HttpContext.RequestAborted);
+                boardId, BoardKinds.PrivateNote, loggedInAccount, HttpContext.RequestAborted);
             if (!result.Success)
                 return Json(new { result = false, error = localizer[result.ErrorKey, result.ErrorArgs].ToPlainString() });
 
@@ -1239,14 +1237,14 @@ public class ManagementController(
     /// </summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [RequiredHttpPostAccess(Role = Role.Admin)]
-    [RequiredHttpPostAccess(Role = Role.User)]
+    [RequiredHttpPostAccess(Role = AccountRoles.Admin)]
+    [RequiredHttpPostAccess(Role = AccountRoles.User)]
     public async Task<IActionResult> IsBoardExists(long id)
     {
         try
         {
             string? nickname = HttpContext.GetLoggedInAccount().Nickname;
-            BoardResponse? board = await boardService.GetBoardByIdAsync(id, BoardTypes.PrivateNote, HttpContext.RequestAborted);
+            BoardResponse? board = await boardService.GetBoardByIdAsync(id, BoardKinds.PrivateNote, HttpContext.RequestAborted);
 
             return board == null || board.Deleted || board.Writer != nickname
                 ? Json(new { result = false, error = localizer["Input is invalid"].Value })
@@ -1270,8 +1268,8 @@ public class ManagementController(
     /// <summary>Saves edits to one of the caller's own private notes.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [RequiredHttpPostAccess(Role = Role.Admin)]
-    [RequiredHttpPostAccess(Role = Role.User)]
+    [RequiredHttpPostAccess(Role = AccountRoles.Admin)]
+    [RequiredHttpPostAccess(Role = AccountRoles.User)]
     public async Task<IActionResult> EditPrivateNoteBoard(BoardInputViewModel boardInputViewModel)
     {
         try
@@ -1283,20 +1281,20 @@ public class ManagementController(
 
             // DB-fresh account already loaded by ViewBagPopulatorFilter for this request (see WritePrivateNoteBoard).
             AccountResponse loggedInAccount = HttpContext.GetLoggedInAccount();
-            if (loggedInAccount.Role is not (Role.Admin or Role.User))
+            if (loggedInAccount.Role is not (AccountRoles.Admin or AccountRoles.User))
                 return Json(new { result = false, error = localizer["Please Login to edit board"].Value });
 
             BoardRequest boardRequest = new()
             {
                 Id = boardInputViewModel.Id,
-                Type = BoardTypes.PrivateNote,
+                Type = BoardKinds.PrivateNote,
                 Title = boardInputViewModel.Title,
                 Content = boardInputViewModel.Content
             };
 
             AttachedFileDto? attachedFile = await boardInputViewModel.UploadedFile.ToAttachedFileInfoAsync(serverSettings.Value.MaxAttachedFileSizeBytes, HttpContext.RequestAborted);
 
-            ServiceResult result = await boardService.EditBoardAsync(boardRequest, loggedInAccount.RequireNickname(), loggedInAccount.Role == Role.Admin, attachedFile, HttpContext.RequestAborted);
+            ServiceResult result = await boardService.EditBoardAsync(boardRequest, loggedInAccount.RequireNickname(), loggedInAccount.Role == AccountRoles.Admin, attachedFile, HttpContext.RequestAborted);
             return result.Success
                 ? Json(new { result = true, message = localizer["The board has been successfully updated."].Value })
                 : Json(new { result = false, error = localizer[result.ErrorKey, result.ErrorArgs].ToPlainString() });
@@ -1319,8 +1317,8 @@ public class ManagementController(
     /// <summary>Soft-deletes one of the caller's own private notes (no admin bypass).</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [RequiredHttpPostAccess(Role = Role.Admin)]
-    [RequiredHttpPostAccess(Role = Role.User)]
+    [RequiredHttpPostAccess(Role = AccountRoles.Admin)]
+    [RequiredHttpPostAccess(Role = AccountRoles.User)]
     public async Task<IActionResult> DeleteBoard([FromBody] BoardInputViewModel boardInputViewModel)
     {
         try
@@ -1333,7 +1331,7 @@ public class ManagementController(
             // another account's private note board.
             ServiceResult result = await boardService.DeleteBoardAsync(
                 boardInputViewModel.Id,
-                BoardTypes.PrivateNote,
+                BoardKinds.PrivateNote,
                 loggedInAccount.RequireNickname(),
                 false,
                 HttpContext.RequestAborted);
@@ -1356,8 +1354,8 @@ public class ManagementController(
     /// <summary>Soft-deletes a comment on a private note; only the comment's author may (no admin bypass for private notes).</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [RequiredHttpPostAccess(Role = Role.Admin)]
-    [RequiredHttpPostAccess(Role = Role.User)]
+    [RequiredHttpPostAccess(Role = AccountRoles.Admin)]
+    [RequiredHttpPostAccess(Role = AccountRoles.User)]
     public async Task<IActionResult> DeleteComment(long id)
     {
         try
@@ -1369,8 +1367,8 @@ public class ManagementController(
             ServiceResult result = await boardService.DeleteCommentAsync(
                 id,
                 loggedInAccount.RequireNickname(),
-                loggedInAccount.Role == Role.Admin,
-                BoardTypes.PrivateNote,
+                loggedInAccount.Role == AccountRoles.Admin,
+                BoardKinds.PrivateNote,
                 HttpContext.RequestAborted);
 
             return result.Success

@@ -1,8 +1,8 @@
+using Maroik.Core.Contract.Extensions;
+using Maroik.Core.Contract.Constants;
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Contract.Settings;
-using Maroik.Core.Domain.Accounts;
-using Maroik.Core.Domain.Extensions;
 using Maroik.Website.Constants;
 using Maroik.Website.Extensions;
 using Microsoft.AspNetCore.Localization;
@@ -48,7 +48,7 @@ public class ViewBagPopulatorFilter(
         // HttpContext.GetLoggedInAccount() — never null from here on (anonymous placeholder at worst).
         context.HttpContext.Items[HttpContextItemKeys.LoggedInAccount] = loggedInAccount;
         controller.ViewBag.TimeZoneOptions = timeZoneCatalogService.GetTimeZoneOptions();
-        controller.ViewBag.CopyrightYear = timeProvider.GetUtcNow().UtcDateTime.ConvertTimeByTimeZoneIanaId(loggedInAccount.RequireTimeZoneIanaId()).Year;
+        controller.ViewBag.CopyrightYear = timeProvider.GetUtcNow().UtcDateTime.ToTimeZone(loggedInAccount.RequireTimeZoneIanaId()).Year;
 
         PublishActiveMenuItem(context, controller, loggedInAccount);
 
@@ -93,7 +93,7 @@ public class ViewBagPopulatorFilter(
                 : new AccountResponse
                 {
                     Nickname = "Login",
-                    Role = Role.Anonymous,
+                    Role = AccountRoles.Anonymous,
                     TimeZoneIanaId = "UTC",
                     AvatarImagePath = "/anonymous/images/bg1.jpg"
                 };
@@ -104,8 +104,8 @@ public class ViewBagPopulatorFilter(
     {
         (IEnumerable<CategoryResponse>? roleCategories, IEnumerable<SubCategoryResponse>? roleSubCategories) = loggedInAccount.Role switch
         {
-            Role.Admin => ((IEnumerable<CategoryResponse>?)controller.ViewBag.AdminCategories, (IEnumerable<SubCategoryResponse>?)controller.ViewBag.AdminSubCategories),
-            Role.User => ((IEnumerable<CategoryResponse>?)controller.ViewBag.UserCategories, (IEnumerable<SubCategoryResponse>?)controller.ViewBag.UserSubCategories),
+            AccountRoles.Admin => ((IEnumerable<CategoryResponse>?)controller.ViewBag.AdminCategories, (IEnumerable<SubCategoryResponse>?)controller.ViewBag.AdminSubCategories),
+            AccountRoles.User => ((IEnumerable<CategoryResponse>?)controller.ViewBag.UserCategories, (IEnumerable<SubCategoryResponse>?)controller.ViewBag.UserSubCategories),
             _ => ((IEnumerable<CategoryResponse>?)controller.ViewBag.AnonymousCategories, (IEnumerable<SubCategoryResponse>?)controller.ViewBag.AnonymousSubCategories)
         };
 
@@ -128,7 +128,7 @@ public class ViewBagPopulatorFilter(
         int fixedIncomesNoticedCount = 0, fixedExpenditureNoticedCount = 0;
         int fixedIncomesExpiredCount = 0, fixedExpenditureExpiredCount = 0;
 
-        if (loggedInAccount.Role == Role.User)
+        if (loggedInAccount.Role == AccountRoles.User)
         {
             try
             {

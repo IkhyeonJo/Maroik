@@ -1,6 +1,4 @@
 using System.ComponentModel.DataAnnotations;
-using Maroik.Core.Domain.Finances;
-using Maroik.Website.Mappers;
 
 namespace Maroik.Website.Models.ViewModels.Notices;
 
@@ -99,5 +97,5 @@ public class FixedExpenditureOutputViewModel
     /// <summary>
     /// CSS row class for the grid, prioritizing Expired over Noticed over the default state.
     /// </summary>
-    public string RowCssClass => FixedSchedulePolicy.GetRowStatus(Expired, Noticed).ToRowCssClass();
+    public string RowCssClass { get; set; } = "";
 }

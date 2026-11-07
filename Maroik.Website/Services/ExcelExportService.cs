@@ -1,10 +1,11 @@
+using Maroik.Core.Contract.Extensions;
 ﻿using System.Globalization;
 using System.Text;
 using DocumentFormat.OpenXml;
 using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Spreadsheet;
 using Maroik.Core.Contract.Dtos;
-using Maroik.Core.Domain.Extensions;
+using Maroik.Core.Contract.Interfaces;
 using Maroik.Website.Extensions;
 using Maroik.Website.Interfaces;
 using Maroik.Website.Mappers;
@@ -20,7 +21,7 @@ namespace Maroik.Website.Services;
 /// caller-supplied time zone, so this class holds no localizer or session state of its own. The fixed
 /// income / expenditure exports judge their notice and expiry flags against <paramref name="timeProvider"/>.
 /// </summary>
-public class ExcelExportService(TimeProvider timeProvider) : IExcelExportService
+public class ExcelExportService(TimeProvider timeProvider, IPolicyService policyService) : IExcelExportService
 {
     /// <inheritdoc />
     public MemoryStream CreateAssetExcel(
@@ -48,8 +49,8 @@ public class ExcelExportService(TimeProvider timeProvider) : IExcelExportService
             localize(item.Item ?? ""),
             item.MonetaryUnit ?? "",
             XlsxCell.Number(item.Amount),
-            Timestamp(item.Created.ConvertTimeByTimeZoneIanaId(timeZoneIanaId)),
-            Timestamp(item.Updated.ConvertTimeByTimeZoneIanaId(timeZoneIanaId)),
+            Timestamp(item.Created.ToTimeZone(timeZoneIanaId)),
+            Timestamp(item.Updated.ToTimeZone(timeZoneIanaId)),
             item.Note ?? "",
             item.Deleted.ToString()
         ]);
@@ -90,8 +91,8 @@ public class ExcelExportService(TimeProvider timeProvider) : IExcelExportService
             currencyByProduct.GetValueOrDefault(item.DepositMyAssetProductName ?? "", ""),
             XlsxCell.Number(item.Amount),
             item.DepositMyAssetProductName ?? "",
-            Timestamp(item.Created.ConvertTimeByTimeZoneIanaId(timeZoneIanaId)),
-            Timestamp(item.Updated.ConvertTimeByTimeZoneIanaId(timeZoneIanaId)),
+            Timestamp(item.Created.ToTimeZone(timeZoneIanaId)),
+            Timestamp(item.Updated.ToTimeZone(timeZoneIanaId)),
             item.Note ?? ""
         ]);
 
@@ -134,8 +135,8 @@ public class ExcelExportService(TimeProvider timeProvider) : IExcelExportService
             item.PaymentMethod ?? "",
             item.Note ?? "",
             item.MyDepositAsset ?? "",
-            Timestamp(item.Created.ConvertTimeByTimeZoneIanaId(timeZoneIanaId)),
-            Timestamp(item.Updated.ConvertTimeByTimeZoneIanaId(timeZoneIanaId))
+            Timestamp(item.Created.ToTimeZone(timeZoneIanaId)),
+            Timestamp(item.Updated.ToTimeZone(timeZoneIanaId))
         ]);
 
         return BuildExcel(headers, rows);
@@ -151,7 +152,7 @@ public class ExcelExportService(TimeProvider timeProvider) : IExcelExportService
     {
         var assetList = assets.ToList();
         var ordered = items
-            .ToDisplayViewModels(assetList, localize, timeZoneIanaId, noticeWindowDays, timeProvider.GetUtcNow().UtcDateTime)
+            .ToDisplayViewModels(policyService, assetList, localize, timeZoneIanaId, noticeWindowDays, timeProvider.GetUtcNow().UtcDateTime)
             .OrderByDescending(a => a.Expired).ThenByDescending(a => a.Noticed)
             .ThenByDescending(a => a.Unpunctuality).ThenByDescending(a => a.Created)
             .ThenByDescending(a => a.Updated).ToList();
@@ -205,7 +206,7 @@ public class ExcelExportService(TimeProvider timeProvider) : IExcelExportService
     {
         var assetList = assets.ToList();
         var ordered = items
-            .ToDisplayViewModels(assetList, localize, timeZoneIanaId, noticeWindowDays, timeProvider.GetUtcNow().UtcDateTime)
+            .ToDisplayViewModels(policyService, assetList, localize, timeZoneIanaId, noticeWindowDays, timeProvider.GetUtcNow().UtcDateTime)
             .OrderByDescending(a => a.Expired).ThenByDescending(a => a.Noticed)
             .ThenByDescending(a => a.Unpunctuality).ThenByDescending(a => a.Created)
             .ThenByDescending(a => a.Updated).ToList();

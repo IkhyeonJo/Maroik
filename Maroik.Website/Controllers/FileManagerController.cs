@@ -1,8 +1,7 @@
+using Maroik.Core.Contract.Constants;
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Enums;
 using Maroik.Core.Contract.Interfaces;
-using Maroik.Core.Domain.Accounts;
-using Maroik.Core.Domain.FileManagers;
 using Maroik.Website.Attributes;
 using Maroik.Website.Extensions;
 using Maroik.Website.Mappers;
@@ -21,16 +20,18 @@ namespace Maroik.Website.Controllers;
 /// <param name="localizer">Localizer for this controller's user-facing messages.</param>
 /// <param name="logger">Logger for unexpected failures in the File Manager actions.</param>
 /// <param name="fileManagerService">File Manager use cases.</param>
+/// <param name="policyService">The upload timings the page follows.</param>
 public class FileManagerController(
     IHtmlLocalizer<FileManagerController> localizer,
     ILogger<FileManagerController> logger,
-    IFileManagerService fileManagerService) : Controller
+    IFileManagerService fileManagerService,
+    IPolicyService policyService) : Controller
 {
     #region Page
 
     /// <summary>Returns the File Manager page; the drive and the folders are fetched by the page script.</summary>
     [HttpGet]
-    public IActionResult UserIndex() => View();
+    public IActionResult UserIndex() => View(policyService.GetFileManagerFormRules());
 
     #endregion
 
@@ -48,7 +49,7 @@ public class FileManagerController(
     /// <summary>The folder tree and the storage usage (the left panel).</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [RequiredHttpPostAccess(Role = Role.User)]
+    [RequiredHttpPostAccess(Role = AccountRoles.User)]
     public async Task<IActionResult> GetDrive(CancellationToken ct)
     {
         try
@@ -66,7 +67,7 @@ public class FileManagerController(
     /// <summary>An open folder's breadcrumb and items.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [RequiredHttpPostAccess(Role = Role.User)]
+    [RequiredHttpPostAccess(Role = AccountRoles.User)]
     public async Task<IActionResult> GetFolder([FromBody] FileManagerFolderInputViewModel input, CancellationToken ct)
     {
         if (!ModelState.IsValid) return Json(new { result = false, error = localizer["Input is invalid"].Value });
@@ -85,7 +86,7 @@ public class FileManagerController(
     /// <summary>The items whose name contains the query, with their locations.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [RequiredHttpPostAccess(Role = Role.User)]
+    [RequiredHttpPostAccess(Role = AccountRoles.User)]
     public async Task<IActionResult> Search([FromBody] FileManagerSearchInputViewModel input, CancellationToken ct)
     {
         if (!ModelState.IsValid) return Json(new { result = false, error = localizer["Input is invalid"].Value });
@@ -104,7 +105,7 @@ public class FileManagerController(
     /// <summary>The files a multi-download fetches (each selected file, and every file under each selected folder).</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [RequiredHttpPostAccess(Role = Role.User)]
+    [RequiredHttpPostAccess(Role = AccountRoles.User)]
     public async Task<IActionResult> ListDownloadFiles([FromBody] FileManagerSelectionInputViewModel input, CancellationToken ct)
     {
         if (!ModelState.IsValid) return Json(new { result = false, error = localizer["Input is invalid"].Value });
@@ -126,7 +127,7 @@ public class FileManagerController(
     /// <summary>Streams a file as an attachment; a refusal comes back as JSON.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [RequiredHttpPostAccess(Role = Role.User)]
+    [RequiredHttpPostAccess(Role = AccountRoles.User)]
     public async Task<IActionResult> Download(long id, CancellationToken ct)
     {
         try
@@ -145,7 +146,7 @@ public class FileManagerController(
     /// <summary>An image to preview, with the Content-Type its bytes proved; a refusal comes back as JSON.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [RequiredHttpPostAccess(Role = Role.User)]
+    [RequiredHttpPostAccess(Role = AccountRoles.User)]
     public async Task<IActionResult> Preview(long id, CancellationToken ct)
     {
         try
@@ -167,7 +168,7 @@ public class FileManagerController(
     /// <summary>Creates a folder (or, for a folder upload, reuses one of the same name).</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [RequiredHttpPostAccess(Role = Role.User)]
+    [RequiredHttpPostAccess(Role = AccountRoles.User)]
     public async Task<IActionResult> CreateFolder([FromBody] FileManagerCreateFolderInputViewModel input, CancellationToken ct)
     {
         if (!ModelState.IsValid) return Json(new { result = false, error = localizer["Input is invalid"].Value });
@@ -188,7 +189,7 @@ public class FileManagerController(
     /// <summary>Renames an item.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [RequiredHttpPostAccess(Role = Role.User)]
+    [RequiredHttpPostAccess(Role = AccountRoles.User)]
     public async Task<IActionResult> Rename([FromBody] FileManagerRenameInputViewModel input, CancellationToken ct)
     {
         if (!ModelState.IsValid) return Json(new { result = false, error = localizer["Input is invalid"].Value });
@@ -207,7 +208,7 @@ public class FileManagerController(
     /// <summary>Moves the selected items into a folder.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [RequiredHttpPostAccess(Role = Role.User)]
+    [RequiredHttpPostAccess(Role = AccountRoles.User)]
     public async Task<IActionResult> Move([FromBody] FileManagerSelectionInputViewModel input, CancellationToken ct)
     {
         if (!ModelState.IsValid) return Json(new { result = false, error = localizer["Input is invalid"].Value });
@@ -226,7 +227,7 @@ public class FileManagerController(
     /// <summary>Deletes the selected items (a folder with everything under it).</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [RequiredHttpPostAccess(Role = Role.User)]
+    [RequiredHttpPostAccess(Role = AccountRoles.User)]
     public async Task<IActionResult> Delete([FromBody] FileManagerSelectionInputViewModel input, CancellationToken ct)
     {
         if (!ModelState.IsValid) return Json(new { result = false, error = localizer["Input is invalid"].Value });
@@ -249,7 +250,7 @@ public class FileManagerController(
     /// <summary>Whether a batch of the given total size fits the remaining quota (asked before a batch starts).</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [RequiredHttpPostAccess(Role = Role.User)]
+    [RequiredHttpPostAccess(Role = AccountRoles.User)]
     public async Task<IActionResult> CheckQuota([FromBody] FileManagerQuotaInputViewModel input, CancellationToken ct)
     {
         if (!ModelState.IsValid) return Json(new { result = false, error = localizer["Input is invalid"].Value });
@@ -268,10 +269,10 @@ public class FileManagerController(
     /// <summary>Starts one file's upload: a name conflict to decide, or the upload id and chunk size.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [RequiredHttpPostAccess(Role = Role.User)]
+    [RequiredHttpPostAccess(Role = AccountRoles.User)]
     public async Task<IActionResult> BeginUpload([FromBody] FileManagerUploadInputViewModel input, CancellationToken ct)
     {
-        if (!ModelState.IsValid || !Enum.TryParse(input.Conflict, ignoreCase: false, out FileManagerConflictChoice conflict) || !Enum.IsDefined(conflict)
+        if (!ModelState.IsValid || !Enum.TryParse(input.Conflict, ignoreCase: false, out FileManagerConflictOption conflict) || !Enum.IsDefined(conflict)
             || int.TryParse(input.Conflict, out _))
             return Json(new { result = false, error = localizer["Input is invalid"].Value });
         try
@@ -294,7 +295,7 @@ public class FileManagerController(
     /// <summary>Receives one chunk of an upload (a multipart form) and forwards it to file storage.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [RequiredHttpPostAccess(Role = Role.User)]
+    [RequiredHttpPostAccess(Role = AccountRoles.User)]
     public async Task<IActionResult> UploadChunk([FromForm] FileManagerChunkInputViewModel input, CancellationToken ct)
     {
         if (!ModelState.IsValid || input.Chunk == null) return Json(new { result = false, error = localizer["Input is invalid"].Value });
@@ -318,7 +319,7 @@ public class FileManagerController(
     /// </summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [RequiredHttpPostAccess(Role = Role.User)]
+    [RequiredHttpPostAccess(Role = AccountRoles.User)]
     public async Task<IActionResult> CompleteUpload([FromBody] FileManagerUploadIdInputViewModel input, CancellationToken ct)
     {
         if (!ModelState.IsValid) return Json(new { result = false, error = localizer["Input is invalid"].Value });
@@ -340,7 +341,7 @@ public class FileManagerController(
     /// <summary>Abandons an upload.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [RequiredHttpPostAccess(Role = Role.User)]
+    [RequiredHttpPostAccess(Role = AccountRoles.User)]
     public async Task<IActionResult> AbortUpload([FromBody] FileManagerUploadIdInputViewModel input, CancellationToken ct)
     {
         if (!ModelState.IsValid) return Json(new { result = false, error = localizer["Input is invalid"].Value });

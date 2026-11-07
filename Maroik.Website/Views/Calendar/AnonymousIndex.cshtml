@@ -7,7 +7,6 @@
     No create/edit/delete controls are shown; the calendar is read-only.
 *@
 @using Maroik.Website.Models.ViewModels.Calendars
-@using Maroik.Core.Domain.Calendars
 @model CalendarOutputViewModel
 
 @{
@@ -17,11 +16,11 @@
 @* Reminder lead-time bounds + the "notify at HH:MM" list — authoritative in CalendarReminderPolicy
    / the view model. This page only displays reminders (disabled inputs), but it reads the same
    values so it never drifts from the create/edit pages. *@
-@Html.Hidden("minLeadTimeBeforeEvent", CalendarReminderPolicy.MinLeadTimeBeforeEvent)
-@Html.Hidden("maxMinutesBeforeEvent", CalendarReminderPolicy.MaxMinutesBeforeEvent)
-@Html.Hidden("maxHoursBeforeEvent", CalendarReminderPolicy.MaxHoursBeforeEvent)
-@Html.Hidden("maxDaysBeforeEvent", CalendarReminderPolicy.MaxDaysBeforeEvent)
-@Html.Hidden("maxWeeksBeforeEvent", CalendarReminderPolicy.MaxWeeksBeforeEvent)
+@Html.Hidden("minLeadTimeBeforeEvent", Model.ReminderRules.MinLeadTimeBeforeEvent)
+@Html.Hidden("maxMinutesBeforeEvent", Model.ReminderRules.MaxMinutesBeforeEvent)
+@Html.Hidden("maxHoursBeforeEvent", Model.ReminderRules.MaxHoursBeforeEvent)
+@Html.Hidden("maxDaysBeforeEvent", Model.ReminderRules.MaxDaysBeforeEvent)
+@Html.Hidden("maxWeeksBeforeEvent", Model.ReminderRules.MaxWeeksBeforeEvent)
 @Html.Hidden("reminderTimeIntervals", ClientJsonSerializer.Serialize(Model.TimeIntervals))
 
 @Html.Hidden("localizerMinutes", Localizer["Minutes"].Value)
@@ -176,7 +175,7 @@
                         <div class="form-row">
                             <div class="form-group col-md-12 mb-3">
                                 <label for="viewCalendarEventName">@Localizer["Name"].Value</label>
-                                <input class="form-control form-control-sm" type="text" data-val="true" data-val-required="@Localizer["Please enter Name"].Value" id="viewCalendarEventName" name="viewCalendarEventName" value="" maxlength="@TitledContentPolicy.MaxTitleLength" disabled/>
+                                <input class="form-control form-control-sm" type="text" data-val="true" data-val-required="@Localizer["Please enter Name"].Value" id="viewCalendarEventName" name="viewCalendarEventName" value="" maxlength="@PolicyLimits.TitleMaxLength" disabled/>
                                 <span class="field-validation-valid text-danger" data-valmsg-for="viewCalendarEventName" data-valmsg-replace="true"></span>
                             </div>
                         </div>
@@ -282,7 +281,7 @@
                         <div class="form-row">
                             <div class="form-group col-md-12 mb-3">
                                 <label for="viewCalendarEventDescription">@Localizer["Description"].Value</label>
-                                <textarea class="form-control form-control-sm" id="viewCalendarEventDescription" name="viewCalendarEventDescription" maxlength="@TitledContentPolicy.MaxBodyLength" disabled></textarea>
+                                <textarea class="form-control form-control-sm" id="viewCalendarEventDescription" name="viewCalendarEventDescription" maxlength="@PolicyLimits.BodyMaxLength" disabled></textarea>
                             </div>
                         </div>
 

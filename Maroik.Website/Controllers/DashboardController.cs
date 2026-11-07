@@ -1,6 +1,6 @@
+using Maroik.Core.Contract.Constants;
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
-using Maroik.Core.Domain.Accounts;
 using Maroik.Website.Attributes;
 using Maroik.Website.Constants;
 using Maroik.Website.Extensions;
@@ -32,9 +32,9 @@ public class DashboardController(
     /// <summary>Sets the UI culture cookie to the requested locale.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [RequiredHttpPostAccess(Role = Role.Admin)]
-    [RequiredHttpPostAccess(Role = Role.User)]
-    [RequiredHttpPostAccess(Role = Role.Anonymous)]
+    [RequiredHttpPostAccess(Role = AccountRoles.Admin)]
+    [RequiredHttpPostAccess(Role = AccountRoles.User)]
+    [RequiredHttpPostAccess(Role = AccountRoles.Anonymous)]
     public IActionResult CultureManagement([FromBody] LoginInputViewModel loginInputViewModel)
     {
         // Only the cultures the app actually supports (CulturePolicy.SupportedCultures — the same
@@ -93,7 +93,7 @@ public class DashboardController(
     /// <summary>Updates the logged-in user's default monetary unit preference.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [RequiredHttpPostAccess(Role = Role.User)]
+    [RequiredHttpPostAccess(Role = AccountRoles.User)]
     public async Task<IActionResult> UserUpdateDefaultMonetary([FromBody] UserIndexInputViewModel userIndexInputViewModel, CancellationToken ct)
     {
         string email = HttpContext.GetLoggedInAccount().Email ?? "";
@@ -121,8 +121,8 @@ public class DashboardController(
 
         return loggedInAccount.Role switch
         {
-            Role.Admin => RedirectToAction("AdminIndex", "Dashboard"),
-            Role.User => RedirectToAction("UserIndex", "Dashboard"),
+            AccountRoles.Admin => RedirectToAction("AdminIndex", "Dashboard"),
+            AccountRoles.User => RedirectToAction("UserIndex", "Dashboard"),
             _ => View()
         };
     }

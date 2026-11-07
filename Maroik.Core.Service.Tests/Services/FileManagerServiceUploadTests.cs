@@ -21,7 +21,7 @@ public class FileManagerServiceUploadTests
     private readonly H _h = new();
 
     /// <summary>A request to upload <paramref name="name"/> of <paramref name="size"/> bytes into <paramref name="parentId"/>.</summary>
-    private static FileManagerUploadRequest Upload(string name, long size = 100, long? parentId = null, FileManagerConflictChoice conflict = FileManagerConflictChoice.Ask) =>
+    private static FileManagerUploadRequest Upload(string name, long size = 100, long? parentId = null, FileManagerConflictOption conflict = FileManagerConflictOption.Ask) =>
         new() { Name = name, Size = size, ParentId = parentId, Conflict = conflict };
 
     /// <summary>Starts an upload that must succeed and returns its start.</summary>
@@ -114,7 +114,7 @@ public class FileManagerServiceUploadTests
         _h.File("a.txt");
         _h.File("a (1).txt", uploading: true);
 
-        FileManagerUploadStart start = await StartAsync(Upload("a.txt", conflict: FileManagerConflictChoice.KeepBoth));
+        FileManagerUploadStart start = await StartAsync(Upload("a.txt", conflict: FileManagerConflictOption.KeepBoth));
 
         Assert.Equal("a (2).txt", start.Name);
     }
@@ -125,7 +125,7 @@ public class FileManagerServiceUploadTests
     {
         long old = _h.File("a.txt");
 
-        FileManagerUploadStart start = await StartAsync(Upload("a.txt", conflict: FileManagerConflictChoice.Overwrite));
+        FileManagerUploadStart start = await StartAsync(Upload("a.txt", conflict: FileManagerConflictOption.Overwrite));
 
         Assert.Equal("a.txt", start.Name);
         Assert.NotNull(_h.Nodes.Get(old));
@@ -350,7 +350,7 @@ public class FileManagerServiceUploadTests
     {
         long old = _h.File("a.txt");
         string oldPath = _h.Node(old).StoragePath!;
-        FileManagerUploadStart start = await StartAsync(Upload("a.txt", conflict: FileManagerConflictChoice.Overwrite));
+        FileManagerUploadStart start = await StartAsync(Upload("a.txt", conflict: FileManagerConflictOption.Overwrite));
 
         (ServiceResult result, _) = await _h.Sut.CompleteUploadAsync(H.Email, start.UploadId, overwrite: true, TestContext.Current.CancellationToken);
 

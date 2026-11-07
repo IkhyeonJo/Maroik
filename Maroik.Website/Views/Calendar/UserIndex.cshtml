@@ -8,7 +8,6 @@
     The time grid is scrolled to the user's current local time on page load.
 *@
 @using Maroik.Website.Models.ViewModels.Calendars
-@using Maroik.Core.Domain.Calendars
 @model CalendarOutputViewModel
 
 @{
@@ -22,15 +21,15 @@
 @Html.Hidden("loggedInAccountTimeZoneIanaId", loggedInAccount.TimeZoneIanaId)
 @Html.Hidden("calendarInitialDate", Model.InitialDate)
 @* Reminder lead-time bounds — authoritative in CalendarReminderPolicy; the client check reads these instead of hardcoding. *@
-@Html.Hidden("minLeadTimeBeforeEvent", CalendarReminderPolicy.MinLeadTimeBeforeEvent)
-@Html.Hidden("maxMinutesBeforeEvent", CalendarReminderPolicy.MaxMinutesBeforeEvent)
-@Html.Hidden("maxHoursBeforeEvent", CalendarReminderPolicy.MaxHoursBeforeEvent)
-@Html.Hidden("maxDaysBeforeEvent", CalendarReminderPolicy.MaxDaysBeforeEvent)
-@Html.Hidden("maxWeeksBeforeEvent", CalendarReminderPolicy.MaxWeeksBeforeEvent)
+@Html.Hidden("minLeadTimeBeforeEvent", Model.ReminderRules.MinLeadTimeBeforeEvent)
+@Html.Hidden("maxMinutesBeforeEvent", Model.ReminderRules.MaxMinutesBeforeEvent)
+@Html.Hidden("maxHoursBeforeEvent", Model.ReminderRules.MaxHoursBeforeEvent)
+@Html.Hidden("maxDaysBeforeEvent", Model.ReminderRules.MaxDaysBeforeEvent)
+@Html.Hidden("maxWeeksBeforeEvent", Model.ReminderRules.MaxWeeksBeforeEvent)
 @* "Notify at HH:MM" options + default, from CalendarReminderPolicy / the view model, so the client stops regenerating the 15-minute list. *@
 @Html.Hidden("reminderTimeIntervals", ClientJsonSerializer.Serialize(Model.TimeIntervals))
-@Html.Hidden("defaultReminderTimeOfDay", CalendarReminderPolicy.DefaultReminderTimeOfDay)
-@Html.Hidden("maxRemindersPerEvent", CalendarReminderPolicy.MaxRemindersPerEvent)
+@Html.Hidden("defaultReminderTimeOfDay", Model.ReminderRules.DefaultReminderTimeOfDay)
+@Html.Hidden("maxRemindersPerEvent", Model.ReminderRules.MaxRemindersPerEvent)
 @* The culture CalendarService orders the "my calendars" list under, so the client re-sorts it the same way. *@
 @Html.Hidden("calendarNameCulture", System.Globalization.CultureInfo.CurrentCulture.Name)
 @Html.Hidden("localizerMinutes", Localizer["Minutes"].Value)
@@ -111,7 +110,7 @@
 @Html.Hidden("localizerErrorRangeHour", Localizer["ErrorRangeHour"].Value)
 @Html.Hidden("localizerErrorRangeDay", Localizer["ErrorRangeDay"].Value)
 @Html.Hidden("localizerErrorRangeWeek", Localizer["ErrorRangeWeek"].Value)
-@Html.Hidden("localizerTooManyReminders", Localizer["An event can have at most {0} reminders.", CalendarReminderPolicy.MaxRemindersPerEvent].Value)
+@Html.Hidden("localizerTooManyReminders", Localizer["An event can have at most {0} reminders.", Model.ReminderRules.MaxRemindersPerEvent].Value)
 @Html.Hidden("localizerFailedToLoadCalendars", Localizer["FailedToLoadCalendars"].Value)
 @Html.Hidden("calendarEventOutputViewModels", ClientJsonSerializer.Serialize(Model.CalendarEventOutputViewModels))
 @Html.Hidden("otherCalendarEventOutputViewModels", ClientJsonSerializer.Serialize(Model.OtherCalendarEventOutputViewModels))
@@ -243,7 +242,7 @@
                         <div class="form-row">
                             <div class="form-group col-md-12 mb-3">
                                 <label for="createCalendarName">@Localizer["Name"].Value</label>
-                                <input class="form-control form-control-sm" type="text" data-val="true" data-val-required="@Localizer["Please enter Name"].Value" id="createCalendarName" name="createCalendarName" value="" maxlength="@ShortTextPolicy.MaxLength">
+                                <input class="form-control form-control-sm" type="text" data-val="true" data-val-required="@Localizer["Please enter Name"].Value" id="createCalendarName" name="createCalendarName" value="" maxlength="@PolicyLimits.ShortTextMaxLength">
                                 <span class="field-validation-valid text-danger" data-valmsg-for="createCalendarName" data-valmsg-replace="true"></span>
                             </div>
                         </div>
@@ -251,7 +250,7 @@
                         <div class="form-row">
                             <div class="form-group col-md-12 mb-3">
                                 <label for="createCalendarDescription">@Localizer["Description"].Value</label>
-                                <textarea class="form-control form-control-sm" id="createCalendarDescription" name="createCalendarDescription" maxlength="@TitledContentPolicy.MaxBodyLength"></textarea>
+                                <textarea class="form-control form-control-sm" id="createCalendarDescription" name="createCalendarDescription" maxlength="@PolicyLimits.BodyMaxLength"></textarea>
                             </div>
                         </div>
 
@@ -302,7 +301,7 @@
                         <div class="form-row">
                             <div class="form-group col-md-12 mb-3">
                                 <label for="editCalendarName">@Localizer["Name"].Value</label>
-                                <input class="form-control form-control-sm" type="text" data-val="true" data-val-required="@Localizer["Please enter Name"].Value" id="editCalendarName" name="editCalendarName" value="" maxlength="@ShortTextPolicy.MaxLength">
+                                <input class="form-control form-control-sm" type="text" data-val="true" data-val-required="@Localizer["Please enter Name"].Value" id="editCalendarName" name="editCalendarName" value="" maxlength="@PolicyLimits.ShortTextMaxLength">
                                 <span class="field-validation-valid text-danger" data-valmsg-for="editCalendarName" data-valmsg-replace="true"></span>
                             </div>
                         </div>
@@ -310,7 +309,7 @@
                         <div class="form-row">
                             <div class="form-group col-md-12 mb-3">
                                 <label for="editCalendarDescription">@Localizer["Description"].Value</label>
-                                <textarea class="form-control form-control-sm" id="editCalendarDescription" name="editCalendarDescription" maxlength="@TitledContentPolicy.MaxBodyLength"></textarea>
+                                <textarea class="form-control form-control-sm" id="editCalendarDescription" name="editCalendarDescription" maxlength="@PolicyLimits.BodyMaxLength"></textarea>
                             </div>
                         </div>
 
@@ -373,7 +372,7 @@
                         <div class="form-row">
                             <div class="form-group col-md-12 mb-3">
                                 <label for="createCalendarEventName">@Localizer["Name"].Value</label>
-                                <input class="form-control form-control-sm" type="text" data-val="true" data-val-required="@Localizer["Please enter Name"].Value" id="createCalendarEventName" name="createCalendarEventName" value="" maxlength="@TitledContentPolicy.MaxTitleLength">
+                                <input class="form-control form-control-sm" type="text" data-val="true" data-val-required="@Localizer["Please enter Name"].Value" id="createCalendarEventName" name="createCalendarEventName" value="" maxlength="@PolicyLimits.TitleMaxLength">
                                 <span class="field-validation-valid text-danger" data-valmsg-for="createCalendarEventName" data-valmsg-replace="true"></span>
                             </div>
                         </div>
@@ -493,7 +492,7 @@
                         <div class="form-row">
                             <div class="form-group col-md-12 mb-3">
                                 <label for="createCalendarEventDescription">@Localizer["Description"].Value</label>
-                                <textarea class="form-control form-control-sm" id="createCalendarEventDescription" name="createCalendarEventDescription" maxlength="@TitledContentPolicy.MaxBodyLength"></textarea>
+                                <textarea class="form-control form-control-sm" id="createCalendarEventDescription" name="createCalendarEventDescription" maxlength="@PolicyLimits.BodyMaxLength"></textarea>
                             </div>
                         </div>
 
@@ -573,7 +572,7 @@
                         <div class="form-row">
                             <div class="form-group col-md-12 mb-3">
                                 <label for="editCalendarEventName">@Localizer["Name"].Value</label>
-                                <input class="form-control form-control-sm" type="text" data-val="true" data-val-required="@Localizer["Please enter Name"].Value" id="editCalendarEventName" name="editCalendarEventName" value="" maxlength="@TitledContentPolicy.MaxTitleLength">
+                                <input class="form-control form-control-sm" type="text" data-val="true" data-val-required="@Localizer["Please enter Name"].Value" id="editCalendarEventName" name="editCalendarEventName" value="" maxlength="@PolicyLimits.TitleMaxLength">
                                 <span class="field-validation-valid text-danger" data-valmsg-for="editCalendarEventName" data-valmsg-replace="true"></span>
                             </div>
                         </div>
@@ -679,7 +678,7 @@
                         <div class="form-row">
                             <div class="form-group col-md-12 mb-3">
                                 <label for="editCalendarEventDescription">@Localizer["Description"].Value</label>
-                                <textarea class="form-control form-control-sm" id="editCalendarEventDescription" name="editCalendarEventDescription" maxlength="@TitledContentPolicy.MaxBodyLength"></textarea>
+                                <textarea class="form-control form-control-sm" id="editCalendarEventDescription" name="editCalendarEventDescription" maxlength="@PolicyLimits.BodyMaxLength"></textarea>
                             </div>
                         </div>
 
@@ -770,7 +769,7 @@
                         <div class="form-row">
                             <div class="form-group col-md-12 mb-3">
                                 <label for="viewCalendarEventName">@Localizer["Name"].Value</label>
-                                <input class="form-control form-control-sm" type="text" data-val="true" data-val-required="@Localizer["Please enter Name"].Value" id="viewCalendarEventName" name="viewCalendarEventName" value="" maxlength="@TitledContentPolicy.MaxTitleLength" disabled/>
+                                <input class="form-control form-control-sm" type="text" data-val="true" data-val-required="@Localizer["Please enter Name"].Value" id="viewCalendarEventName" name="viewCalendarEventName" value="" maxlength="@PolicyLimits.TitleMaxLength" disabled/>
                                 <span class="field-validation-valid text-danger" data-valmsg-for="viewCalendarEventName" data-valmsg-replace="true"></span>
                             </div>
                         </div>
@@ -876,7 +875,7 @@
                         <div class="form-row">
                             <div class="form-group col-md-12 mb-3">
                                 <label for="viewCalendarEventDescription">@Localizer["Description"].Value</label>
-                                <textarea class="form-control form-control-sm" id="viewCalendarEventDescription" name="viewCalendarEventDescription" maxlength="@TitledContentPolicy.MaxBodyLength" disabled></textarea>
+                                <textarea class="form-control form-control-sm" id="viewCalendarEventDescription" name="viewCalendarEventDescription" maxlength="@PolicyLimits.BodyMaxLength" disabled></textarea>
                             </div>
                         </div>
 

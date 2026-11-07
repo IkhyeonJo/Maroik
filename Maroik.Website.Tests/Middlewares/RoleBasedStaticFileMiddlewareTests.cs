@@ -1,3 +1,4 @@
+using Maroik.Core.Service.Services;
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Domain.Accounts;
@@ -53,7 +54,7 @@ public class RoleBasedStaticFileMiddlewareTests
         bool nextCalled = false;
         var sut = new RoleBasedStaticFileMiddleware(_ => { nextCalled = true; return Task.CompletedTask; });
 
-        await sut.InvokeAsync(context, _sessionService.Object, _accountService.Object);
+        await sut.InvokeAsync(context, _sessionService.Object, _accountService.Object, new PolicyService());
 
         return (nextCalled, context.Response.StatusCode);
     }
@@ -131,7 +132,7 @@ public class RoleBasedStaticFileMiddlewareTests
         bool nextCalled = false;
         var sut = new RoleBasedStaticFileMiddleware(_ => { nextCalled = true; return Task.CompletedTask; });
 
-        await sut.InvokeAsync(context, _sessionService.Object, _accountService.Object);
+        await sut.InvokeAsync(context, _sessionService.Object, _accountService.Object, new PolicyService());
 
         Assert.True(nextCalled);
         Assert.Equal(200, context.Response.StatusCode);
@@ -146,7 +147,7 @@ public class RoleBasedStaticFileMiddlewareTests
         bool nextCalled = false;
         var sut = new RoleBasedStaticFileMiddleware(_ => { nextCalled = true; return Task.CompletedTask; });
 
-        await sut.InvokeAsync(context, _sessionService.Object, _accountService.Object);
+        await sut.InvokeAsync(context, _sessionService.Object, _accountService.Object, new PolicyService());
 
         Assert.False(nextCalled);
         Assert.Equal(403, context.Response.StatusCode);
@@ -161,7 +162,7 @@ public class RoleBasedStaticFileMiddlewareTests
         bool nextCalled = false;
         var sut = new RoleBasedStaticFileMiddleware(_ => { nextCalled = true; return Task.CompletedTask; });
 
-        await sut.InvokeAsync(context, _sessionService.Object, _accountService.Object);
+        await sut.InvokeAsync(context, _sessionService.Object, _accountService.Object, new PolicyService());
 
         Assert.False(nextCalled);
         Assert.Equal(403, context.Response.StatusCode);
@@ -176,7 +177,7 @@ public class RoleBasedStaticFileMiddlewareTests
         bool nextCalled = false;
         var sut = new RoleBasedStaticFileMiddleware(_ => { nextCalled = true; return Task.CompletedTask; });
 
-        await sut.InvokeAsync(context, _sessionService.Object, _accountService.Object);
+        await sut.InvokeAsync(context, _sessionService.Object, _accountService.Object, new PolicyService());
 
         Assert.True(nextCalled);
         Assert.Equal(200, context.Response.StatusCode);
@@ -191,7 +192,7 @@ public class RoleBasedStaticFileMiddlewareTests
         bool nextCalled = false;
         var sut = new RoleBasedStaticFileMiddleware(_ => { nextCalled = true; return Task.CompletedTask; });
 
-        await sut.InvokeAsync(context, _sessionService.Object, _accountService.Object);
+        await sut.InvokeAsync(context, _sessionService.Object, _accountService.Object, new PolicyService());
 
         Assert.False(nextCalled);
         Assert.Equal(403, context.Response.StatusCode);
@@ -206,7 +207,7 @@ public class RoleBasedStaticFileMiddlewareTests
         bool nextCalled = false;
         var sut = new RoleBasedStaticFileMiddleware(_ => { nextCalled = true; return Task.CompletedTask; });
 
-        await sut.InvokeAsync(context, _sessionService.Object, _accountService.Object);
+        await sut.InvokeAsync(context, _sessionService.Object, _accountService.Object, new PolicyService());
 
         Assert.False(nextCalled);
         Assert.Equal(403, context.Response.StatusCode);
@@ -228,7 +229,7 @@ public class RoleBasedStaticFileMiddlewareTests
         bool nextCalled = false;
         var sut = new RoleBasedStaticFileMiddleware(_ => { nextCalled = true; return Task.CompletedTask; });
 
-        await sut.InvokeAsync(context, _sessionService.Object, _accountService.Object);
+        await sut.InvokeAsync(context, _sessionService.Object, _accountService.Object, new PolicyService());
 
         Assert.False(nextCalled);
         Assert.Equal(403, context.Response.StatusCode);
@@ -243,7 +244,7 @@ public class RoleBasedStaticFileMiddlewareTests
         bool nextCalled = false;
         var sut = new RoleBasedStaticFileMiddleware(_ => { nextCalled = true; return Task.CompletedTask; });
 
-        await sut.InvokeAsync(context, _sessionService.Object, _accountService.Object);
+        await sut.InvokeAsync(context, _sessionService.Object, _accountService.Object, new PolicyService());
 
         Assert.True(nextCalled);
     }
@@ -266,7 +267,7 @@ public class RoleBasedStaticFileMiddlewareTests
         bool nextCalled = false;
         var sut = new RoleBasedStaticFileMiddleware(_ => { nextCalled = true; return Task.CompletedTask; });
 
-        await sut.InvokeAsync(context, _sessionService.Object, _accountService.Object);
+        await sut.InvokeAsync(context, _sessionService.Object, _accountService.Object, new PolicyService());
 
         Assert.False(nextCalled);
         Assert.Equal(403, context.Response.StatusCode);
@@ -283,7 +284,7 @@ public class RoleBasedStaticFileMiddlewareTests
         bool nextCalled = false;
         var sut = new RoleBasedStaticFileMiddleware(_ => { nextCalled = true; return Task.CompletedTask; });
 
-        await sut.InvokeAsync(context, _sessionService.Object, _accountService.Object);
+        await sut.InvokeAsync(context, _sessionService.Object, _accountService.Object, new PolicyService());
 
         Assert.True(nextCalled);
     }
@@ -297,7 +298,7 @@ public class RoleBasedStaticFileMiddlewareTests
         bool nextCalled = false;
         var sut = new RoleBasedStaticFileMiddleware(_ => { nextCalled = true; return Task.CompletedTask; });
 
-        await sut.InvokeAsync(context, _sessionService.Object, _accountService.Object);
+        await sut.InvokeAsync(context, _sessionService.Object, _accountService.Object, new PolicyService());
 
         Assert.False(nextCalled);
         Assert.Equal(403, context.Response.StatusCode);
@@ -312,7 +313,7 @@ public class RoleBasedStaticFileMiddlewareTests
         bool nextCalled = false;
         var sut = new RoleBasedStaticFileMiddleware(_ => { nextCalled = true; return Task.CompletedTask; });
 
-        await sut.InvokeAsync(context, _sessionService.Object, _accountService.Object);
+        await sut.InvokeAsync(context, _sessionService.Object, _accountService.Object, new PolicyService());
 
         Assert.True(nextCalled);
     }
@@ -326,7 +327,7 @@ public class RoleBasedStaticFileMiddlewareTests
         bool nextCalled = false;
         var sut = new RoleBasedStaticFileMiddleware(_ => { nextCalled = true; return Task.CompletedTask; });
 
-        await sut.InvokeAsync(context, _sessionService.Object, _accountService.Object);
+        await sut.InvokeAsync(context, _sessionService.Object, _accountService.Object, new PolicyService());
 
         Assert.True(nextCalled);
         Assert.Equal(200, context.Response.StatusCode);
@@ -341,7 +342,7 @@ public class RoleBasedStaticFileMiddlewareTests
         bool nextCalled = false;
         var sut = new RoleBasedStaticFileMiddleware(_ => { nextCalled = true; return Task.CompletedTask; });
 
-        await sut.InvokeAsync(context, _sessionService.Object, _accountService.Object);
+        await sut.InvokeAsync(context, _sessionService.Object, _accountService.Object, new PolicyService());
 
         Assert.True(nextCalled);
     }

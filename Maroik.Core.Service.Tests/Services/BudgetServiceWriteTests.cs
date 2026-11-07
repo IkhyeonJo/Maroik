@@ -1,4 +1,5 @@
 using Maroik.Core.Contract.Dtos;
+using Maroik.Core.Contract.Enums;
 using Maroik.Core.Domain.Budgets;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -26,7 +27,7 @@ public class BudgetServiceWriteTests
     [Fact]
     public async Task EditAsync_CreatesTheSheetOnItsFirstEdit()
     {
-        var (result, edit) = await _h.Sut.EditAsync(H.Email, BudgetKind.Income, 2026, "UTC", [new BudgetCellEdit("B2", "3,000,000")], TestContext.Current.CancellationToken);
+        var (result, edit) = await _h.Sut.EditAsync(H.Email, BudgetSheetKind.Income, 2026, "UTC", [new BudgetCellEditRequest("B2", "3,000,000")], TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
         BudgetSheet sheet = Assert.Single(_h.Sheets.All);
@@ -49,8 +50,8 @@ public class BudgetServiceWriteTests
         _h.Cell(id, _meal.Key, "B", "1");
         _h.Cell(id, _meal.Key, "C", "2");
 
-        var (result, _) = await _h.Sut.EditAsync(H.Email, BudgetKind.Expenditure, 2026, "UTC",
-            [new BudgetCellEdit("B2", "10"), new BudgetCellEdit("C2", ""), new BudgetCellEdit("D2", "=B2*2"), new BudgetCellEdit("E2", "")], TestContext.Current.CancellationToken);
+        var (result, _) = await _h.Sut.EditAsync(H.Email, BudgetSheetKind.Expenditure, 2026, "UTC",
+            [new BudgetCellEditRequest("B2", "10"), new BudgetCellEditRequest("C2", ""), new BudgetCellEditRequest("D2", "=B2*2"), new BudgetCellEditRequest("E2", "")], TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
         Assert.Equal([("B", "10", H.Now), ("D", $"=B{{{_meal.Key}}}*2", H.Now)], _h.Cells.All.OrderBy(c => c.Column, StringComparer.Ordinal).Select(c => (c.Column, c.Input, c.Updated)));
@@ -65,7 +66,7 @@ public class BudgetServiceWriteTests
     {
         _h.Sheet(BudgetKind.Expenditure, 2026, H.Email, _meal);
 
-        var (result, edit) = await _h.Sut.EditAsync(H.Email, BudgetKind.Expenditure, 2026, "UTC", [new BudgetCellEdit("B2", "lunch")], TestContext.Current.CancellationToken);
+        var (result, edit) = await _h.Sut.EditAsync(H.Email, BudgetSheetKind.Expenditure, 2026, "UTC", [new BudgetCellEditRequest("B2", "lunch")], TestContext.Current.CancellationToken);
 
         Assert.Equal(("Budget.CellNeedsNumber", "A budget cell takes a number or a formula.", ServiceErrorType.Validation), (result.ErrorCode, result.ErrorKey, result.ErrorType));
         Assert.Null(edit);
@@ -81,7 +82,7 @@ public class BudgetServiceWriteTests
         var boom = new InvalidOperationException("db down");
         _h.Cells.FailWrites = boom;
 
-        var (result, _) = await _h.Sut.EditAsync(H.Email, BudgetKind.Expenditure, 2026, "UTC", [new BudgetCellEdit("B2", "1")], TestContext.Current.CancellationToken);
+        var (result, _) = await _h.Sut.EditAsync(H.Email, BudgetSheetKind.Expenditure, 2026, "UTC", [new BudgetCellEditRequest("B2", "1")], TestContext.Current.CancellationToken);
 
         Assert.Equal((ServiceErrorKeys.TemporaryError, ServiceErrorType.Failure), (result.ErrorKey, result.ErrorType));
         var log = _h.Logger.LatestRecord;
@@ -97,7 +98,7 @@ public class BudgetServiceWriteTests
         var boom = new InvalidOperationException("db down");
         _h.Accounts.Setup(a => a.FindByEmailForUpdateAsync(H.Email, It.IsAny<CancellationToken>())).ThrowsAsync(boom);
 
-        var (result, _) = await _h.Sut.EditAsync(H.Email, BudgetKind.Income, 2026, "UTC", [new BudgetCellEdit("B2", "1")], TestContext.Current.CancellationToken);
+        var (result, _) = await _h.Sut.EditAsync(H.Email, BudgetSheetKind.Income, 2026, "UTC", [new BudgetCellEditRequest("B2", "1")], TestContext.Current.CancellationToken);
 
         Assert.Equal(ServiceErrorKeys.TemporaryError, result.ErrorKey);
         Assert.Equal(("Budget: failed to create Income2026 of user@example.com", boom), (_h.Logger.LatestRecord.Message, _h.Logger.LatestRecord.Exception));
@@ -113,7 +114,7 @@ public class BudgetServiceWriteTests
             .Callback(() => _h.Sheet(BudgetKind.Income, 2026))
             .ReturnsAsync((Domain.Accounts.Account?)null);
 
-        var (result, _) = await _h.Sut.EditAsync(H.Email, BudgetKind.Income, 2026, "UTC", [new BudgetCellEdit("B6", "1")], TestContext.Current.CancellationToken);
+        var (result, _) = await _h.Sut.EditAsync(H.Email, BudgetSheetKind.Income, 2026, "UTC", [new BudgetCellEditRequest("B6", "1")], TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
         Assert.Single(_h.Sheets.All);
@@ -127,7 +128,7 @@ public class BudgetServiceWriteTests
         long id = _h.Sheet(BudgetKind.Expenditure, 2026, H.Email, _meal);
         _h.Cell(id, _meal.Key, "C", $"=B{{{_meal.Key}}}+1");
 
-        var (result, edit) = await _h.Sut.CopyAsync(H.Email, BudgetKind.Expenditure, 2026, "UTC", "C2", "D2:E2", TestContext.Current.CancellationToken);
+        var (result, edit) = await _h.Sut.CopyAsync(H.Email, BudgetSheetKind.Expenditure, 2026, "UTC", "C2", "D2:E2", TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
         Assert.Equal(2, edit!.Written);
@@ -141,7 +142,7 @@ public class BudgetServiceWriteTests
     {
         _h.Sheet(BudgetKind.Expenditure, 2026, H.Email, _meal);
 
-        var (result, _) = await _h.Sut.CopyAsync(H.Email, BudgetKind.Expenditure, 2026, "UTC", "B2", "N2", TestContext.Current.CancellationToken);
+        var (result, _) = await _h.Sut.CopyAsync(H.Email, BudgetSheetKind.Expenditure, 2026, "UTC", "B2", "N2", TestContext.Current.CancellationToken);
 
         Assert.Equal("Budget.CellReadOnly", result.ErrorCode);
         _h.AssertTransactions(1, 0);
@@ -155,7 +156,7 @@ public class BudgetServiceWriteTests
         _h.Cell(id, _meal.Key, "B", "1");
         _h.Cells.FailWrites = new InvalidOperationException("db down");
 
-        var (result, _) = await _h.Sut.CopyAsync(H.Email, BudgetKind.Expenditure, 2026, "UTC", "B2", "C2", TestContext.Current.CancellationToken);
+        var (result, _) = await _h.Sut.CopyAsync(H.Email, BudgetSheetKind.Expenditure, 2026, "UTC", "B2", "C2", TestContext.Current.CancellationToken);
 
         Assert.Equal(ServiceErrorKeys.TemporaryError, result.ErrorKey);
         Assert.Equal("Budget: failed to paste into Expenditure2026 of user@example.com", _h.Logger.LatestRecord.Message);
@@ -167,7 +168,7 @@ public class BudgetServiceWriteTests
     {
         _h.Sheet(BudgetKind.Expenditure, 2026, H.Email, _meal);
 
-        var (result, sheet) = await _h.Sut.AddLineAsync(H.Email, BudgetKind.Expenditure, 2026, "UTC", "ConsumerSpending", "PinMoney", "usd", TestContext.Current.CancellationToken);
+        var (result, sheet) = await _h.Sut.AddLineAsync(H.Email, BudgetSheetKind.Expenditure, 2026, "UTC", "ConsumerSpending", "PinMoney", "usd", TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
         Assert.Equal([_meal, _pin], _h.Lines.All.Select(l => l.Line).OrderBy(l => l.SubClass, StringComparer.Ordinal));
@@ -181,8 +182,8 @@ public class BudgetServiceWriteTests
     {
         _h.Sheet(BudgetKind.Expenditure, 2026, H.Email, _meal);
 
-        var (duplicate, _) = await _h.Sut.AddLineAsync(H.Email, BudgetKind.Expenditure, 2026, "UTC", "ConsumerSpending", "MealOrEatOutExpenses", "KRW", TestContext.Current.CancellationToken);
-        var (bad, _) = await _h.Sut.AddLineAsync(H.Email, BudgetKind.Expenditure, 2026, "UTC", "RegularIncome", "LaborIncome", "KRW", TestContext.Current.CancellationToken);
+        var (duplicate, _) = await _h.Sut.AddLineAsync(H.Email, BudgetSheetKind.Expenditure, 2026, "UTC", "ConsumerSpending", "MealOrEatOutExpenses", "KRW", TestContext.Current.CancellationToken);
+        var (bad, _) = await _h.Sut.AddLineAsync(H.Email, BudgetSheetKind.Expenditure, 2026, "UTC", "RegularIncome", "LaborIncome", "KRW", TestContext.Current.CancellationToken);
 
         Assert.Equal(("Budget.LineExists", ServiceErrorKeys.BudgetLineExists, ServiceErrorType.Conflict), (duplicate.ErrorCode, duplicate.ErrorKey, duplicate.ErrorType));
         Assert.Equal("ExpenditureClass.Invalid", bad.ErrorCode);
@@ -197,7 +198,7 @@ public class BudgetServiceWriteTests
         _h.Sheet(BudgetKind.Expenditure, 2026, H.Email,
             [.. Enumerable.Range(0, BudgetSheetLayout.MaxLines).Select(i => BudgetLine.Create(BudgetKind.Expenditure, "ConsumerSpending", "PinMoney", $"C{i}").Value)]);
 
-        var (result, sheet) = await _h.Sut.AddLineAsync(H.Email, BudgetKind.Expenditure, 2026, "UTC", "ConsumerSpending", "MealOrEatOutExpenses", "KRW", TestContext.Current.CancellationToken);
+        var (result, sheet) = await _h.Sut.AddLineAsync(H.Email, BudgetSheetKind.Expenditure, 2026, "UTC", "ConsumerSpending", "MealOrEatOutExpenses", "KRW", TestContext.Current.CancellationToken);
 
         Assert.Equal(("Budget.TooManyLines", "A sheet can have at most {0} lines.", ServiceErrorType.Validation), (result.ErrorCode, result.ErrorKey, result.ErrorType));
         Assert.Null(sheet);
@@ -217,7 +218,7 @@ public class BudgetServiceWriteTests
         foreach (char column in "OPQRSTUVWXY")
             _h.Cell(id, "F.1", column.ToString(), "=SUM(A{H.ConsumerSpending}:Z{F.30})");
 
-        var (result, sheet) = await _h.Sut.AddLineAsync(H.Email, BudgetKind.Expenditure, 2026, "UTC", "ConsumerSpending", "PinMoney", "USD", TestContext.Current.CancellationToken);
+        var (result, sheet) = await _h.Sut.AddLineAsync(H.Email, BudgetSheetKind.Expenditure, 2026, "UTC", "ConsumerSpending", "PinMoney", "USD", TestContext.Current.CancellationToken);
 
         Assert.Equal(("Budget.TooManyReferences", "The formulas of a sheet can read at most {0} cells in total."), (result.ErrorCode, result.ErrorKey));
         Assert.Null(sheet);
@@ -228,7 +229,7 @@ public class BudgetServiceWriteTests
     [Fact]
     public async Task AddLineAsync_CreatesTheSheetFirst()
     {
-        var (result, _) = await _h.Sut.AddLineAsync(H.Email, BudgetKind.Expenditure, 2027, "UTC", "ConsumerSpending", "PinMoney", "USD", TestContext.Current.CancellationToken);
+        var (result, _) = await _h.Sut.AddLineAsync(H.Email, BudgetSheetKind.Expenditure, 2027, "UTC", "ConsumerSpending", "PinMoney", "USD", TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
         Assert.Equal(21, _h.Lines.All.Count);
@@ -243,7 +244,7 @@ public class BudgetServiceWriteTests
         _h.Cell(id, _meal.Key, "B", "1");
         _h.Cell(id, "F.1", "B", "2");
 
-        var (result, sheet) = await _h.Sut.RemoveLineAsync(H.Email, BudgetKind.Expenditure, 2026, "UTC", "ConsumerSpending", "MealOrEatOutExpenses", "KRW", TestContext.Current.CancellationToken);
+        var (result, sheet) = await _h.Sut.RemoveLineAsync(H.Email, BudgetSheetKind.Expenditure, 2026, "UTC", "ConsumerSpending", "MealOrEatOutExpenses", "KRW", TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
         Assert.Equal([_pin], _h.Lines.All.Select(l => l.Line));
@@ -258,8 +259,8 @@ public class BudgetServiceWriteTests
     {
         _h.Sheet(BudgetKind.Expenditure, 2026, H.Email, _meal);
 
-        var (missing, _) = await _h.Sut.RemoveLineAsync(H.Email, BudgetKind.Expenditure, 2026, "UTC", "ConsumerSpending", "PinMoney", "USD", TestContext.Current.CancellationToken);
-        var (noSheet, _) = await _h.Sut.RemoveLineAsync(H.Email, BudgetKind.Income, 2026, "UTC", "RegularIncome", "LaborIncome", "KRW", TestContext.Current.CancellationToken);
+        var (missing, _) = await _h.Sut.RemoveLineAsync(H.Email, BudgetSheetKind.Expenditure, 2026, "UTC", "ConsumerSpending", "PinMoney", "USD", TestContext.Current.CancellationToken);
+        var (noSheet, _) = await _h.Sut.RemoveLineAsync(H.Email, BudgetSheetKind.Income, 2026, "UTC", "RegularIncome", "LaborIncome", "KRW", TestContext.Current.CancellationToken);
 
         Assert.Equal(("Budget.LineNotFound", ServiceErrorKeys.BudgetLineNotFound, ServiceErrorType.NotFound), (missing.ErrorCode, missing.ErrorKey, missing.ErrorType));
         Assert.Equal("Budget.LineNotFound", noSheet.ErrorCode);
@@ -273,7 +274,7 @@ public class BudgetServiceWriteTests
         _h.Sheet(BudgetKind.Expenditure, 2026, H.Email, _meal);
         _h.Cells.FailWrites = new InvalidOperationException("db down");
 
-        var (result, _) = await _h.Sut.RemoveLineAsync(H.Email, BudgetKind.Expenditure, 2026, "UTC", "ConsumerSpending", "MealOrEatOutExpenses", "KRW", TestContext.Current.CancellationToken);
+        var (result, _) = await _h.Sut.RemoveLineAsync(H.Email, BudgetSheetKind.Expenditure, 2026, "UTC", "ConsumerSpending", "MealOrEatOutExpenses", "KRW", TestContext.Current.CancellationToken);
 
         Assert.Equal(ServiceErrorKeys.TemporaryError, result.ErrorKey);
         Assert.Equal("Budget: failed to change the lines of Expenditure2026 of user@example.com", _h.Logger.LatestRecord.Message);
@@ -290,7 +291,7 @@ public class BudgetServiceWriteTests
         long now = _h.Sheet(BudgetKind.Expenditure, 2026, H.Email, _meal);
         _h.Cell(now, _meal.Key, "C", "9");
 
-        var (result, sheet, copied) = await _h.Sut.CarryOverAsync(H.Email, BudgetKind.Expenditure, 2026, "UTC", TestContext.Current.CancellationToken);
+        var (result, sheet, copied) = await _h.Sut.CarryOverAsync(H.Email, BudgetSheetKind.Expenditure, 2026, "UTC", TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
         Assert.Equal(1, copied);
@@ -308,7 +309,7 @@ public class BudgetServiceWriteTests
         _h.Sheet(BudgetKind.Expenditure, 2026, H.Email, _meal);
         _h.Cells.FailWrites = new InvalidOperationException("db down");
 
-        var (result, _, _) = await _h.Sut.CarryOverAsync(H.Email, BudgetKind.Expenditure, 2026, "UTC", TestContext.Current.CancellationToken);
+        var (result, _, _) = await _h.Sut.CarryOverAsync(H.Email, BudgetSheetKind.Expenditure, 2026, "UTC", TestContext.Current.CancellationToken);
 
         Assert.Equal(ServiceErrorKeys.TemporaryError, result.ErrorKey);
         Assert.Equal("Budget: failed to carry over into Expenditure2026 of user@example.com", _h.Logger.LatestRecord.Message);
@@ -318,11 +319,11 @@ public class BudgetServiceWriteTests
     [Fact]
     public async Task Writes_RefuseABadYear()
     {
-        Assert.Equal("Budget.YearInvalid", (await _h.Sut.EditAsync(H.Email, BudgetKind.Income, 0, "UTC", [], TestContext.Current.CancellationToken)).Result.ErrorCode);
-        Assert.Equal("Budget.YearInvalid", (await _h.Sut.CopyAsync(H.Email, BudgetKind.Income, 0, "UTC", "B2", "C2", TestContext.Current.CancellationToken)).Result.ErrorCode);
-        Assert.Equal("Budget.YearInvalid", (await _h.Sut.AddLineAsync(H.Email, BudgetKind.Income, 0, "UTC", "a", "b", "c", TestContext.Current.CancellationToken)).Result.ErrorCode);
-        Assert.Equal("Budget.YearInvalid", (await _h.Sut.RemoveLineAsync(H.Email, BudgetKind.Income, 0, "UTC", "a", "b", "c", TestContext.Current.CancellationToken)).Result.ErrorCode);
-        Assert.Equal("Budget.YearInvalid", (await _h.Sut.CarryOverAsync(H.Email, BudgetKind.Income, 0, "UTC", TestContext.Current.CancellationToken)).Result.ErrorCode);
+        Assert.Equal("Budget.YearInvalid", (await _h.Sut.EditAsync(H.Email, BudgetSheetKind.Income, 0, "UTC", [], TestContext.Current.CancellationToken)).Result.ErrorCode);
+        Assert.Equal("Budget.YearInvalid", (await _h.Sut.CopyAsync(H.Email, BudgetSheetKind.Income, 0, "UTC", "B2", "C2", TestContext.Current.CancellationToken)).Result.ErrorCode);
+        Assert.Equal("Budget.YearInvalid", (await _h.Sut.AddLineAsync(H.Email, BudgetSheetKind.Income, 0, "UTC", "a", "b", "c", TestContext.Current.CancellationToken)).Result.ErrorCode);
+        Assert.Equal("Budget.YearInvalid", (await _h.Sut.RemoveLineAsync(H.Email, BudgetSheetKind.Income, 0, "UTC", "a", "b", "c", TestContext.Current.CancellationToken)).Result.ErrorCode);
+        Assert.Equal("Budget.YearInvalid", (await _h.Sut.CarryOverAsync(H.Email, BudgetSheetKind.Income, 0, "UTC", TestContext.Current.CancellationToken)).Result.ErrorCode);
         _h.AssertTransactions(0, 0);
     }
 }

@@ -1,9 +1,9 @@
+using Maroik.Core.Contract.Extensions;
+using Maroik.Core.Contract.Constants;
 using System.Globalization;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Maroik.Core.Contract.Dtos;
-using Maroik.Core.Domain.Calendars;
-using Maroik.Core.Domain.Extensions;
 using Maroik.Website.Extensions;
 using Maroik.Website.Models.ViewModels.Calendars;
 using Maroik.Website.Serializers;
@@ -82,15 +82,15 @@ public static class CalendarViewModelMapper
                 string startTzId = calendarEvent.StartDateTimeZoneIanaId ?? userTimeZoneIanaId;
                 string endTzId = calendarEvent.EndDateTimeZoneIanaId ?? userTimeZoneIanaId;
 
-                DateTime localStart = calendarEvent.StartDate.ConvertTimeByTimeZoneIanaId(startTzId);
-                DateTime localEnd = calendarEvent.EndDate.ConvertTimeByTimeZoneIanaId(endTzId);
+                DateTime localStart = calendarEvent.StartDate.ToTimeZone(startTzId);
+                DateTime localEnd = calendarEvent.EndDate.ToTimeZone(endTzId);
 
                 item.StartDateTimeZoneIanaId = startTzId;
                 item.EndDateTimeZoneIanaId = endTzId;
                 item.DisplayStartDate = localStart.ToString("yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture);
                 item.DisplayEndDate = localEnd.ToString("yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture);
-                item.DisplayStartDateTimeZone = startTzId.ToTimeZoneStandardName();
-                item.DisplayEndDateTimeZone = endTzId.ToTimeZoneStandardName();
+                item.DisplayStartDateTimeZone = startTzId.ToTimeZoneDisplayName();
+                item.DisplayEndDateTimeZone = endTzId.ToTimeZoneDisplayName();
 
                 if (!forGrid)
                 {
@@ -147,12 +147,12 @@ public static class CalendarViewModelMapper
         /// </summary>
         public void PopulateTimeData(string timeZoneIanaId, DateTime utcNow)
         {
-            DateTime ct = utcNow.ConvertTimeByTimeZoneIanaId(timeZoneIanaId);
+            DateTime ct = utcNow.ToTimeZone(timeZoneIanaId);
             vm.CurrentDate = ct.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
             vm.CurrentHour = ct.Hour;
             vm.CurrentMinute = ct.Minute;
             vm.CurrentSecond = ct.Second;
-            const int step = CalendarReminderPolicy.ReminderTimeOfDayStepMinutes;
+            const int step = PolicyLimits.ReminderTimeOfDayStepMinutes;
             List<string> ti = [];
             for (int h = 0; h < 24; h++)
                 for (int m = 0; m < 60; m += step)
@@ -186,8 +186,8 @@ public static class CalendarViewModelMapper
             }
             else
             {
-                req.StartDate = ParseLocalDateTime(vm.StartDate!).ConvertToUtcByTimeZoneIanaId(vm.StartDateTimeZoneIanaId!);
-                req.EndDate = ParseLocalDateTime(vm.EndDate!).ConvertToUtcByTimeZoneIanaId(vm.EndDateTimeZoneIanaId!);
+                req.StartDate = ParseLocalDateTime(vm.StartDate!).ToUtcFromTimeZone(vm.StartDateTimeZoneIanaId!);
+                req.EndDate = ParseLocalDateTime(vm.EndDate!).ToUtcFromTimeZone(vm.EndDateTimeZoneIanaId!);
                 req.StartDateTimeZoneIanaId = vm.StartDateTimeZoneIanaId;
                 req.EndDateTimeZoneIanaId = vm.EndDateTimeZoneIanaId;
             }

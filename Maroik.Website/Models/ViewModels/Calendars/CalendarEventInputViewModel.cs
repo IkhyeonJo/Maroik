@@ -1,6 +1,6 @@
+using Maroik.Core.Contract.Interfaces;
 using System.ComponentModel.DataAnnotations;
 using System.Globalization;
-using Maroik.Core.Domain.Calendars;
 
 namespace Maroik.Website.Models.ViewModels.Calendars;
 
@@ -68,18 +68,19 @@ public class CalendarEventInputViewModel : IValidatableObject
     /// </summary>
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {
+        IPolicyService policy = validationContext.GetRequiredService<IPolicyService>();
         if (AllDay)
         {
-            if (!IsValidDateOnly(StartDate))
+            if (!IsValidDateOnly(policy, StartDate))
                 yield return new ValidationResult("Please enter a valid StartDate", [nameof(StartDate)]);
-            if (!IsValidDateOnly(EndDate))
+            if (!IsValidDateOnly(policy, EndDate))
                 yield return new ValidationResult("Please enter a valid EndDate", [nameof(EndDate)]);
         }
         else
         {
-            if (!IsValidLocalDateTime(StartDate))
+            if (!IsValidLocalDateTime(policy, StartDate))
                 yield return new ValidationResult("Please enter a valid StartDate", [nameof(StartDate)]);
-            if (!IsValidLocalDateTime(EndDate))
+            if (!IsValidLocalDateTime(policy, EndDate))
                 yield return new ValidationResult("Please enter a valid EndDate", [nameof(EndDate)]);
             if (string.IsNullOrWhiteSpace(StartDateTimeZoneIanaId))
                 yield return new ValidationResult("Please enter StartDateTimeZoneIanaId", [nameof(StartDateTimeZoneIanaId)]);
@@ -89,14 +90,14 @@ public class CalendarEventInputViewModel : IValidatableObject
     }
 
     /// <summary>Matches the "yyyy-M-d" shape <c>ToCalendarEventRequest</c> splits an all-day date on.</summary>
-    private static bool IsValidDateOnly(string? value) =>
+    private static bool IsValidDateOnly(IPolicyService policy, string? value) =>
         DateTime.TryParseExact(value, "yyyy-M-d", CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime date)
-        && CalendarEvent.IsWithinYears(date);
+        && policy.IsWithinCalendarEventYears(date);
 
     /// <summary>Matches the "yyyy-M-d H:m" shape <c>ParseLocalDateTime</c> splits a timed date on.</summary>
     // Within the domain's years too (CalendarEvent.IsWithinYears): the controller converts a timed date to UTC before the domain sees
     // it, and around year 1 that conversion threw, so the user saw a "temporary error" instead of a refused input.
-    private static bool IsValidLocalDateTime(string? value) =>
+    private static bool IsValidLocalDateTime(IPolicyService policy, string? value) =>
         DateTime.TryParseExact(value, "yyyy-M-d H:m", CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime date)
-        && CalendarEvent.IsWithinYears(date);
+        && policy.IsWithinCalendarEventYears(date);
 }

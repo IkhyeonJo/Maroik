@@ -9,7 +9,6 @@
     The logged-in account is read from Context.GetLoggedInAccount() to pre-populate read-only fields.
 *@
 @model Maroik.Website.Models.ViewModels.Managements.ProfileOutputViewModel
-@using Maroik.Core.Domain.Uploads
 
 @{
     AccountResponse loggedInAccount = Context.GetLoggedInAccount();
@@ -17,7 +16,7 @@
 }
 @Html.Hidden(nameof(maxAttachedFileSizeBytes), maxAttachedFileSizeBytes)
 @* Accepted avatar image types — authoritative in ImageUploadPolicy (also enforced server-side). *@
-@Html.Hidden("allowedImageContentTypes", ClientJsonSerializer.Serialize(ImageUploadPolicy.AllowedContentTypes))
+@Html.Hidden("allowedImageContentTypes", ClientJsonSerializer.Serialize(Model.AllowedImageContentTypes))
 <section class="content">
     <div class="container-fluid">
         @if (Model.MustChangePassword)
@@ -44,7 +43,7 @@
                         <h3 class="profile-username text-center">@Model.Nickname</h3>
                         <ul class="list-group list-group-unbordered mb-3">
                             <li class="list-group-item">
-                                <b>@Localizer["Create"]</b> <span class="float-right">@Model.Created.ConvertTimeByTimeZoneIanaId(Model.TimeZoneIanaId ?? "").ToString("d")</span>
+                                <b>@Localizer["Create"]</b> <span class="float-right">@Model.Created.ToTimeZone(Model.TimeZoneIanaId ?? "").ToString("d")</span>
                             </li>
                         </ul>
                     </div>
@@ -92,7 +91,7 @@
                                                                                 <div class="form-group">
                                                                                     <div class="btn btn-default btn-file">
                                                                                         <i class="fas fa-paperclip" style="padding-right: 3px;"></i>&nbsp;&nbsp;&nbsp;@Localizer["Browse"]
-                                                                                        <input type="file" name="ProfileAvatarFiles" id="ProfileAvatarFiles" data-noFileAttachedErrorMessage="@Localizer["Please attach a file."]" data-fileSizeLimitationErrorMessage="@Localizer["File Size must be smaller than {0}MB.", maxAttachedFileSizeBytes.ToMegabytesLabel()]" data-fileTypeErrorMessage="@Localizer["Only .jpg or jpeg or .png file allowed."]" accept="@(string.Join(", ", ImageUploadPolicy.AllowedContentTypes))">
+                                                                                        <input type="file" name="ProfileAvatarFiles" id="ProfileAvatarFiles" data-noFileAttachedErrorMessage="@Localizer["Please attach a file."]" data-fileSizeLimitationErrorMessage="@Localizer["File Size must be smaller than {0}MB.", maxAttachedFileSizeBytes.ToMegabytesLabel()]" data-fileTypeErrorMessage="@Localizer["Only .jpg or jpeg or .png file allowed."]" accept="@(string.Join(", ", Model.AllowedImageContentTypes))">
                                                                                     </div>
                                                                                 </div>
                                                                             </form>
@@ -208,10 +207,10 @@
 @section Scripts{
     @switch (loggedInAccount.Role)
     {
-        case Role.Admin:
+        case AccountRoles.Admin:
             <script src="~/admin/custom/Management/Profile/js/site.js" asp-append-version="true"></script>
             break;
-        case Role.User:
+        case AccountRoles.User:
             <script src="~/user/custom/Management/Profile/js/site.js" asp-append-version="true"></script>
             break;
     }

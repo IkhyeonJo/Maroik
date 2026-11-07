@@ -9,7 +9,7 @@
     Noticed/Expired flags are computed server-side and shown as colored badges in the grid.
     localization strings for the calendar widget are injected as hidden form fields.
 *@
-@using Maroik.Core.Domain.Finances
+@model FinanceFormRules
 @{
     var assets = ViewBag.Assets as List<AssetResponse> ?? [];
     string? defaultAssetProductName = ViewBag.DefaultAssetProductName as string;
@@ -68,10 +68,10 @@
 @* Expenditure main→sub-class taxonomy, the deposit-asset sub-class set, the deposit
    month→max-day rule and the "no maturity date" sentinel — authoritative in
    ExpenditureClassPolicy / FixedSchedulePolicy; the form reads these instead of hardcoding them. *@
-@Html.Hidden("expenditureSubClassMap", ClientJsonSerializer.Serialize(ExpenditureClassPolicy.SubClassesByMainClass))
-@Html.Hidden("expenditureDepositAssetSubClasses", ClientJsonSerializer.Serialize(ExpenditureClassPolicy.DepositAssetSubClasses))
-@Html.Hidden("maxDepositDayByMonth", ClientJsonSerializer.Serialize(FixedSchedulePolicy.MaxDepositDayByMonth))
-@Html.Hidden("noMaturityDate", FixedSchedulePolicy.NoMaturityDateIso)
+@Html.Hidden("expenditureSubClassMap", ClientJsonSerializer.Serialize(Model.ExpenditureSubClassesByMainClass))
+@Html.Hidden("expenditureDepositAssetSubClasses", ClientJsonSerializer.Serialize(Model.DepositAssetSubClasses))
+@Html.Hidden("maxDepositDayByMonth", ClientJsonSerializer.Serialize(Model.MaxDepositDayByMonth))
+@Html.Hidden("noMaturityDate", Model.NoMaturityDateIso)
 @Html.Hidden("localizerFailedToLoadAmountLabel", Localizer["Failed to load the amount label."].Value)
 
 <section class="content">
@@ -126,9 +126,9 @@
                                 <label for="createFixedExpenditureMainClass">@Localizer["MainClass"].Value</label>
                                 <br />
                                 <select id="createFixedExpenditureMainClass" name="createFixedExpenditureMainClass" class="form-control form-control-sm" style="max-width:100%;text-overflow:ellipsis;">
-                                    @foreach (string mainClass in ExpenditureClassPolicy.MainClasses)
+                                    @foreach (string mainClass in Model.ExpenditureMainClasses)
                                     {
-                                        <option value="@mainClass" selected="@(mainClass == ExpenditureClassPolicy.MainClasses[0])">@Localizer[mainClass].Value</option>
+                                        <option value="@mainClass" selected="@(mainClass == Model.ExpenditureMainClasses[0])">@Localizer[mainClass].Value</option>
                                     }
                                 </select>
                             </div>
@@ -136,7 +136,7 @@
                                 <label for="createFixedExpenditureSubClass">@Localizer["SubClass"].Value</label>
                                 <br />
                                 <select id="createFixedExpenditureSubClass" name="createFixedExpenditureSubClass" class="form-control form-control-sm" style="max-width:100%;text-overflow:ellipsis;">
-                                    @Html.ExpenditureSubClassOptions(Localizer)
+                                    @Html.ExpenditureSubClassOptions(Localizer, Model.ExpenditureSubClassesByMainClass)
                                 </select>
                             </div>
                         </div>
@@ -239,9 +239,9 @@
                                 <label for="editFixedExpenditureMainClass">@Localizer["MainClass"].Value</label>
                                 <br />
                                 <select id="editFixedExpenditureMainClass" name="editFixedExpenditureMainClass" class="form-control form-control-sm" style="max-width:100%;text-overflow:ellipsis;">
-                                    @foreach (string mainClass in ExpenditureClassPolicy.MainClasses)
+                                    @foreach (string mainClass in Model.ExpenditureMainClasses)
                                     {
-                                        <option value="@mainClass" selected="@(mainClass == ExpenditureClassPolicy.MainClasses[0])">@Localizer[mainClass].Value</option>
+                                        <option value="@mainClass" selected="@(mainClass == Model.ExpenditureMainClasses[0])">@Localizer[mainClass].Value</option>
                                     }
                                 </select>
                             </div>
@@ -249,7 +249,7 @@
                                 <label for="editFixedExpenditureSubClass">@Localizer["SubClass"].Value</label>
                                 <br />
                                 <select id="editFixedExpenditureSubClass" name="editFixedExpenditureSubClass" class="form-control form-control-sm" style="max-width:100%;text-overflow:ellipsis;">
-                                    @Html.ExpenditureSubClassOptions(Localizer)
+                                    @Html.ExpenditureSubClassOptions(Localizer, Model.ExpenditureSubClassesByMainClass)
                                 </select>
                             </div>
                         </div>

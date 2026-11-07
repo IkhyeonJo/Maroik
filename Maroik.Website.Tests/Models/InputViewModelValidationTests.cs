@@ -1,3 +1,4 @@
+using Maroik.Website.Tests.Fixtures;
 using System.ComponentModel.DataAnnotations;
 using Maroik.Core.Domain.Finances;
 using Maroik.Website.Models.ViewModels.AccountBooks;
@@ -18,7 +19,7 @@ public class InputViewModelValidationTests
 
     /// <summary>Runs <paramref name="model"/>'s own validation and returns the results.</summary>
     private static List<ValidationResult> Validate(IValidatableObject model) =>
-        [.. model.Validate(new ValidationContext(model))];
+        [.. model.Validate(new ValidationContext(model, new PolicyServiceProvider(), null))];
 
     // -- ExpenditureInputViewModel ------------------------------------------------------------------------
 

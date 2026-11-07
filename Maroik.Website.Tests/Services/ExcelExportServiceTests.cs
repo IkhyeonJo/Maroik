@@ -1,3 +1,4 @@
+using Maroik.Core.Service.Services;
 ﻿using System.Globalization;
 using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Spreadsheet;
@@ -16,7 +17,7 @@ namespace Maroik.Website.Tests.Services;
 public class ExcelExportServiceTests
 {
     /// <summary>The service under test, on the real clock (the fixtures below date their schedules relative to it).</summary>
-    private readonly ExcelExportService _sut = new(TimeProvider.System);
+    private readonly ExcelExportService _sut = new(TimeProvider.System, new PolicyService());
 
     /// <summary>A fake localizer that prefixes each key with <c>L:</c>.</summary>
     private static readonly Func<string, string> _localize = key => $"L:{key}";
@@ -420,7 +421,7 @@ public class ExcelExportServiceTests
     [Fact]
     public void FixedScheduleExports_JudgeExpiry_AgainstTheInjectedClock()
     {
-        var sut = new ExcelExportService(new FakeTimeProvider(new DateTimeOffset(2031, 1, 1, 0, 0, 0, TimeSpan.Zero)));
+        var sut = new ExcelExportService(new FakeTimeProvider(new DateTimeOffset(2031, 1, 1, 0, 0, 0, TimeSpan.Zero)), new PolicyService());
         var maturity = new DateTime(2030, 12, 31);
 
         var fixedIncome = ReadRows(sut.CreateFixedIncomeExcel(

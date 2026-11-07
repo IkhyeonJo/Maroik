@@ -1,6 +1,5 @@
+using Maroik.Core.Contract.Constants;
 using System.ComponentModel.DataAnnotations;
-using Maroik.Core.Domain.Accounts;
-using Maroik.Core.Domain.Primitives;
 using Maroik.Website.Attributes;
 using Maroik.Website.Constants;
 
@@ -25,15 +24,15 @@ public class LoginInputViewModel
     /// (uppercase, lowercase, digit, special character).
     /// </summary>
     [Required(ErrorMessage = "Password is required")]
-    [StringLength(PasswordPolicy.MaxByteLength, ErrorMessage = "The {0} must be between {2} and {1} characters long.", MinimumLength = PasswordPolicy.MinLength)]
+    [StringLength(PolicyLimits.PasswordMaxByteLength, ErrorMessage = "The {0} must be between {2} and {1} characters long.", MinimumLength = PolicyLimits.PasswordMinLength)]
     [DataType(DataType.Password)]
-    [RegularExpression(PasswordPolicy.Pattern, ErrorMessage = ValidationMessages.PasswordComplexity)]
+    [RegularExpression(PolicyLimits.PasswordPattern, ErrorMessage = ValidationMessages.PasswordComplexity)]
     [PasswordMaxBytes(ErrorMessage = "Password must be at most 72 bytes (one Korean character counts as 3 bytes).")]
     public string? Password { get; set; }
 
     /// <summary>The display name chosen by the user during registration.</summary>
     [Required(ErrorMessage = "Nickname is required")]
-    [StringLength(ShortTextPolicy.MaxLength, ErrorMessage = "Must be between {2} and {1} characters.", MinimumLength = 1)]
+    [StringLength(PolicyLimits.ShortTextMaxLength, ErrorMessage = "Must be between {2} and {1} characters.", MinimumLength = 1)]
     public string? Nickname { get; set; }
 
     /// <summary>Whether the user has agreed to the service terms of use (required for registration).</summary>

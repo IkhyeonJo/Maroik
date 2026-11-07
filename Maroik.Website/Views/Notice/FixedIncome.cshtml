@@ -9,7 +9,7 @@
     Noticed/Expired flags are computed server-side and shown as colored badges in the grid.
     localization strings for the calendar widget are injected as hidden form fields.
 *@
-@using Maroik.Core.Domain.Finances
+@model FinanceFormRules
 @{
     var assets = ViewBag.Assets as List<AssetResponse> ?? [];
     string? defaultAssetProductName = ViewBag.DefaultAssetProductName as string;
@@ -68,9 +68,9 @@
 @* Income main→sub-class taxonomy, the deposit month→max-day rule, and the "no maturity date"
    sentinel — authoritative in IncomeClassPolicy / FixedSchedulePolicy; the form reads these
    instead of hardcoding them. *@
-@Html.Hidden("incomeSubClassMap", ClientJsonSerializer.Serialize(IncomeClassPolicy.SubClassesByMainClass))
-@Html.Hidden("maxDepositDayByMonth", ClientJsonSerializer.Serialize(FixedSchedulePolicy.MaxDepositDayByMonth))
-@Html.Hidden("noMaturityDate", FixedSchedulePolicy.NoMaturityDateIso)
+@Html.Hidden("incomeSubClassMap", ClientJsonSerializer.Serialize(Model.IncomeSubClassesByMainClass))
+@Html.Hidden("maxDepositDayByMonth", ClientJsonSerializer.Serialize(Model.MaxDepositDayByMonth))
+@Html.Hidden("noMaturityDate", Model.NoMaturityDateIso)
 @Html.Hidden("localizerFailedToLoadAmountLabel", Localizer["Failed to load the amount label."].Value)
 
 <section class="content">
@@ -125,9 +125,9 @@
                                 <label for="createFixedIncomeMainClass">@Localizer["MainClass"].Value</label>
                                 <br />
                                 <select id="createFixedIncomeMainClass" name="createFixedIncomeMainClass" class="form-control form-control-sm" style="max-width:100%;text-overflow:ellipsis;">
-                                    @foreach (string mainClass in IncomeClassPolicy.MainClasses)
+                                    @foreach (string mainClass in Model.IncomeMainClasses)
                                     {
-                                        <option value="@mainClass" selected="@(mainClass == IncomeClassPolicy.MainClasses[0])">@Localizer[mainClass].Value</option>
+                                        <option value="@mainClass" selected="@(mainClass == Model.IncomeMainClasses[0])">@Localizer[mainClass].Value</option>
                                     }
                                 </select>
                             </div>
@@ -135,7 +135,7 @@
                                 <label for="createFixedIncomeSubClass">@Localizer["SubClass"].Value</label>
                                 <br />
                                 <select id="createFixedIncomeSubClass" name="createFixedIncomeSubClass" class="form-control form-control-sm" style="max-width:100%;text-overflow:ellipsis;">
-                                    @Html.IncomeSubClassOptions(Localizer)
+                                    @Html.IncomeSubClassOptions(Localizer, Model.IncomeSubClassesByMainClass)
                                 </select>
                             </div>
                         </div>
@@ -228,9 +228,9 @@
                                 <label for="editFixedIncomeMainClass">@Localizer["MainClass"].Value</label>
                                 <br />
                                 <select id="editFixedIncomeMainClass" name="editFixedIncomeMainClass" class="form-control form-control-sm" style="max-width:100%;text-overflow:ellipsis;">
-                                    @foreach (string mainClass in IncomeClassPolicy.MainClasses)
+                                    @foreach (string mainClass in Model.IncomeMainClasses)
                                     {
-                                        <option value="@mainClass" selected="@(mainClass == IncomeClassPolicy.MainClasses[0])">@Localizer[mainClass].Value</option>
+                                        <option value="@mainClass" selected="@(mainClass == Model.IncomeMainClasses[0])">@Localizer[mainClass].Value</option>
                                     }
                                 </select>
                             </div>
@@ -238,7 +238,7 @@
                                 <label for="editFixedIncomeSubClass">@Localizer["SubClass"].Value</label>
                                 <br />
                                 <select id="editFixedIncomeSubClass" name="editFixedIncomeSubClass" class="form-control form-control-sm" style="max-width:100%;text-overflow:ellipsis;">
-                                    @Html.IncomeSubClassOptions(Localizer)
+                                    @Html.IncomeSubClassOptions(Localizer, Model.IncomeSubClassesByMainClass)
                                 </select>
                             </div>
                         </div>

@@ -1,9 +1,8 @@
+using Maroik.Core.Contract.Enums;
+using Maroik.Core.Contract.Extensions;
+using Maroik.Core.Contract.Constants;
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
-using Maroik.Core.Domain.Accounts;
-using Maroik.Core.Domain.Budgets;
-using Maroik.Core.Domain.Finances;
-using Maroik.Core.Domain.Extensions;
 using Maroik.Website.Attributes;
 using Maroik.Website.Extensions;
 using Maroik.Website.Interfaces;
@@ -20,6 +19,7 @@ namespace Maroik.Website.Controllers;
 /// </summary>
 /// <param name="localizer">Localizer for this controller's user-facing messages.</param>
 /// <param name="logger">Logger for unexpected failures in the account-book actions.</param>
+/// <param name="policyService">The Domain's stateless rules and the values the pages mirror.</param>
 /// <param name="assetService">Asset use cases.</param>
 /// <param name="incomeService">Income use cases.</param>
 /// <param name="expenditureService">Expenditure use cases.</param>
@@ -34,6 +34,7 @@ public class AccountBookController(
     IExpenditureService expenditureService,
     IBudgetService budgetService,
     IExcelExportService excelExportService,
+    IPolicyService policyService,
     TimeProvider timeProvider) : Controller
 {
     #region Asset
@@ -43,10 +44,10 @@ public class AccountBookController(
     /// <summary>Creates a new asset record.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [RequiredHttpPostAccess(Role = Role.User)]
+    [RequiredHttpPostAccess(Role = AccountRoles.User)]
     public async Task<IActionResult> CreateAsset([FromBody] AssetInputViewModel assetInputViewModel, CancellationToken ct)
     {
-        if (!ModelState.IsValid || !FinanceAmountPolicy.TryParseInput(assetInputViewModel.Amount, out decimal amount))
+        if (!ModelState.IsValid || !policyService.TryParseAmount(assetInputViewModel.Amount, out decimal amount))
             return Json(new { result = false, error = localizer["Input is invalid"].Value });
 
         string email = HttpContext.GetLoggedInEmail();
@@ -100,6 +101,7 @@ public class AccountBookController(
         string tz = pageAccount.RequireTimeZoneIanaId();
         var vm = new AccountBookPageViewModel
         {
+            FinanceRules = policyService.GetFinanceFormRules(),
             Assets =
             [
                 .. (await assetService.GetAssetsAsync(pageAccount.RequireEmail(), ct))
@@ -113,7 +115,7 @@ public class AccountBookController(
     /// <summary>Checks whether an asset with the given product name exists.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [RequiredHttpPostAccess(Role = Role.User)]
+    [RequiredHttpPostAccess(Role = AccountRoles.User)]
     public async Task<IActionResult> IsAssetExists(string productName, CancellationToken ct)
     {
         try
@@ -139,11 +141,11 @@ public class AccountBookController(
     /// <summary>Updates an existing asset record.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [RequiredHttpPostAccess(Role = Role.User)]
+    [RequiredHttpPostAccess(Role = AccountRoles.User)]
     public async Task<IActionResult> UpdateAsset([FromBody] AssetInputViewModel assetInputViewModel, CancellationToken ct)
     {
         _ = ModelState.Remove(nameof(assetInputViewModel.MonetaryUnit));
-        if (!ModelState.IsValid || !FinanceAmountPolicy.TryParseInput(assetInputViewModel.Amount, out decimal amount))
+        if (!ModelState.IsValid || !policyService.TryParseAmount(assetInputViewModel.Amount, out decimal amount))
             return Json(new { result = false, error = localizer["Input is invalid"].Value });
 
         string email = HttpContext.GetLoggedInEmail();
@@ -179,7 +181,7 @@ public class AccountBookController(
     /// <summary>Soft-deletes an asset (the row and its history are kept; it disappears from the asset dropdowns).</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [RequiredHttpPostAccess(Role = Role.User)]
+    [RequiredHttpPostAccess(Role = AccountRoles.User)]
     public async Task<IActionResult> DeleteAsset([FromBody] AssetInputViewModel assetInputViewModel, CancellationToken ct)
     {
         string email = HttpContext.GetLoggedInEmail();
@@ -204,7 +206,7 @@ public class AccountBookController(
     /// <summary>Exports asset records to an Excel file.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [RequiredHttpPostAccess(Role = Role.User)]
+    [RequiredHttpPostAccess(Role = AccountRoles.User)]
     public async Task<IActionResult> ExportExcelAsset(string fileName = "", CancellationToken ct = default)
     {
         AccountResponse account = HttpContext.GetLoggedInAccount();
@@ -225,10 +227,10 @@ public class AccountBookController(
     /// <summary>Creates a new income transaction.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [RequiredHttpPostAccess(Role = Role.User)]
+    [RequiredHttpPostAccess(Role = AccountRoles.User)]
     public async Task<IActionResult> CreateIncome([FromBody] IncomeInputViewModel incomeInputViewModel, CancellationToken ct)
     {
-        if (!ModelState.IsValid || !FinanceAmountPolicy.TryParseInput(incomeInputViewModel.Amount, out decimal amount))
+        if (!ModelState.IsValid || !policyService.TryParseAmount(incomeInputViewModel.Amount, out decimal amount))
             return Json(new { result = false, error = localizer["Input is invalid"].Value });
 
         AccountResponse account = HttpContext.GetLoggedInAccount();
@@ -285,6 +287,7 @@ public class AccountBookController(
         string tz = pageAccount.RequireTimeZoneIanaId();
         var vm = new AccountBookPageViewModel
         {
+            FinanceRules = policyService.GetFinanceFormRules(),
             Assets =
             [
                 .. (await assetService.GetAssetsAsync(pageAccount.RequireEmail(), ct))
@@ -298,7 +301,7 @@ public class AccountBookController(
     /// <summary>Checks whether an income record with the given ID exists.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [RequiredHttpPostAccess(Role = Role.User)]
+    [RequiredHttpPostAccess(Role = AccountRoles.User)]
     public async Task<IActionResult> IsIncomeExists(long id, CancellationToken ct)
     {
         try
@@ -310,7 +313,7 @@ public class AccountBookController(
             if (income == null)
                 return Json(new { result = false, error = localizer["Input is invalid"].Value });
 
-            income.Created = income.Created.ConvertTimeByTimeZoneIanaId(tz);
+            income.Created = income.Created.ToTimeZone(tz);
             return Json(new { result = true, income });
         }
         catch (Exception ex)
@@ -323,7 +326,7 @@ public class AccountBookController(
     /// <summary>Returns a formatted amount label for the given income product.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [RequiredHttpPostAccess(Role = Role.User)]
+    [RequiredHttpPostAccess(Role = AccountRoles.User)]
     public async Task<IActionResult> GetIncomeAmountLabel(string productName, CancellationToken ct)
     {
         try
@@ -352,10 +355,10 @@ public class AccountBookController(
     /// <summary>Updates an existing income record.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [RequiredHttpPostAccess(Role = Role.User)]
+    [RequiredHttpPostAccess(Role = AccountRoles.User)]
     public async Task<IActionResult> UpdateIncome([FromBody] IncomeInputViewModel incomeInputViewModel, CancellationToken ct)
     {
-        if (!ModelState.IsValid || !FinanceAmountPolicy.TryParseInput(incomeInputViewModel.Amount, out decimal amount))
+        if (!ModelState.IsValid || !policyService.TryParseAmount(incomeInputViewModel.Amount, out decimal amount))
             return Json(new { result = false, error = localizer["Input is invalid"].Value });
 
         AccountResponse account = HttpContext.GetLoggedInAccount();
@@ -393,7 +396,7 @@ public class AccountBookController(
     /// <summary>Deletes an income record, reversing its deposit on the linked asset's balance.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [RequiredHttpPostAccess(Role = Role.User)]
+    [RequiredHttpPostAccess(Role = AccountRoles.User)]
     public async Task<IActionResult> DeleteIncome([FromBody] IncomeInputViewModel incomeInputViewModel, CancellationToken ct)
     {
         string email = HttpContext.GetLoggedInEmail();
@@ -418,7 +421,7 @@ public class AccountBookController(
     /// <summary>Exports income records to an Excel file.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [RequiredHttpPostAccess(Role = Role.User)]
+    [RequiredHttpPostAccess(Role = AccountRoles.User)]
     public async Task<IActionResult> ExportExcelIncome(string fileName = "", CancellationToken ct = default)
     {
         AccountResponse account = HttpContext.GetLoggedInAccount();
@@ -440,11 +443,11 @@ public class AccountBookController(
     /// <summary>Creates a new expenditure transaction.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [RequiredHttpPostAccess(Role = Role.User)]
+    [RequiredHttpPostAccess(Role = AccountRoles.User)]
     public async Task<IActionResult> CreateExpenditure(
         [FromBody] ExpenditureInputViewModel expenditureInputViewModel, CancellationToken ct)
     {
-        if (!ModelState.IsValid || !FinanceAmountPolicy.TryParseInput(expenditureInputViewModel.Amount, out decimal amount))
+        if (!ModelState.IsValid || !policyService.TryParseAmount(expenditureInputViewModel.Amount, out decimal amount))
             return Json(new { result = false, error = localizer["Input is invalid"].Value });
 
         AccountResponse account = HttpContext.GetLoggedInAccount();
@@ -502,6 +505,7 @@ public class AccountBookController(
         string tz = pageAccount.RequireTimeZoneIanaId();
         var vm = new AccountBookPageViewModel
         {
+            FinanceRules = policyService.GetFinanceFormRules(),
             Assets =
             [
                 .. (await assetService.GetAssetsAsync(pageAccount.RequireEmail(), ct))
@@ -515,7 +519,7 @@ public class AccountBookController(
     /// <summary>Checks whether an expenditure record with the given ID exists.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [RequiredHttpPostAccess(Role = Role.User)]
+    [RequiredHttpPostAccess(Role = AccountRoles.User)]
     public async Task<IActionResult> IsExpenditureExists(long id, CancellationToken ct)
     {
         try
@@ -527,7 +531,7 @@ public class AccountBookController(
             if (expenditure == null)
                 return Json(new { result = false, error = localizer["Input is invalid"].Value });
 
-            expenditure.Created = expenditure.Created.ConvertTimeByTimeZoneIanaId(tz);
+            expenditure.Created = expenditure.Created.ToTimeZone(tz);
             return Json(new { result = true, expenditure });
         }
         catch (Exception ex)
@@ -540,7 +544,7 @@ public class AccountBookController(
     /// <summary>Returns a formatted amount label for the given expenditure product.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [RequiredHttpPostAccess(Role = Role.User)]
+    [RequiredHttpPostAccess(Role = AccountRoles.User)]
     public async Task<IActionResult> GetExpenditureAmountLabel(string productName, CancellationToken ct)
     {
         try
@@ -569,11 +573,11 @@ public class AccountBookController(
     /// <summary>Updates an existing expenditure record.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [RequiredHttpPostAccess(Role = Role.User)]
+    [RequiredHttpPostAccess(Role = AccountRoles.User)]
     public async Task<IActionResult> UpdateExpenditure(
         [FromBody] ExpenditureInputViewModel expenditureInputViewModel, CancellationToken ct)
     {
-        if (!ModelState.IsValid || !FinanceAmountPolicy.TryParseInput(expenditureInputViewModel.Amount, out decimal amount))
+        if (!ModelState.IsValid || !policyService.TryParseAmount(expenditureInputViewModel.Amount, out decimal amount))
             return Json(new { result = false, error = localizer["Input is invalid"].Value });
 
         AccountResponse account = HttpContext.GetLoggedInAccount();
@@ -612,7 +616,7 @@ public class AccountBookController(
     /// <summary>Deletes an expenditure record, reversing its effect on the linked asset balance(s).</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [RequiredHttpPostAccess(Role = Role.User)]
+    [RequiredHttpPostAccess(Role = AccountRoles.User)]
     public async Task<IActionResult> DeleteExpenditure(
         [FromBody] ExpenditureInputViewModel expenditureInputViewModel, CancellationToken ct)
     {
@@ -638,7 +642,7 @@ public class AccountBookController(
     /// <summary>Exports expenditure records to an Excel file.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [RequiredHttpPostAccess(Role = Role.User)]
+    [RequiredHttpPostAccess(Role = AccountRoles.User)]
     public async Task<IActionResult> ExportExcelExpenditure(string fileName = "", CancellationToken ct = default)
     {
         AccountResponse account = HttpContext.GetLoggedInAccount();
@@ -662,7 +666,7 @@ public class AccountBookController(
     {
         AccountResponse account = HttpContext.GetLoggedInAccount();
         var assets = await assetService.GetAssetsAsync(account.RequireEmail(), ct);
-        return View("Budget", BudgetViewModelMapper.Page(BudgetKind.Income, assets, timeProvider.GetUtcNow().UtcDateTime, account.RequireTimeZoneIanaId(), key => localizer[key].Value, budgetService.GetFixedInitialYear(account.RequireEmail())));
+        return View("Budget", BudgetViewModelMapper.Page(BudgetSheetKind.Income, policyService.GetBudgetPageRules(BudgetSheetKind.Income), assets, timeProvider.GetUtcNow().UtcDateTime, account.RequireTimeZoneIanaId(), key => localizer[key].Value, budgetService.GetFixedInitialYear(account.RequireEmail())));
     }
 
     /// <summary>The Expenditure Budget page (the budget sheet view, told its kind).</summary>
@@ -671,20 +675,20 @@ public class AccountBookController(
     {
         AccountResponse account = HttpContext.GetLoggedInAccount();
         var assets = await assetService.GetAssetsAsync(account.RequireEmail(), ct);
-        return View("Budget", BudgetViewModelMapper.Page(BudgetKind.Expenditure, assets, timeProvider.GetUtcNow().UtcDateTime, account.RequireTimeZoneIanaId(), key => localizer[key].Value, budgetService.GetFixedInitialYear(account.RequireEmail())));
+        return View("Budget", BudgetViewModelMapper.Page(BudgetSheetKind.Expenditure, policyService.GetBudgetPageRules(BudgetSheetKind.Expenditure), assets, timeProvider.GetUtcNow().UtcDateTime, account.RequireTimeZoneIanaId(), key => localizer[key].Value, budgetService.GetFixedInitialYear(account.RequireEmail())));
     }
 
     /// <summary>A budget sheet, ready to draw.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [RequiredHttpPostAccess(Role = Role.User)]
+    [RequiredHttpPostAccess(Role = AccountRoles.User)]
     public async Task<IActionResult> GetBudgetSheet([FromBody] BudgetSheetInputViewModel input, CancellationToken ct)
     {
         if (!ModelState.IsValid) return Json(new { result = false, error = localizer["Input is invalid"].Value });
         AccountResponse account = HttpContext.GetLoggedInAccount();
         try
         {
-            var (result, sheet) = await budgetService.GetSheetAsync(account.RequireEmail(), Enum.Parse<BudgetKind>(input.Kind), input.Year, account.RequireTimeZoneIanaId(), ct);
+            var (result, sheet) = await budgetService.GetSheetAsync(account.RequireEmail(), Enum.Parse<BudgetSheetKind>(input.Kind), input.Year, account.RequireTimeZoneIanaId(), ct);
             return result.Success
                 ? Json(new { result = true, sheet = sheet!.ToViewModel(key => localizer[key].Value) })
                 : Json(new { result = false, error = localizer[result.ErrorKey, result.ErrorArgs].ToPlainString() });
@@ -699,14 +703,14 @@ public class AccountBookController(
     /// <summary>The formula bar's coloring and preview of an input being typed (nothing is stored).</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [RequiredHttpPostAccess(Role = Role.User)]
+    [RequiredHttpPostAccess(Role = AccountRoles.User)]
     public async Task<IActionResult> PreviewBudgetCell([FromBody] BudgetPreviewInputViewModel input, CancellationToken ct)
     {
         if (!ModelState.IsValid) return Json(new { result = false, error = localizer["Input is invalid"].Value });
         AccountResponse account = HttpContext.GetLoggedInAccount();
         try
         {
-            var (result, preview) = await budgetService.PreviewAsync(account.RequireEmail(), Enum.Parse<BudgetKind>(input.Kind), input.Year, account.RequireTimeZoneIanaId(),
+            var (result, preview) = await budgetService.PreviewAsync(account.RequireEmail(), Enum.Parse<BudgetSheetKind>(input.Kind), input.Year, account.RequireTimeZoneIanaId(),
                 input.Address, input.Input ?? "", ct);
             return result.Success
                 ? Json(new { result = true, preview = preview!.ToViewModel((key, args) => localizer[key, args].ToPlainString()) })
@@ -722,15 +726,15 @@ public class AccountBookController(
     /// <summary>Stores typed cell edits; replies the changed cells.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [RequiredHttpPostAccess(Role = Role.User)]
+    [RequiredHttpPostAccess(Role = AccountRoles.User)]
     public async Task<IActionResult> SetBudgetCells([FromBody] BudgetEditsInputViewModel input, CancellationToken ct)
     {
         if (!ModelState.IsValid) return Json(new { result = false, error = localizer["Input is invalid"].Value });
         AccountResponse account = HttpContext.GetLoggedInAccount();
         try
         {
-            var (result, edit) = await budgetService.EditAsync(account.RequireEmail(), Enum.Parse<BudgetKind>(input.Kind), input.Year, account.RequireTimeZoneIanaId(),
-                [.. input.Edits.Select(e => new BudgetCellEdit(e.Address, e.Input))], ct);
+            var (result, edit) = await budgetService.EditAsync(account.RequireEmail(), Enum.Parse<BudgetSheetKind>(input.Kind), input.Year, account.RequireTimeZoneIanaId(),
+                [.. input.Edits.Select(e => new BudgetCellEditRequest(e.Address, e.Input))], ct);
             return result.Success
                 ? Json(new { result = true, changed = edit!.Changed.Select(c => c.ToViewModel(input.Kind)) })
                 : Json(new { result = false, error = localizer[result.ErrorKey, result.ErrorArgs].ToPlainString() });
@@ -745,14 +749,14 @@ public class AccountBookController(
     /// <summary>Pastes or fills a block of cells, as Excel does; replies the changed cells.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [RequiredHttpPostAccess(Role = Role.User)]
+    [RequiredHttpPostAccess(Role = AccountRoles.User)]
     public async Task<IActionResult> CopyBudgetCells([FromBody] BudgetCopyInputViewModel input, CancellationToken ct)
     {
         if (!ModelState.IsValid) return Json(new { result = false, error = localizer["Input is invalid"].Value });
         AccountResponse account = HttpContext.GetLoggedInAccount();
         try
         {
-            var (result, edit) = await budgetService.CopyAsync(account.RequireEmail(), Enum.Parse<BudgetKind>(input.Kind), input.Year, account.RequireTimeZoneIanaId(),
+            var (result, edit) = await budgetService.CopyAsync(account.RequireEmail(), Enum.Parse<BudgetSheetKind>(input.Kind), input.Year, account.RequireTimeZoneIanaId(),
                 input.Source, input.Target, ct);
             return result.Success
                 ? Json(new { result = true, changed = edit!.Changed.Select(c => c.ToViewModel(input.Kind)) })
@@ -768,14 +772,14 @@ public class AccountBookController(
     /// <summary>Adds a line (a class in a currency); replies the sheet.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [RequiredHttpPostAccess(Role = Role.User)]
+    [RequiredHttpPostAccess(Role = AccountRoles.User)]
     public async Task<IActionResult> AddBudgetLine([FromBody] BudgetLineInputViewModel input, CancellationToken ct)
     {
         if (!ModelState.IsValid) return Json(new { result = false, error = localizer["Input is invalid"].Value });
         AccountResponse account = HttpContext.GetLoggedInAccount();
         try
         {
-            var (result, sheet) = await budgetService.AddLineAsync(account.RequireEmail(), Enum.Parse<BudgetKind>(input.Kind), input.Year, account.RequireTimeZoneIanaId(),
+            var (result, sheet) = await budgetService.AddLineAsync(account.RequireEmail(), Enum.Parse<BudgetSheetKind>(input.Kind), input.Year, account.RequireTimeZoneIanaId(),
                 input.MainClass, input.SubClass, input.Currency, ct);
             return result.Success
                 ? Json(new { result = true, message = localizer["The line was added."].Value, sheet = sheet!.ToViewModel(key => localizer[key].Value) })
@@ -791,14 +795,14 @@ public class AccountBookController(
     /// <summary>Removes a line and its inputs; replies the sheet.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [RequiredHttpPostAccess(Role = Role.User)]
+    [RequiredHttpPostAccess(Role = AccountRoles.User)]
     public async Task<IActionResult> RemoveBudgetLine([FromBody] BudgetLineInputViewModel input, CancellationToken ct)
     {
         if (!ModelState.IsValid) return Json(new { result = false, error = localizer["Input is invalid"].Value });
         AccountResponse account = HttpContext.GetLoggedInAccount();
         try
         {
-            var (result, sheet) = await budgetService.RemoveLineAsync(account.RequireEmail(), Enum.Parse<BudgetKind>(input.Kind), input.Year, account.RequireTimeZoneIanaId(),
+            var (result, sheet) = await budgetService.RemoveLineAsync(account.RequireEmail(), Enum.Parse<BudgetSheetKind>(input.Kind), input.Year, account.RequireTimeZoneIanaId(),
                 input.MainClass, input.SubClass, input.Currency, ct);
             return result.Success
                 ? Json(new { result = true, message = localizer["The line was removed."].Value, sheet = sheet!.ToViewModel(key => localizer[key].Value) })
@@ -814,14 +818,14 @@ public class AccountBookController(
     /// <summary>Fills the sheet's empty budget cells from last year's sheet; replies the sheet and how many cells were filled.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [RequiredHttpPostAccess(Role = Role.User)]
+    [RequiredHttpPostAccess(Role = AccountRoles.User)]
     public async Task<IActionResult> CarryOverBudget([FromBody] BudgetSheetInputViewModel input, CancellationToken ct)
     {
         if (!ModelState.IsValid) return Json(new { result = false, error = localizer["Input is invalid"].Value });
         AccountResponse account = HttpContext.GetLoggedInAccount();
         try
         {
-            var (result, sheet, copied) = await budgetService.CarryOverAsync(account.RequireEmail(), Enum.Parse<BudgetKind>(input.Kind), input.Year, account.RequireTimeZoneIanaId(), ct);
+            var (result, sheet, copied) = await budgetService.CarryOverAsync(account.RequireEmail(), Enum.Parse<BudgetSheetKind>(input.Kind), input.Year, account.RequireTimeZoneIanaId(), ct);
             return result.Success
                 ? Json(new { result = true, message = localizer["{0} cells were filled from last year.", copied].ToPlainString(), sheet = sheet!.ToViewModel(key => localizer[key].Value) })
                 : Json(new { result = false, error = localizer[result.ErrorKey, result.ErrorArgs].ToPlainString() });
@@ -836,10 +840,10 @@ public class AccountBookController(
     /// <summary>Exports a budget sheet to an Excel file (its calculated values).</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [RequiredHttpPostAccess(Role = Role.User)]
+    [RequiredHttpPostAccess(Role = AccountRoles.User)]
     public async Task<IActionResult> ExportExcelBudget(string kind, int year, string fileName = "", CancellationToken ct = default)
     {
-        if (!Enum.TryParse(kind, out BudgetKind budgetKind) || !Enum.IsDefined(budgetKind)) return BadRequest();
+        if (!Enum.TryParse(kind, out BudgetSheetKind budgetKind) || !Enum.IsDefined(budgetKind)) return BadRequest();
         AccountResponse account = HttpContext.GetLoggedInAccount();
         var (result, sheet) = await budgetService.GetSheetAsync(account.RequireEmail(), budgetKind, year, account.RequireTimeZoneIanaId(), ct);
         if (!result.Success) return BadRequest();

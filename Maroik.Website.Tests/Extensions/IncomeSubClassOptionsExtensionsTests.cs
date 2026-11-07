@@ -1,3 +1,4 @@
+using Maroik.Core.Service.Services;
 using System.Text;
 using System.Text.Encodings.Web;
 using Maroik.Website.Extensions;
@@ -36,7 +37,7 @@ public class IncomeSubClassOptionsExtensionsTests
     [Fact]
     public void IncomeSubClassOptions_RendersEachDistinctSubClassExactlyOnce()
     {
-        string html = Render(((IHtmlHelper)null!).IncomeSubClassOptions(MakeEchoLocalizer()));
+        string html = Render(((IHtmlHelper)null!).IncomeSubClassOptions(MakeEchoLocalizer(), new PolicyService().GetFinanceFormRules().IncomeSubClassesByMainClass));
 
         Assert.Equal(1, CountOccurrences(html, "value=\"LaborIncome\""));
         Assert.Equal(1, CountOccurrences(html, "value=\"OtherIncome\""));
@@ -50,7 +51,7 @@ public class IncomeSubClassOptionsExtensionsTests
     [Fact]
     public void IncomeSubClassOptions_MarksFirstSubClass_AsSelected()
     {
-        string html = Render(((IHtmlHelper)null!).IncomeSubClassOptions(MakeEchoLocalizer()));
+        string html = Render(((IHtmlHelper)null!).IncomeSubClassOptions(MakeEchoLocalizer(), new PolicyService().GetFinanceFormRules().IncomeSubClassesByMainClass));
 
         int optionStart = html.IndexOf("<option", StringComparison.Ordinal);
         int optionEnd = html.IndexOf('>', optionStart);

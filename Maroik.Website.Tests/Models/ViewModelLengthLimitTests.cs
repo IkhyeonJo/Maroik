@@ -1,3 +1,4 @@
+using Maroik.Website.Tests.Fixtures;
 using System.ComponentModel.DataAnnotations;
 using System.Reflection;
 using Maroik.Core.Domain.Accounts;
@@ -64,7 +65,7 @@ public class ViewModelLengthLimitTests
         var model = new LoginOutputViewModel { Password = new string('a', length) };
         var results = new List<ValidationResult>();
 
-        Validator.TryValidateProperty(model.Password, new ValidationContext(model) { MemberName = nameof(LoginOutputViewModel.Password) }, results);
+        Validator.TryValidateProperty(model.Password, new ValidationContext(model, new PolicyServiceProvider(), null) { MemberName = nameof(LoginOutputViewModel.Password) }, results);
 
         Assert.Contains(results, r => r.ErrorMessage == $"The Password must be between {PasswordPolicy.MinLength} and {PasswordPolicy.MaxByteLength} characters long.");
     }

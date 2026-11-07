@@ -1,5 +1,5 @@
+using Maroik.Core.Contract.Constants;
 using System.ComponentModel.DataAnnotations;
-using Maroik.Core.Domain.Accounts;
 using Maroik.Website.Attributes;
 using Maroik.Website.Constants;
 
@@ -26,7 +26,7 @@ public class ProfileInputViewModel
     /// an account whose password predates the rule must still be able to type it in order to change it.
     /// </summary>
     [Required(ErrorMessage = "Password is required")]
-    [StringLength(PasswordPolicy.MaxByteLength)]
+    [StringLength(PolicyLimits.PasswordMaxByteLength)]
     [DataType(DataType.Password)]
     public string? Password { get; set; }
 
@@ -35,9 +35,9 @@ public class ProfileInputViewModel
     /// Must satisfy the password complexity rule.
     /// </summary>
     [Required(ErrorMessage = "New password is required")]
-    [StringLength(PasswordPolicy.MaxByteLength, ErrorMessage = "The {0} must be between {2} and {1} characters long.", MinimumLength = PasswordPolicy.MinLength)]
+    [StringLength(PolicyLimits.PasswordMaxByteLength, ErrorMessage = "The {0} must be between {2} and {1} characters long.", MinimumLength = PolicyLimits.PasswordMinLength)]
     [DataType(DataType.Password)]
-    [RegularExpression(PasswordPolicy.Pattern, ErrorMessage = ValidationMessages.PasswordComplexity)]
+    [RegularExpression(PolicyLimits.PasswordPattern, ErrorMessage = ValidationMessages.PasswordComplexity)]
     [PasswordMaxBytes(ErrorMessage = "Password must be at most 72 bytes (one Korean character counts as 3 bytes).")]
     public string? NewPassword { get; set; }
 

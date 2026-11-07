@@ -1,4 +1,3 @@
-using Maroik.Core.Domain.Finances;
 using Microsoft.AspNetCore.Html;
 using Microsoft.AspNetCore.Mvc.Localization;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -7,8 +6,8 @@ namespace Maroik.Website.Extensions;
 
 /// <summary>
 /// Renders the &lt;option&gt; list for an income "subclass" &lt;select&gt; from
-/// <see cref="IncomeClassPolicy.SubClassesByMainClass"/> (the domain policy backing
-/// <see cref="IncomeClassPolicy.Validate"/>) instead of hardcoding it, so the list can't drift
+/// <c>IncomeClassPolicy.SubClassesByMainClass</c> (the domain policy backing
+/// <c>IncomeClassPolicy.Validate</c>) instead of hardcoding it, so the list can't drift
 /// out of sync with what the server actually accepts.
 /// <para>
 /// Unlike <see cref="ExpenditureSubClassOptionsExtensions.ExpenditureSubClassOptions"/>, income
@@ -31,13 +30,14 @@ public static class IncomeSubClassOptionsExtensions
     /// </summary>
     /// <param name="html">The view's HTML helper (extension receiver; not otherwise used).</param>
     /// <param name="localizer">The calling view's localizer, used for each option's label.</param>
+    /// <param name="subClassesByMainClass">The subclasses of each main class, from <c>IPolicyService.GetFinanceFormRules</c>.</param>
     /// <returns>The rendered option list, ready to place inside the subclass <c>&lt;select&gt;</c>.</returns>
     // ReSharper disable once UnusedParameter.Global -- the receiver makes it callable as Html.X(...) from a view.
-    public static IHtmlContent IncomeSubClassOptions(this IHtmlHelper html, IViewLocalizer localizer)
+    public static IHtmlContent IncomeSubClassOptions(this IHtmlHelper html, IViewLocalizer localizer, IReadOnlyDictionary<string, IReadOnlyList<string>> subClassesByMainClass)
     {
         IReadOnlyList<string> distinctSubClasses =
         [
-            .. IncomeClassPolicy.SubClassesByMainClass.Values.SelectMany(s => s).Distinct()
+            .. subClassesByMainClass.Values.SelectMany(s => s).Distinct()
         ];
 
         var content = new HtmlContentBuilder();

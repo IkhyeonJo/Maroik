@@ -1,5 +1,5 @@
+using Maroik.Core.Contract.Constants;
 using Maroik.Core.Contract.Dtos;
-using Maroik.Core.Domain.Finances;
 using Maroik.Website.Models.ViewModels.Dashboards;
 
 namespace Maroik.Website.Mappers;
@@ -8,7 +8,7 @@ namespace Maroik.Website.Mappers;
 /// Converts a <see cref="DashboardDto"/> returned by <c>IDashboardService</c> into the
 /// <see cref="UserIndexOutputViewModel"/> expected by the Dashboard view.
 /// Handles response-to-ViewModel mapping only (the year selectors, and the per-category sums/percentages
-/// <c>DashboardService</c> already computed via <see cref="FinanceBreakdownPolicy"/> copied onto their named
+/// <c>DashboardService</c> already computed via <c>FinanceBreakdownPolicy</c> copied onto their named
 /// view-model properties) — no summing or percentage math happens here.
 /// </summary>
 public static class DashboardViewModelMapper
@@ -58,27 +58,27 @@ public static class DashboardViewModelMapper
         IReadOnlyDictionary<string, FinanceBreakdownDto> yearBreakdown,
         IReadOnlyDictionary<string, FinanceBreakdownDto> yearMonthBreakdown)
     {
-        (decimal Year, decimal YearMonth, double PctYear, double PctYearMonth) Values(IncomeMainClass mainClass, IncomeSubClass subClass) =>
-            (Amount(yearBreakdown, mainClass.ToString(), subClass.ToString()), Amount(yearMonthBreakdown, mainClass.ToString(), subClass.ToString()),
-             Pct(yearBreakdown, mainClass.ToString(), subClass.ToString()), Pct(yearMonthBreakdown, mainClass.ToString(), subClass.ToString()));
+        (decimal Year, decimal YearMonth, double PctYear, double PctYearMonth) Values(string mainClass, string subClass) =>
+            (Amount(yearBreakdown, mainClass, subClass), Amount(yearMonthBreakdown, mainClass, subClass),
+             Pct(yearBreakdown, mainClass, subClass), Pct(yearMonthBreakdown, mainClass, subClass));
 
         (vm.RegularIncomeLaborIncomeYear, vm.RegularIncomeLaborIncomeYearMonth,
-         vm.PercentageOfRegularIncomeLaborIncomeYear, vm.PercentageOfRegularIncomeLaborIncomeYearMonth) = Values(IncomeMainClass.RegularIncome, IncomeSubClass.LaborIncome);
+         vm.PercentageOfRegularIncomeLaborIncomeYear, vm.PercentageOfRegularIncomeLaborIncomeYearMonth) = Values(IncomeClassNames.RegularIncome, IncomeClassNames.LaborIncome);
         (vm.RegularIncomeBusinessIncomeYear, vm.RegularIncomeBusinessIncomeYearMonth,
-         vm.PercentageOfRegularIncomeBusinessIncomeYear, vm.PercentageOfRegularIncomeBusinessIncomeYearMonth) = Values(IncomeMainClass.RegularIncome, IncomeSubClass.BusinessIncome);
+         vm.PercentageOfRegularIncomeBusinessIncomeYear, vm.PercentageOfRegularIncomeBusinessIncomeYearMonth) = Values(IncomeClassNames.RegularIncome, IncomeClassNames.BusinessIncome);
         (vm.RegularIncomePensionIncomeYear, vm.RegularIncomePensionIncomeYearMonth,
-         vm.PercentageOfRegularIncomePensionIncomeYear, vm.PercentageOfRegularIncomePensionIncomeYearMonth) = Values(IncomeMainClass.RegularIncome, IncomeSubClass.PensionIncome);
+         vm.PercentageOfRegularIncomePensionIncomeYear, vm.PercentageOfRegularIncomePensionIncomeYearMonth) = Values(IncomeClassNames.RegularIncome, IncomeClassNames.PensionIncome);
         (vm.RegularIncomeFinancialIncomeYear, vm.RegularIncomeFinancialIncomeYearMonth,
-         vm.PercentageOfRegularIncomeFinancialIncomeYear, vm.PercentageOfRegularIncomeFinancialIncomeYearMonth) = Values(IncomeMainClass.RegularIncome, IncomeSubClass.FinancialIncome);
+         vm.PercentageOfRegularIncomeFinancialIncomeYear, vm.PercentageOfRegularIncomeFinancialIncomeYearMonth) = Values(IncomeClassNames.RegularIncome, IncomeClassNames.FinancialIncome);
         (vm.RegularIncomeRentalIncomeYear, vm.RegularIncomeRentalIncomeYearMonth,
-         vm.PercentageOfRegularIncomeRentalIncomeYear, vm.PercentageOfRegularIncomeRentalIncomeYearMonth) = Values(IncomeMainClass.RegularIncome, IncomeSubClass.RentalIncome);
+         vm.PercentageOfRegularIncomeRentalIncomeYear, vm.PercentageOfRegularIncomeRentalIncomeYearMonth) = Values(IncomeClassNames.RegularIncome, IncomeClassNames.RentalIncome);
         (vm.RegularIncomeOtherIncomeYear, vm.RegularIncomeOtherIncomeYearMonth,
-         vm.PercentageOfRegularIncomeOtherIncomeYear, vm.PercentageOfRegularIncomeOtherIncomeYearMonth) = Values(IncomeMainClass.RegularIncome, IncomeSubClass.OtherIncome);
+         vm.PercentageOfRegularIncomeOtherIncomeYear, vm.PercentageOfRegularIncomeOtherIncomeYearMonth) = Values(IncomeClassNames.RegularIncome, IncomeClassNames.OtherIncome);
 
         (vm.IrregularIncomeLaborIncomeYear, vm.IrregularIncomeLaborIncomeYearMonth,
-         vm.PercentageOfIrregularIncomeLaborIncomeYear, vm.PercentageOfIrregularIncomeLaborIncomeYearMonth) = Values(IncomeMainClass.IrregularIncome, IncomeSubClass.LaborIncome);
+         vm.PercentageOfIrregularIncomeLaborIncomeYear, vm.PercentageOfIrregularIncomeLaborIncomeYearMonth) = Values(IncomeClassNames.IrregularIncome, IncomeClassNames.LaborIncome);
         (vm.IrregularIncomeOtherIncomeYear, vm.IrregularIncomeOtherIncomeYearMonth,
-         vm.PercentageOfIrregularIncomeOtherIncomeYear, vm.PercentageOfIrregularIncomeOtherIncomeYearMonth) = Values(IncomeMainClass.IrregularIncome, IncomeSubClass.OtherIncome);
+         vm.PercentageOfIrregularIncomeOtherIncomeYear, vm.PercentageOfIrregularIncomeOtherIncomeYearMonth) = Values(IncomeClassNames.IrregularIncome, IncomeClassNames.OtherIncome);
     }
 
     /// <summary>
@@ -94,51 +94,51 @@ public static class DashboardViewModelMapper
     {
 
         (vm.RegularSavingsDepositYear, vm.RegularSavingsDepositYearMonth,
-         vm.PercentageOfRegularSavingsDepositYear, vm.PercentageOfRegularSavingsDepositYearMonth) = Values(ExpenditureMainClass.RegularSavings, ExpenditureSubClass.Deposit);
+         vm.PercentageOfRegularSavingsDepositYear, vm.PercentageOfRegularSavingsDepositYearMonth) = Values(ExpenditureClassNames.RegularSavings, ExpenditureClassNames.Deposit);
         (vm.RegularSavingsInvestmentYear, vm.RegularSavingsInvestmentYearMonth,
-         vm.PercentageOfRegularSavingsInvestmentYear, vm.PercentageOfRegularSavingsInvestmentYearMonth) = Values(ExpenditureMainClass.RegularSavings, ExpenditureSubClass.Investment);
+         vm.PercentageOfRegularSavingsInvestmentYear, vm.PercentageOfRegularSavingsInvestmentYearMonth) = Values(ExpenditureClassNames.RegularSavings, ExpenditureClassNames.Investment);
 
         (vm.NonConsumerSpendingPublicPensionYear, vm.NonConsumerSpendingPublicPensionYearMonth,
-         vm.PercentageOfNonConsumerSpendingPublicPensionYear, vm.PercentageOfNonConsumerSpendingPublicPensionYearMonth) = Values(ExpenditureMainClass.NonConsumerSpending, ExpenditureSubClass.PublicPension);
+         vm.PercentageOfNonConsumerSpendingPublicPensionYear, vm.PercentageOfNonConsumerSpendingPublicPensionYearMonth) = Values(ExpenditureClassNames.NonConsumerSpending, ExpenditureClassNames.PublicPension);
         (vm.NonConsumerSpendingDebtRepaymentYear, vm.NonConsumerSpendingDebtRepaymentYearMonth,
-         vm.PercentageOfNonConsumerSpendingDebtRepaymentYear, vm.PercentageOfNonConsumerSpendingDebtRepaymentYearMonth) = Values(ExpenditureMainClass.NonConsumerSpending, ExpenditureSubClass.DebtRepayment);
+         vm.PercentageOfNonConsumerSpendingDebtRepaymentYear, vm.PercentageOfNonConsumerSpendingDebtRepaymentYearMonth) = Values(ExpenditureClassNames.NonConsumerSpending, ExpenditureClassNames.DebtRepayment);
         (vm.NonConsumerSpendingTaxYear, vm.NonConsumerSpendingTaxYearMonth,
-         vm.PercentageOfNonConsumerSpendingTaxYear, vm.PercentageOfNonConsumerSpendingTaxYearMonth) = Values(ExpenditureMainClass.NonConsumerSpending, ExpenditureSubClass.Tax);
+         vm.PercentageOfNonConsumerSpendingTaxYear, vm.PercentageOfNonConsumerSpendingTaxYearMonth) = Values(ExpenditureClassNames.NonConsumerSpending, ExpenditureClassNames.Tax);
         (vm.NonConsumerSpendingSocialInsuranceYear, vm.NonConsumerSpendingSocialInsuranceYearMonth,
-         vm.PercentageOfNonConsumerSpendingSocialInsuranceYear, vm.PercentageOfNonConsumerSpendingSocialInsuranceYearMonth) = Values(ExpenditureMainClass.NonConsumerSpending, ExpenditureSubClass.SocialInsurance);
+         vm.PercentageOfNonConsumerSpendingSocialInsuranceYear, vm.PercentageOfNonConsumerSpendingSocialInsuranceYearMonth) = Values(ExpenditureClassNames.NonConsumerSpending, ExpenditureClassNames.SocialInsurance);
         (vm.NonConsumerSpendingInterHouseholdTransferExpensesYear, vm.NonConsumerSpendingInterHouseholdTransferExpensesYearMonth,
-         vm.PercentageOfNonConsumerSpendingInterHouseholdTransferExpensesYear, vm.PercentageOfNonConsumerSpendingInterHouseholdTransferExpensesYearMonth) = Values(ExpenditureMainClass.NonConsumerSpending, ExpenditureSubClass.InterHouseholdTransferExpenses);
+         vm.PercentageOfNonConsumerSpendingInterHouseholdTransferExpensesYear, vm.PercentageOfNonConsumerSpendingInterHouseholdTransferExpensesYearMonth) = Values(ExpenditureClassNames.NonConsumerSpending, ExpenditureClassNames.InterHouseholdTransferExpenses);
         (vm.NonConsumerSpendingNonProfitOrganizationTransferYear, vm.NonConsumerSpendingNonProfitOrganizationTransferYearMonth,
-         vm.PercentageOfNonConsumerSpendingNonProfitOrganizationTransferYear, vm.PercentageOfNonConsumerSpendingNonProfitOrganizationTransferYearMonth) = Values(ExpenditureMainClass.NonConsumerSpending, ExpenditureSubClass.NonProfitOrganizationTransfer);
+         vm.PercentageOfNonConsumerSpendingNonProfitOrganizationTransferYear, vm.PercentageOfNonConsumerSpendingNonProfitOrganizationTransferYearMonth) = Values(ExpenditureClassNames.NonConsumerSpending, ExpenditureClassNames.NonProfitOrganizationTransfer);
 
         (vm.ConsumerSpendingMealOrEatOutExpensesYear, vm.ConsumerSpendingMealOrEatOutExpensesYearMonth,
-         vm.PercentageOfConsumerSpendingMealOrEatOutExpensesYear, vm.PercentageOfConsumerSpendingMealOrEatOutExpensesYearMonth) = Values(ExpenditureMainClass.ConsumerSpending, ExpenditureSubClass.MealOrEatOutExpenses);
+         vm.PercentageOfConsumerSpendingMealOrEatOutExpensesYear, vm.PercentageOfConsumerSpendingMealOrEatOutExpensesYearMonth) = Values(ExpenditureClassNames.ConsumerSpending, ExpenditureClassNames.MealOrEatOutExpenses);
         (vm.ConsumerSpendingHousingOrSuppliesCostYear, vm.ConsumerSpendingHousingOrSuppliesCostYearMonth,
-         vm.PercentageOfConsumerSpendingHousingOrSuppliesCostYear, vm.PercentageOfConsumerSpendingHousingOrSuppliesCostYearMonth) = Values(ExpenditureMainClass.ConsumerSpending, ExpenditureSubClass.HousingOrSuppliesCost);
+         vm.PercentageOfConsumerSpendingHousingOrSuppliesCostYear, vm.PercentageOfConsumerSpendingHousingOrSuppliesCostYearMonth) = Values(ExpenditureClassNames.ConsumerSpending, ExpenditureClassNames.HousingOrSuppliesCost);
         (vm.ConsumerSpendingEducationExpensesYear, vm.ConsumerSpendingEducationExpensesYearMonth,
-         vm.PercentageOfConsumerSpendingEducationExpensesYear, vm.PercentageOfConsumerSpendingEducationExpensesYearMonth) = Values(ExpenditureMainClass.ConsumerSpending, ExpenditureSubClass.EducationExpenses);
+         vm.PercentageOfConsumerSpendingEducationExpensesYear, vm.PercentageOfConsumerSpendingEducationExpensesYearMonth) = Values(ExpenditureClassNames.ConsumerSpending, ExpenditureClassNames.EducationExpenses);
         (vm.ConsumerSpendingMedicalExpensesYear, vm.ConsumerSpendingMedicalExpensesYearMonth,
-         vm.PercentageOfConsumerSpendingMedicalExpensesYear, vm.PercentageOfConsumerSpendingMedicalExpensesYearMonth) = Values(ExpenditureMainClass.ConsumerSpending, ExpenditureSubClass.MedicalExpenses);
+         vm.PercentageOfConsumerSpendingMedicalExpensesYear, vm.PercentageOfConsumerSpendingMedicalExpensesYearMonth) = Values(ExpenditureClassNames.ConsumerSpending, ExpenditureClassNames.MedicalExpenses);
         (vm.ConsumerSpendingTransportationCostYear, vm.ConsumerSpendingTransportationCostYearMonth,
-         vm.PercentageOfConsumerSpendingTransportationCostYear, vm.PercentageOfConsumerSpendingTransportationCostYearMonth) = Values(ExpenditureMainClass.ConsumerSpending, ExpenditureSubClass.TransportationCost);
+         vm.PercentageOfConsumerSpendingTransportationCostYear, vm.PercentageOfConsumerSpendingTransportationCostYearMonth) = Values(ExpenditureClassNames.ConsumerSpending, ExpenditureClassNames.TransportationCost);
         (vm.ConsumerSpendingCommunicationCostYear, vm.ConsumerSpendingCommunicationCostYearMonth,
-         vm.PercentageOfConsumerSpendingCommunicationCostYear, vm.PercentageOfConsumerSpendingCommunicationCostYearMonth) = Values(ExpenditureMainClass.ConsumerSpending, ExpenditureSubClass.CommunicationCost);
+         vm.PercentageOfConsumerSpendingCommunicationCostYear, vm.PercentageOfConsumerSpendingCommunicationCostYearMonth) = Values(ExpenditureClassNames.ConsumerSpending, ExpenditureClassNames.CommunicationCost);
         (vm.ConsumerSpendingLeisureOrCultureYear, vm.ConsumerSpendingLeisureOrCultureYearMonth,
-         vm.PercentageOfConsumerSpendingLeisureOrCultureYear, vm.PercentageOfConsumerSpendingLeisureOrCultureYearMonth) = Values(ExpenditureMainClass.ConsumerSpending, ExpenditureSubClass.LeisureOrCulture);
+         vm.PercentageOfConsumerSpendingLeisureOrCultureYear, vm.PercentageOfConsumerSpendingLeisureOrCultureYearMonth) = Values(ExpenditureClassNames.ConsumerSpending, ExpenditureClassNames.LeisureOrCulture);
         (vm.ConsumerSpendingClothingOrShoesYear, vm.ConsumerSpendingClothingOrShoesYearMonth,
-         vm.PercentageOfConsumerSpendingClothingOrShoesYear, vm.PercentageOfConsumerSpendingClothingOrShoesYearMonth) = Values(ExpenditureMainClass.ConsumerSpending, ExpenditureSubClass.ClothingOrShoes);
+         vm.PercentageOfConsumerSpendingClothingOrShoesYear, vm.PercentageOfConsumerSpendingClothingOrShoesYearMonth) = Values(ExpenditureClassNames.ConsumerSpending, ExpenditureClassNames.ClothingOrShoes);
         (vm.ConsumerSpendingPinMoneyYear, vm.ConsumerSpendingPinMoneyYearMonth,
-         vm.PercentageOfConsumerSpendingPinMoneyYear, vm.PercentageOfConsumerSpendingPinMoneyYearMonth) = Values(ExpenditureMainClass.ConsumerSpending, ExpenditureSubClass.PinMoney);
+         vm.PercentageOfConsumerSpendingPinMoneyYear, vm.PercentageOfConsumerSpendingPinMoneyYearMonth) = Values(ExpenditureClassNames.ConsumerSpending, ExpenditureClassNames.PinMoney);
         (vm.ConsumerSpendingProtectionTypeInsuranceYear, vm.ConsumerSpendingProtectionTypeInsuranceYearMonth,
-         vm.PercentageOfConsumerSpendingProtectionTypeInsuranceYear, vm.PercentageOfConsumerSpendingProtectionTypeInsuranceYearMonth) = Values(ExpenditureMainClass.ConsumerSpending, ExpenditureSubClass.ProtectionTypeInsurance);
+         vm.PercentageOfConsumerSpendingProtectionTypeInsuranceYear, vm.PercentageOfConsumerSpendingProtectionTypeInsuranceYearMonth) = Values(ExpenditureClassNames.ConsumerSpending, ExpenditureClassNames.ProtectionTypeInsurance);
         (vm.ConsumerSpendingOtherExpensesYear, vm.ConsumerSpendingOtherExpensesYearMonth,
-         vm.PercentageOfConsumerSpendingOtherExpensesYear, vm.PercentageOfConsumerSpendingOtherExpensesYearMonth) = Values(ExpenditureMainClass.ConsumerSpending, ExpenditureSubClass.OtherExpenses);
+         vm.PercentageOfConsumerSpendingOtherExpensesYear, vm.PercentageOfConsumerSpendingOtherExpensesYearMonth) = Values(ExpenditureClassNames.ConsumerSpending, ExpenditureClassNames.OtherExpenses);
         (vm.ConsumerSpendingUnknownExpenditureYear, vm.ConsumerSpendingUnknownExpenditureYearMonth,
-         vm.PercentageOfConsumerSpendingUnknownExpenditureYear, vm.PercentageOfConsumerSpendingUnknownExpenditureYearMonth) = Values(ExpenditureMainClass.ConsumerSpending, ExpenditureSubClass.UnknownExpenditure);
+         vm.PercentageOfConsumerSpendingUnknownExpenditureYear, vm.PercentageOfConsumerSpendingUnknownExpenditureYearMonth) = Values(ExpenditureClassNames.ConsumerSpending, ExpenditureClassNames.UnknownExpenditure);
         return;
 
-        (decimal Year, decimal YearMonth, double PctYear, double PctYearMonth) Values(ExpenditureMainClass mainClass, ExpenditureSubClass subClass) =>
-            (Amount(yearBreakdown, mainClass.ToString(), subClass.ToString()), Amount(yearMonthBreakdown, mainClass.ToString(), subClass.ToString()),
-             Pct(yearBreakdown, mainClass.ToString(), subClass.ToString()), Pct(yearMonthBreakdown, mainClass.ToString(), subClass.ToString()));
+        (decimal Year, decimal YearMonth, double PctYear, double PctYearMonth) Values(string mainClass, string subClass) =>
+            (Amount(yearBreakdown, mainClass, subClass), Amount(yearMonthBreakdown, mainClass, subClass),
+             Pct(yearBreakdown, mainClass, subClass), Pct(yearMonthBreakdown, mainClass, subClass));
     }
 }

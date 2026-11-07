@@ -7,10 +7,10 @@
     actions (whose replies the server has already shaped — sizes, local times, icons, usage) and draws them. How often / how long
     it asks about a file's virus scan is rendered from the domain policy; the server checks every file (there is no size limit).
 *@
-@using Maroik.Core.Domain.FileManagers
+@model FileManagerFormRules
 
-@Html.Hidden("scanPollMilliseconds", FileManagerUploadPolicy.ScanPollMilliseconds)
-@Html.Hidden("maxScanWaitMilliseconds", FileManagerUploadPolicy.MaxScanWaitMilliseconds)
+@Html.Hidden("scanPollMilliseconds", Model.ScanPollMilliseconds)
+@Html.Hidden("maxScanWaitMilliseconds", Model.MaxScanWaitMilliseconds)
 @Html.Hidden("localizerMyDrive", Localizer["My Drive"].Value)
 @Html.Hidden("localizerItemCount", Localizer["{0} items"].Value)
 @Html.Hidden("localizerSelectedCount", Localizer["{0} selected"].Value)
@@ -101,7 +101,7 @@
                 <div class="modal-body">
                     <label for="newFolderName">@Localizer["Folder name"].Value</label>
                     <input type="text" id="newFolderName" name="newFolderName" class="form-control form-control-sm" autocomplete="off"
-                           maxlength="@ShortTextPolicy.MaxLength" data-val="true" data-val-required="@Localizer["Please enter a name"].Value" />
+                           maxlength="@PolicyLimits.ShortTextMaxLength" data-val="true" data-val-required="@Localizer["Please enter a name"].Value" />
                     <span class="field-validation-valid text-danger" data-valmsg-for="newFolderName" data-valmsg-replace="true"></span>
                 </div>
                 <div class="modal-footer justify-content-between">
@@ -123,7 +123,7 @@
                     <input type="hidden" id="renameId" value="" />
                     <label for="renameName">@Localizer["Name"].Value</label>
                     <input type="text" id="renameName" name="renameName" class="form-control form-control-sm" autocomplete="off"
-                           maxlength="@ShortTextPolicy.MaxLength" data-val="true" data-val-required="@Localizer["Please enter a name"].Value" />
+                           maxlength="@PolicyLimits.ShortTextMaxLength" data-val="true" data-val-required="@Localizer["Please enter a name"].Value" />
                     <span class="field-validation-valid text-danger" data-valmsg-for="renameName" data-valmsg-replace="true"></span>
                 </div>
                 <div class="modal-footer justify-content-between">

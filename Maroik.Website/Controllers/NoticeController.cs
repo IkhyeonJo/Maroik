@@ -1,8 +1,7 @@
+using Maroik.Core.Contract.Constants;
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Contract.Settings;
-using Maroik.Core.Domain.Accounts;
-using Maroik.Core.Domain.Finances;
 using Maroik.Website.Attributes;
 using Maroik.Website.Extensions;
 using Maroik.Website.Interfaces;
@@ -17,6 +16,7 @@ namespace Maroik.Website.Controllers;
 /// <summary>Manages fixed-income and fixed-expenditure notice records (create, read, update, delete, export).</summary>
 /// <param name="localizer">Localizer for this controller's user-facing messages.</param>
 /// <param name="logger">Logger for unexpected failures in the Notice actions.</param>
+/// <param name="policyService">The Domain's stateless rules and the values the pages mirror.</param>
 /// <param name="assetService">Asset reads (asset dropdowns, currency labels).</param>
 /// <param name="fixedIncomeService">Fixed-income use cases.</param>
 /// <param name="fixedExpenditureService">Fixed-expenditure use cases.</param>
@@ -29,6 +29,7 @@ public class NoticeController(
     IAssetService assetService,
     IFixedIncomeService fixedIncomeService,
     IFixedExpenditureService fixedExpenditureService,
+    IPolicyService policyService,
     IOptions<ServerSetting> settings,
     IExcelExportService excelExportService,
     TimeProvider timeProvider) : Controller
@@ -39,12 +40,12 @@ public class NoticeController(
     /// <summary>Creates a new fixed-income record.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [RequiredHttpPostAccess(Role = Role.User)]
+    [RequiredHttpPostAccess(Role = AccountRoles.User)]
     public async Task<IActionResult> CreateFixedIncome(
         [FromBody] FixedIncomeInputViewModel fixedIncomeInputViewModel, CancellationToken ct)
     {
         if (!ModelState.IsValid || !fixedIncomeInputViewModel.MaturityDate.TryParseMaturityDate(out DateTime maturityDate)
-            || !FinanceAmountPolicy.TryParseInput(fixedIncomeInputViewModel.Amount, out decimal amount))
+            || !policyService.TryParseAmount(fixedIncomeInputViewModel.Amount, out decimal amount))
             return Json(new { result = false, error = localizer["Input is invalid"].Value });
 
         try
@@ -93,7 +94,7 @@ public class NoticeController(
                 ? await fixedIncomeService.GetFixedIncomesAsync(account.RequireEmail(), ct)
                 : await fixedIncomeService.SearchFixedIncomesAsync(account.RequireEmail(), wholeSearch, ct);
             var viewModels = incomes
-                .ToDisplayViewModels(assets, key => localizer[key].Value, account.RequireTimeZoneIanaId(), settings.Value.NoticeMaturityDateDay, timeProvider.GetUtcNow().UtcDateTime)
+                .ToDisplayViewModels(policyService, assets, key => localizer[key].Value, account.RequireTimeZoneIanaId(), settings.Value.NoticeMaturityDateDay, timeProvider.GetUtcNow().UtcDateTime)
                 .OrderByDescending(a => a.Expired).ThenByDescending(m => m.Noticed)
                 .ThenByDescending(m => m.Unpunctuality).ThenByDescending(a => a.Created)
                 .ThenByDescending(a => a.Updated)
@@ -106,13 +107,13 @@ public class NoticeController(
             .Where(x => !x.Deleted).OrderBy(x => x.ProductName).ToList();
         ViewBag.Assets = fixedIncomeAssets;
         ViewBag.DefaultAssetProductName = fixedIncomeAssets.FirstOrDefault()?.ProductName;
-        return View();
+        return View(policyService.GetFinanceFormRules());
     }
 
     /// <summary>Checks whether a fixed-income record with the given ID exists.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [RequiredHttpPostAccess(Role = Role.User)]
+    [RequiredHttpPostAccess(Role = AccountRoles.User)]
     public async Task<IActionResult> IsFixedIncomeExists(long id, CancellationToken ct)
     {
         try
@@ -148,7 +149,7 @@ public class NoticeController(
     /// <summary>Returns a formatted amount label for the given fixed-income product.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [RequiredHttpPostAccess(Role = Role.User)]
+    [RequiredHttpPostAccess(Role = AccountRoles.User)]
     public async Task<IActionResult> GetFixedIncomeAmountLabel(string productName, CancellationToken ct)
     {
         try
@@ -176,12 +177,12 @@ public class NoticeController(
     /// <summary>Updates an existing fixed-income record.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [RequiredHttpPostAccess(Role = Role.User)]
+    [RequiredHttpPostAccess(Role = AccountRoles.User)]
     public async Task<IActionResult> UpdateFixedIncome(
         [FromBody] FixedIncomeInputViewModel fixedIncomeInputViewModel, CancellationToken ct)
     {
         if (!ModelState.IsValid || !fixedIncomeInputViewModel.MaturityDate.TryParseMaturityDate(out DateTime maturityDate)
-            || !FinanceAmountPolicy.TryParseInput(fixedIncomeInputViewModel.Amount, out decimal amount))
+            || !policyService.TryParseAmount(fixedIncomeInputViewModel.Amount, out decimal amount))
             return Json(new { result = false, error = localizer["Input is invalid"].Value });
 
         try
@@ -220,7 +221,7 @@ public class NoticeController(
     /// <summary>Deletes an existing fixed-income record.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [RequiredHttpPostAccess(Role = Role.User)]
+    [RequiredHttpPostAccess(Role = AccountRoles.User)]
     public async Task<IActionResult> DeleteFixedIncome(
         [FromBody] FixedIncomeInputViewModel fixedIncomeInputViewModel, CancellationToken ct)
     {
@@ -244,7 +245,7 @@ public class NoticeController(
     /// <summary>Exports fixed-income records to an Excel file.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [RequiredHttpPostAccess(Role = Role.User)]
+    [RequiredHttpPostAccess(Role = AccountRoles.User)]
     public async Task<IActionResult> ExportExcelFixedIncome(string fileName = "", CancellationToken ct = default)
     {
         AccountResponse account = HttpContext.GetLoggedInAccount();
@@ -264,12 +265,12 @@ public class NoticeController(
     /// <summary>Creates a new fixed-expenditure record.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [RequiredHttpPostAccess(Role = Role.User)]
+    [RequiredHttpPostAccess(Role = AccountRoles.User)]
     public async Task<IActionResult> CreateFixedExpenditure(
         [FromBody] FixedExpenditureInputViewModel fixedExpenditureInputViewModel, CancellationToken ct)
     {
         if (!ModelState.IsValid || !fixedExpenditureInputViewModel.MaturityDate.TryParseMaturityDate(out DateTime maturityDate)
-            || !FinanceAmountPolicy.TryParseInput(fixedExpenditureInputViewModel.Amount, out decimal amount))
+            || !policyService.TryParseAmount(fixedExpenditureInputViewModel.Amount, out decimal amount))
             return Json(new { result = false, error = localizer["Input is invalid"].Value });
 
         try
@@ -319,7 +320,7 @@ public class NoticeController(
                 ? await fixedExpenditureService.GetFixedExpendituresAsync(account.RequireEmail(), ct)
                 : await fixedExpenditureService.SearchFixedExpendituresAsync(account.RequireEmail(), wholeSearch, ct);
             var viewModels = expenditures
-                .ToDisplayViewModels(assets, key => localizer[key].Value, account.RequireTimeZoneIanaId(), settings.Value.NoticeMaturityDateDay, timeProvider.GetUtcNow().UtcDateTime)
+                .ToDisplayViewModels(policyService, assets, key => localizer[key].Value, account.RequireTimeZoneIanaId(), settings.Value.NoticeMaturityDateDay, timeProvider.GetUtcNow().UtcDateTime)
                 .OrderByDescending(a => a.Expired).ThenByDescending(m => m.Noticed)
                 .ThenByDescending(m => m.Unpunctuality).ThenByDescending(a => a.Created)
                 .ThenByDescending(a => a.Updated)
@@ -332,13 +333,13 @@ public class NoticeController(
             .Where(x => !x.Deleted).OrderBy(x => x.ProductName).ToList();
         ViewBag.Assets = fixedExpenditureAssets;
         ViewBag.DefaultAssetProductName = fixedExpenditureAssets.FirstOrDefault()?.ProductName;
-        return View();
+        return View(policyService.GetFinanceFormRules());
     }
 
     /// <summary>Checks whether a fixed-expenditure record with the given ID exists.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [RequiredHttpPostAccess(Role = Role.User)]
+    [RequiredHttpPostAccess(Role = AccountRoles.User)]
     public async Task<IActionResult> IsFixedExpenditureExists(long id, CancellationToken ct)
     {
         try
@@ -375,7 +376,7 @@ public class NoticeController(
     /// <summary>Returns a formatted amount label for the given fixed-expenditure product.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [RequiredHttpPostAccess(Role = Role.User)]
+    [RequiredHttpPostAccess(Role = AccountRoles.User)]
     public async Task<IActionResult> GetFixedExpenditureAmountLabel(string productName, CancellationToken ct)
     {
         try
@@ -403,12 +404,12 @@ public class NoticeController(
     /// <summary>Updates an existing fixed-expenditure record.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [RequiredHttpPostAccess(Role = Role.User)]
+    [RequiredHttpPostAccess(Role = AccountRoles.User)]
     public async Task<IActionResult> UpdateFixedExpenditure(
         [FromBody] FixedExpenditureInputViewModel fixedExpenditureInputViewModel, CancellationToken ct)
     {
         if (!ModelState.IsValid || !fixedExpenditureInputViewModel.MaturityDate.TryParseMaturityDate(out DateTime maturityDate)
-            || !FinanceAmountPolicy.TryParseInput(fixedExpenditureInputViewModel.Amount, out decimal amount))
+            || !policyService.TryParseAmount(fixedExpenditureInputViewModel.Amount, out decimal amount))
             return Json(new { result = false, error = localizer["Input is invalid"].Value });
 
         try
@@ -448,7 +449,7 @@ public class NoticeController(
     /// <summary>Deletes an existing fixed-expenditure record.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [RequiredHttpPostAccess(Role = Role.User)]
+    [RequiredHttpPostAccess(Role = AccountRoles.User)]
     public async Task<IActionResult> DeleteFixedExpenditure(
         [FromBody] FixedExpenditureInputViewModel fixedExpenditureInputViewModel, CancellationToken ct)
     {
@@ -472,7 +473,7 @@ public class NoticeController(
     /// <summary>Exports fixed-expenditure records to an Excel file.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [RequiredHttpPostAccess(Role = Role.User)]
+    [RequiredHttpPostAccess(Role = AccountRoles.User)]
     public async Task<IActionResult> ExportExcelFixedExpenditure(string fileName = "", CancellationToken ct = default)
     {
         AccountResponse account = HttpContext.GetLoggedInAccount();

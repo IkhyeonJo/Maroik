@@ -1,5 +1,6 @@
+using Maroik.Core.Contract.Enums;
+using Maroik.Core.Service.Services;
 using Maroik.Core.Contract.Dtos;
-using Maroik.Core.Domain.Budgets;
 using Maroik.Website.Mappers;
 using Maroik.Website.Models.ViewModels.AccountBooks;
 
@@ -154,7 +155,7 @@ public class BudgetViewModelMapperTests
     [InlineData(2025, 2025)]
     public void ThePage_OpensOnTheFixedYear_WhenThereIsOne(int? fixedYear, int expected)
     {
-        BudgetPageViewModel page = BudgetViewModelMapper.Page(BudgetKind.Income, [], new DateTime(2026, 5, 1, 0, 0, 0, DateTimeKind.Utc), "UTC", L, fixedYear);
+        BudgetPageViewModel page = BudgetViewModelMapper.Page(BudgetSheetKind.Income, new PolicyService().GetBudgetPageRules(BudgetSheetKind.Income), [], new DateTime(2026, 5, 1, 0, 0, 0, DateTimeKind.Utc), "UTC", L, fixedYear);
 
         Assert.Equal((2026, expected), (page.Year, page.InitialYear));
     }
@@ -165,7 +166,7 @@ public class BudgetViewModelMapperTests
     {
         AssetResponse[] assets = [new() { ProductName = "A", MonetaryUnit = "KRW" }, new() { ProductName = "B", MonetaryUnit = "USD" }, new() { ProductName = "C", MonetaryUnit = "KRW" }, new() { ProductName = "D" }];
 
-        BudgetPageViewModel page = BudgetViewModelMapper.Page(BudgetKind.Income, assets, new DateTime(2026, 12, 31, 16, 0, 0, DateTimeKind.Utc), "Asia/Seoul", L);
+        BudgetPageViewModel page = BudgetViewModelMapper.Page(BudgetSheetKind.Income, new PolicyService().GetBudgetPageRules(BudgetSheetKind.Income), assets, new DateTime(2026, 12, 31, 16, 0, 0, DateTimeKind.Utc), "Asia/Seoul", L);
 
         Assert.Equal(("Income", 2027), (page.Kind, page.Year));
         Assert.Equal(["RegularIncome", "IrregularIncome"], page.MainClasses);
@@ -174,7 +175,7 @@ public class BudgetViewModelMapperTests
         Assert.Equal(8, page.ClassLabels.Count);
         Assert.Equal("L:IrregularIncome", page.ClassLabels["IrregularIncome"]);
         Assert.Equal("L:RentalIncome", page.ClassLabels["RentalIncome"]);
-        Assert.Equal(["RegularSavings", "NonConsumerSpending", "ConsumerSpending"], BudgetViewModelMapper.Page(BudgetKind.Expenditure, [], DateTime.UnixEpoch, "UTC", L).MainClasses);
+        Assert.Equal(["RegularSavings", "NonConsumerSpending", "ConsumerSpending"], BudgetViewModelMapper.Page(BudgetSheetKind.Expenditure, new PolicyService().GetBudgetPageRules(BudgetSheetKind.Expenditure), [], DateTime.UnixEpoch, "UTC", L).MainClasses);
     }
 
     /// <summary>
@@ -184,7 +185,7 @@ public class BudgetViewModelMapperTests
     [Fact]
     public void ThePage_CaptionsTheMonthAndYearTotalColumns()
     {
-        BudgetPageViewModel page = BudgetViewModelMapper.Page(BudgetKind.Income, [], DateTime.UnixEpoch, "UTC", L);
+        BudgetPageViewModel page = BudgetViewModelMapper.Page(BudgetSheetKind.Income, new PolicyService().GetBudgetPageRules(BudgetSheetKind.Income), [], DateTime.UnixEpoch, "UTC", L);
 
         Assert.Equal(new Dictionary<string, string>
         {

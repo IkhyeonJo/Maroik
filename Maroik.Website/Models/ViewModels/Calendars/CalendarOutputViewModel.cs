@@ -10,6 +10,9 @@ namespace Maroik.Website.Models.ViewModels.Calendars;
 /// </summary>
 public class CalendarOutputViewModel
 {
+    /// <summary>The reminder limits the page mirrors.</summary>
+    public CalendarFormRules ReminderRules { get; set; } = new();
+
     /// <summary>Calendars owned by the logged-in user.</summary>
     public IEnumerable<CalendarResponse> Calendars { get; set; } = [];
 
@@ -37,7 +40,7 @@ public class CalendarOutputViewModel
     public string CurrentDate { get; set; } = "";
 
     /// <summary>
-    /// Time-of-day labels every <c>CalendarReminderPolicy.ReminderTimeOfDayStepMinutes</c> (15) minutes
+    /// Time-of-day labels every <c>PolicyLimits.ReminderTimeOfDayStepMinutes</c> (15) minutes
     /// ("00:00", "00:15", … "23:45") for the time pickers, including the all-day reminder's "notify at" list.
     /// </summary>
     public List<string> TimeIntervals { get; set; } = [];

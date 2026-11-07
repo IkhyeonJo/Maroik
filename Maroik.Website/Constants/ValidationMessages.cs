@@ -1,4 +1,4 @@
-using Maroik.Core.Domain.Accounts;
+using Maroik.Core.Contract.Constants;
 
 namespace Maroik.Website.Constants;
 
@@ -10,8 +10,8 @@ public static class ValidationMessages
 {
     /// <summary>
     /// The password rule's message — the same text the services return
-    /// (<see cref="PasswordPolicy.ViolationMessage"/>), so the client-side and server-side rejections
+    /// (<see cref="PolicyLimits.PasswordViolationMessage"/>), so the client-side and server-side rejections
     /// read identically and share one resx entry per page.
     /// </summary>
-    public const string PasswordComplexity = PasswordPolicy.ViolationMessage;
+    public const string PasswordComplexity = PolicyLimits.PasswordViolationMessage;
 }

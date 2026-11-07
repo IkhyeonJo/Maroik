@@ -1,5 +1,5 @@
+using Maroik.Core.Contract.Interfaces;
 using System.ComponentModel.DataAnnotations;
-using Maroik.Core.Domain.Finances;
 using Maroik.Website.Mappers;
 
 namespace Maroik.Website.Models.ViewModels.AccountBooks;
@@ -61,7 +61,7 @@ public class ExpenditureInputViewModel : IValidatableObject
 
     /// <summary>
     /// Name of the asset (product) credited by this expenditure — the transfer target. Required only when
-    /// <see cref="SubClass"/> is one of <see cref="ExpenditureClassPolicy.DepositAssetSubClasses"/>
+    /// <see cref="SubClass"/> is one of <c>ExpenditureClassPolicy.DepositAssetSubClasses</c>
     /// (a transfer-type subclass) — the domain only needs a deposit asset then; see
     /// <see cref="Validate"/>.
     /// </summary>
@@ -75,7 +75,7 @@ public class ExpenditureInputViewModel : IValidatableObject
     /// </summary>
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {
-        if (SubClass != null && ExpenditureClassPolicy.DepositAssetSubClasses.Contains(SubClass)
+        if (validationContext.GetRequiredService<IPolicyService>().IsDepositAssetSubClass(SubClass)
             && string.IsNullOrWhiteSpace(MyDepositAsset))
         {
             yield return new ValidationResult("Please enter MyDepositAsset", [nameof(MyDepositAsset)]);

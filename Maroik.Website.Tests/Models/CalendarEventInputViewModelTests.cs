@@ -1,3 +1,4 @@
+using Maroik.Website.Tests.Fixtures;
 using System.ComponentModel.DataAnnotations;
 using Maroik.Website.Models.ViewModels.Calendars;
 
@@ -12,7 +13,7 @@ public class CalendarEventInputViewModelTests
 {
     /// <summary>The member names of every validation error of <paramref name="vm"/>.</summary>
     private static List<string> Errors(CalendarEventInputViewModel vm) =>
-        [.. vm.Validate(new ValidationContext(vm)).SelectMany(r => r.MemberNames)];
+        [.. vm.Validate(new ValidationContext(vm, new PolicyServiceProvider(), null)).SelectMany(r => r.MemberNames)];
 
     /// <summary>A well-formed timed event (start without zero padding) spanning two time zones.</summary>
     private static CalendarEventInputViewModel Timed() => new()

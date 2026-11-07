@@ -1,9 +1,8 @@
+using Maroik.Core.Contract.Constants;
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Extensions;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Contract.Settings;
-using Maroik.Core.Domain.Accounts;
-using Maroik.Core.Domain.Boards;
 using Maroik.Website.Attributes;
 using Maroik.Website.Extensions;
 using Maroik.Website.Mappers;
@@ -42,8 +41,8 @@ public class ForumController(
     /// <summary>Submits a new free-forum post (with optional file attachment).</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [RequiredHttpPostAccess(Role = Role.Admin)]
-    [RequiredHttpPostAccess(Role = Role.User)]
+    [RequiredHttpPostAccess(Role = AccountRoles.Admin)]
+    [RequiredHttpPostAccess(Role = AccountRoles.User)]
     public async Task<IActionResult> WriteFreeBoard(BoardInputViewModel boardInputViewModel, CancellationToken ct)
     {
         try
@@ -58,12 +57,12 @@ public class ForumController(
             // session snapshot, so a mid-session role change takes effect here immediately.
             AccountResponse loggedInAccount = HttpContext.GetLoggedInAccount();
 
-            if (loggedInAccount.Role is not (Role.Admin or Role.User))
+            if (loggedInAccount.Role is not (AccountRoles.Admin or AccountRoles.User))
                 return Json(new { result = false, error = localizer["Please Login to write board"].Value });
 
             BoardRequest boardRequest = new()
             {
-                Type = BoardTypes.FreeForum,
+                Type = BoardKinds.FreeForum,
                 Title = boardInputViewModel.Title,
                 Content = boardInputViewModel.Content,
                 Writer = loggedInAccount.RequireNickname(),
@@ -75,7 +74,7 @@ public class ForumController(
 
             // WriteBoardAsync itself gates Noticed on isAdmin, so a non-admin's Noticed=true can
             // never pin a post regardless of what this controller (or any other caller) sends.
-            ServiceResult result = await boardService.WriteBoardAsync(boardRequest, loggedInAccount.Role == Role.Admin, attachedFile, ct);
+            ServiceResult result = await boardService.WriteBoardAsync(boardRequest, loggedInAccount.Role == AccountRoles.Admin, attachedFile, ct);
             return result.Success
                 ? Json(new { result = true, message = localizer["The board has been successfully created."].Value })
                 : Json(new { result = false, error = localizer[result.ErrorKey, result.ErrorArgs].ToPlainString() });
@@ -92,8 +91,8 @@ public class ForumController(
     /// <summary>Submits a comment on a free-forum post.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [RequiredHttpPostAccess(Role = Role.Admin)]
-    [RequiredHttpPostAccess(Role = Role.User)]
+    [RequiredHttpPostAccess(Role = AccountRoles.Admin)]
+    [RequiredHttpPostAccess(Role = AccountRoles.User)]
     public async Task<IActionResult> WriteFreeComment([FromBody] BoardCommentInputViewModel boardCommentInputViewModel, CancellationToken ct)
     {
         try
@@ -106,7 +105,7 @@ public class ForumController(
 
             // DB-fresh account already loaded by ViewBagPopulatorFilter for this request (see WriteFreeBoard).
             AccountResponse loggedInAccount = HttpContext.GetLoggedInAccount();
-            if (loggedInAccount.Role is not (Role.Admin or Role.User))
+            if (loggedInAccount.Role is not (AccountRoles.Admin or AccountRoles.User))
                 return Json(new { result = false, error = localizer["Please Login to write comment."].Value });
 
             BoardCommentRequest commentRequest = new()
@@ -117,7 +116,7 @@ public class ForumController(
                 Content = boardCommentInputViewModel.Content
             };
 
-            ServiceResult result = await boardService.WriteCommentAsync(commentRequest, isAdmin: loggedInAccount.Role == Role.Admin, requiredType: BoardTypes.FreeForum, ct: ct);
+            ServiceResult result = await boardService.WriteCommentAsync(commentRequest, isAdmin: loggedInAccount.Role == AccountRoles.Admin, requiredType: BoardKinds.FreeForum, ct: ct);
             return result.Success
                 ? Json(new { result = true, boardId = boardCommentInputViewModel.BoardId, page = boardCommentInputViewModel.DetailCurrentPage })
                 : Json(new { result = false, error = localizer[result.ErrorKey, result.ErrorArgs].ToPlainString() });
@@ -139,12 +138,12 @@ public class ForumController(
     /// </summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [RequiredHttpPostAccess(Role = Role.Admin)]
-    [RequiredHttpPostAccess(Role = Role.User)]
+    [RequiredHttpPostAccess(Role = AccountRoles.Admin)]
+    [RequiredHttpPostAccess(Role = AccountRoles.User)]
     public async Task<IActionResult> UploadImageFile(IFormFile? summernoteImageFile, CancellationToken ct)
     {
         return await this.UploadEditorImageAsync(summernoteImageFile, serverSettings.Value.MaxAttachedFileSizeBytes, localizer, logger, dataProtection,
-            (file, uploaderEmail, token) => boardService.UploadSummernoteImageAsync(file, "Forum", BoardTypes.FreeForum, uploaderEmail, token),
+            (file, uploaderEmail, token) => boardService.UploadSummernoteImageAsync(file, "Forum", BoardKinds.FreeForum, uploaderEmail, token),
             ct);
     }
     #endregion
@@ -171,12 +170,12 @@ public class ForumController(
                     LoggedInAccountTimeZoneIanaId = loggedInAccount.RequireTimeZoneIanaId()
                 };
 
-                bool isAccountSessionExist = loggedInAccount.Role != Role.Anonymous;
+                bool isAccountSessionExist = loggedInAccount.Role != AccountRoles.Anonymous;
                 return isAccountSessionExist ? View(freeForumOutputViewModel) : RedirectToAction("Login", "Account");
             }
             // Detail view
             case "detail" when boardId == null:
-                return RedirectToAction(BoardTypes.FreeForum, "Forum");
+                return RedirectToAction(BoardKinds.FreeForum, "Forum");
             case "detail":
             {
                 FreeForumOutputViewModel freeForumOutputViewModel = new()
@@ -188,11 +187,11 @@ public class ForumController(
 
                 try
                 {
-                    BoardResponse? freeBoard = await boardService.GetBoardByIdAsync(boardId.Value, BoardTypes.FreeForum, ct);
+                    BoardResponse? freeBoard = await boardService.GetBoardByIdAsync(boardId.Value, BoardKinds.FreeForum, ct);
                     BoardAttachedFileDto? boardAttachedFile = await boardService.GetAttachedFileByBoardIdAsync(boardId.Value, ct);
 
                     if (freeBoard == null || freeBoard.Deleted)
-                        return RedirectToAction(BoardTypes.FreeForum, "Forum");
+                        return RedirectToAction(BoardKinds.FreeForum, "Forum");
 
                     // The account from HttpContext.GetLoggedInAccount() is re-fetched from the database by ViewBagPopulatorFilter
                     // on every request (not the session-cached snapshot), so a mid-session Role
@@ -200,7 +199,7 @@ public class ForumController(
                     // below — matching the "edit" case's use of HttpContext.GetLoggedInAccount().
                     AccountResponse loggedInAccount = HttpContext.GetLoggedInAccount();
                     if (!boardService.CanView(freeBoard, loggedInAccount))
-                        return RedirectToAction(BoardTypes.FreeForum, "Forum");
+                        return RedirectToAction(BoardKinds.FreeForum, "Forum");
 
                     await boardService.IncrementBoardViewAsync(boardId.Value, ct);
 
@@ -242,12 +241,12 @@ public class ForumController(
                 catch (Exception ex)
                 {
                     logger.LogError(ex, "Failed to load free-forum post {BoardId} for {Email}", boardId, HttpContext.GetLoggedInAccount().Email);
-                    return RedirectToAction(BoardTypes.FreeForum, "Forum");
+                    return RedirectToAction(BoardKinds.FreeForum, "Forum");
                 }
             }
             // Edit
             case "edit" when boardId == null:
-                return RedirectToAction(BoardTypes.FreeForum, "Forum");
+                return RedirectToAction(BoardKinds.FreeForum, "Forum");
             case "edit":
             {
                 FreeForumOutputViewModel freeForumOutputViewModel = new()
@@ -259,18 +258,18 @@ public class ForumController(
 
                 try
                 {
-                    BoardResponse? freeBoard = await boardService.GetBoardByIdAsync(boardId.Value, BoardTypes.FreeForum, ct);
+                    BoardResponse? freeBoard = await boardService.GetBoardByIdAsync(boardId.Value, BoardKinds.FreeForum, ct);
                     BoardAttachedFileDto? boardAttachedFile = await boardService.GetAttachedFileByBoardIdAsync(boardId.Value, ct);
 
                     if (freeBoard == null || freeBoard.Deleted)
-                        return RedirectToAction(BoardTypes.FreeForum, "Forum");
+                        return RedirectToAction(BoardKinds.FreeForum, "Forum");
 
                     // The account from HttpContext.GetLoggedInAccount() is re-fetched from the database by ViewBagPopulatorFilter
                     // on every request (not the session-cached snapshot), so ownership is always checked
                     // against the account's current state. The edit page is owner-only (no admin bypass).
                     AccountResponse loggedInAccount = HttpContext.GetLoggedInAccount();
                     if (!loggedInAccount.IsOwner(freeBoard.Writer))
-                        return RedirectToAction(BoardTypes.FreeForum, "Forum");
+                        return RedirectToAction(BoardKinds.FreeForum, "Forum");
 
                     (freeBoard.Content, bool isImgTagIncluded) = await boardService.PrepareHtmlForDisplayAsync(freeBoard.Content ?? "", ct);
 
@@ -296,7 +295,7 @@ public class ForumController(
                 catch (Exception ex)
                 {
                     logger.LogError(ex, "Failed to load the edit form of free-forum post {BoardId} for {Email}", boardId, HttpContext.GetLoggedInAccount().Email);
-                    return RedirectToAction(BoardTypes.FreeForum, "Forum");
+                    return RedirectToAction(BoardKinds.FreeForum, "Forum");
                 }
             }
             // List
@@ -310,12 +309,12 @@ public class ForumController(
                 // is reflected immediately in the locked-post visibility rule below — same
                 // rationale as the "detail" case above.
                 AccountResponse loggedInAccountForQuery = HttpContext.GetLoggedInAccount();
-                bool isLoggedIn = loggedInAccountForQuery.Role != Role.Anonymous;
+                bool isLoggedIn = loggedInAccountForQuery.Role != AccountRoles.Anonymous;
                 // Filtering, search/visibility rules, ordering, and paging are all pushed down into
                 // one SQL query (see BoardRepository.QueryPageAsync) instead of materializing the
                 // whole board-type bucket into memory first.
                 (IEnumerable<BoardResponse> pageItems, int totalCount) = await boardService.GetBoardPageAsync(new BoardPageQuery(
-                    Type: BoardTypes.FreeForum,
+                    Type: BoardKinds.FreeForum,
                     OwnerNickname: null,
                     SearchType: searchType,
                     SearchText: searchText,
@@ -325,7 +324,7 @@ public class ForumController(
                     Page: page,
                     PageSize: pageSize), ct);
 
-                BoardResponse[] noticeBoards = [.. await boardService.GetNoticedBoardsAsync(BoardTypes.FreeForum, ct)];
+                BoardResponse[] noticeBoards = [.. await boardService.GetNoticedBoardsAsync(BoardKinds.FreeForum, ct)];
                 BoardResponse[] boardResponses = [.. pageItems];
                 var listNicknames = noticeBoards.Select(b => b.Writer)
                     .Concat(boardResponses.Select(b => b.Writer))
@@ -376,16 +375,16 @@ public class ForumController(
     /// </summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [RequiredHttpPostAccess(Role = Role.Admin)]
-    [RequiredHttpPostAccess(Role = Role.User)]
-    [RequiredHttpPostAccess(Role = Role.Anonymous)]
+    [RequiredHttpPostAccess(Role = AccountRoles.Admin)]
+    [RequiredHttpPostAccess(Role = AccountRoles.User)]
+    [RequiredHttpPostAccess(Role = AccountRoles.Anonymous)]
     public async Task<IActionResult> DownloadFreeBoardAttachedFile(long boardId, CancellationToken ct)
     {
         try
         {
             // Re-fetched from the database by ViewBagPopulatorFilter on every request.
             AccountResponse viewer = HttpContext.GetLoggedInAccount();
-            (ServiceResult result, AttachmentDownload? file) = await boardService.OpenAttachedFileAsync(boardId, BoardTypes.FreeForum, viewer, ct);
+            (ServiceResult result, AttachmentDownload? file) = await boardService.OpenAttachedFileAsync(boardId, BoardKinds.FreeForum, viewer, ct);
             if (!result.Success)
                 return Json(new { result = false, error = localizer[result.ErrorKey, result.ErrorArgs].ToPlainString() });
 
@@ -406,13 +405,13 @@ public class ForumController(
     /// </summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [RequiredHttpPostAccess(Role = Role.Admin)]
-    [RequiredHttpPostAccess(Role = Role.User)]
+    [RequiredHttpPostAccess(Role = AccountRoles.Admin)]
+    [RequiredHttpPostAccess(Role = AccountRoles.User)]
     public async Task<IActionResult> IsBoardExists(long id, CancellationToken ct)
     {
         try
         {
-            BoardResponse? board = await boardService.GetBoardByIdAsync(id, BoardTypes.FreeForum, ct);
+            BoardResponse? board = await boardService.GetBoardByIdAsync(id, BoardKinds.FreeForum, ct);
             if (board == null || board.Deleted)
                 return Json(new { result = false, error = localizer["Input is invalid"].Value });
 
@@ -442,8 +441,8 @@ public class ForumController(
     /// <summary>Saves edits to an existing free-forum post.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [RequiredHttpPostAccess(Role = Role.Admin)]
-    [RequiredHttpPostAccess(Role = Role.User)]
+    [RequiredHttpPostAccess(Role = AccountRoles.Admin)]
+    [RequiredHttpPostAccess(Role = AccountRoles.User)]
     public async Task<IActionResult> EditFreeBoard(BoardInputViewModel boardInputViewModel, CancellationToken ct)
     {
         try
@@ -455,13 +454,13 @@ public class ForumController(
 
             // DB-fresh account already loaded by ViewBagPopulatorFilter for this request (see WriteFreeBoard).
             AccountResponse loggedInAccount = HttpContext.GetLoggedInAccount();
-            if (loggedInAccount.Role is not (Role.Admin or Role.User))
+            if (loggedInAccount.Role is not (AccountRoles.Admin or AccountRoles.User))
                 return Json(new { result = false, error = localizer["Please Login to edit board."].Value });
 
             BoardRequest boardRequest = new()
             {
                 Id = boardInputViewModel.Id,
-                Type = BoardTypes.FreeForum,
+                Type = BoardKinds.FreeForum,
                 Title = boardInputViewModel.Title,
                 Content = boardInputViewModel.Content,
                 Locked = boardInputViewModel.Locked
@@ -469,7 +468,7 @@ public class ForumController(
 
             AttachedFileDto? attachedFile = await boardInputViewModel.UploadedFile.ToAttachedFileInfoAsync(serverSettings.Value.MaxAttachedFileSizeBytes, ct);
 
-            ServiceResult result = await boardService.EditBoardAsync(boardRequest, loggedInAccount.RequireNickname(), loggedInAccount.Role == Role.Admin, attachedFile, ct);
+            ServiceResult result = await boardService.EditBoardAsync(boardRequest, loggedInAccount.RequireNickname(), loggedInAccount.Role == AccountRoles.Admin, attachedFile, ct);
             return result.Success
                 ? Json(new { result = true, message = localizer["The board has been successfully updated."].Value })
                 : Json(new { result = false, error = localizer[result.ErrorKey, result.ErrorArgs].ToPlainString() });
@@ -490,8 +489,8 @@ public class ForumController(
     /// <summary>Soft-deletes a free-forum post.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [RequiredHttpPostAccess(Role = Role.Admin)]
-    [RequiredHttpPostAccess(Role = Role.User)]
+    [RequiredHttpPostAccess(Role = AccountRoles.Admin)]
+    [RequiredHttpPostAccess(Role = AccountRoles.User)]
     public async Task<IActionResult> DeleteBoard([FromBody] BoardInputViewModel boardInputViewModel, CancellationToken ct)
     {
         try
@@ -501,9 +500,9 @@ public class ForumController(
 
             ServiceResult result = await boardService.DeleteBoardAsync(
                 boardInputViewModel.Id,
-                BoardTypes.FreeForum,
+                BoardKinds.FreeForum,
                 loggedInAccount.RequireNickname(),
-                loggedInAccount.Role == Role.Admin,
+                loggedInAccount.Role == AccountRoles.Admin,
                 ct);
 
             return result.Success
@@ -522,8 +521,8 @@ public class ForumController(
     /// <summary>Soft-deletes a free-forum comment.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [RequiredHttpPostAccess(Role = Role.Admin)]
-    [RequiredHttpPostAccess(Role = Role.User)]
+    [RequiredHttpPostAccess(Role = AccountRoles.Admin)]
+    [RequiredHttpPostAccess(Role = AccountRoles.User)]
     public async Task<IActionResult> DeleteComment(long id, CancellationToken ct)
     {
         try
@@ -534,8 +533,8 @@ public class ForumController(
             ServiceResult result = await boardService.DeleteCommentAsync(
                 id,
                 loggedInAccount.RequireNickname(),
-                loggedInAccount.Role == Role.Admin,
-                BoardTypes.FreeForum,
+                loggedInAccount.Role == AccountRoles.Admin,
+                BoardKinds.FreeForum,
                 ct);
 
             return result.Success

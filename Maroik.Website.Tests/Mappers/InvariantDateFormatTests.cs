@@ -1,3 +1,4 @@
+using Maroik.Core.Service.Services;
 using System.Globalization;
 using Maroik.Core.Contract.Dtos;
 using Maroik.Website.Mappers;
@@ -33,8 +34,8 @@ public sealed class InvariantDateFormatTests : IDisposable
         var income = new FixedIncomeResponse { MaturityDate = new DateTime(2030, 12, 31), DepositMonth = 1, DepositDay = 1 };
         var expenditure = new FixedExpenditureResponse { MaturityDate = new DateTime(2030, 12, 31), DepositMonth = 1, DepositDay = 1 };
 
-        Assert.Equal("2030-12-31", Assert.Single(new[] { income }.ToDisplayViewModels([], k => k, "UTC", 3, _utcNow)).MaturityDate);
-        Assert.Equal("2030-12-31", Assert.Single(new[] { expenditure }.ToDisplayViewModels([], k => k, "UTC", 3, _utcNow)).MaturityDate);
+        Assert.Equal("2030-12-31", Assert.Single(new[] { income }.ToDisplayViewModels(new PolicyService(), [], k => k, "UTC", 3, _utcNow)).MaturityDate);
+        Assert.Equal("2030-12-31", Assert.Single(new[] { expenditure }.ToDisplayViewModels(new PolicyService(), [], k => k, "UTC", 3, _utcNow)).MaturityDate);
     }
 
     /// <summary>Calendar event display dates (all-day and timed) are Gregorian.</summary>

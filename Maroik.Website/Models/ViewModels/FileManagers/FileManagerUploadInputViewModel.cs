@@ -13,7 +13,7 @@ public class FileManagerUploadInputViewModel
     public long Size { get; set; }
 
     /// <summary>
-    /// What to do with a name already used in the folder: a <c>FileManagerConflictChoice</c> name ("Ask", "Overwrite" or "KeepBoth");
+    /// What to do with a name already used in the folder: a <c>FileManagerConflictOption</c> name ("Ask", "Overwrite" or "KeepBoth");
     /// anything else is invalid input.
     /// </summary>
     public string? Conflict { get; set; }

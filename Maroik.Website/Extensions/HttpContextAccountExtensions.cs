@@ -15,7 +15,7 @@ public static class HttpContextAccountExtensions
         /// <summary>
         /// Returns the logged-in account that <see cref="ViewBagPopulatorFilter"/> resolved for this
         /// request — the database-fresh account when a session exists, or its anonymous placeholder
-        /// (<c>Role.Anonymous</c>, no email) otherwise. Never null inside an MVC action or the views it
+        /// (<c>AccountRoles.Anonymous</c>, no email) otherwise. Never null inside an MVC action or the views it
         /// renders, because that filter runs globally before every action.
         /// </summary>
         /// <exception cref="InvalidOperationException">The filter has not run for this request.</exception>

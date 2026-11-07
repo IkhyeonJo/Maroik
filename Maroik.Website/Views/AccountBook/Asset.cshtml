@@ -7,7 +7,6 @@
     Asset amounts are displayed with their currency units; soft-deleted assets can be restored.
 *@
 @using Maroik.Website.Models.ViewModels.AccountBooks
-@using Maroik.Core.Domain.Finances
 @model AccountBookPageViewModel
 <section class="content">
     <div class="card card-primary">
@@ -65,7 +64,7 @@
                                     @* Options are rendered from AssetItemType (the domain enum backing Asset.Item /
                                        the DB's Asset_Item_check constraint) rather than hardcoded, so this list can't
                                        drift out of sync with the taxonomy the server actually accepts. *@
-                                    @foreach (string item in Enum.GetNames<AssetItemType>())
+                                    @foreach (string item in Model.FinanceRules.AssetItemTypes)
                                     {
                                         <option value="@item">@Localizer[item].Value</option>
                                     }
@@ -122,7 +121,7 @@
                                 <label for="editAssetItem">@Localizer["Item"].Value</label>
                                 <br />
                                 <select id="editAssetItem" name="editAssetItem" class="form-control form-control-sm" style="max-width:100%;text-overflow:ellipsis;">
-                                    @foreach (string item in Enum.GetNames<AssetItemType>())
+                                    @foreach (string item in Model.FinanceRules.AssetItemTypes)
                                     {
                                         <option value="@item">@Localizer[item].Value</option>
                                     }

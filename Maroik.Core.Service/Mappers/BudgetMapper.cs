@@ -1,4 +1,5 @@
 using Maroik.Core.Contract.Dtos;
+using Maroik.Core.Contract.Enums;
 using Maroik.Core.Domain.Budgets;
 using Maroik.Core.Domain.Formulas;
 
@@ -7,6 +8,9 @@ namespace Maroik.Core.Service.Mappers;
 /// <summary>Maps the budget domain's views (<see cref="BudgetSheetView"/>, <see cref="BudgetCellView"/>, <see cref="BudgetFormulaPreview"/>) to their DTOs.</summary>
 public static class BudgetMapper
 {
+    /// <summary>The Domain's kind of a sheet kind named by a caller of the service.</summary>
+    public static BudgetKind ToDomain(BudgetSheetKind kind) => kind == BudgetSheetKind.Income ? BudgetKind.Income : BudgetKind.Expenditure;
+
     /// <summary>A sheet.</summary>
     public static BudgetSheetResponse ToResponse(BudgetSheetView view) => new()
     {

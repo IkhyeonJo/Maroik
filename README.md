@@ -337,8 +337,8 @@ All of this is enforced by architecture tests that fail the build, among them:
 `Domain_ErrorMessages_MustGoThrough_DomainError`, `BoundedContext_ShouldNot_DependOnAnotherBoundedContext`,
 `ServiceLayer_MustNotProjectReference_AnyInfrastructureOrPersistenceProject`,
 `InfrastructureLayers_MustBuildOnContractOnly_NotOnEachOtherOrService`, `ProjectReferenceGraph_MustBeAcyclic`,
-`Controllers_ShouldNot_DependOnRepositoryOrClientOrServiceNamespace`,
-`PostActions_MustCarry_AntiforgeryAndRoleAttributes` and `ServiceResults_TakeTheirMessageKey_FromServiceErrorKeys`.
+`Controllers_ShouldNot_DependOnRepositoryOrClientOrServiceNamespace`, `WebsiteTypes_ShouldNot_DependOnDomainNamespace`,
+`WebsiteSources_ShouldNot_MentionDomainNamespace`, `PostActions_MustCarry_AntiforgeryAndRoleAttributes` and `ServiceResults_TakeTheirMessageKey_FromServiceErrorKeys`.
 
 ### Runtime
 

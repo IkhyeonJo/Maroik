@@ -381,14 +381,14 @@ public class FileManagerService(
             {
                 switch (request.Conflict)
                 {
-                    case FileManagerConflictChoice.Ask:
+                    case FileManagerConflictOption.Ask:
                         await unitOfWork.RollbackAsync(ct);
                         return (ServiceResult.Ok(), new FileManagerUploadStart(true, Guid.Empty, name, FileManagerUploadPolicy.ChunkBytes));
-                    case FileManagerConflictChoice.KeepBoth:
+                    case FileManagerConflictOption.KeepBoth:
                         name = FileManagerNamePolicy.KeepBothName(name, [.. tree.Children(request.ParentId).Except(stale).Select(n => n.Name)]);
                         break;
                     // A file never overwrites a folder.
-                    case FileManagerConflictChoice.Overwrite when existing.IsFolder:
+                    case FileManagerConflictOption.Overwrite when existing.IsFolder:
                         await unitOfWork.RollbackAsync(ct);
                         return (NameTaken(name), null);
                 }

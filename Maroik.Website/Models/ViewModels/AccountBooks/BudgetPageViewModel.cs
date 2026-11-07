@@ -1,8 +1,12 @@
+using Maroik.Core.Contract.Dtos;
 namespace Maroik.Website.Models.ViewModels.AccountBooks;
 
 /// <summary>The Income Budget / Expenditure Budget page: which sheet it opens and what its "add line" form offers.</summary>
 public sealed class BudgetPageViewModel
 {
+    /// <summary>The functions the formula editor offers.</summary>
+    public IReadOnlyList<BudgetFunctionResponse> Functions { get; init; } = [];
+
     /// <summary>Income or Expenditure.</summary>
     public string Kind { get; init; } = "";
 

@@ -1,3 +1,4 @@
+using Maroik.Core.Service.Services;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Website.Middlewares;
 using Microsoft.AspNetCore.Hosting;
@@ -50,7 +51,7 @@ public sealed class AvatarCacheMiddlewareTests : IDisposable
         var sut = new AvatarCacheMiddleware(_ => { nextCalled = true; return Task.CompletedTask; });
         var context = BuildContext("/css/site.css");
 
-        await sut.InvokeAsync(context, MakeEnv(_webRoot), _profileService.Object, NullLogger<AvatarCacheMiddleware>.Instance);
+        await sut.InvokeAsync(context, MakeEnv(_webRoot), _profileService.Object, new PolicyService(), NullLogger<AvatarCacheMiddleware>.Instance);
 
         Assert.True(nextCalled);
         _profileService.Verify(p => p.DownloadAvatarAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
@@ -64,7 +65,7 @@ public sealed class AvatarCacheMiddlewareTests : IDisposable
         var sut = new AvatarCacheMiddleware(_ => { nextCalled = true; return Task.CompletedTask; });
         var context = BuildContext(AvatarUrl, method: "POST");
 
-        await sut.InvokeAsync(context, MakeEnv(_webRoot), _profileService.Object, NullLogger<AvatarCacheMiddleware>.Instance);
+        await sut.InvokeAsync(context, MakeEnv(_webRoot), _profileService.Object, new PolicyService(), NullLogger<AvatarCacheMiddleware>.Instance);
 
         Assert.True(nextCalled);
         _profileService.Verify(p => p.DownloadAvatarAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
@@ -78,7 +79,7 @@ public sealed class AvatarCacheMiddlewareTests : IDisposable
         var sut = new AvatarCacheMiddleware(_ => { nextCalled = true; return Task.CompletedTask; });
         var context = BuildContext(AvatarUrl);
 
-        await sut.InvokeAsync(context, MakeEnv(null), _profileService.Object, NullLogger<AvatarCacheMiddleware>.Instance);
+        await sut.InvokeAsync(context, MakeEnv(null), _profileService.Object, new PolicyService(), NullLogger<AvatarCacheMiddleware>.Instance);
 
         Assert.True(nextCalled);
         _profileService.Verify(p => p.DownloadAvatarAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
@@ -94,7 +95,7 @@ public sealed class AvatarCacheMiddlewareTests : IDisposable
         var sut = new AvatarCacheMiddleware(_ => { nextCalled = true; return Task.CompletedTask; });
         var context = BuildContext(AvatarUrl);
 
-        await sut.InvokeAsync(context, MakeEnv(_webRoot), _profileService.Object, NullLogger<AvatarCacheMiddleware>.Instance);
+        await sut.InvokeAsync(context, MakeEnv(_webRoot), _profileService.Object, new PolicyService(), NullLogger<AvatarCacheMiddleware>.Instance);
 
         Assert.True(nextCalled);
         _profileService.Verify(p => p.DownloadAvatarAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
@@ -110,7 +111,7 @@ public sealed class AvatarCacheMiddlewareTests : IDisposable
         var sut = new AvatarCacheMiddleware(_ => { nextCalled = true; return Task.CompletedTask; });
         var context = BuildContext(AvatarUrl);
 
-        await sut.InvokeAsync(context, MakeEnv(_webRoot), _profileService.Object, NullLogger<AvatarCacheMiddleware>.Instance);
+        await sut.InvokeAsync(context, MakeEnv(_webRoot), _profileService.Object, new PolicyService(), NullLogger<AvatarCacheMiddleware>.Instance);
 
         Assert.True(nextCalled);
         string localPath = Path.Combine(LocalAvatarDir, AvatarFile);
@@ -129,7 +130,7 @@ public sealed class AvatarCacheMiddlewareTests : IDisposable
         var sut = new AvatarCacheMiddleware(_ => { nextCalled = true; return Task.CompletedTask; });
         var context = BuildContext(AvatarUrl);
 
-        await sut.InvokeAsync(context, MakeEnv(_webRoot), _profileService.Object, NullLogger<AvatarCacheMiddleware>.Instance);
+        await sut.InvokeAsync(context, MakeEnv(_webRoot), _profileService.Object, new PolicyService(), NullLogger<AvatarCacheMiddleware>.Instance);
 
         Assert.True(nextCalled);
         Assert.False(File.Exists(Path.Combine(LocalAvatarDir, AvatarFile)));
@@ -144,7 +145,7 @@ public sealed class AvatarCacheMiddlewareTests : IDisposable
         var sut = new AvatarCacheMiddleware(_ => { nextCalled = true; return Task.CompletedTask; });
         var context = BuildContext(AvatarUrl);
 
-        await sut.InvokeAsync(context, MakeEnv(_webRoot), _profileService.Object, NullLogger<AvatarCacheMiddleware>.Instance);
+        await sut.InvokeAsync(context, MakeEnv(_webRoot), _profileService.Object, new PolicyService(), NullLogger<AvatarCacheMiddleware>.Instance);
 
         Assert.True(nextCalled);
         Assert.False(File.Exists(Path.Combine(LocalAvatarDir, AvatarFile)));
@@ -160,7 +161,7 @@ public sealed class AvatarCacheMiddlewareTests : IDisposable
         var sut = new AvatarCacheMiddleware(_ => { nextCalled = true; return Task.CompletedTask; });
         var context = BuildContext(AvatarUrl);
 
-        await sut.InvokeAsync(context, MakeEnv(_webRoot), _profileService.Object, NullLogger<AvatarCacheMiddleware>.Instance);
+        await sut.InvokeAsync(context, MakeEnv(_webRoot), _profileService.Object, new PolicyService(), NullLogger<AvatarCacheMiddleware>.Instance);
 
         Assert.True(nextCalled);
         Assert.False(File.Exists(Path.Combine(LocalAvatarDir, AvatarFile)));
@@ -181,7 +182,7 @@ public sealed class AvatarCacheMiddlewareTests : IDisposable
         bool nextCalled = false;
         var sut = new AvatarCacheMiddleware(_ => { nextCalled = true; return Task.CompletedTask; });
 
-        await sut.InvokeAsync(BuildContext(path), MakeEnv(_webRoot), _profileService.Object, NullLogger<AvatarCacheMiddleware>.Instance);
+        await sut.InvokeAsync(BuildContext(path), MakeEnv(_webRoot), _profileService.Object, new PolicyService(), NullLogger<AvatarCacheMiddleware>.Instance);
 
         Assert.True(nextCalled);
         _profileService.Verify(p => p.DownloadAvatarAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
@@ -197,7 +198,7 @@ public sealed class AvatarCacheMiddlewareTests : IDisposable
         _profileService.Setup(p => p.DownloadAvatarAsync(fileName, It.IsAny<CancellationToken>())).ReturnsAsync([1, 2]);
         var sut = new AvatarCacheMiddleware(_ => Task.CompletedTask);
 
-        await sut.InvokeAsync(BuildContext("/upload/Management/Profile/Avatar/" + fileName), MakeEnv(_webRoot), _profileService.Object, NullLogger<AvatarCacheMiddleware>.Instance);
+        await sut.InvokeAsync(BuildContext("/upload/Management/Profile/Avatar/" + fileName), MakeEnv(_webRoot), _profileService.Object, new PolicyService(), NullLogger<AvatarCacheMiddleware>.Instance);
 
         Assert.True(File.Exists(Path.Combine(LocalAvatarDir, fileName)));
     }

@@ -36,7 +36,7 @@
 
         @switch (Model.Role)
         {
-            case Role.Admin:
+            case AccountRoles.Admin:
                 @*<!-- Language Dropdown Menu -->*@
                 <li class="nav-item dropdown">
                     <a class="nav-link" data-toggle="dropdown" href="#">
@@ -59,7 +59,7 @@
                             <img src="@Model.AvatarImagePath" class="img-circle elevation-2" alt="@Localizer["User Image"].Value">
                             <p>
                                 @Model.Nickname
-                                <small>@Localizer["Member since"] @Model.Created.ConvertTimeByTimeZoneIanaId(Model.TimeZoneIanaId ?? "").ToString("d")</small>
+                                <small>@Localizer["Member since"] @Model.Created.ToTimeZone(Model.TimeZoneIanaId ?? "").ToString("d")</small>
                             </p>
                         </li>
                         @*<!-- Menu Footer-->*@
@@ -72,7 +72,7 @@
                     </ul>
                 </li>
                 break;
-            case Role.User:
+            case AccountRoles.User:
             {
                 if (totalNoticeCount > 0)
                 {
@@ -125,7 +125,7 @@
                             <img src="@Model.AvatarImagePath" class="img-circle elevation-2" alt="@Localizer["User Image"].Value">
                             <p>
                                 @Model.Nickname
-                                <small>@Localizer["Member since"] @Model.Created.ConvertTimeByTimeZoneIanaId(Model.TimeZoneIanaId ?? "").ToString("d")</small>
+                                <small>@Localizer["Member since"] @Model.Created.ToTimeZone(Model.TimeZoneIanaId ?? "").ToString("d")</small>
                             </p>
                         </li>
                         @*<!-- Menu Footer-->*@
@@ -139,7 +139,7 @@
                 </li>
                 break;
             }
-            case Role.Anonymous:
+            case AccountRoles.Anonymous:
                 @*<!-- Language Dropdown Menu -->*@
                 <li class="nav-item dropdown">
                     <div class="btn-group" style="padding-right:10px;">

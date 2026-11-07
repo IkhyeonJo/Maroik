@@ -1,4 +1,4 @@
-using Maroik.Core.Domain.Extensions;
+using Maroik.Core.Contract.Extensions;
 
 namespace Maroik.Website.Extensions;
 
@@ -22,7 +22,7 @@ public static class ExportExcelExtensions
         public string ToExcelFileName(string timeZoneIanaId, DateTime utcNow)
         {
             string safePrefix = new(prefix.Where(c => Array.IndexOf(_invalidFileNameChars, c) < 0).ToArray());
-            return $"{safePrefix}-{utcNow.ConvertTimeByTimeZoneIanaId(timeZoneIanaId):yyyy-MM-dd-HH-mm-ss-fff}.xlsx";
+            return $"{safePrefix}-{utcNow.ToTimeZone(timeZoneIanaId):yyyy-MM-dd-HH-mm-ss-fff}.xlsx";
         }
     }
 }

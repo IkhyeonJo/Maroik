@@ -9,6 +9,9 @@ namespace Maroik.Website.Models.ViewModels.AccountBooks;
 /// </summary>
 public class AccountBookPageViewModel
 {
+    /// <summary>What the page's forms offer and mirror.</summary>
+    public FinanceFormRules FinanceRules { get; set; } = new();
+
     /// <summary>Active (non-deleted) assets belonging to the logged-in user, used to populate the asset-selection dropdowns.</summary>
     public List<AssetResponse> Assets { get; set; } = [];
 

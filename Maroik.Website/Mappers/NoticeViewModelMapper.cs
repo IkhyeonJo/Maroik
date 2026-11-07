@@ -1,6 +1,7 @@
+using Maroik.Core.Contract.Interfaces;
+using Maroik.Core.Contract.Enums;
+using Maroik.Core.Contract.Extensions;
 using Maroik.Core.Contract.Dtos;
-using Maroik.Core.Domain.Finances;
-using Maroik.Core.Domain.Extensions;
 using Maroik.Website.Extensions;
 using Maroik.Website.Models.ViewModels.Notices;
 
@@ -9,22 +10,22 @@ namespace Maroik.Website.Mappers;
 /// <summary>
 /// Maps fixed-income and fixed-expenditure response objects to display view models.
 /// Schedule status flags (<c>Noticed</c>, <c>Expired</c>) are computed via
-/// <see cref="FixedSchedulePolicy"/>, which is shared with the service layer.
+/// <c>FixedSchedulePolicy</c>, which is shared with the service layer.
 /// </summary>
 public static class NoticeViewModelMapper
 {
-    extension(FixedScheduleRowStatus status)
+    extension(FixedScheduleRowState status)
     {
         /// <summary>
-        /// Maps a <see cref="FixedScheduleRowStatus"/> to the notice-grid's Bootstrap row class.
-        /// The status decision is Domain's (<see cref="FixedSchedulePolicy.GetRowStatus"/>); this
+        /// Maps a <see cref="FixedScheduleRowState"/> to the notice-grid's Bootstrap row class.
+        /// The status decision is Domain's (<c>FixedSchedulePolicy.GetRowStatus</c>); this
         /// presentation-only mapping (and the "clsGridRow" selector hook the client script binds
         /// to) belongs here, not in Domain.
         /// </summary>
         public string ToRowCssClass() => status switch
         {
-            FixedScheduleRowStatus.Expired => "table-danger clsGridRow",
-            FixedScheduleRowStatus.Noticed => "table-info clsGridRow",
+            FixedScheduleRowState.Expired => "table-danger clsGridRow",
+            FixedScheduleRowState.Noticed => "table-info clsGridRow",
             _ => "table-inactive clsGridRow"
         };
     }
@@ -33,6 +34,7 @@ public static class NoticeViewModelMapper
     {
         /// <summary>Maps a single <see cref="FixedIncomeResponse"/> to a <see cref="FixedIncomeOutputViewModel"/> for display.</summary>
         private FixedIncomeOutputViewModel ToDisplayViewModel(
+            IPolicyService policy,
             IReadOnlyDictionary<string, string?> currencyByProduct,
             Func<string, string> localize,
             string timeZoneIanaId,
@@ -50,10 +52,13 @@ public static class NoticeViewModelMapper
                 MaturityDate = item.MaturityDate.ToMaturityDateString(),
                 Note = item.Note,
                 DepositMyAssetProductName = item.DepositMyAssetProductName,
-                Created = item.Created.ConvertTimeByTimeZoneIanaId(timeZoneIanaId),
-                Updated = item.Updated.ConvertTimeByTimeZoneIanaId(timeZoneIanaId),
-                Noticed = FixedSchedulePolicy.IsNoticed(item.DepositMonth, item.DepositDay, today, noticeWindowDays, item.Unpunctuality),
-                Expired = FixedSchedulePolicy.IsExpired(item.MaturityDate, today),
+                Created = item.Created.ToTimeZone(timeZoneIanaId),
+                Updated = item.Updated.ToTimeZone(timeZoneIanaId),
+                Noticed = policy.IsFixedScheduleNoticed(item.DepositMonth, item.DepositDay, today, noticeWindowDays, item.Unpunctuality),
+                Expired = policy.IsFixedScheduleExpired(item.MaturityDate, today),
+                RowCssClass = policy.GetFixedScheduleRowState(
+                    policy.IsFixedScheduleExpired(item.MaturityDate, today),
+                    policy.IsFixedScheduleNoticed(item.DepositMonth, item.DepositDay, today, noticeWindowDays, item.Unpunctuality)).ToRowCssClass(),
                 Unpunctuality = item.Unpunctuality
             };
     }
@@ -65,6 +70,7 @@ public static class NoticeViewModelMapper
         /// against <paramref name="utcNow"/> (the request's clock reading) as a date in <paramref name="timeZoneIanaId"/>.
         /// </summary>
         public List<FixedIncomeOutputViewModel> ToDisplayViewModels(
+            IPolicyService policy,
             IEnumerable<AssetResponse> assets,
             Func<string, string> localize,
             string timeZoneIanaId,
@@ -74,10 +80,10 @@ public static class NoticeViewModelMapper
             var currencyByProduct = assets
                 .GroupBy(a => a.ProductName ?? "")
                 .ToDictionary(g => g.Key, g => g.Last().MonetaryUnit);
-            var today = utcNow.ConvertTimeByTimeZoneIanaId(timeZoneIanaId).Date;
+            var today = utcNow.ToTimeZone(timeZoneIanaId).Date;
             return
             [
-                .. items.Select(i => i.ToDisplayViewModel(currencyByProduct, localize, timeZoneIanaId, today, noticeWindowDays))
+                .. items.Select(i => i.ToDisplayViewModel(policy, currencyByProduct, localize, timeZoneIanaId, today, noticeWindowDays))
             ];
         }
     }
@@ -86,6 +92,7 @@ public static class NoticeViewModelMapper
     {
         /// <summary>Maps a single <see cref="FixedExpenditureResponse"/> to a <see cref="FixedExpenditureOutputViewModel"/> for display.</summary>
         private FixedExpenditureOutputViewModel ToDisplayViewModel(
+            IPolicyService policy,
             IReadOnlyDictionary<string, string?> currencyByProduct,
             Func<string, string> localize,
             string timeZoneIanaId,
@@ -104,10 +111,13 @@ public static class NoticeViewModelMapper
                 DepositDay = item.DepositDay,
                 MaturityDate = item.MaturityDate.ToMaturityDateString(),
                 Note = item.Note,
-                Created = item.Created.ConvertTimeByTimeZoneIanaId(timeZoneIanaId),
-                Updated = item.Updated.ConvertTimeByTimeZoneIanaId(timeZoneIanaId),
-                Noticed = FixedSchedulePolicy.IsNoticed(item.DepositMonth, item.DepositDay, today, noticeWindowDays, item.Unpunctuality),
-                Expired = FixedSchedulePolicy.IsExpired(item.MaturityDate, today),
+                Created = item.Created.ToTimeZone(timeZoneIanaId),
+                Updated = item.Updated.ToTimeZone(timeZoneIanaId),
+                Noticed = policy.IsFixedScheduleNoticed(item.DepositMonth, item.DepositDay, today, noticeWindowDays, item.Unpunctuality),
+                Expired = policy.IsFixedScheduleExpired(item.MaturityDate, today),
+                RowCssClass = policy.GetFixedScheduleRowState(
+                    policy.IsFixedScheduleExpired(item.MaturityDate, today),
+                    policy.IsFixedScheduleNoticed(item.DepositMonth, item.DepositDay, today, noticeWindowDays, item.Unpunctuality)).ToRowCssClass(),
                 Unpunctuality = item.Unpunctuality
             };
     }
@@ -119,6 +129,7 @@ public static class NoticeViewModelMapper
         /// against <paramref name="utcNow"/> (the request's clock reading) as a date in <paramref name="timeZoneIanaId"/>.
         /// </summary>
         public List<FixedExpenditureOutputViewModel> ToDisplayViewModels(
+            IPolicyService policy,
             IEnumerable<AssetResponse> assets,
             Func<string, string> localize,
             string timeZoneIanaId,
@@ -128,10 +139,10 @@ public static class NoticeViewModelMapper
             var currencyByProduct = assets
                 .GroupBy(a => a.ProductName ?? "")
                 .ToDictionary(g => g.Key, g => g.Last().MonetaryUnit);
-            var today = utcNow.ConvertTimeByTimeZoneIanaId(timeZoneIanaId).Date;
+            var today = utcNow.ToTimeZone(timeZoneIanaId).Date;
             return
             [
-                .. items.Select(i => i.ToDisplayViewModel(currencyByProduct, localize, timeZoneIanaId, today, noticeWindowDays))
+                .. items.Select(i => i.ToDisplayViewModel(policy, currencyByProduct, localize, timeZoneIanaId, today, noticeWindowDays))
             ];
         }
     }

@@ -1,4 +1,4 @@
-using Maroik.Core.Domain.FileManagers;
+using Maroik.Core.Contract.Enums;
 
 namespace Maroik.Core.Contract.Dtos;
 
@@ -15,5 +15,5 @@ public class FileManagerUploadRequest
     public long Size { get; set; }
 
     /// <summary>What to do when a finished file of the same name is already in the folder.</summary>
-    public FileManagerConflictChoice Conflict { get; set; }
+    public FileManagerConflictOption Conflict { get; set; }
 }

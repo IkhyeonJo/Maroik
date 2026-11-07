@@ -1,6 +1,5 @@
+using Maroik.Core.Contract.Constants;
 using System.ComponentModel.DataAnnotations;
-using Maroik.Core.Domain.Accounts;
-using Maroik.Core.Domain.Primitives;
 using Maroik.Website.Constants;
 
 namespace Maroik.Website.Models.ViewModels.Accounts;
@@ -24,9 +23,9 @@ public class LoginOutputViewModel
     /// (uppercase, lowercase, digit, special character).
     /// </summary>
     [Required(ErrorMessage = "Password is required")]
-    [StringLength(PasswordPolicy.MaxByteLength, ErrorMessage = "The {0} must be between {2} and {1} characters long.", MinimumLength = PasswordPolicy.MinLength)]
+    [StringLength(PolicyLimits.PasswordMaxByteLength, ErrorMessage = "The {0} must be between {2} and {1} characters long.", MinimumLength = PolicyLimits.PasswordMinLength)]
     [DataType(DataType.Password)]
-    [RegularExpression(PasswordPolicy.Pattern, ErrorMessage = ValidationMessages.PasswordComplexity)]
+    [RegularExpression(PolicyLimits.PasswordPattern, ErrorMessage = ValidationMessages.PasswordComplexity)]
     public string? Password { get; set; }
 
 
@@ -35,14 +34,14 @@ public class LoginOutputViewModel
     /// Validated with a <see cref="CompareAttribute"/> against <see cref="Password"/>.
     /// </summary>
     [Required(ErrorMessage = "Confirm Password is required")]
-    [StringLength(PasswordPolicy.MaxByteLength, ErrorMessage = "The {0} must be between {2} and {1} characters long.", MinimumLength = PasswordPolicy.MinLength)]
+    [StringLength(PolicyLimits.PasswordMaxByteLength, ErrorMessage = "The {0} must be between {2} and {1} characters long.", MinimumLength = PolicyLimits.PasswordMinLength)]
     [DataType(DataType.Password)]
     [Compare(nameof(Password), ErrorMessage = "The password do not match")]
     public string? ConfirmPassword { get; set; }
 
     /// <summary>The display name (nickname) chosen by the registering user.</summary>
     [Required(ErrorMessage = "Nickname is required")]
-    [StringLength(ShortTextPolicy.MaxLength, ErrorMessage = "Must be between {2} and {1} characters.", MinimumLength = 1)]
+    [StringLength(PolicyLimits.ShortTextMaxLength, ErrorMessage = "Must be between {2} and {1} characters.", MinimumLength = 1)]
     public string? Nickname { get; set; }
 
     /// <summary>Whether the user agreed to the service terms of use — must be <see langword="true"/> for registration to succeed.</summary>

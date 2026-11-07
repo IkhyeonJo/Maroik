@@ -45,6 +45,7 @@ public static class ServiceCollectionExtensions
             services.AddSingleton<IHtmlContentSanitizerService, HtmlContentSanitizerService>();
             services.AddSingleton<IHtmlParserService, HtmlParserService>();
             services.AddSingleton<ITimeZoneCatalogService, TimeZoneCatalogService>();
+            services.AddSingleton<IPolicyService, PolicyService>();
         }
     }
 }

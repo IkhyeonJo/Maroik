@@ -11,7 +11,6 @@
 *@
 
 @using Maroik.Website.Models.ViewModels.AccountBooks
-@using Maroik.Core.Domain.Finances
 @model AccountBookPageViewModel
 @{
     var assets = Model.Assets;
@@ -71,8 +70,8 @@
 
 @* Expenditure main→sub-class taxonomy and the deposit-asset sub-class set — authoritative in
    ExpenditureClassPolicy; the form reads these instead of hardcoding the lists. *@
-@Html.Hidden("expenditureSubClassMap", ClientJsonSerializer.Serialize(ExpenditureClassPolicy.SubClassesByMainClass))
-@Html.Hidden("expenditureDepositAssetSubClasses", ClientJsonSerializer.Serialize(ExpenditureClassPolicy.DepositAssetSubClasses))
+@Html.Hidden("expenditureSubClassMap", ClientJsonSerializer.Serialize(Model.FinanceRules.ExpenditureSubClassesByMainClass))
+@Html.Hidden("expenditureDepositAssetSubClasses", ClientJsonSerializer.Serialize(Model.FinanceRules.DepositAssetSubClasses))
 @Html.Hidden("localizerFailedToLoadAmountLabel", Localizer["Failed to load the amount label."].Value)
 
 <section class="content">
@@ -123,9 +122,9 @@
                                 <label for="createExpenditureMainClass">@Localizer["MainClass"].Value</label>
                                 <br />
                                 <select id="createExpenditureMainClass" name="createExpenditureMainClass" class="form-control form-control-sm" style="max-width:100%;text-overflow:ellipsis;">
-                                    @foreach (string mainClass in ExpenditureClassPolicy.MainClasses)
+                                    @foreach (string mainClass in Model.FinanceRules.ExpenditureMainClasses)
                                     {
-                                        <option value="@mainClass" selected="@(mainClass == ExpenditureClassPolicy.MainClasses[0])">@Localizer[mainClass].Value</option>
+                                        <option value="@mainClass" selected="@(mainClass == Model.FinanceRules.ExpenditureMainClasses[0])">@Localizer[mainClass].Value</option>
                                     }
                                 </select>
                             </div>
@@ -133,7 +132,7 @@
                                 <label for="createExpenditureSubClass">@Localizer["SubClass"].Value</label>
                                 <br />
                                 <select id="createExpenditureSubClass" name="createExpenditureSubClass" class="form-control form-control-sm" style="max-width:100%;text-overflow:ellipsis;">
-                                    @Html.ExpenditureSubClassOptions(Localizer)
+                                    @Html.ExpenditureSubClassOptions(Localizer, Model.FinanceRules.ExpenditureSubClassesByMainClass)
                                 </select>
                             </div>
                         </div>
@@ -271,9 +270,9 @@
                                 <label for="editExpenditureMainClass">@Localizer["MainClass"].Value</label>
                                 <br />
                                 <select id="editExpenditureMainClass" name="editExpenditureMainClass" class="form-control form-control-sm" style="max-width:100%;text-overflow:ellipsis;">
-                                    @foreach (string mainClass in ExpenditureClassPolicy.MainClasses)
+                                    @foreach (string mainClass in Model.FinanceRules.ExpenditureMainClasses)
                                     {
-                                        <option value="@mainClass" selected="@(mainClass == ExpenditureClassPolicy.MainClasses[0])">@Localizer[mainClass].Value</option>
+                                        <option value="@mainClass" selected="@(mainClass == Model.FinanceRules.ExpenditureMainClasses[0])">@Localizer[mainClass].Value</option>
                                     }
                                 </select>
                             </div>
@@ -281,7 +280,7 @@
                                 <label for="editExpenditureSubClass">@Localizer["SubClass"].Value</label>
                                 <br />
                                 <select id="editExpenditureSubClass" name="editExpenditureSubClass" class="form-control form-control-sm" style="max-width:100%;text-overflow:ellipsis;">
-                                    @Html.ExpenditureSubClassOptions(Localizer)
+                                    @Html.ExpenditureSubClassOptions(Localizer, Model.FinanceRules.ExpenditureSubClassesByMainClass)
                                 </select>
                             </div>
                         </div>

@@ -1,7 +1,7 @@
+using Maroik.Core.Contract.Enums;
+using Maroik.Core.Contract.Extensions;
 using System.Globalization;
 using Maroik.Core.Contract.Dtos;
-using Maroik.Core.Domain.Budgets;
-using Maroik.Core.Domain.Extensions;
 using Maroik.Website.Constants;
 using Maroik.Website.Models.ViewModels.AccountBooks;
 
@@ -17,24 +17,23 @@ public static class BudgetViewModelMapper
 {
     /// <summary>
     /// The page model: the kind, the account's current year in its time zone, the kind's classes (localized), the asset currencies, and
-    /// the captions of the month and year-total columns (localized; which column is which comes from <see cref="BudgetSheetLayout"/>).
+    /// the captions of the month and year-total columns (localized; which column is which comes from <c>BudgetSheetLayout</c>).
     /// <paramref name="fixedInitialYear"/> is the year to open on instead of the current one, if any.
     /// </summary>
-    public static BudgetPageViewModel Page(BudgetKind kind, IEnumerable<AssetResponse> assets, DateTime utcNow, string timeZoneIanaId, Func<string, string> localize, int? fixedInitialYear = null) => new()
+    public static BudgetPageViewModel Page(BudgetSheetKind kind, BudgetPageRules rules, IEnumerable<AssetResponse> assets, DateTime utcNow, string timeZoneIanaId, Func<string, string> localize, int? fixedInitialYear = null) => new()
     {
         Kind = kind.ToString(),
-        Year = utcNow.ConvertTimeByTimeZoneIanaId(timeZoneIanaId).Year,
-        InitialYear = fixedInitialYear ?? utcNow.ConvertTimeByTimeZoneIanaId(timeZoneIanaId).Year,
-        MainClasses = BudgetLine.MainClasses(kind),
-        SubClassesByMainClass = BudgetLine.Taxonomy(kind),
-        ClassLabels = BudgetLine.MainClasses(kind).Concat(BudgetLine.Taxonomy(kind).Values.SelectMany(s => s)).Distinct(StringComparer.Ordinal)
+        Year = utcNow.ToTimeZone(timeZoneIanaId).Year,
+        InitialYear = fixedInitialYear ?? utcNow.ToTimeZone(timeZoneIanaId).Year,
+        MainClasses = rules.MainClasses,
+        SubClassesByMainClass = rules.SubClassesByMainClass,
+        Functions = rules.Functions,
+        ClassLabels = rules.MainClasses.Concat(rules.SubClassesByMainClass.Values.SelectMany(s => s)).Distinct(StringComparer.Ordinal)
             .ToDictionary(c => c, localize, StringComparer.Ordinal),
         Currencies = [.. assets.Select(a => a.MonetaryUnit).OfType<string>().Distinct(StringComparer.Ordinal)],
-        ColumnCaptions = Enumerable.Range(0, BudgetSheetLayout.ColumnCount).Select(i => ((char)('A' + i)).ToString())
-            .Select(column => (column, key: BudgetSheetLayout.MonthOf(column) is { } month ? _monthKeys[month - 1]
-                : column == BudgetSheetLayout.YearColumn ? "Year total" : null))
-            .Where(c => c.key is not null)
-            .ToDictionary(c => c.column, c => localize(c.key!), StringComparer.Ordinal),
+        ColumnCaptions = rules.MonthByColumn.Select(c => (column: c.Key, key: _monthKeys[c.Value - 1]))
+            .Append((column: rules.YearColumn, key: "Year total"))
+            .ToDictionary(c => c.column, c => localize(c.key), StringComparer.Ordinal),
     };
 
     /// <summary>The resx keys of the month columns' captions, January first.</summary>

@@ -1,6 +1,6 @@
+using Maroik.Core.Contract.Extensions;
 using System.Globalization;
 using Maroik.Core.Contract.Dtos;
-using Maroik.Core.Domain.Extensions;
 using Maroik.Website.Models.ViewModels.AccountBooks;
 
 namespace Maroik.Website.Mappers;
@@ -27,7 +27,7 @@ public static class AccountBookViewModelMapper
 
     /// <summary>
     /// Parses a "yyyy-MM-dd HH:mm:ss" local wall-clock string (no time zone of its own — the
-    /// caller applies one via <see cref="DateTimeExtensions.ConvertToUtcByTimeZoneIanaId"/>).
+    /// caller applies one via <see cref="TimeZoneDisplayExtensions.ToUtcFromTimeZone"/>).
     /// </summary>
     private static DateTime ParseLocalDateTime(string value) =>
         DateTime.ParseExact(value, LocalDateTimeFormat, CultureInfo.InvariantCulture, DateTimeStyles.None);
@@ -41,14 +41,14 @@ public static class AccountBookViewModelMapper
         /// never computes or transmits a UTC instant or a time zone itself.
         /// </summary>
         public DateTime ToCreatedUtc(string accountTimeZoneIanaId) =>
-            ParseLocalDateTime(vm.Created!).ConvertToUtcByTimeZoneIanaId(accountTimeZoneIanaId);
+            ParseLocalDateTime(vm.Created!).ToUtcFromTimeZone(accountTimeZoneIanaId);
     }
 
     extension(ExpenditureInputViewModel vm)
     {
         /// <summary>Same conversion as the <c>IncomeInputViewModel</c> overload above, for an expenditure.</summary>
         public DateTime ToCreatedUtc(string accountTimeZoneIanaId) =>
-            ParseLocalDateTime(vm.Created!).ConvertToUtcByTimeZoneIanaId(accountTimeZoneIanaId);
+            ParseLocalDateTime(vm.Created!).ToUtcFromTimeZone(accountTimeZoneIanaId);
     }
 
     extension(AssetResponse item)
@@ -60,8 +60,8 @@ public static class AccountBookViewModelMapper
             Item = localize(item.Item ?? ""),
             Amount = item.Amount,
             MonetaryUnit = item.MonetaryUnit,
-            Created = item.Created.ConvertTimeByTimeZoneIanaId(timeZoneIanaId),
-            Updated = item.Updated.ConvertTimeByTimeZoneIanaId(timeZoneIanaId),
+            Created = item.Created.ToTimeZone(timeZoneIanaId),
+            Updated = item.Updated.ToTimeZone(timeZoneIanaId),
             Note = item.Note,
             Deleted = item.Deleted
         };
@@ -96,8 +96,8 @@ public static class AccountBookViewModelMapper
                 Amount = item.Amount,
                 MonetaryUnit = currencyByProduct.GetValueOrDefault(item.DepositMyAssetProductName ?? ""),
                 DepositMyAssetProductName = item.DepositMyAssetProductName,
-                Created = item.Created.ConvertTimeByTimeZoneIanaId(timeZoneIanaId),
-                Updated = item.Updated.ConvertTimeByTimeZoneIanaId(timeZoneIanaId),
+                Created = item.Created.ToTimeZone(timeZoneIanaId),
+                Updated = item.Updated.ToTimeZone(timeZoneIanaId),
                 Note = item.Note
             };
     }
@@ -140,8 +140,8 @@ public static class AccountBookViewModelMapper
                 PaymentMethod = item.PaymentMethod,
                 Note = item.Note,
                 MyDepositAsset = item.MyDepositAsset,
-                Created = item.Created.ConvertTimeByTimeZoneIanaId(timeZoneIanaId),
-                Updated = item.Updated.ConvertTimeByTimeZoneIanaId(timeZoneIanaId)
+                Created = item.Created.ToTimeZone(timeZoneIanaId),
+                Updated = item.Updated.ToTimeZone(timeZoneIanaId)
             };
     }
 
@@ -171,7 +171,7 @@ public static class AccountBookViewModelMapper
         /// </summary>
         public void PopulateTimeData(string timeZoneIanaId, DateTime utcNow)
         {
-            DateTime ct = utcNow.ConvertTimeByTimeZoneIanaId(timeZoneIanaId);
+            DateTime ct = utcNow.ToTimeZone(timeZoneIanaId);
             vm.CurrentDate = ct.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
             vm.CurrentHour = ct.Hour;
             vm.CurrentMinute = ct.Minute;

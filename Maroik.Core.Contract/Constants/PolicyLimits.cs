@@ -1,0 +1,45 @@
+using Maroik.Core.Domain.Accounts;
+using Maroik.Core.Domain.Calendars;
+using Maroik.Core.Domain.Finances;
+using Maroik.Core.Domain.Menus;
+using Maroik.Core.Domain.Primitives;
+
+namespace Maroik.Core.Contract.Constants;
+
+/// <summary>
+/// The Domain's compile-time limits, for the code outside the Service layer that may not read the Domain. A validation attribute
+/// such as <c>[StringLength(PolicyLimits.PasswordMaxByteLength)]</c> takes only a constant, so it cannot ask a service; everything
+/// that is not a constant comes from <c>IPolicyService</c>. Each value is the Domain's own constant, not a copy of it.
+/// </summary>
+public static class PolicyLimits
+{
+    /// <summary><see cref="PasswordPolicy.MinLength"/>.</summary>
+    public const int PasswordMinLength = PasswordPolicy.MinLength;
+
+    /// <summary><see cref="PasswordPolicy.MaxByteLength"/>.</summary>
+    public const int PasswordMaxByteLength = PasswordPolicy.MaxByteLength;
+
+    /// <summary><see cref="PasswordPolicy.Pattern"/>.</summary>
+    public const string PasswordPattern = PasswordPolicy.Pattern;
+
+    /// <summary><see cref="PasswordPolicy.ViolationMessage"/>.</summary>
+    public const string PasswordViolationMessage = PasswordPolicy.ViolationMessage;
+
+    /// <summary><see cref="ShortTextPolicy.MaxLength"/>.</summary>
+    public const int ShortTextMaxLength = ShortTextPolicy.MaxLength;
+
+    /// <summary><see cref="TitledContentPolicy.MaxTitleLength"/>.</summary>
+    public const int TitleMaxLength = TitledContentPolicy.MaxTitleLength;
+
+    /// <summary><see cref="TitledContentPolicy.MaxBodyLength"/>.</summary>
+    public const int BodyMaxLength = TitledContentPolicy.MaxBodyLength;
+
+    /// <summary><see cref="MenuFieldPolicy.MinOrder"/>.</summary>
+    public const long MenuMinOrder = MenuFieldPolicy.MinOrder;
+
+    /// <summary><see cref="FinanceAmountPolicy.MaxDecimalPlaces"/>.</summary>
+    public const int AmountMaxDecimalPlaces = FinanceAmountPolicy.MaxDecimalPlaces;
+
+    /// <summary><see cref="CalendarReminderPolicy.ReminderTimeOfDayStepMinutes"/>.</summary>
+    public const int ReminderTimeOfDayStepMinutes = CalendarReminderPolicy.ReminderTimeOfDayStepMinutes;
+}

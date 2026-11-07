@@ -3,7 +3,7 @@ namespace Maroik.Website.Models.ViewModels.Managements;
 /// <summary>
 /// Read-only view model for displaying a single PrivateNote board post in the management area.
 /// A private note is single-owner content, so it has no lock affordance
-/// (see <see cref="Maroik.Core.Domain.Boards.Board.IsPrivateNote"/>).
+/// (see <c>Board.IsPrivateNote</c>).
 /// </summary>
 public class BoardOutputViewModel
 {

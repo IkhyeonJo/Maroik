@@ -1,6 +1,6 @@
+using Maroik.Core.Contract.Constants;
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
-using Maroik.Core.Domain.Accounts;
 using Maroik.Website.Attributes;
 using Maroik.Website.Extensions;
 using Maroik.Website.Mappers;
@@ -45,7 +45,7 @@ public class KanbanController(
     /// <summary>Creates a card in the lane whose "+ Add card" button opened the modal.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [RequiredHttpPostAccess(Role = Role.User)]
+    [RequiredHttpPostAccess(Role = AccountRoles.User)]
     public async Task<IActionResult> CreateKanbanCard([FromBody] KanbanCardInputViewModel kanbanCardInputViewModel, CancellationToken ct)
     {
         if (!ModelState.IsValid)
@@ -77,7 +77,7 @@ public class KanbanController(
     /// <summary>Edits a card's title, description and due date; the card stays in its lane.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [RequiredHttpPostAccess(Role = Role.User)]
+    [RequiredHttpPostAccess(Role = AccountRoles.User)]
     public async Task<IActionResult> UpdateKanbanCard([FromBody] KanbanCardEditInputViewModel kanbanCardEditInputViewModel, CancellationToken ct)
     {
         if (!ModelState.IsValid)
@@ -109,7 +109,7 @@ public class KanbanController(
     /// <summary>Deletes a card.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [RequiredHttpPostAccess(Role = Role.User)]
+    [RequiredHttpPostAccess(Role = AccountRoles.User)]
     public async Task<IActionResult> DeleteKanbanCard(long id, CancellationToken ct)
     {
         string email = HttpContext.GetLoggedInEmail();

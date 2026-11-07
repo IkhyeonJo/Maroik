@@ -506,4 +506,52 @@ public class WebsiteArchitectureTests
             "Pass all data through the controller's ViewModel instead.\n" +
             "Failing types: " + string.Join(", ", serviceResult.FailingTypeNames ?? []));
     }
+
+    /// <summary>
+    /// The Website reaches the Domain only through the Service layer, so no compiled Website type, Razor views included, may
+    /// depend on it. This catches a Domain type that arrives without a <c>using</c>, for example through a Contract member.
+    /// </summary>
+    [Fact]
+    public void WebsiteTypes_ShouldNot_DependOnDomainNamespace()
+    {
+        NetArchTest.Rules.TestResult result = Types.InAssembly(_websiteAssembly)
+            .ShouldNot()
+            .HaveDependencyOn("Maroik.Core.Domain")
+            .GetResult();
+
+        Assert.True(
+            result.IsSuccessful,
+            "Maroik.Website must not depend on Maroik.Core.Domain: get the value or decision from a service.\n" +
+            "Failing types: " + string.Join(", ", result.FailingTypeNames ?? []));
+    }
+
+    /// <summary>
+    /// The source-side half of <see cref="WebsiteTypes_ShouldNot_DependOnDomainNamespace"/>. The compiler copies a <c>const</c>
+    /// into the caller, so <c>[StringLength(PasswordPolicy.MaxByteLength)]</c> leaves no dependency in the IL for NetArchTest to
+    /// see; only the source shows it.
+    /// </summary>
+    [Fact]
+    public void WebsiteSources_ShouldNot_MentionDomainNamespace()
+    {
+        string[] generatedFolders =
+        [
+            Path.Combine(RepositoryPaths.Website, "bin") + Path.DirectorySeparatorChar,
+            Path.Combine(RepositoryPaths.Website, "obj") + Path.DirectorySeparatorChar,
+        ];
+
+        List<string> offendingFiles =
+        [
+            .. Directory.EnumerateFiles(RepositoryPaths.Website, "*", SearchOption.AllDirectories)
+                .Where(path => path.EndsWith(".cs", StringComparison.Ordinal) || path.EndsWith(".cshtml", StringComparison.Ordinal))
+                .Where(path => !generatedFolders.Any(folder => path.StartsWith(folder, StringComparison.Ordinal)))
+                .Where(path => File.ReadAllText(path).Contains("Maroik.Core.Domain", StringComparison.Ordinal))
+                .Select(path => Path.GetRelativePath(RepositoryPaths.Website, path))
+                .Order(StringComparer.Ordinal)
+        ];
+
+        Assert.True(
+            offendingFiles.Count == 0,
+            "Maroik.Website must not mention Maroik.Core.Domain: get the value or decision from a service.\n" +
+            "Offending files (" + offendingFiles.Count + "):\n" + string.Join("\n", offendingFiles));
+    }
 }

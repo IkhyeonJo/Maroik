@@ -1,6 +1,5 @@
+using Maroik.Core.Contract.Constants;
 using Maroik.Core.Contract.Interfaces;
-using Maroik.Core.Domain.Accounts;
-using Maroik.Website.Extensions;
 using Maroik.Website.Interfaces;
 
 namespace Maroik.Website.Middlewares;
@@ -17,7 +16,7 @@ namespace Maroik.Website.Middlewares;
 public class RoleBasedStaticFileMiddleware(RequestDelegate next)
 {
     /// <summary>Checks the request path against the account's current role and either blocks (403) or forwards the request.</summary>
-    public async Task InvokeAsync(HttpContext context, ISessionService sessionService, IAccountService accountService)
+    public async Task InvokeAsync(HttpContext context, ISessionService sessionService, IAccountService accountService, IPolicyService policyService)
     {
         var path = context.Request.Path.Value;
 
@@ -36,8 +35,8 @@ public class RoleBasedStaticFileMiddleware(RequestDelegate next)
             // gate. The case-insensitive test is therefore what keeps the gate host-independent.
             var relativePath = path.TrimStart('/');
             string? requiredRole =
-                relativePath.StartsWith("admin/", StringComparison.OrdinalIgnoreCase) ? Role.Admin
-                : relativePath.StartsWith("user/", StringComparison.OrdinalIgnoreCase) ? Role.User
+                relativePath.StartsWith("admin/", StringComparison.OrdinalIgnoreCase) ? AccountRoles.Admin
+                : relativePath.StartsWith("user/", StringComparison.OrdinalIgnoreCase) ? AccountRoles.User
                 : null;
 
             if (requiredRole != null)
@@ -48,7 +47,7 @@ public class RoleBasedStaticFileMiddleware(RequestDelegate next)
                 var account = sessionAccount == null
                     ? null
                     : await accountService.GetAccountByEmailAsync(sessionAccount.Email ?? "", context.RequestAborted);
-                bool sessionValid = sessionAccount != null && account.SessionInvalidationReason(sessionAccount) == null;
+                bool sessionValid = sessionAccount != null && policyService.GetSessionInvalidationReason(account, sessionAccount) == null;
 
                 if (!sessionValid || account!.Role != requiredRole)
                 {

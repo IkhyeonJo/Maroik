@@ -36,12 +36,12 @@
                         <div asp-validation-summary="ModelOnly" class="text-danger"></div>
                         <div class="form-group">
                             <label for="writeBoardTitle">@Localizer["Title"].Value</label>
-                            <input class="form-control" type="text" data-val="true" data-val-required="@Localizer["Title is required"].Value" id="writeBoardTitle" name="writeBoardTitle" value="" required maxlength="@TitledContentPolicy.MaxTitleLength">
+                            <input class="form-control" type="text" data-val="true" data-val-required="@Localizer["Title is required"].Value" id="writeBoardTitle" name="writeBoardTitle" value="" required maxlength="@PolicyLimits.TitleMaxLength">
                             <span class="field-validation-valid text-danger" data-valmsg-for="writeBoardTitle" data-valmsg-replace="true"></span>
                         </div>
                         <div class="form-group">
                             <label for="writeBoardContent" class="control-label">@Localizer["Content"].Value</label>
-                            <textarea name="writeBoardContent" id="writeBoardContent" maxlength="@TitledContentPolicy.MaxBodyLength"></textarea>
+                            <textarea name="writeBoardContent" id="writeBoardContent" maxlength="@PolicyLimits.BodyMaxLength"></textarea>
                         </div>
 
                         <div class="form-group">
@@ -66,7 +66,7 @@
                         <span class="mailbox-read-time float-left">@Localizer["Views"].Value: @Model.BoardOutputViewModel!.Views</span>
 
                         <span class="mailbox-read-time float-right">
-                            @Localizer["Updated"].Value: [<span id="private_note_detail_updated">@Model.BoardOutputViewModel.Updated.ToViewerFormattedString(Model.ViewerSeesLocalTime, loggedInAccountTimeZoneIanaId)</span>]
+                            @Localizer["Updated"].Value: [<span id="private_note_detail_updated">@Model.BoardOutputViewModel.Updated.ToViewerText(Model.ViewerSeesLocalTime, loggedInAccountTimeZoneIanaId)</span>]
                         </span>
                         <br />
                     </div>
@@ -129,7 +129,7 @@
                                                 <span>@comment.Writer</span>
                                             }
                                             <span class="text-muted float-middle">
-                                                @Localizer["Created"].Value: [<span class="private_note_detail_comment_created">@comment.Created.ToViewerFormattedString(Model.ViewerSeesLocalTime, loggedInAccountTimeZoneIanaId)</span>]
+                                                @Localizer["Created"].Value: [<span class="private_note_detail_comment_created">@comment.Created.ToViewerText(Model.ViewerSeesLocalTime, loggedInAccountTimeZoneIanaId)</span>]
                                             </span>
                                             @{
                                                 if (comment.CanDelete)/*If the visitor is the author*/
@@ -158,7 +158,7 @@
                                                 <span>@comment.Writer</span>
                                             }
                                             <span class="text-muted float-middle">
-                                                @Localizer["Created"].Value: [<span class="private_note_detail_comment_created">@comment.Created.ToViewerFormattedString(Model.ViewerSeesLocalTime, loggedInAccountTimeZoneIanaId)</span>]
+                                                @Localizer["Created"].Value: [<span class="private_note_detail_comment_created">@comment.Created.ToViewerText(Model.ViewerSeesLocalTime, loggedInAccountTimeZoneIanaId)</span>]
                                             </span>
                                             @{
                                                 if (comment.CanDelete)/*If the visitor is the author*/
@@ -188,12 +188,12 @@
                         <div asp-validation-summary="ModelOnly" class="text-danger"></div>
                         <div class="form-group">
                             <label for="editBoardTitle">@Localizer["Title"].Value</label>
-                            <input class="form-control" type="text" data-val="true" data-val-required="@Localizer["Title is required"].Value" id="editBoardTitle" name="editBoardTitle" value="@Model.BoardOutputViewModel!.Title" required maxlength="@TitledContentPolicy.MaxTitleLength">
+                            <input class="form-control" type="text" data-val="true" data-val-required="@Localizer["Title is required"].Value" id="editBoardTitle" name="editBoardTitle" value="@Model.BoardOutputViewModel!.Title" required maxlength="@PolicyLimits.TitleMaxLength">
                             <span class="field-validation-valid text-danger" data-valmsg-for="editBoardTitle" data-valmsg-replace="true"></span>
                         </div>
                         <div id="divEditBoardContent" class="form-group" style="@(Model.BoardOutputViewModel!.IsImgTagIncluded ? "display:none;" : "")">
                             <label for="editBoardContent" class="control-label"></label>
-                            <textarea name="editBoardContent" id="editBoardContent" maxlength="@TitledContentPolicy.MaxBodyLength">@Model.BoardOutputViewModel!.Content</textarea>
+                            <textarea name="editBoardContent" id="editBoardContent" maxlength="@PolicyLimits.BodyMaxLength">@Model.BoardOutputViewModel!.Content</textarea>
                         </div>
 
                         <div class="card-footer bg-dark">
@@ -293,7 +293,7 @@
                                     {
                                         <td><span>@board.Writer</span></td>
                                     }
-                                    <td class="private_note_board_created">@board.Created.ToViewerFormattedString(Model.ViewerSeesLocalTime, loggedInAccountTimeZoneIanaId)</td>
+                                    <td class="private_note_board_created">@board.Created.ToViewerText(Model.ViewerSeesLocalTime, loggedInAccountTimeZoneIanaId)</td>
 
                                     <td>@board.View</td>
                                     @if (board.HasAttachment)
@@ -359,10 +359,10 @@
     @* ReSharper disable Html.PathError *@
     @switch (loggedInAccount.Role)
     {
-        case Role.Admin:
+        case AccountRoles.Admin:
             <img alt="" src="~/admin/dist/img/ajax-loader.gif" asp-append-version="true" />
             break;
-        case Role.User:
+        case AccountRoles.User:
             <img alt="" src="~/user/dist/img/ajax-loader.gif" asp-append-version="true" />
             break;
     }
@@ -387,10 +387,10 @@
 @section Scripts{
     @switch (loggedInAccount.Role)
     {
-        case Role.Admin:
+        case AccountRoles.Admin:
             <script src="~/admin/custom/Management/PrivateNote/js/site.js" asp-append-version="true"></script>
             break;
-        case Role.User:
+        case AccountRoles.User:
             <script src="~/user/custom/Management/PrivateNote/js/site.js" asp-append-version="true"></script>
             break;
     }

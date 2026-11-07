@@ -1,5 +1,5 @@
+using Maroik.Core.Contract.Constants;
 using System.ComponentModel.DataAnnotations;
-using Maroik.Core.Domain.Accounts;
 using Maroik.Website.Constants;
 
 namespace Maroik.Website.Models.ViewModels.Managements;
@@ -11,6 +11,9 @@ namespace Maroik.Website.Models.ViewModels.Managements;
 /// </summary>
 public class ProfileOutputViewModel
 {
+    /// <summary>The content types the avatar upload mirrors.</summary>
+    public IReadOnlyList<string> AllowedImageContentTypes { get; set; } = [];
+
     /// <summary>Account email address (read-only; displayed as the account identifier).</summary>
     [Required(ErrorMessage = "Please enter Email")]
     [Display(Name = "Email")]
@@ -37,9 +40,9 @@ public class ProfileOutputViewModel
     /// server checks the current password against the stored hash, not against the rule.
     /// </summary>
     [Required(ErrorMessage = "Password is required")]
-    [StringLength(PasswordPolicy.MaxByteLength, ErrorMessage = "The {0} must be between {2} and {1} characters long.", MinimumLength = PasswordPolicy.MinLength)]
+    [StringLength(PolicyLimits.PasswordMaxByteLength, ErrorMessage = "The {0} must be between {2} and {1} characters long.", MinimumLength = PolicyLimits.PasswordMinLength)]
     [DataType(DataType.Password)]
-    [RegularExpression(PasswordPolicy.Pattern, ErrorMessage = ValidationMessages.PasswordComplexity)]
+    [RegularExpression(PolicyLimits.PasswordPattern, ErrorMessage = ValidationMessages.PasswordComplexity)]
     public string? Password { get; set; }
 
     /// <summary>
@@ -47,9 +50,9 @@ public class ProfileOutputViewModel
     /// Must satisfy the password complexity rule.
     /// </summary>
     [Required(ErrorMessage = "New password is required")]
-    [StringLength(PasswordPolicy.MaxByteLength, ErrorMessage = "The {0} must be between {2} and {1} characters long.", MinimumLength = PasswordPolicy.MinLength)]
+    [StringLength(PolicyLimits.PasswordMaxByteLength, ErrorMessage = "The {0} must be between {2} and {1} characters long.", MinimumLength = PolicyLimits.PasswordMinLength)]
     [DataType(DataType.Password)]
-    [RegularExpression(PasswordPolicy.Pattern, ErrorMessage = ValidationMessages.PasswordComplexity)]
+    [RegularExpression(PolicyLimits.PasswordPattern, ErrorMessage = ValidationMessages.PasswordComplexity)]
     public string? NewPassword { get; set; }
 
 
@@ -57,7 +60,7 @@ public class ProfileOutputViewModel
     /// Confirmation of the new password — must match <see cref="NewPassword"/> exactly.
     /// </summary>
     [Required(ErrorMessage = "Confirm new password is required")]
-    [StringLength(PasswordPolicy.MaxByteLength, ErrorMessage = "The {0} must be between {2} and {1} characters long.", MinimumLength = PasswordPolicy.MinLength)]
+    [StringLength(PolicyLimits.PasswordMaxByteLength, ErrorMessage = "The {0} must be between {2} and {1} characters long.", MinimumLength = PolicyLimits.PasswordMinLength)]
     [DataType(DataType.Password)]
     [Compare(nameof(NewPassword), ErrorMessage = "The new password do not match")]
     public string? ConfirmNewPassword { get; set; }

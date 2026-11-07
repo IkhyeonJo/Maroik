@@ -1,5 +1,5 @@
+using Maroik.Core.Contract.Extensions;
 using Maroik.Core.Contract.Dtos;
-using Maroik.Core.Domain.Extensions;
 using Maroik.Website.Models.ViewModels.Managements;
 
 namespace Maroik.Website.Mappers;
@@ -24,8 +24,8 @@ public static class ManagementViewModelMapper
             LoginAttempt = item.LoginAttempt,
             EmailConfirmed = item.EmailConfirmed,
             AgreedServiceTerms = item.AgreedServiceTerms,
-            Created = item.Created.ConvertTimeByTimeZoneIanaId(timeZoneIanaId),
-            Updated = item.Updated.ConvertTimeByTimeZoneIanaId(timeZoneIanaId),
+            Created = item.Created.ToTimeZone(timeZoneIanaId),
+            Updated = item.Updated.ToTimeZone(timeZoneIanaId),
             Message = item.Message,
             Deleted = item.Deleted,
             FileManagerScanDisabled = item.FileManagerScanDisabled

@@ -1,5 +1,4 @@
 using Maroik.Core.Contract.Interfaces;
-using Maroik.Core.Domain.Uploads;
 
 namespace Maroik.Website.Middlewares;
 
@@ -22,15 +21,15 @@ public sealed class AvatarCacheMiddleware(RequestDelegate next)
     /// <summary>
     /// The file name of <paramref name="requestPath"/> when it is a name an uploaded avatar can have, otherwise null: a
     /// GUID (ProfileService names new uploads <c>{Guid:N}</c>; the seeded ones use the hyphenated form) with an
-    /// <see cref="ImageUploadPolicy"/> extension. Any other name cannot exist in file storage, so it is left to the
+    /// <c>ImageUploadPolicy</c> extension. Any other name cannot exist in file storage, so it is left to the
     /// static-file 404 instead of costing a file-storage request (and its failure log) per made-up URL. GetFileName drops
     /// any directory component, so a returned name cannot escape the cache directory.
     /// </summary>
-    private static string? UploadedAvatarFileName(string requestPath)
+    private static string? UploadedAvatarFileName(string requestPath, IPolicyService policyService)
     {
         string fileName = Path.GetFileName(requestPath);
         return Guid.TryParse(Path.GetFileNameWithoutExtension(fileName), out _)
-               && ImageUploadPolicy.IsAllowedExtension(Path.GetExtension(fileName))
+               && policyService.IsAllowedImageExtension(Path.GetExtension(fileName))
             ? fileName
             : null;
     }
@@ -40,6 +39,7 @@ public sealed class AvatarCacheMiddleware(RequestDelegate next)
         HttpContext context,
         IWebHostEnvironment env,
         IProfileService profileService,
+        IPolicyService policyService,
         ILogger<AvatarCacheMiddleware> logger)
     {
         string? path = context.Request.Path.Value;
@@ -52,7 +52,7 @@ public sealed class AvatarCacheMiddleware(RequestDelegate next)
             && HttpMethods.IsGet(context.Request.Method)
             && path.StartsWith(UrlPrefix, StringComparison.Ordinal))
         {
-            if (UploadedAvatarFileName(path) is { } fileName)
+            if (UploadedAvatarFileName(path, policyService) is { } fileName)
             {
                 string localDir = Path.Combine(env.WebRootPath, "upload", "Management", "Profile", "Avatar");
                 string localPath = Path.Combine(localDir, fileName);

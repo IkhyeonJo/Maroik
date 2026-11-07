@@ -1,7 +1,6 @@
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Enums;
 using Maroik.Core.Contract.Interfaces;
-using Maroik.Core.Domain.Uploads;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Localization;
 
@@ -46,7 +45,7 @@ public static class EditorImageUploadExtensions
             }
 
             var ext = Path.GetExtension(imageFile.FileName).ToLowerInvariant();
-            if (!ImageUploadPolicy.IsAllowedExtension(ext))
+            if (!controller.HttpContext.RequestServices.GetRequiredService<IPolicyService>().IsAllowedImageExtension(ext))
             {
                 logger.LogWarning("Editor image upload refused: extension not allowed ({Extension}) for {Email}", ext, uploaderEmail);
                 return controller.Ok(new { result = false, errorMessage = localizer["Only .jpg or jpeg or .png file allowed."].Value });
