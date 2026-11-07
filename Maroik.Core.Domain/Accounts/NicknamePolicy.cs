@@ -21,7 +21,6 @@ namespace Maroik.Core.Domain.Accounts;
 /// </summary>
 public static class NicknamePolicy
 {
-    // ReSharper disable once GrammarMistakeInComment
     /// <summary>
     /// Names an ordinary user may not register: staff / system roles, the placeholder shown to
     /// signed-out visitors (<c>Login</c>), and the site name. Matched on the <em>canonical</em> form

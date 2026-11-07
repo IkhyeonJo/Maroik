@@ -24,7 +24,6 @@ public class KanbanController(
     IKanbanService kanbanService) : Controller
 {
     #region Read
-    // ReSharper disable once GrammarMistakeInComment
     /// <summary>
     /// Returns the board page, or — to the page script's AJAX request after a write — only the board partial to swap in.
     /// Overdue due dates are decided in the signed-in user's time zone.

@@ -51,13 +51,19 @@ public class ExpenditureService(
         {
             var classResult = ExpenditureClassPolicy.Validate(request.MainClass, request.SubClass);
             if (classResult.IsError)
-                return await unitOfWork.FailAsync(classResult.FirstError, ct);
+            {
+                await unitOfWork.RollbackAsync(ct);
+                return ServiceResult.FromError(classResult.FirstError);
+            }
 
             bool isTransfer = classResult.Value;
             // The transfer rule (ExpenditureClassPolicy.ResolveDepositAsset) is checked before any asset is looked up or locked.
             var depositCheck = ExpenditureClassPolicy.ResolveDepositAsset("Expenditure", isTransfer, request.PaymentMethod ?? "", request.MyDepositAsset);
             if (depositCheck.IsError)
-                return await unitOfWork.FailAsync(depositCheck.FirstError, ct);
+            {
+                await unitOfWork.RollbackAsync(ct);
+                return ServiceResult.FromError(depositCheck.FirstError);
+            }
 
             // GetAssetsOrdinalAsync takes row locks held until commit/rollback, always in ordinal
             // name order, so that concurrent transactions touching the same asset pair (here,
@@ -67,13 +73,19 @@ public class ExpenditureService(
 
             Asset? paymentAsset = touchedAssets.FindAsset(request.PaymentMethod);
             if (!AssetUsagePolicy.CanRecordExpenditure(isTransfer, paymentAsset, touchedAssets.FindAsset(request.MyDepositAsset), out var refusal))
-                return await unitOfWork.FailAsync(AssetRefusalMapper.ToResult(AssetRefusalMapper.Expenditure, refusal), ct);
+            {
+                await unitOfWork.RollbackAsync(ct);
+                return AssetRefusalMapper.ToResult(AssetRefusalMapper.Expenditure, refusal);
+            }
 
             string currency = paymentAsset.Balance.Currency.Value;
             var expenditureResult = Expenditure.Record(accountEmail, request.MainClass, request.SubClass,
                 request.Content, Math.Abs(request.Amount), currency, request.PaymentMethod, depositCheck.Value, utcNow, request.Note, request.Created);
             if (expenditureResult.IsError)
-                return await unitOfWork.FailAsync(expenditureResult.FirstError, ct);
+            {
+                await unitOfWork.RollbackAsync(ct);
+                return ServiceResult.FromError(expenditureResult.FirstError);
+            }
 
             var expenditure = expenditureResult.Value;
             await expenditureRepository.CreateAsync(expenditure, ct);
@@ -81,7 +93,10 @@ public class ExpenditureService(
             var moveResult = await assetBalance.ApplyBalanceMovementsAsync(
                 touchedAssets, expenditure.BalanceMovements(), utcNow, ct);
             if (moveResult.IsError)
-                return await unitOfWork.FailAsync(moveResult.FirstError, ct);
+            {
+                await unitOfWork.RollbackAsync(ct);
+                return ServiceResult.FromError(moveResult.FirstError);
+            }
 
             await unitOfWork.CommitAsync(ct);
             return ServiceResult.Ok();
@@ -103,20 +118,29 @@ public class ExpenditureService(
         {
             var classResult = ExpenditureClassPolicy.Validate(request.MainClass, request.SubClass);
             if (classResult.IsError)
-                return await unitOfWork.FailAsync(classResult.FirstError, ct);
+            {
+                await unitOfWork.RollbackAsync(ct);
+                return ServiceResult.FromError(classResult.FirstError);
+            }
 
             bool isTransfer = classResult.Value;
             // The transfer rule (ExpenditureClassPolicy.ResolveDepositAsset) is checked before any asset is looked up or locked.
             var depositCheck = ExpenditureClassPolicy.ResolveDepositAsset("Expenditure", isTransfer, request.PaymentMethod ?? "", request.MyDepositAsset);
             if (depositCheck.IsError)
-                return await unitOfWork.FailAsync(depositCheck.FirstError, ct);
+            {
+                await unitOfWork.RollbackAsync(ct);
+                return ServiceResult.FromError(depositCheck.FirstError);
+            }
 
             // FOR UPDATE: lock the record for the rest of the transaction so a concurrent
             // UpdateAsync/DeleteAsync of the same expenditure cannot read a stale amount here and
             // drift the linked asset balances.
             Expenditure? previous = await expenditureRepository.FindByEmailAndIdForUpdateAsync(accountEmail, request.Id, ct);
             if (previous == null)
-                return await unitOfWork.FailAsync(ServiceResult.NotFound("Expenditure.NotFound", ServiceErrorKeys.ExpenditureNotFound), ct);
+            {
+                await unitOfWork.RollbackAsync(ct);
+                return ServiceResult.NotFound("Expenditure.NotFound", ServiceErrorKeys.ExpenditureNotFound);
+            }
 
             // Lock every asset this update can touch (old + new payment/deposit) in a single
             // ordinal-ordered batch so concurrent transactions on the same asset pair cannot deadlock.
@@ -126,7 +150,10 @@ public class ExpenditureService(
             Asset? newPayAsset = touchedAssets.FindAsset(request.PaymentMethod);
             if (!AssetUsagePolicy.CanRetargetExpenditure(isTransfer, newPayAsset, touchedAssets.FindAsset(request.MyDepositAsset),
                     touchedAssets.FindAsset(previous.PaymentMethod), touchedAssets.FindAsset(previous.MyDepositAsset), out var refusal))
-                return await unitOfWork.FailAsync(AssetRefusalMapper.ToResult(AssetRefusalMapper.Expenditure, refusal), ct);
+            {
+                await unitOfWork.RollbackAsync(ct);
+                return AssetRefusalMapper.ToResult(AssetRefusalMapper.Expenditure, refusal);
+            }
 
             string newCurrency = newPayAsset.Balance.Currency.Value;
             IReadOnlyList<BalanceMovement> before = previous.BalanceMovements();
@@ -134,13 +161,19 @@ public class ExpenditureService(
             var updateResult = previous.Update(request.MainClass, request.SubClass, request.Content,
                 Math.Abs(request.Amount), newCurrency, request.PaymentMethod, depositCheck.Value, request.Note, utcNow, request.Created);
             if (updateResult.IsError)
-                return await unitOfWork.FailAsync(updateResult.FirstError, ct);
+            {
+                await unitOfWork.RollbackAsync(ct);
+                return ServiceResult.FromError(updateResult.FirstError);
+            }
 
             await expenditureRepository.UpdateEntityAsync(previous, ct);
             var moveResult = await assetBalance.ApplyBalanceMovementsAsync(touchedAssets,
                 BalanceMovement.Replacing(before, previous.BalanceMovements()), utcNow, ct);
             if (moveResult.IsError)
-                return await unitOfWork.FailAsync(moveResult.FirstError, ct);
+            {
+                await unitOfWork.RollbackAsync(ct);
+                return ServiceResult.FromError(moveResult.FirstError);
+            }
 
             await unitOfWork.CommitAsync(ct);
             return ServiceResult.Ok();
@@ -164,17 +197,26 @@ public class ExpenditureService(
             // same expenditure cannot reverse its asset impact twice or from a stale amount.
             Expenditure? expenditure = await expenditureRepository.FindByEmailAndIdForUpdateAsync(accountEmail, id, ct);
             if (expenditure == null)
-                return await unitOfWork.FailAsync(ServiceResult.NotFound("Expenditure.NotFound", ServiceErrorKeys.ExpenditureNotFound), ct);
+            {
+                await unitOfWork.RollbackAsync(ct);
+                return ServiceResult.NotFound("Expenditure.NotFound", ServiceErrorKeys.ExpenditureNotFound);
+            }
 
             Dictionary<string, Asset> touchedAssets = await assetBalance.GetAssetsOrdinalAsync(
                 accountEmail, [expenditure.PaymentMethod, expenditure.MyDepositAsset], ct);
             if (!AssetUsagePolicy.CanMoveBack([touchedAssets.FindAsset(expenditure.PaymentMethod), touchedAssets.FindAsset(expenditure.MyDepositAsset)], out var refusal))
-                return await unitOfWork.FailAsync(AssetRefusalMapper.ToResult(AssetRefusalMapper.Expenditure, refusal), ct);
+            {
+                await unitOfWork.RollbackAsync(ct);
+                return AssetRefusalMapper.ToResult(AssetRefusalMapper.Expenditure, refusal);
+            }
 
             var moveResult = await assetBalance.ApplyBalanceMovementsAsync(touchedAssets,
                 BalanceMovement.Undoing(expenditure.BalanceMovements()), utcNow, ct);
             if (moveResult.IsError)
-                return await unitOfWork.FailAsync(moveResult.FirstError, ct);
+            {
+                await unitOfWork.RollbackAsync(ct);
+                return ServiceResult.FromError(moveResult.FirstError);
+            }
 
             await expenditureRepository.DeleteByIdAsync(expenditure.Id, ct);
 

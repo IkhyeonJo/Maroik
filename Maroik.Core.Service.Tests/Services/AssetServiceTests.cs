@@ -566,7 +566,6 @@ public class AssetServiceTests
         Assert.Empty(_logger.Collector.GetSnapshot());
     }
 
-    // ReSharper disable once GrammarMistakeInComment
     /// <summary>A create that throws anything else logs the failure with the exception, the asset and the account.</summary>
     [Fact]
     public async Task CreateAsync_LogsTheFailureWithTheException_WhenTheRepositoryThrows()
@@ -713,7 +712,6 @@ public class AssetServiceTests
         _unitOfWork.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Never);
     }
 
-    // ReSharper disable once GrammarMistakeInComment
     /// <summary>A delete that throws logs the failure with the exception, the asset and the account.</summary>
     [Fact]
     public async Task DeleteAsync_LogsTheFailureWithTheException_WhenTheRepositoryThrows()

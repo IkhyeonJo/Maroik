@@ -40,7 +40,6 @@ public sealed class Email : ValueObject
 
         string trimmed = value.Trim();
 
-        // ReSharper disable once GrammarMistakeInComment
         // Persisted in character varying(255) columns (Account.Email and every table that references it):
         // an over-long address is a clean validation error here, not a raw "value too long" (SQLSTATE
         // 22001) from the write.

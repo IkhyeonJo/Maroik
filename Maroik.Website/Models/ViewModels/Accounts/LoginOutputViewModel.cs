@@ -1,5 +1,3 @@
-// ReSharper disable UnusedAutoPropertyAccessor.Global
-// ReSharper disable PropertyCanBeMadeInitOnly.Global
 using System.ComponentModel.DataAnnotations;
 using Maroik.Core.Domain.Accounts;
 using Maroik.Core.Domain.Primitives;

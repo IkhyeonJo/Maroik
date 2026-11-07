@@ -9,7 +9,6 @@ public sealed class BudgetCellViewModel
     /// <summary>Label, Budget, Computed, Blank or Free.</summary>
     public string Role { get; init; } = "";
 
-    // ReSharper disable once GrammarMistakeInComment
     /// <summary>Its input in A1 form (shown in the formula bar), or empty.</summary>
     public string Input { get; init; } = "";
 

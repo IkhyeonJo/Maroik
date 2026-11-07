@@ -1,5 +1,3 @@
-// ReSharper disable AutoPropertyCanBeMadeGetOnly.Global
-// ReSharper disable CollectionNeverUpdated.Global
 using System.ComponentModel.DataAnnotations;
 
 namespace Maroik.Website.Models.ViewModels.AccountBooks;

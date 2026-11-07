@@ -1,4 +1,3 @@
-// ReSharper disable UnusedAutoPropertyAccessor.Global
 namespace Maroik.Website.Models.ViewModels.FileManagers;
 
 /// <summary>A drive-wide name search.</summary>

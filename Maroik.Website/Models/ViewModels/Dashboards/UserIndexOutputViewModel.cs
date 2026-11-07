@@ -1,4 +1,3 @@
-// ReSharper disable PropertyCanBeMadeInitOnly.Global
 namespace Maroik.Website.Models.ViewModels.Dashboards;
 
 /// <summary>

@@ -1,5 +1,3 @@
-// ReSharper disable PropertyCanBeMadeInitOnly.Global
-// ReSharper disable UnusedAutoPropertyAccessor.Global
 namespace Maroik.Website.Models.ViewModels.FileManagers;
 
 /// <summary>One folder or file as the File Manager page draws it (a tile, a list row, a tree node or a search result).</summary>

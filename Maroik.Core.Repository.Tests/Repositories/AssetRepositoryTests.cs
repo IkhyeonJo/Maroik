@@ -54,7 +54,6 @@ public sealed class AssetRepositoryTests(DatabaseFixture database) : RepositoryT
 
     // -- Domain limits vs. column limits ---------------------------------------------
 
-    // ReSharper disable once GrammarMistakeInComment
     /// <summary>
     /// The limits the Asset domain enforces (255-char name / note, |amount| ≤ 9,999,999,999,999,999.99)
     /// are exactly what the real <c>Asset</c> columns hold: a value sitting on each limit persists and

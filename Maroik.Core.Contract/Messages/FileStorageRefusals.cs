@@ -31,11 +31,9 @@ public static class FileStorageRefusals
     /// <summary>A completed File Manager upload whose background scan failed for another reason than the scanner (logged by the service).</summary>
     public const string StoreFailed = "The upload could not be stored.";
 
-    // ReSharper disable once GrammarMistakeInComment
     /// <summary>A delete that names anything but a File Manager file (the attachments have no delete API).</summary>
     public const string NotAFileManagerFile = "Only a File Manager file can be deleted.";
 
-    // ReSharper disable once GrammarMistakeInComment
     /// <summary>A delete of a File Manager file that does not exist.</summary>
     public const string FileNotFound = "File not found";
 }

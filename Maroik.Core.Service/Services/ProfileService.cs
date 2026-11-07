@@ -7,7 +7,6 @@ using Maroik.Core.Domain.Accounts;
 using Maroik.Core.Domain.Finances;
 using Maroik.Core.Domain.Uploads;
 using Maroik.Core.Domain.ValueObjects;
-using Maroik.Core.Service.Extensions;
 using Maroik.Core.Service.Mappers;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -104,17 +103,24 @@ public class ProfileService(
             // "forgot password" on another device.
             Account? account = await accountRepository.FindByEmailForUpdateAsync(email, ct);
             if (account == null)
-                return await unitOfWork.FailAsync(ServiceResult.NotFound("Account.NotFound", ServiceErrorKeys.InputInvalid), ct);
+            {
+                await unitOfWork.RollbackAsync(ct);
+                return ServiceResult.NotFound("Account.NotFound", ServiceErrorKeys.InputInvalid);
+            }
 
             if (!passwordService.VerifyPassword(currentPassword, account.HashedPassword))
             {
                 logger.LogWarning("Password change refused: wrong current password for {Email}", email);
-                return await unitOfWork.FailAsync(ServiceResult.Validation("Profile.WrongPassword", ServiceErrorKeys.InvalidPassword), ct);
+                await unitOfWork.RollbackAsync(ct);
+                return ServiceResult.Validation("Profile.WrongPassword", ServiceErrorKeys.InvalidPassword);
             }
 
             // Enforce the complexity rule server-side, before hashing — Account.ChangePassword only sees the hash.
             if (!PasswordPolicy.IsValid(newPassword))
-                return await unitOfWork.FailAsync(ServiceResult.Validation("Account.PasswordPolicy", PasswordPolicy.ViolationMessage), ct);
+            {
+                await unitOfWork.RollbackAsync(ct);
+                return ServiceResult.Validation("Account.PasswordPolicy", PasswordPolicy.ViolationMessage);
+            }
 
             // Let the domain method compute the new SecurityStamp / clear MustChangePassword and any
             // pending ResetPasswordToken, then persist only those columns (see UpdateAvatarAsync for
@@ -126,7 +132,8 @@ public class ProfileService(
                 // The policy above already refused a blank password, so an empty hash here is a
                 // hasher fault, not user input.
                 logger.LogError("Password change failed for {Email}: {ErrorCode}", email, changeResult.FirstError.Code);
-                return await unitOfWork.FailAsync(ServiceResult.Failure("Profile.UpdatePasswordFailed", ServiceResult.TemporaryErrorKey), ct);
+                await unitOfWork.RollbackAsync(ct);
+                return ServiceResult.Failure("Profile.UpdatePasswordFailed", ServiceResult.TemporaryErrorKey);
             }
 
             await accountRepository.UpdatePasswordAsync(

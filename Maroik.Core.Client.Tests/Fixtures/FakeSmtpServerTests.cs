@@ -1,6 +1,5 @@
 namespace Maroik.Core.Client.Tests.Fixtures;
 
-// ReSharper disable once GrammarMistakeInComment
 /// <summary>
 /// The fake SMTP server shuts down cleanly however its accept loop is caught by the shutdown. <c>DisposeAsync</c> signals the stop
 /// and closes the listener while the loop may be anywhere: not yet at the accept (it then meets a closed listener —

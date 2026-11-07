@@ -135,166 +135,179 @@ public class AccountService(
         Account? existing = await FindByEmailAsync(Email.NormalizeForLookup(newAccount.Email), ct);
 
         if (existing == null)
+            return await RegisterNewAccountAsync(newAccount, emailTemplate, utcNow, ct);
+
+        return existing.EmailConfirmed
+            ? await AnswerAlreadyConfirmedRegistrationAsync(existing, newAccount, utcNow, ct)
+            : await ReplaceUnconfirmedRegistrationAsync(existing, newAccount, emailTemplate, utcNow, ct);
+    }
+
+    /// <summary>A registration for an address no account has: creates the account and mails its confirmation link.</summary>
+    private async Task<RegisterResult> RegisterNewAccountAsync(RegisterAccountRequest newAccount, EmailTemplate emailTemplate, DateTime utcNow, CancellationToken ct)
+    {
+        // Validate + normalize the nickname first (cheap, and before the deliberately slow
+        // BCrypt hash below). The reserved-name rule applies here: self-registration may not
+        // claim a staff / system name. Uniqueness is checked ignoring case, since the database
+        // constraint alone is case-sensitive and would let "bob" register next to "Bob".
+        var nicknameResult = NicknamePolicy.Validate(newAccount.Nickname);
+        if (nicknameResult.IsError)
+            return RegisterResult.FromError(nicknameResult.FirstError);
+        string nickname = nicknameResult.Value;
+
+        if (await accountRepository.NicknameExistsIgnoreCaseAsync(nickname, ct))
+            return RegisterResult.Fail(ServiceErrorKeys.NicknameExists, errorArgs: [nickname]);
+
+        // Enforce the password-complexity rule at the service boundary (not just the ViewModel),
+        // before hashing — Account.Create only ever sees the already-hashed value.
+        if (!PasswordPolicy.IsValid(newAccount.PlainPassword))
+            return RegisterResult.Fail(PasswordPolicy.ViolationMessage);
+
+        // Brand-new account: hash the plain-text password and create the domain entity.
+        string hashedPassword = passwordService.HashPassword(newAccount.PlainPassword ?? "");
+
+        // Self-registration always creates a plain User account; the request has no way to
+        // choose a role or any admin-only state, and the confirmation token is generated here.
+        // The account keeps only its hash; the token itself goes out in the mail below.
+        string registrationToken = GuidToken.Generate(utcNow);
+        var createResult = Account.Create(
+            newAccount.Email ?? "",
+            hashedPassword,
+            nickname,
+            AccountRole.User,
+            newAccount.TimeZoneIanaId ?? "UTC",
+            defaultMonetaryUnit: null,
+            registrationToken,
+            newAccount.AgreedServiceTerms, utcNow);
+
+        if (createResult.IsError)
+            return RegisterResult.FromError(createResult.FirstError);
+
+        var account = createResult.Value;
+        account.SetMessage(AccountMessage.UserCreatedVerifyEmail.GetDescription(), utcNow);
+
+        try
         {
-            // Validate + normalize the nickname first (cheap, and before the deliberately slow
-            // BCrypt hash below). The reserved-name rule applies here: self-registration may not
-            // claim a staff / system name. Uniqueness is checked ignoring case, since the database
-            // constraint alone is case-sensitive and would let "bob" register next to "Bob".
-            var nicknameResult = NicknamePolicy.Validate(newAccount.Nickname);
-            if (nicknameResult.IsError)
-                return RegisterResult.FromError(nicknameResult.FirstError);
-            string nickname = nicknameResult.Value;
-
-            if (await accountRepository.NicknameExistsIgnoreCaseAsync(nickname, ct))
-                return RegisterResult.Fail(ServiceErrorKeys.NicknameExists, errorArgs: [nickname]);
-
-            // Enforce the password-complexity rule at the service boundary (not just the ViewModel),
-            // before hashing — Account.Create only ever sees the already-hashed value.
-            if (!PasswordPolicy.IsValid(newAccount.PlainPassword))
-                return RegisterResult.Fail(PasswordPolicy.ViolationMessage);
-
-            // Brand-new account: hash the plain-text password and create the domain entity.
-            string hashedPassword = passwordService.HashPassword(newAccount.PlainPassword ?? "");
-
-            // Self-registration always creates a plain User account; the request has no way to
-            // choose a role or any admin-only state, and the confirmation token is generated here.
-            // The account keeps only its hash; the token itself goes out in the mail below.
-            string registrationToken = GuidToken.Generate(utcNow);
-            var createResult = Account.Create(
-                newAccount.Email ?? "",
-                hashedPassword,
-                nickname,
-                AccountRole.User,
-                newAccount.TimeZoneIanaId ?? "UTC",
-                defaultMonetaryUnit: null,
-                registrationToken,
-                newAccount.AgreedServiceTerms, utcNow);
-
-            if (createResult.IsError)
-                return RegisterResult.FromError(createResult.FirstError);
-
-            var account = createResult.Value;
-            account.SetMessage(AccountMessage.UserCreatedVerifyEmail.GetDescription(), utcNow);
-
-            try
+            await accountRepository.CreateAsync(account, ct);
+        }
+        catch (Exception e)
+        {
+            if (e.IsPostgresUniqueViolation())
             {
-                await accountRepository.CreateAsync(account, ct);
+                // The prior FindByEmailAsync check above is a read-then-write race: two concurrent
+                // registrations for the same not-yet-registered email can both pass it. Email is the
+                // actual primary key (Account_pk), while Nickname has its own separate unique
+                // constraint (Account_Nickname_unique) plus a case-insensitive index
+                // (Account_unique_index_0) — report whichever one actually collided
+                // instead of always blaming the nickname.
+                bool isNicknameConflict = e.IsAccountNicknameUniqueViolation();
+                return isNicknameConflict
+                    ? RegisterResult.Fail(ServiceErrorKeys.NicknameExists, errorArgs: [nickname])
+                    : RegisterResult.Fail(ServiceErrorKeys.EmailExists, errorArgs: [newAccount.Email ?? ""]);
             }
-            catch (Exception e)
+            logger.LogError(e, "Failed to create account for {Email}", newAccount.Email);
+            return RegisterResult.Fail(ServiceErrorKeys.RegistrationFailed);
+        }
+
+        logger.LogInformation("Account registered: {Email}", account.Email.Value);
+
+        // The account was just created with UserCreatedVerifyEmail already set above, so a
+        // successful send should not overwrite it with VerifyEmail.
+        return await SendConfirmationEmailAndUpdateStatusAsync(
+            account, registrationToken, emailTemplate,
+            setVerifyEmailMessageOnSuccess: false, repeat: false, utcNow, ct);
+    }
+
+    /// <summary>A registration for an address nobody has confirmed yet: replaces the earlier registrant's credentials and mails a new link.</summary>
+    private async Task<RegisterResult> ReplaceUnconfirmedRegistrationAsync(Account existing, RegisterAccountRequest newAccount, EmailTemplate emailTemplate, DateTime utcNow, CancellationToken ct)
+    {
+        // Pre-hijacking guard: nobody has proven they own this address yet, so this submission
+        // REPLACES the earlier registrant's password / nickname / time zone instead of just
+        // re-mailing a link for credentials someone else chose. Together with ConfirmEmailAsync
+        // requiring the registration password, the account only ever activates for the person
+        // holding both the mailbox and the password. Input is validated and hashed before the
+        // lock, so the BCrypt cost is never paid while holding it.
+        var nicknameResult = NicknamePolicy.Validate(newAccount.Nickname);
+        if (nicknameResult.IsError)
+            return RegisterResult.FromError(nicknameResult.FirstError);
+        string nickname = nicknameResult.Value;
+
+        if (!PasswordPolicy.IsValid(newAccount.PlainPassword))
+            return RegisterResult.Fail(PasswordPolicy.ViolationMessage);
+
+        string hashedPassword = passwordService.HashPassword(newAccount.PlainPassword ?? "");
+        string registrationToken = GuidToken.Generate(utcNow);
+
+        Account locked;
+        await unitOfWork.BeginAsync(ct: ct);
+        try
+        {
+            // Re-read under FOR UPDATE: serializes against a concurrent ConfirmEmailAsync /
+            // ResendConfirmationEmailAsync write to the same row, so this cannot overwrite an
+            // account a concurrent confirm just activated. The lock is released at Commit below,
+            // before the network mail send that follows.
+            Account? found = await accountRepository.FindByEmailForUpdateAsync(existing.Email.Value, ct);
+            if (found == null)
             {
-                if (e.IsPostgresUniqueViolation())
-                {
-                    // The prior FindByEmailAsync check above is a read-then-write race: two concurrent
-                    // registrations for the same not-yet-registered email can both pass it. Email is the
-                    // actual primary key (Account_pk), while Nickname has its own separate unique
-                    // constraint (Account_Nickname_unique) plus a case-insensitive index
-                    // (Account_unique_index_0) — report whichever one actually collided
-                    // instead of always blaming the nickname.
-                    bool isNicknameConflict = e.IsAccountNicknameUniqueViolation();
-                    return isNicknameConflict
-                        ? RegisterResult.Fail(ServiceErrorKeys.NicknameExists, errorArgs: [nickname])
-                        : RegisterResult.Fail(ServiceErrorKeys.EmailExists, errorArgs: [newAccount.Email ?? ""]);
-                }
-                logger.LogError(e, "Failed to create account for {Email}", newAccount.Email);
+                await unitOfWork.RollbackAsync(ct);
                 return RegisterResult.Fail(ServiceErrorKeys.RegistrationFailed);
             }
 
-            logger.LogInformation("Account registered: {Email}", account.Email.Value);
-
-            // The account was just created with UserCreatedVerifyEmail already set above, so a
-            // successful send should not overwrite it with VerifyEmail.
-            return await SendConfirmationEmailAndUpdateStatusAsync(
-                account, registrationToken, emailTemplate,
-                setVerifyEmailMessageOnSuccess: false, repeat: false, utcNow, ct);
-        }
-
-        if (!existing.EmailConfirmed)
-        {
-            // Pre-hijacking guard: nobody has proven they own this address yet, so this submission
-            // REPLACES the earlier registrant's password / nickname / time zone instead of just
-            // re-mailing a link for credentials someone else chose. Together with ConfirmEmailAsync
-            // requiring the registration password, the account only ever activates for the person
-            // holding both the mailbox and the password. Input is validated and hashed before the
-            // lock, so the BCrypt cost is never paid while holding it.
-            var nicknameResult = NicknamePolicy.Validate(newAccount.Nickname);
-            if (nicknameResult.IsError)
-                return RegisterResult.FromError(nicknameResult.FirstError);
-            string nickname = nicknameResult.Value;
-
-            if (!PasswordPolicy.IsValid(newAccount.PlainPassword))
-                return RegisterResult.Fail(PasswordPolicy.ViolationMessage);
-
-            string hashedPassword = passwordService.HashPassword(newAccount.PlainPassword ?? "");
-            string registrationToken = GuidToken.Generate(utcNow);
-
-            Account locked;
-            await unitOfWork.BeginAsync(ct: ct);
-            try
+            if (found.EmailConfirmed)
             {
-                // Re-read under FOR UPDATE: serializes against a concurrent ConfirmEmailAsync /
-                // ResendConfirmationEmailAsync write to the same row, so this cannot overwrite an
-                // account a concurrent confirm just activated. The lock is released at Commit below,
-                // before the network mail send that follows.
-                Account? found = await accountRepository.FindByEmailForUpdateAsync(existing.Email.Value, ct);
-                if (found == null)
-                {
-                    await unitOfWork.RollbackAsync(ct);
-                    return RegisterResult.Fail(ServiceErrorKeys.RegistrationFailed);
-                }
-
-                if (found.EmailConfirmed)
-                {
-                    // Confirmed by a concurrent request while this one waited for the lock.
-                    await unitOfWork.RollbackAsync(ct);
-                    return RegisterResult.Fail(AccountMessage.UserAlreadyCreated.GetDescription());
-                }
-
-                // The account's own nickname (in any letter case) is not a conflict — only another
-                // account holding it is. The case-insensitive unique index still backstops a race.
-                if (!string.Equals(found.Nickname, nickname, StringComparison.OrdinalIgnoreCase)
-                    && await accountRepository.NicknameExistsIgnoreCaseAsync(nickname, ct))
-                {
-                    await unitOfWork.RollbackAsync(ct);
-                    return RegisterResult.Fail(ServiceErrorKeys.NicknameExists, errorArgs: [nickname]);
-                }
-
-                // A fresh token always: every link mailed for the replaced registration dies with it.
-                var replaceResult = found.ReplaceUnconfirmedRegistration(
-                    hashedPassword, nickname, newAccount.TimeZoneIanaId ?? "UTC", registrationToken, newAccount.AgreedServiceTerms, utcNow);
-                if (replaceResult.IsError)
-                {
-                    await unitOfWork.RollbackAsync(ct);
-                    return RegisterResult.FromError(replaceResult.FirstError);
-                }
-
-                await accountRepository.UpdateEntityAsync(found, ct);
-                await unitOfWork.CommitAsync(ct);
-                locked = found;
+                // Confirmed by a concurrent request while this one waited for the lock.
+                await unitOfWork.RollbackAsync(ct);
+                return RegisterResult.Fail(AccountMessage.UserAlreadyCreated.GetDescription());
             }
-            catch (Exception e) when (e.IsAccountNicknameUniqueViolation())
+
+            // The account's own nickname (in any letter case) is not a conflict — only another
+            // account holding it is. The case-insensitive unique index still backstops a race.
+            if (!string.Equals(found.Nickname, nickname, StringComparison.OrdinalIgnoreCase)
+                && await accountRepository.NicknameExistsIgnoreCaseAsync(nickname, ct))
             {
-                // Another registration took the nickname between the check above and the commit.
                 await unitOfWork.RollbackAsync(ct);
                 return RegisterResult.Fail(ServiceErrorKeys.NicknameExists, errorArgs: [nickname]);
             }
-            catch
+
+            // A fresh token always: every link mailed for the replaced registration dies with it.
+            var replaceResult = found.ReplaceUnconfirmedRegistration(
+                hashedPassword, nickname, newAccount.TimeZoneIanaId ?? "UTC", registrationToken, newAccount.AgreedServiceTerms, utcNow);
+            if (replaceResult.IsError)
             {
                 await unitOfWork.RollbackAsync(ct);
-                throw;
+                return RegisterResult.FromError(replaceResult.FirstError);
             }
 
-            logger.LogInformation("Unconfirmed registration replaced for {Email}", locked.Email.Value);
-
-            // Mail send + final status write run unlocked, after the row lock above was released.
-            // SendConfirmationEmailAndUpdateStatusAsync re-persists the same token hash it finds on
-            // `locked` as its first step — a harmless idempotent re-write of the value just
-            // committed above — then sends the mail and writes the final status column, none of
-            // which need this row's lock held.
-            return await SendConfirmationEmailAndUpdateStatusAsync(
-                locked, registrationToken, emailTemplate,
-                setVerifyEmailMessageOnSuccess: true, repeat: false, utcNow, ct);
+            await accountRepository.UpdateEntityAsync(found, ct);
+            await unitOfWork.CommitAsync(ct);
+            locked = found;
+        }
+        catch (Exception e) when (e.IsAccountNicknameUniqueViolation())
+        {
+            // Another registration took the nickname between the check above and the commit.
+            await unitOfWork.RollbackAsync(ct);
+            return RegisterResult.Fail(ServiceErrorKeys.NicknameExists, errorArgs: [nickname]);
+        }
+        catch
+        {
+            await unitOfWork.RollbackAsync(ct);
+            throw;
         }
 
+        logger.LogInformation("Unconfirmed registration replaced for {Email}", locked.Email.Value);
+
+        // Mail send + final status write run unlocked, after the row lock above was released.
+        // SendConfirmationEmailAndUpdateStatusAsync re-persists the same token hash it finds on
+        // `locked` as its first step — a harmless idempotent re-write of the value just
+        // committed above — then sends the mail and writes the final status column, none of
+        // which need this row's lock held.
+        return await SendConfirmationEmailAndUpdateStatusAsync(
+            locked, registrationToken, emailTemplate,
+            setVerifyEmailMessageOnSuccess: true, repeat: false, utcNow, ct);
+    }
+
+    /// <summary>A registration for a confirmed address: answers "already exists", reconciling the account's status only for its proven owner.</summary>
+    private async Task<RegisterResult> AnswerAlreadyConfirmedRegistrationAsync(Account existing, RegisterAccountRequest newAccount, DateTime utcNow, CancellationToken ct)
+    {
         // Account is fully confirmed: tell the caller it already exists and bring the account's own
         // stored status into line — but write a column only when its value would actually change.
         // This path runs off an un-locked FindByEmailAsync read against another user's row from an
@@ -319,28 +332,26 @@ public class AccountService(
             return RegisterResult.Fail(alreadyCreatedMessage);
         }
 
+        try
         {
-            try
+            if (!existing.AgreedServiceTerms)
             {
-                if (!existing.AgreedServiceTerms)
-                {
-                    existing.AcceptServiceTerms(utcNow);
-                    await accountRepository.UpdateAgreedServiceTermsAsync(
-                        existing.Email.Value, existing.AgreedServiceTerms, existing.Updated, ct);
-                }
+                existing.AcceptServiceTerms(utcNow);
+                await accountRepository.UpdateAgreedServiceTermsAsync(
+                    existing.Email.Value, existing.AgreedServiceTerms, existing.Updated, ct);
+            }
 
-                if (!string.Equals(existing.Message, alreadyCreatedMessage, StringComparison.Ordinal))
-                {
-                    existing.SetMessage(alreadyCreatedMessage, utcNow);
-                    await accountRepository.UpdateMessageAsync(
-                        existing.Email.Value, existing.Message, existing.Updated, ct);
-                }
-            }
-            catch (Exception e)
+            if (!string.Equals(existing.Message, alreadyCreatedMessage, StringComparison.Ordinal))
             {
-                logger.LogError(e, "Failed to update account status for {Email}", existing.Email.Value);
-                return RegisterResult.Fail(ServiceErrorKeys.AccountStatusFailed);
+                existing.SetMessage(alreadyCreatedMessage, utcNow);
+                await accountRepository.UpdateMessageAsync(
+                    existing.Email.Value, existing.Message, existing.Updated, ct);
             }
+        }
+        catch (Exception e)
+        {
+            logger.LogError(e, "Failed to update account status for {Email}", existing.Email.Value);
+            return RegisterResult.Fail(ServiceErrorKeys.AccountStatusFailed);
         }
 
         return RegisterResult.Fail(alreadyCreatedMessage);
@@ -369,7 +380,6 @@ public class AccountService(
         await unitOfWork.BeginAsync(ct: ct);
         try
         {
-            // ReSharper disable once GrammarMistakeInComment
             // Re-read under FOR UPDATE before regenerating/persisting the token: serializes against
             // a concurrent ConfirmEmailAsync/RegisterAsync write to the same row (both take the
             // same lock before writing) so this cannot resurrect a token a concurrent confirm just
@@ -412,17 +422,34 @@ public class AccountService(
             setVerifyEmailMessageOnSuccess: true, repeat: true, utcNow, ct);
     }
 
+    /// <summary>The token inside a confirmation link's protected value, or <see langword="null"/> (logged) when the value does not decrypt.</summary>
+    private string? TryUnprotectRegistrationToken(string encryptedToken)
+    {
+        try { return dataProtection.Unprotect(ProtectedValue.MailToken, encryptedToken); }
+        catch (Exception e)
+        {
+            logger.LogWarning(e, "Failed to decrypt registration token");
+            return null;
+        }
+    }
+
+    /// <summary>The token inside a reset link's protected value, or <see langword="null"/> (logged) when the value does not decrypt.</summary>
+    private string? TryUnprotectResetPasswordToken(string encryptedToken)
+    {
+        try { return dataProtection.Unprotect(ProtectedValue.MailToken, encryptedToken); }
+        catch (Exception e)
+        {
+            logger.LogWarning(e, "Failed to decrypt reset password token");
+            return null;
+        }
+    }
+
     /// <inheritdoc />
     public async Task<ConfirmEmailResult> ValidateRegistrationTokenAsync(string encryptedToken, CancellationToken ct = default)
     {
         DateTime utcNow = timeProvider.GetUtcNow().UtcDateTime;
-        string rawToken;
-        try { rawToken = dataProtection.Unprotect(ProtectedValue.MailToken, encryptedToken); }
-        catch (Exception e)
-        {
-            logger.LogWarning(e, "Failed to decrypt registration token");
+        if (TryUnprotectRegistrationToken(encryptedToken) is not { } rawToken)
             return new ConfirmEmailResult { InvalidToken = true, AccountCreated = false };
-        }
 
         Account? account = await FindByRegistrationTokenAsync(rawToken, ct);
         // A live link: show the password form, echoing the still-encrypted token back into it.
@@ -439,13 +466,8 @@ public class AccountService(
     public async Task<ConfirmEmailResult> ConfirmEmailAsync(string encryptedToken, string password, CancellationToken ct = default)
     {
         DateTime utcNow = timeProvider.GetUtcNow().UtcDateTime;
-        string rawToken;
-        try { rawToken = dataProtection.Unprotect(ProtectedValue.MailToken, encryptedToken); }
-        catch (Exception e)
-        {
-            logger.LogWarning(e, "Failed to decrypt registration token");
+        if (TryUnprotectRegistrationToken(encryptedToken) is not { } rawToken)
             return new ConfirmEmailResult { InvalidToken = true, AccountCreated = false };
-        }
 
         Account? account = await FindByRegistrationTokenAsync(rawToken, ct);
         if (account == null)
@@ -626,13 +648,8 @@ public class AccountService(
     public async Task<ResetPasswordValidationResult> ValidateResetPasswordTokenAsync(string encryptedToken, CancellationToken ct = default)
     {
         DateTime utcNow = timeProvider.GetUtcNow().UtcDateTime;
-        string rawToken;
-        try { rawToken = dataProtection.Unprotect(ProtectedValue.MailToken, encryptedToken); }
-        catch (Exception e)
-        {
-            logger.LogWarning(e, "Failed to decrypt reset password token");
+        if (TryUnprotectResetPasswordToken(encryptedToken) is not { } rawToken)
             return new ResetPasswordValidationResult { FailToReset = true };
-        }
 
         Account? account = await FindByResetPasswordTokenAsync(rawToken, ct);
 
@@ -653,13 +670,8 @@ public class AccountService(
     public async Task<(ServiceResult Result, AccountResponse? SignIn)> ResetPasswordAsync(string encryptedToken, string newPassword, CancellationToken ct = default)
     {
         DateTime utcNow = timeProvider.GetUtcNow().UtcDateTime;
-        string rawToken;
-        try { rawToken = dataProtection.Unprotect(ProtectedValue.MailToken, encryptedToken); }
-        catch (Exception e)
-        {
-            logger.LogWarning(e, "Failed to decrypt reset password token");
+        if (TryUnprotectResetPasswordToken(encryptedToken) is not { } rawToken)
             return (ServiceResult.Fail(ServiceErrorKeys.Signals.ResetPasswordInvalid), null);
-        }
 
         Account? found = await FindByResetPasswordTokenAsync(rawToken, ct);
         if (found == null || !found.AcceptsResetToken(rawToken, utcNow))

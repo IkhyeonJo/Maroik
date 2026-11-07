@@ -1,7 +1,5 @@
-// ReSharper disable UnusedAutoPropertyAccessor.Global
 using System.ComponentModel.DataAnnotations;
 using Maroik.Core.Domain.Finances;
-// ReSharper disable PropertyCanBeMadeInitOnly.Global
 
 namespace Maroik.Website.Models.ViewModels.Notices;
 

@@ -72,11 +72,34 @@ public class AuthorizationFilter(IMenuService menuService, IDistributedCache cac
     private static readonly FrozenDictionary<(string Controller, string Action), FrozenSet<string>> _postActionRoles =
         BuildPostActionRoleMap();
 
+    /// <summary>The routing name of <see cref="Controllers.AccountController"/>.</summary>
+    private const string AccountControllerName = "Account";
+    /// <summary>The routing name of <see cref="Controllers.ManagementController"/>.</summary>
+    private const string ManagementControllerName = "Management";
+    /// <summary>The routing name of <see cref="Controllers.ExceptionController"/>.</summary>
+    private const string ExceptionControllerName = "Exception";
+    /// <summary>The routing name of <see cref="Controllers.DashboardController"/>.</summary>
+    private const string DashboardControllerName = "Dashboard";
+
+    /// <summary>
+    /// The <c>AccountController</c> pages a signed-out visitor may open without a navigation-menu match: login, registration,
+    /// e-mail confirmation, the consent form and the forgot / reset-password flow.
+    /// </summary>
+    private static readonly FrozenSet<string> _anonymousAccountPages = new HashSet<string>
+    {
+        nameof(Controllers.AccountController.Login),
+        nameof(Controllers.AccountController.Register),
+        nameof(Controllers.AccountController.ConfirmEmail),
+        nameof(Controllers.AccountController.ConsentForm),
+        nameof(Controllers.AccountController.ForgotPassword),
+        nameof(Controllers.AccountController.ResetPassword),
+    }.ToFrozenSet();
+
     /// <summary>
     /// The fixed set of <c>AccountController</c> POST endpoints an unauthenticated visitor may POST
     /// to without a navigation-menu match — login, logout, registration / resend, email
     /// confirmation (link + registration password), and the forgot / reset-password flow. Spelled out explicitly (not reflected off the controller) so
-    /// this anonymous surface mirrors the hardcoded GET allow-list in <see cref="OnAuthorizationAsync"/>:
+    /// this anonymous surface mirrors the GET allow-list <see cref="_anonymousAccountPages"/>:
     /// adding a new POST action to <c>AccountController</c> does NOT silently widen anonymous access
     /// — it stays denied (redirect to Dashboard) until it is added here on purpose. Every entry must
     /// still carry <c>[HttpPost]</c> + <c>[ValidateAntiForgeryToken]</c>, enforced by
@@ -85,12 +108,12 @@ public class AuthorizationFilter(IMenuService menuService, IDistributedCache cac
     private static readonly FrozenSet<(string Controller, string Action)> _anonymousAccountPostActions =
         new HashSet<(string Controller, string Action)>
         {
-            ("Account", nameof(Controllers.AccountController.Login)),
-            ("Account", nameof(Controllers.AccountController.Logout)),
-            ("Account", nameof(Controllers.AccountController.Register)),
-            ("Account", nameof(Controllers.AccountController.ConfirmEmail)),
-            ("Account", nameof(Controllers.AccountController.ForgotPassword)),
-            ("Account", nameof(Controllers.AccountController.ResetPassword)),
+            (AccountControllerName, nameof(Controllers.AccountController.Login)),
+            (AccountControllerName, nameof(Controllers.AccountController.Logout)),
+            (AccountControllerName, nameof(Controllers.AccountController.Register)),
+            (AccountControllerName, nameof(Controllers.AccountController.ConfirmEmail)),
+            (AccountControllerName, nameof(Controllers.AccountController.ForgotPassword)),
+            (AccountControllerName, nameof(Controllers.AccountController.ResetPassword)),
         }.ToFrozenSet();
 
     /// <summary>The routing name of <paramref name="controllerType"/> (its type name minus the "Controller" suffix).</summary>
@@ -129,88 +152,45 @@ public class AuthorizationFilter(IMenuService menuService, IDistributedCache cac
         return map.ToFrozenDictionary();
     }
 
+    /// <summary>What a request gets; <see cref="Decide"/> works it out and <see cref="OnAuthorizationAsync"/> carries it out.</summary>
+    private enum AccessDecision
+    {
+        /// <summary>The request proceeds (no <c>Result</c> set).</summary>
+        Allow,
+
+        /// <summary>A signed-out visitor who opened an unlisted page goes to the public dashboard; nothing is logged.</summary>
+        RedirectVisitorToPublicDashboard,
+
+        /// <summary>The ordinary forced-change flow (every page leads to the change-password form): not a denial.</summary>
+        RedirectToPasswordChange,
+
+        /// <summary>A write attempted while a password change is pending: logged, sent to the public dashboard.</summary>
+        DenyWhilePasswordChangeIsPending,
+
+        /// <summary>A refused request: logged, sent to the public dashboard.</summary>
+        Deny,
+    }
+
+    /// <summary>The endpoint a request resolved to, and its HTTP method.</summary>
+    private readonly record struct RequestTarget(string Controller, string Action, string Method)
+    {
+        /// <summary>Whether this is <paramref name="controller"/> / <paramref name="action"/>.</summary>
+        public bool Is(string controller, string action) => Controller == controller && Action == action;
+    }
+
     /// <summary>Loads (or restores from cache) the navigation menu data, then allows or denies the request before model binding.</summary>
     public async Task OnAuthorizationAsync(AuthorizationFilterContext context)
     {
-        var results = await Task.WhenAll(
-            cache.GetAsync(AdminCategoriesCacheKey),
-            cache.GetAsync(AdminSubCategoriesCacheKey),
-            cache.GetAsync(UserCategoriesCacheKey),
-            cache.GetAsync(UserSubCategoriesCacheKey),
-            cache.GetAsync(AnonymousCategoriesCacheKey),
-            cache.GetAsync(AnonymousSubCategoriesCacheKey));
-
-        List<CategoryResponse> adminCategories = [];
-        List<SubCategoryResponse> adminSubCategories = [];
-        List<CategoryResponse> userCategories = [];
-        List<SubCategoryResponse> userSubCategories = [];
-        List<CategoryResponse> anonymousCategories = [];
-        List<SubCategoryResponse> anonymousSubCategories = [];
-
-        bool menusLoaded = false;
-        if (results[0] != null && results[1] != null && results[2] != null &&
-            results[3] != null && results[4] != null && results[5] != null)
-        {
-            try
-            {
-                adminCategories = JsonSerializer.Deserialize<List<CategoryResponse>>(results[0]!)!;
-                adminSubCategories = JsonSerializer.Deserialize<List<SubCategoryResponse>>(results[1]!)!;
-                userCategories = JsonSerializer.Deserialize<List<CategoryResponse>>(results[2]!)!;
-                userSubCategories = JsonSerializer.Deserialize<List<SubCategoryResponse>>(results[3]!)!;
-                anonymousCategories = JsonSerializer.Deserialize<List<CategoryResponse>>(results[4]!)!;
-                anonymousSubCategories = JsonSerializer.Deserialize<List<SubCategoryResponse>>(results[5]!)!;
-                menusLoaded = true;
-            }
-            catch (Exception e)
-            {
-                // A poisoned or shape-changed cache entry must not turn into a 500 on every request
-                // for the whole 10-minute TTL — leave menusLoaded false so the block below rebuilds
-                // from the database, which also overwrites the bad entry. (SessionService.GetAccountAsync
-                // guards its own deserialization the same way.)
-                logger.LogWarning(e, "Navigation menu cache entry could not be read; rebuilding it from the database");
-            }
-        }
-
-        if (!menusLoaded)
-        {
-            var categories = (await menuService.GetAllCategoriesAsync()).ToList();
-            var subCategories = (await menuService.GetAllSubCategoriesAsync()).ToList();
-
-            var entryOptions = new DistributedCacheEntryOptions()
-                .SetSlidingExpiration(TimeSpan.FromMinutes(10));
-
-            adminCategories = [.. categories.Where(c => c.Role == Role.Admin)];
-            adminSubCategories = [.. subCategories.Where(s => s.Role == Role.Admin)];
-            userCategories = [.. categories.Where(c => c.Role == Role.User)];
-            userSubCategories = [.. subCategories.Where(s => s.Role == Role.User)];
-            anonymousCategories = [.. categories.Where(c => c.Role == Role.Anonymous)];
-            anonymousSubCategories = [.. subCategories.Where(s => s.Role == Role.Anonymous)];
-
-            await Task.WhenAll(
-                cache.SetAsync(AdminCategoriesCacheKey, JsonSerializer.SerializeToUtf8Bytes(adminCategories),
-                    entryOptions),
-                cache.SetAsync(AdminSubCategoriesCacheKey, JsonSerializer.SerializeToUtf8Bytes(adminSubCategories),
-                    entryOptions),
-                cache.SetAsync(UserCategoriesCacheKey, JsonSerializer.SerializeToUtf8Bytes(userCategories),
-                    entryOptions),
-                cache.SetAsync(UserSubCategoriesCacheKey, JsonSerializer.SerializeToUtf8Bytes(userSubCategories),
-                    entryOptions),
-                cache.SetAsync(AnonymousCategoriesCacheKey, JsonSerializer.SerializeToUtf8Bytes(anonymousCategories),
-                    entryOptions),
-                cache.SetAsync(AnonymousSubCategoriesCacheKey, JsonSerializer.SerializeToUtf8Bytes(anonymousSubCategories),
-                    entryOptions));
-        }
+        NavigationMenus menus = await LoadNavigationMenusAsync();
 
         // Hand the menu to ViewBagPopulatorFilter: an authorization filter runs before the controller
         // instance exists, so there is no ViewBag to write to here.
-        context.HttpContext.Items[HttpContextItemKeys.NavigationMenus] = new NavigationMenus(
-            adminCategories, adminSubCategories,
-            userCategories, userSubCategories,
-            anonymousCategories, anonymousSubCategories);
+        context.HttpContext.Items[HttpContextItemKeys.NavigationMenus] = menus;
 
-        var currentControllerName = context.ActionDescriptor.RouteValues["controller"] ?? ""; // Controller name before execution
-        var currentActionName = context.ActionDescriptor.RouteValues["action"] ?? ""; // Action name before execution
-        var currentRequestMethod = context.HttpContext.Request.Method; // HTTP method (GET, POST, ...)
+        var target = new RequestTarget(
+            context.ActionDescriptor.RouteValues["controller"] ?? "",
+            context.ActionDescriptor.RouteValues["action"] ?? "",
+            context.HttpContext.Request.Method);
         var sessionAccount = await sessionService.GetAccountAsync(context.HttpContext.RequestAborted); // Check if account session exists after login
 
         AccountResponse? loggedInAccount = null;
@@ -218,17 +198,8 @@ public class AuthorizationFilter(IMenuService menuService, IDistributedCache cac
         {
             loggedInAccount = await accountService.GetAccountByEmailAsync(sessionAccount.Email ?? "", context.HttpContext.RequestAborted); // Re-check account state from DB so that Deleted/Role/SecurityStamp changes take effect on the next request, not only at login
 
-            // SecurityStamp mismatch means the password changed (self-service, forgot-password
-            // reset, or admin override) or an administrator locked the account after this session was
-            // minted — the session was captured by value at login, so it never sees the new stamp on its
-            // own. A lock by itself does NOT end a session: a lock from failed logins only refuses new
-            // logins, or anyone who knows the address could throw its owner out by guessing wrong.
-            if (loggedInAccount == null || loggedInAccount.Deleted ||
-                loggedInAccount.SecurityStamp != sessionAccount.SecurityStamp)
+            if (loggedInAccount.SessionInvalidationReason(sessionAccount) is { } reason)
             {
-                string reason = loggedInAccount == null ? "account no longer exists"
-                    : loggedInAccount.Deleted ? "account is deleted"
-                    : "security stamp changed";
                 logger.LogWarning("Session invalidated for {Email}: {Reason}", sessionAccount.Email, reason);
                 sessionService.RemoveAccount(); // Invalidate this session immediately
                 context.Result = new RedirectResult("/Account/Login");
@@ -240,188 +211,203 @@ public class AuthorizationFilter(IMenuService menuService, IDistributedCache cac
             context.HttpContext.Items[HttpContextItemKeys.LoggedInAccount] = loggedInAccount;
         }
 
-        var isAccountSessionExist = loggedInAccount != null;
-
-        // An admin-forced password change locks the account to the profile page (where the
-        // change-password form lives) and logout, until UpdateProfilePassword clears the flag.
-        if (isAccountSessionExist && loggedInAccount!.MustChangePassword)
+        switch (Decide(target, loggedInAccount, menus))
         {
-            bool isAllowedWhileForced =
-                (currentControllerName == "Management" && currentActionName is "Profile" or "UpdateProfilePassword") ||
-                (currentControllerName == "Account" && currentActionName == "Logout") ||
-                (currentControllerName == "Exception" && currentActionName == "Error");
-
-            if (isAllowedWhileForced)
-                return; // Result set above when refused; the allowed actions pass through
-            if (string.Equals(currentRequestMethod, "GET", StringComparison.OrdinalIgnoreCase))
-            {
-                // The ordinary forced-change flow (every page leads to the change-password form): not a denial.
-                context.Result = new RedirectResult("/Management/Profile");
-            }
-            else
-            {
-                logger.LogWarning("Access denied: {Method} {Controller}/{Action} for {Account} while a password change is pending",
-                    currentRequestMethod, currentControllerName, currentActionName, loggedInAccount.Email);
+            case AccessDecision.Allow:
+                return;
+            case AccessDecision.RedirectVisitorToPublicDashboard:
                 context.Result = new RedirectResult("/Dashboard/AnonymousIndex");
-            }
-
-            return; // Result set above when refused; the allowed actions pass through
+                return;
+            case AccessDecision.RedirectToPasswordChange:
+                context.Result = new RedirectResult("/Management/Profile");
+                return;
+            case AccessDecision.DenyWhilePasswordChangeIsPending:
+                logger.LogWarning("Access denied: {Method} {Controller}/{Action} for {Account} while a password change is pending",
+                    target.Method, target.Controller, target.Action, loggedInAccount?.Email);
+                context.Result = new RedirectResult("/Dashboard/AnonymousIndex");
+                return;
+            case AccessDecision.Deny:
+            default:
+                // A refused request is a security event: record who asked for what, then send them to the start page.
+                logger.LogWarning("Access denied: {Method} {Controller}/{Action} for {Account}",
+                    target.Method, target.Controller, target.Action, loggedInAccount?.Email ?? "anonymous");
+                context.Result = new RedirectResult("/Dashboard/AnonymousIndex");
+                return;
         }
+    }
+
+    /// <summary>The navigation menu of all three roles: from the distributed cache when every entry reads, otherwise rebuilt from the database.</summary>
+    private async Task<NavigationMenus> LoadNavigationMenusAsync()
+    {
+        var results = await Task.WhenAll(
+            cache.GetAsync(AdminCategoriesCacheKey),
+            cache.GetAsync(AdminSubCategoriesCacheKey),
+            cache.GetAsync(UserCategoriesCacheKey),
+            cache.GetAsync(UserSubCategoriesCacheKey),
+            cache.GetAsync(AnonymousCategoriesCacheKey),
+            cache.GetAsync(AnonymousSubCategoriesCacheKey));
+
+        if (results[0] != null && results[1] != null && results[2] != null &&
+            results[3] != null && results[4] != null && results[5] != null)
+        {
+            try
+            {
+                return new NavigationMenus(
+                    JsonSerializer.Deserialize<List<CategoryResponse>>(results[0]!)!,
+                    JsonSerializer.Deserialize<List<SubCategoryResponse>>(results[1]!)!,
+                    JsonSerializer.Deserialize<List<CategoryResponse>>(results[2]!)!,
+                    JsonSerializer.Deserialize<List<SubCategoryResponse>>(results[3]!)!,
+                    JsonSerializer.Deserialize<List<CategoryResponse>>(results[4]!)!,
+                    JsonSerializer.Deserialize<List<SubCategoryResponse>>(results[5]!)!);
+            }
+            catch (Exception e)
+            {
+                // A poisoned or shape-changed cache entry must not turn into a 500 on every request
+                // for the whole 10-minute TTL — fall through so the rebuild below reads the database,
+                // which also overwrites the bad entry. (SessionService.GetAccountAsync
+                // guards its own deserialization the same way.)
+                logger.LogWarning(e, "Navigation menu cache entry could not be read; rebuilding it from the database");
+            }
+        }
+
+        var categories = (await menuService.GetAllCategoriesAsync()).ToList();
+        var subCategories = (await menuService.GetAllSubCategoriesAsync()).ToList();
+
+        var entryOptions = new DistributedCacheEntryOptions()
+            .SetSlidingExpiration(TimeSpan.FromMinutes(10));
+
+        var menus = new NavigationMenus(
+            [.. categories.Where(c => c.Role == Role.Admin)],
+            [.. subCategories.Where(s => s.Role == Role.Admin)],
+            [.. categories.Where(c => c.Role == Role.User)],
+            [.. subCategories.Where(s => s.Role == Role.User)],
+            [.. categories.Where(c => c.Role == Role.Anonymous)],
+            [.. subCategories.Where(s => s.Role == Role.Anonymous)]);
+
+        await Task.WhenAll(
+            cache.SetAsync(AdminCategoriesCacheKey, JsonSerializer.SerializeToUtf8Bytes(menus.AdminCategories), entryOptions),
+            cache.SetAsync(AdminSubCategoriesCacheKey, JsonSerializer.SerializeToUtf8Bytes(menus.AdminSubCategories), entryOptions),
+            cache.SetAsync(UserCategoriesCacheKey, JsonSerializer.SerializeToUtf8Bytes(menus.UserCategories), entryOptions),
+            cache.SetAsync(UserSubCategoriesCacheKey, JsonSerializer.SerializeToUtf8Bytes(menus.UserSubCategories), entryOptions),
+            cache.SetAsync(AnonymousCategoriesCacheKey, JsonSerializer.SerializeToUtf8Bytes(menus.AnonymousCategories), entryOptions),
+            cache.SetAsync(AnonymousSubCategoriesCacheKey, JsonSerializer.SerializeToUtf8Bytes(menus.AnonymousSubCategories), entryOptions));
+
+        return menus;
+    }
+
+    /// <summary>The allow / deny decision for <paramref name="target"/>: no I/O, only the request, the account and the menu.</summary>
+    /// <param name="target">The endpoint and method of the request.</param>
+    /// <param name="account">The validated signed-in account, or <see langword="null"/> for a signed-out visitor.</param>
+    /// <param name="menus">The navigation menu of all three roles.</param>
+    private static AccessDecision Decide(RequestTarget target, AccountResponse? account, NavigationMenus menus)
+    {
+        if (account is { MustChangePassword: true })
+            return DecideWhilePasswordChangeIsPending(target);
 
         // UseExceptionHandler re-executes /Exception/Error with the ORIGINAL request's method, so a
         // failed POST/PUT/DELETE arrives here as that method. The error page is inert (it changes no
         // state and shows only a request id), so it is reachable for every method and every role;
         // without this, the POST branches below would redirect the user away from the error page.
-        if (currentControllerName == "Exception" && currentActionName == "Error")
-            return; // allowed: no Result set
+        if (target.Is(ExceptionControllerName, nameof(Controllers.ExceptionController.Error)))
+            return AccessDecision.Allow;
 
-        switch (currentRequestMethod.ToUpperInvariant())
+        return target.Method.ToUpperInvariant() switch
         {
             // GET method (block page access only!!)
-            // If not logged in
-            case "GET" when !isAccountSessionExist:
-                {
-                    switch (currentControllerName)
-                    {
-                        // If login page
-                        case "Account" when currentActionName == "Login":
-                        // If registration page
-                        case "Account" when currentActionName == "Register":
-                        // If email confirmation page
-                        case "Account" when currentActionName == "ConfirmEmail":
-                        // If consent form page
-                        case "Account" when currentActionName == "ConsentForm":
-                        // If forgot password page
-                        case "Account" when currentActionName == "ForgotPassword":
-                        // If password reset page
-                        case "Account" when currentActionName == "ResetPassword":
-                            return; // allowed: no Result set
-                    }
-
-                    var anonymousMatch = anonymousCategories.ResolveActiveMenuItem(
-                        anonymousSubCategories, currentControllerName, currentActionName);
-
-                    if (anonymousMatch.IsMatch)
-                    {
-                        return; // allowed: no Result set
-                    }
-
-                    context.Result = new RedirectResult("/Dashboard/AnonymousIndex");
-                    return;
-                }
-            case "GET" when isAccountSessionExist:
-                {
-                    switch (currentControllerName)
-                    {
-                        // Initial screen
-                        case "Dashboard" when currentActionName == "AnonymousIndex":
-                            return; // allowed: no Result set
-                    }
-
-                    switch (loggedInAccount!.Role)
-                    {
-                        // Admin and User share identical resolution logic — only which
-                        // category/sub-category list is searched differs by role.
-                        case Role.Admin:
-                        case Role.User:
-                            {
-                                bool isAdmin = loggedInAccount.Role == Role.Admin;
-                                var match = (isAdmin ? adminCategories : userCategories).ResolveActiveMenuItem(
-                                    isAdmin ? adminSubCategories : userSubCategories, currentControllerName, currentActionName);
-
-                                if (match.IsMatch)
-                                {
-                                    return; // allowed: no Result set
-                                }
-
-                                Deny();
-                                return;
-                            }
-                        // Role is a plain string, not an enum — an account somehow persisted with
-                        // neither Admin nor User must still get an explicit denial: an authorization
-                        // filter that returns without setting context.Result lets the request through.
-                        default:
-                            Deny();
-                            return;
-                    }
-                }
-            // POST method — not logged in
-            case "POST" when !isAccountSessionExist:
-                {
-                    (string, string) endpoint = (currentControllerName, currentActionName);
-
-                    // AccountController's own POST actions (login, register, forgot/reset password …)
-                    // are always reachable to an anonymous visitor.
-                    if (_anonymousAccountPostActions.Contains(endpoint))
-                    {
-                        return; // allowed: no Result set
-                    }
-
-                    // Otherwise the action must be explicitly marked for the Anonymous role AND live
-                    // on a controller that appears in the anonymous navigation menu.
-                    if (_postActionRoles.TryGetValue(endpoint, out FrozenSet<string>? anonRoles)
-                        && anonRoles.Contains(Role.Anonymous)
-                        && anonymousCategories.Any(category => category.Controller == currentControllerName))
-                    {
-                        return; // allowed: no Result set
-                    }
-
-                    Deny();
-                    return;
-                }
-            // POST method — logged in
-            case "POST" when isAccountSessionExist:
-                {
-                    // Logout is a POST (antiforgery-protected) endpoint on AccountController, which is
-                    // not part of any role's navigation menu — allow it explicitly for any signed-in
-                    // account regardless of role.
-                    if (currentControllerName == "Account" && currentActionName == "Logout")
-                    {
-                        return; // allowed: no Result set
-                    }
-
-                    switch (loggedInAccount!.Role)
-                    {
-                        // Admin and User share identical resolution logic — only which category
-                        // list is searched for a controller with a matching RequiredHttpPostAccess
-                        // role differs.
-                        case Role.Admin:
-                        case Role.User:
-                            {
-                                var categories = loggedInAccount.Role == Role.Admin ? adminCategories : userCategories;
-
-                                // The action must carry [RequiredHttpPostAccess(Role = <this role>)]
-                                // AND its controller must appear in this role's navigation menu.
-                                if (_postActionRoles.TryGetValue((currentControllerName, currentActionName), out FrozenSet<string>? allowedRoles)
-                                    && allowedRoles.Contains(loggedInAccount.Role)
-                                    && categories.Any(category => category.Controller == currentControllerName))
-                                {
-                                    return; // allowed: no Result set
-                                }
-
-                                Deny();
-                                return;
-                            }
-                        // Role is a plain string, not an enum — an account somehow persisted with
-                        // neither Admin nor User must still get an explicit denial: an authorization
-                        // filter that returns without setting context.Result lets the request through.
-                        default:
-                            Deny();
-                            return;
-                    }
-                }
+            "GET" => account == null ? DecideVisitorGet(target, menus) : DecideSignedInGet(target, account, menus),
+            "POST" => account == null ? DecideVisitorPost(target, menus) : DecideSignedInPost(target, account, menus),
             // (Reject all methods like PATCH / DELETE etc.)
-            default:
-                Deny();
-                return;
-        }
-
-        // A refused request is a security event: record who asked for what, then send them to the start page.
-        void Deny()
-        {
-            logger.LogWarning("Access denied: {Method} {Controller}/{Action} for {Account}",
-                currentRequestMethod, currentControllerName, currentActionName, loggedInAccount?.Email ?? "anonymous");
-            context.Result = new RedirectResult("/Dashboard/AnonymousIndex");
-        }
+            _ => AccessDecision.Deny,
+        };
     }
+
+    /// <summary>
+    /// An admin-forced password change locks the account to the profile page (where the change-password form lives) and
+    /// logout, until UpdateProfilePassword clears the flag.
+    /// </summary>
+    private static AccessDecision DecideWhilePasswordChangeIsPending(RequestTarget target)
+    {
+        bool isAllowed =
+            target.Is(ManagementControllerName, nameof(Controllers.ManagementController.Profile)) ||
+            target.Is(ManagementControllerName, nameof(Controllers.ManagementController.UpdateProfilePassword)) ||
+            target.Is(AccountControllerName, nameof(Controllers.AccountController.Logout)) ||
+            target.Is(ExceptionControllerName, nameof(Controllers.ExceptionController.Error));
+
+        if (isAllowed)
+            return AccessDecision.Allow;
+
+        return string.Equals(target.Method, "GET", StringComparison.OrdinalIgnoreCase)
+            ? AccessDecision.RedirectToPasswordChange
+            : AccessDecision.DenyWhilePasswordChangeIsPending;
+    }
+
+    /// <summary>A signed-out GET: the fixed account pages, or a page of the anonymous menu.</summary>
+    private static AccessDecision DecideVisitorGet(RequestTarget target, NavigationMenus menus)
+    {
+        if (target.Controller == AccountControllerName && _anonymousAccountPages.Contains(target.Action))
+            return AccessDecision.Allow;
+
+        return menus.AnonymousCategories.ResolveActiveMenuItem(menus.AnonymousSubCategories, target.Controller, target.Action).IsMatch
+            ? AccessDecision.Allow
+            : AccessDecision.RedirectVisitorToPublicDashboard;
+    }
+
+    /// <summary>A signed-in GET: the initial screen, or a page of the role's menu.</summary>
+    private static AccessDecision DecideSignedInGet(RequestTarget target, AccountResponse account, NavigationMenus menus)
+    {
+        // Initial screen
+        if (target.Is(DashboardControllerName, nameof(Controllers.DashboardController.AnonymousIndex)))
+            return AccessDecision.Allow;
+
+        // Admin and User share identical resolution logic — only which category/sub-category list is searched differs by
+        // role. Role is a plain string, not an enum — an account somehow persisted with neither Admin nor User must still
+        // get an explicit denial.
+        var match = account.Role switch
+        {
+            Role.Admin => menus.AdminCategories.ResolveActiveMenuItem(menus.AdminSubCategories, target.Controller, target.Action),
+            Role.User => menus.UserCategories.ResolveActiveMenuItem(menus.UserSubCategories, target.Controller, target.Action),
+            _ => null,
+        };
+
+        return match is { IsMatch: true } ? AccessDecision.Allow : AccessDecision.Deny;
+    }
+
+    /// <summary>A signed-out POST: the fixed account endpoints, or an action marked for the Anonymous role on a controller of the anonymous menu.</summary>
+    private static AccessDecision DecideVisitorPost(RequestTarget target, NavigationMenus menus)
+    {
+        // AccountController's own POST actions (login, register, forgot/reset password …)
+        // are always reachable to an anonymous visitor.
+        if (_anonymousAccountPostActions.Contains((target.Controller, target.Action)))
+            return AccessDecision.Allow;
+
+        return IsPostAllowedFor(Role.Anonymous, menus.AnonymousCategories, target) ? AccessDecision.Allow : AccessDecision.Deny;
+    }
+
+    /// <summary>A signed-in POST: logout, or an action marked for the account's role on a controller of that role's menu.</summary>
+    private static AccessDecision DecideSignedInPost(RequestTarget target, AccountResponse account, NavigationMenus menus)
+    {
+        // Logout is a POST (antiforgery-protected) endpoint on AccountController, which is
+        // not part of any role's navigation menu — allow it explicitly for any signed-in
+        // account regardless of role.
+        if (target.Is(AccountControllerName, nameof(Controllers.AccountController.Logout)))
+            return AccessDecision.Allow;
+
+        // Role is a plain string, not an enum — an account somehow persisted with neither Admin nor User must still get an
+        // explicit denial.
+        return account.Role switch
+        {
+            Role.Admin when IsPostAllowedFor(Role.Admin, menus.AdminCategories, target) => AccessDecision.Allow,
+            Role.User when IsPostAllowedFor(Role.User, menus.UserCategories, target) => AccessDecision.Allow,
+            _ => AccessDecision.Deny,
+        };
+    }
+
+    /// <summary>
+    /// Whether the action carries <c>[RequiredHttpPostAccess(Role = <paramref name="role"/>)]</c> AND its controller appears in
+    /// <paramref name="categories"/>, the navigation menu of that role.
+    /// </summary>
+    private static bool IsPostAllowedFor(string role, List<CategoryResponse> categories, RequestTarget target) =>
+        _postActionRoles.TryGetValue((target.Controller, target.Action), out FrozenSet<string>? allowedRoles)
+        && allowedRoles.Contains(role)
+        && categories.Any(category => category.Controller == target.Controller);
 }

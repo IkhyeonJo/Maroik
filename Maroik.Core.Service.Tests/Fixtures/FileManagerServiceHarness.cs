@@ -119,7 +119,6 @@ internal sealed class FileManagerServiceHarness
         UnitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
-    // ReSharper disable once GrammarMistakeInComment
     /// <summary>Asserts the account row was locked before the write.</summary>
     public void AssertAccountLocked() => Accounts.Verify(a => a.FindByEmailForUpdateAsync(Email, It.IsAny<CancellationToken>()), Times.Once);
 }

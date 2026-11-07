@@ -2,7 +2,6 @@ using Maroik.Core.Domain.Finances;
 
 namespace Maroik.Website.Constants;
 
-// ReSharper disable once GrammarMistakeInComment
 /// <summary>
 /// How the finance screens show an amount: with a thousands separator and every decimal place the column stores
 /// (<see cref="FinanceAmountPolicy.MaxDecimalPlaces"/>), trailing zeros dropped — 10000 → "10,000", 12.50 → "12.5",

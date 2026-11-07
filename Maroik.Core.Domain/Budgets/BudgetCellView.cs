@@ -2,7 +2,6 @@ using Maroik.Core.Domain.Formulas;
 
 namespace Maroik.Core.Domain.Budgets;
 
-// ReSharper disable once GrammarMistakeInComment
 /// <summary>A cell as the sheet shows it.</summary>
 /// <param name="Address">Its A1 address.</param>
 /// <param name="Role">What it is.</param>

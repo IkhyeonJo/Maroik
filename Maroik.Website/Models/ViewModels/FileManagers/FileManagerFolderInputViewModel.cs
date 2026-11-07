@@ -1,4 +1,3 @@
-// ReSharper disable UnusedAutoPropertyAccessor.Global
 namespace Maroik.Website.Models.ViewModels.FileManagers;
 
 /// <summary>The folder to open (null = the root).</summary>

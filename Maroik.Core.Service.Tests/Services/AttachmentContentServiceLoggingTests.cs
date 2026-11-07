@@ -27,7 +27,6 @@ public class AttachmentContentServiceLoggingTests
     /// <summary>The storage failure every call fails with.</summary>
     private readonly HttpRequestException _failure = new("File storage answered 404 for 'upload/x.png'.");
 
-    // ReSharper disable once GrammarMistakeInComment
     /// <summary>The service under test, over a file client whose every download and open fails.</summary>
     private AttachmentContentService CreateSut()
     {

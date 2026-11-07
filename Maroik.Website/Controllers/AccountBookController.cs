@@ -742,7 +742,6 @@ public class AccountBookController(
         }
     }
 
-    // ReSharper disable once GrammarMistakeInComment
     /// <summary>Pastes or fills a block of cells, as Excel does; replies the changed cells.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]

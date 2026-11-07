@@ -20,7 +20,6 @@ namespace Maroik.FileStorage.Tests.Services;
 /// </summary>
 public class FileValidationServiceTests
 {
-    // ReSharper disable once GrammarMistakeInComment
     /// <summary>A ClamAV client whose every scan comes back clean.</summary>
     private static Mock<IClamavClient> CleanScanMock()
     {
@@ -30,15 +29,12 @@ public class FileValidationServiceTests
         return mock;
     }
 
-    // ReSharper disable once GrammarMistakeInComment
     /// <summary>A ClamAV client whose every scan finds a virus.</summary>
     private static Mock<IClamavClient> InfectedScanMock() => ScanMock(ClamavScanResult.Infected);
 
-    // ReSharper disable once GrammarMistakeInComment
     /// <summary>A ClamAV client whose every scan reports the daemon unavailable.</summary>
     private static Mock<IClamavClient> UnavailableScanMock() => ScanMock(ClamavScanResult.Unavailable);
 
-    // ReSharper disable once GrammarMistakeInComment
     /// <summary>A ClamAV client whose every scan returns <paramref name="result"/>.</summary>
     private static Mock<IClamavClient> ScanMock(ClamavScanResult result)
     {

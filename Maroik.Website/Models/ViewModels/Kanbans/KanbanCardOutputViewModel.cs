@@ -1,5 +1,3 @@
-// ReSharper disable PropertyCanBeMadeInitOnly.Global
-// ReSharper disable UnusedAutoPropertyAccessor.Global
 namespace Maroik.Website.Models.ViewModels.Kanbans;
 
 /// <summary>One card as the board renders it: Razor encodes every text, and the edit modal is filled from the card's attributes.</summary>

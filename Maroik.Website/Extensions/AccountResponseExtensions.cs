@@ -1,4 +1,5 @@
 using Maroik.Core.Contract.Dtos;
+using Maroik.Core.Domain.Accounts;
 
 namespace Maroik.Website.Extensions;
 
@@ -28,6 +29,17 @@ public static class AccountResponseExtensions
         /// <summary>The account's avatar image path.</summary>
         /// <exception cref="InvalidOperationException">The account has no avatar image path.</exception>
         public string RequireAvatarImagePath() => Required(account.AvatarImagePath, nameof(AccountResponse.AvatarImagePath));
+    }
+
+    extension(AccountResponse? current)
+    {
+        /// <summary>
+        /// Why <paramref name="session"/> no longer stands for this account's current row (null when the account is gone), or
+        /// <see langword="null"/> while it still does: <see cref="AccountSessionPolicy"/> over the two DTOs.
+        /// </summary>
+        /// <param name="session">The account the session captured at login.</param>
+        public string? SessionInvalidationReason(AccountResponse session) => AccountSessionPolicy.InvalidationReason(
+            current != null, current?.Deleted ?? false, current?.SecurityStamp, session.SecurityStamp);
     }
 
     private static string Required(string? value, string field) =>

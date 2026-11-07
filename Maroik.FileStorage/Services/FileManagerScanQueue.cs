@@ -34,7 +34,6 @@ public sealed class FileManagerScanQueue : IFileManagerScanQueue
             _pending[uploadId] = new CancellationTokenSource();
         }
 
-        // ReSharper disable once GrammarMistakeInComment
         // An unbounded channel always takes the write.
         return _queued.Writer.TryWrite(uploadId);
     }

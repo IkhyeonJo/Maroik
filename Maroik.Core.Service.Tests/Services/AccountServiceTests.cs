@@ -2250,7 +2250,6 @@ public class AccountServiceTests
         AssertLogged(LogLevel.Warning, $"Failed to update account message after mail send failure for {account.Email.Value}", thrown);
     }
 
-    // ReSharper disable once GrammarMistakeInComment
     /// <summary>A queued confirmation mail records "verify your mail" on the account, and the publish is logged with an empty correlation id outside a request.</summary>
     [Fact]
     public async Task ResendConfirmationEmailAsync_RecordsVerifyEmail_AndLogsThePublish()

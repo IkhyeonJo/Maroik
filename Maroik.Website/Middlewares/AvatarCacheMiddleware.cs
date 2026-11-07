@@ -10,7 +10,7 @@ namespace Maroik.Website.Middlewares;
 /// <c>/upload/Management/Profile/Avatar/&lt;file&gt;</c>. On a GET for that path, if the file is not
 /// already present in this replica's <c>wwwroot</c>, it is fetched once from file storage (via
 /// <see cref="IProfileService"/>) and written there; the static-file middleware that runs
-/// immediately after then serves it (with its normal caching/ETag handling) on this and every later
+/// immediately after then serves it on this and every later
 /// request. A replica that never handled the upload therefore self-heals on the first render
 /// instead of 404-ing.
 /// </summary>

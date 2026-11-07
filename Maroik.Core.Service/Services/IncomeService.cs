@@ -43,17 +43,26 @@ public class IncomeService(IIncomeRepository incomeRepository, IAssetBalanceStor
         {
             var classResult = IncomeClassPolicy.Validate(request.MainClass, request.SubClass);
             if (classResult.IsError)
-                return await unitOfWork.FailAsync(classResult.FirstError, ct);
+            {
+                await unitOfWork.RollbackAsync(ct);
+                return ServiceResult.FromError(classResult.FirstError);
+            }
 
             Asset? depositAsset = await assetBalance.GetAssetAsync(accountEmail, request.DepositMyAssetProductName ?? "", ct);
             if (!AssetUsagePolicy.CanUse(depositAsset, out var refusal))
-                return await unitOfWork.FailAsync(AssetRefusalMapper.ToResult(AssetRefusalMapper.Income, refusal), ct);
+            {
+                await unitOfWork.RollbackAsync(ct);
+                return AssetRefusalMapper.ToResult(AssetRefusalMapper.Income, refusal);
+            }
 
             string currency = depositAsset.Balance.Currency.Value;
             var incomeResult = Income.Record(accountEmail, request.MainClass, request.SubClass,
                 request.Content, Math.Abs(request.Amount), currency, request.DepositMyAssetProductName, utcNow, request.Note, request.Created);
             if (incomeResult.IsError)
-                return await unitOfWork.FailAsync(incomeResult.FirstError, ct);
+            {
+                await unitOfWork.RollbackAsync(ct);
+                return ServiceResult.FromError(incomeResult.FirstError);
+            }
 
             var income = incomeResult.Value;
             await incomeRepository.CreateAsync(income, ct);
@@ -62,7 +71,10 @@ public class IncomeService(IIncomeRepository incomeRepository, IAssetBalanceStor
             var moveResult = await assetBalance.ApplyBalanceMovementsAsync(
                 touchedAssets, income.BalanceMovements(), utcNow, ct);
             if (moveResult.IsError)
-                return await unitOfWork.FailAsync(moveResult.FirstError, ct);
+            {
+                await unitOfWork.RollbackAsync(ct);
+                return ServiceResult.FromError(moveResult.FirstError);
+            }
 
             await unitOfWork.CommitAsync(ct);
             return ServiceResult.Ok();
@@ -84,14 +96,20 @@ public class IncomeService(IIncomeRepository incomeRepository, IAssetBalanceStor
         {
             var classResult = IncomeClassPolicy.Validate(request.MainClass, request.SubClass);
             if (classResult.IsError)
-                return await unitOfWork.FailAsync(classResult.FirstError, ct);
+            {
+                await unitOfWork.RollbackAsync(ct);
+                return ServiceResult.FromError(classResult.FirstError);
+            }
 
             // FOR UPDATE: lock the record for the rest of the transaction so a concurrent
             // UpdateAsync/DeleteAsync of the same income cannot read a stale amount here and
             // drift the linked asset balance.
             Income? previous = await incomeRepository.FindByEmailAndIdForUpdateAsync(accountEmail, request.Id, ct);
             if (previous == null)
-                return await unitOfWork.FailAsync(ServiceResult.NotFound("Income.NotFound", ServiceErrorKeys.IncomeNotFound), ct);
+            {
+                await unitOfWork.RollbackAsync(ct);
+                return ServiceResult.NotFound("Income.NotFound", ServiceErrorKeys.IncomeNotFound);
+            }
 
             // Lock the previous and new deposit assets in a single ordinal-ordered batch so
             // concurrent transactions on the same asset pair (here or in ExpenditureService)
@@ -102,7 +120,10 @@ public class IncomeService(IIncomeRepository incomeRepository, IAssetBalanceStor
             Asset? prevAsset = touchedAssets.FindAsset(previous.DepositMyAssetProductName);
             Asset? newAsset = touchedAssets.FindAsset(request.DepositMyAssetProductName);
             if (!AssetUsagePolicy.CanRetargetIncome(prevAsset, request.DepositMyAssetProductName, newAsset, out var refusal))
-                return await unitOfWork.FailAsync(AssetRefusalMapper.ToResult(AssetRefusalMapper.Income, refusal), ct);
+            {
+                await unitOfWork.RollbackAsync(ct);
+                return AssetRefusalMapper.ToResult(AssetRefusalMapper.Income, refusal);
+            }
             string newCurrency = newAsset?.Balance.Currency.Value ?? prevAsset?.Balance.Currency.Value ?? "";
 
             IReadOnlyList<BalanceMovement> before = previous.BalanceMovements();
@@ -110,13 +131,19 @@ public class IncomeService(IIncomeRepository incomeRepository, IAssetBalanceStor
             var updateResult = previous.Update(request.MainClass, request.SubClass, request.Content,
                 Math.Abs(request.Amount), newCurrency, request.DepositMyAssetProductName, request.Note, utcNow, request.Created);
             if (updateResult.IsError)
-                return await unitOfWork.FailAsync(updateResult.FirstError, ct);
+            {
+                await unitOfWork.RollbackAsync(ct);
+                return ServiceResult.FromError(updateResult.FirstError);
+            }
 
             await incomeRepository.UpdateEntityAsync(previous, ct);
             var moveResult = await assetBalance.ApplyBalanceMovementsAsync(touchedAssets,
                 BalanceMovement.Replacing(before, previous.BalanceMovements()), utcNow, ct);
             if (moveResult.IsError)
-                return await unitOfWork.FailAsync(moveResult.FirstError, ct);
+            {
+                await unitOfWork.RollbackAsync(ct);
+                return ServiceResult.FromError(moveResult.FirstError);
+            }
 
             await unitOfWork.CommitAsync(ct);
             return ServiceResult.Ok();
@@ -140,19 +167,28 @@ public class IncomeService(IIncomeRepository incomeRepository, IAssetBalanceStor
             // same income cannot reverse its asset impact twice or from a stale amount.
             Income? income = await incomeRepository.FindByEmailAndIdForUpdateAsync(accountEmail, id, ct);
             if (income == null)
-                return await unitOfWork.FailAsync(ServiceResult.NotFound("Income.NotFound", ServiceErrorKeys.IncomeNotFound), ct);
+            {
+                await unitOfWork.RollbackAsync(ct);
+                return ServiceResult.NotFound("Income.NotFound", ServiceErrorKeys.IncomeNotFound);
+            }
 
             // An income referencing a since-archived (soft-deleted) asset must not be deletable,
             // matching Create/Update: a deleted asset's balance must not be touched.
             Dictionary<string, Asset> touchedAssets = await assetBalance.GetAssetsOrdinalAsync(
                 accountEmail, [income.DepositMyAssetProductName], ct);
             if (!AssetUsagePolicy.CanMoveBack([touchedAssets.FindAsset(income.DepositMyAssetProductName)], out var refusal))
-                return await unitOfWork.FailAsync(AssetRefusalMapper.ToResult(AssetRefusalMapper.Income, refusal), ct);
+            {
+                await unitOfWork.RollbackAsync(ct);
+                return AssetRefusalMapper.ToResult(AssetRefusalMapper.Income, refusal);
+            }
 
             var moveResult = await assetBalance.ApplyBalanceMovementsAsync(touchedAssets,
                 BalanceMovement.Undoing(income.BalanceMovements()), utcNow, ct);
             if (moveResult.IsError)
-                return await unitOfWork.FailAsync(moveResult.FirstError, ct);
+            {
+                await unitOfWork.RollbackAsync(ct);
+                return ServiceResult.FromError(moveResult.FirstError);
+            }
 
             await incomeRepository.DeleteByIdAsync(income.Id, ct);
 

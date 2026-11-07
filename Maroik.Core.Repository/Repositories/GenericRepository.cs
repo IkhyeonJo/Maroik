@@ -5,7 +5,6 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Maroik.Core.Repository.Repositories;
 
-// ReSharper disable once GrammarMistakeInComment
 /// <summary>
 /// Base class for EF Core repositories, implementing the create/update operations of
 /// <see cref="IGenericRepository{TDomain}"/> and providing protected query/delete helpers shared
@@ -114,7 +113,6 @@ public abstract class GenericRepository<TDomain, TEntity>(ApplicationDbContext c
         if (existing is not null)
         {
             var entry = Context.Entry(existing);
-            if (entry.State == EntityState.Detached) entry.State = EntityState.Unchanged;
             // Copy all scalar values from the mapped domain object onto the tracked entity, then mark
             // the whole entry Modified so SaveChanges issues an UPDATE for every column regardless of
             // which individual values actually changed.
@@ -273,7 +271,6 @@ public abstract class GenericRepository<TDomain, TEntity>(ApplicationDbContext c
             }
         }
         
-        // ReSharper disable once GrammarMistakeInComment
         // Pending rows the database query above cannot see: an Added (never-flushed) match simply
         // stops being inserted, and a Modified match is turned into a delete.
         var predicateFunc = predicate.Compile();

@@ -1841,7 +1841,6 @@ public class CalendarServiceTests
             new CalendarRequest { Name = "New", TimeZoneIanaId = "UTC", HtmlColorCode = "#3788d8" }, TestContext.Current.CancellationToken));
     }
 
-    // ReSharper disable once GrammarMistakeInComment
     /// <summary>A create that throws is logged with the calendar name and the account.</summary>
     [Fact]
     public async Task CreateCalendarAsync_LogsTheFailure_WhenTheRepositoryThrows()
@@ -1968,7 +1967,6 @@ public class CalendarServiceTests
         _calendarRepo.Verify(r => r.DeleteByIdAsync(It.IsAny<long>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
-    // ReSharper disable once GrammarMistakeInComment
     /// <summary>A delete that throws is logged with the calendar id and the account.</summary>
     [Fact]
     public async Task DeleteCalendarAsync_LogsTheFailure_WhenTheRepositoryThrows()

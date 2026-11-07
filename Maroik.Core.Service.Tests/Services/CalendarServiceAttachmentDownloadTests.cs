@@ -12,7 +12,6 @@ using Moq;
 
 namespace Maroik.Core.Service.Tests.Services;
 
-// ReSharper disable once GrammarMistakeInComment
 /// <summary>
 /// <see cref="CalendarService.OpenCalendarEventAttachedFileAsync"/>: an event's attachment is handed out
 /// only after it is checked again that the event's calendar is one the requesting viewer may see (their

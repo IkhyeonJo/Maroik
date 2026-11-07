@@ -7,7 +7,6 @@ namespace Maroik.Website.Tests;
 /// <summary>Unit tests for <see cref="AmountDisplay"/>.</summary>
 public class AmountDisplayTests
 {
-    // ReSharper disable once GrammarMistakeInComment
     /// <summary>
     /// An amount shows every decimal place the column stores (up to <see cref="FinanceAmountPolicy.MaxDecimalPlaces"/>),
     /// without trailing zeros, and with a thousands separator — the same in every supported culture.

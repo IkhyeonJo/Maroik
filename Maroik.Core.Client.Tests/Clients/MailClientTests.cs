@@ -512,7 +512,6 @@ public class MailClientTests
             Entries.Add((logLevel, formatter(state, exception), exception));
     }
 
-    // ReSharper disable once GrammarMistakeInComment
     /// <summary>
     /// Once the server has accepted the message, a failure while closing the connection must not be reported as a failed
     /// send — the caller would republish and the recipient would get a duplicate. The send is a success; the close failure is

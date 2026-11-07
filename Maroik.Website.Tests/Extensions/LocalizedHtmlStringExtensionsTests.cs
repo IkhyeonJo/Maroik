@@ -4,7 +4,6 @@ using Microsoft.AspNetCore.Mvc.Localization;
 
 namespace Maroik.Website.Tests.Extensions;
 
-// ReSharper disable once GrammarMistakeInComment
 /// <summary>
 /// Unit tests for <see cref="LocalizedHtmlStringExtensions"/>.
 /// <para>

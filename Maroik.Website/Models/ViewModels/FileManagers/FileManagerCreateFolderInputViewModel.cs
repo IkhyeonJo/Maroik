@@ -1,4 +1,3 @@
-// ReSharper disable UnusedAutoPropertyAccessor.Global
 namespace Maroik.Website.Models.ViewModels.FileManagers;
 
 /// <summary>A new folder, or one a folder upload needs (<see cref="Merge"/>: an existing folder of that name is reused).</summary>

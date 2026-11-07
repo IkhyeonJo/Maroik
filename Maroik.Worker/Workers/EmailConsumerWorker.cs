@@ -388,7 +388,6 @@ public sealed class EmailConsumerWorker(
         }
         catch (OperationCanceledException)
         {
-            // ReSharper disable once GrammarMistakeInComment
             // Either the host's own shutdown deadline or the DrainTimeout deadline was reached.
             // If a send is still running at this point, cancel it via _sendCts (every HandleAsync call
             // is given its token) instead of disposing the channel straight out from under it below

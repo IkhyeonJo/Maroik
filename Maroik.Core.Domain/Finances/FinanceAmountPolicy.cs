@@ -30,7 +30,6 @@ public static partial class FinanceAmountPolicy
     /// </summary>
     public const decimal MaxAbsoluteAmount = 9_999_999_999_999_999.9999m;
 
-    // ReSharper disable once GrammarMistakeInComment
     /// <summary>
     /// Rejects an amount whose magnitude the database column cannot hold, so an over-large value is a
     /// clean validation error instead of a raw "numeric field overflow" (SQLSTATE 22003) from the write.

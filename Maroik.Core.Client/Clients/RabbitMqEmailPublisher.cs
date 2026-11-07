@@ -49,7 +49,6 @@ public sealed class RabbitMqEmailPublisher(
     /// </summary>
     private readonly SemaphoreSlim _publishLock = new(1, 1);
 
-    // ReSharper disable once GrammarMistakeInComment
     /// <summary>
     /// 1 from the moment a <see cref="DisposeAsync"/> call claims the disposal, so any other call — repeated or
     /// concurrent — returns at once instead of waiting on (or later releasing) the lock that call disposes. A dispose

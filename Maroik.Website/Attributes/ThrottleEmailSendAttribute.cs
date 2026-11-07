@@ -93,7 +93,6 @@ public sealed class ThrottleEmailSendAttribute : Attribute, IAsyncActionFilter
                     return;
                 }
 
-                // ReSharper disable once GrammarMistakeInComment
                 // Claim the cooldown window immediately, before the action (and its possibly-slow
                 // mail send) runs, not after. Deferring the write would let every
                 // request in a concurrent burst for the same address pass the GetAsync check above

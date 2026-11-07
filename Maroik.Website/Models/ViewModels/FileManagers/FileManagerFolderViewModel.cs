@@ -1,5 +1,3 @@
-// ReSharper disable PropertyCanBeMadeInitOnly.Global
-// ReSharper disable UnusedAutoPropertyAccessor.Global
 namespace Maroik.Website.Models.ViewModels.FileManagers;
 
 /// <summary>An open folder: its breadcrumb and its items, folders first.</summary>

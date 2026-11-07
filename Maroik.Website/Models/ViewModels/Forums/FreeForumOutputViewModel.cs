@@ -1,4 +1,3 @@
-// ReSharper disable PropertyCanBeMadeInitOnly.Global
 using Maroik.Core.Contract.Dtos;
 using Maroik.Website.Models.ViewModels.Boards;
 

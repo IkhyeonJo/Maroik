@@ -23,7 +23,6 @@ public class FinanceMainClassOptionsTests(MaroikWebApplicationFactory factory)
         ["RegularSavings"] = "정기저축", ["NonConsumerSpending"] = "비소비지출", ["ConsumerSpending"] = "소비지출",
     };
 
-    // ReSharper disable once GrammarMistakeInComment
     /// <summary>Each row: the page, its create / edit main-class select, and whether it is an income page.</summary>
     public static TheoryData<string, string, bool> Selects => new()
     {

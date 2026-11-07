@@ -17,12 +17,10 @@ namespace Maroik.Core.Service.Tests.ArchitectureRules;
 /// </remarks>
 public partial class ServiceErrorKeyArchitectureTests
 {
-    // ReSharper disable once GrammarMistakeInComment
     /// <summary><c>XxxResult.Fail("…"</c> — the key is the first argument.</summary>
     [GeneratedRegex(@"\b\w+Result\.Fail\(\s*""(?<key>(?:[^""\\]|\\.)*)""")]
     private static partial Regex LiteralFailKey();
 
-    // ReSharper disable once GrammarMistakeInComment
     /// <summary><c>ServiceResult.Validation/NotFound/Conflict/Failure("code", "…"</c> — the key is the second argument.</summary>
     [GeneratedRegex(@"\bServiceResult\.(?:Validation|NotFound|Conflict|Failure)\(\s*""(?:[^""\\]|\\.)*""\s*,\s*""(?<key>(?:[^""\\]|\\.)*)""")]
     private static partial Regex LiteralCategorizedKey();

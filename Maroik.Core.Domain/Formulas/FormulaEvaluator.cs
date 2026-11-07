@@ -2,7 +2,6 @@ using System.Globalization;
 
 namespace Maroik.Core.Domain.Formulas;
 
-// ReSharper disable once GrammarMistakeInComment
 /// <summary>
 /// Evaluates a bound formula with Excel's value rules, in decimals: operands are coerced as Excel coerces them (numeric text and
 /// booleans to numbers, an empty cell to 0 / "" / FALSE), comparisons order numbers below text below booleans (text ignoring case),

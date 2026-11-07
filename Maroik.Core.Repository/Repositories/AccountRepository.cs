@@ -51,7 +51,6 @@ public class AccountRepository(ApplicationDbContext context)
         FileManagerScanDisabled = a.FileManagerScanDisabled
     };
 
-    // ReSharper disable once GrammarMistakeInComment
     /// <summary>
     /// Writes every column of <paramref name="domain"/>. <c>Nickname</c> is the principal key of <c>Board_fk_0</c> /
     /// <c>BoardComment_fk_1</c>, which EF Core refuses to change on a tracked row, so a changed nickname (the replaced

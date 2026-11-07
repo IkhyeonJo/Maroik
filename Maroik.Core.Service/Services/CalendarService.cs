@@ -246,11 +246,17 @@ public class CalendarService(
             // "Calendar_AccountEmail_Name_unique" constraint (caught below) is what actually
             // closes the race; this check only avoids the round trip in the common case.
             if (Calendar.IsNameTaken(calendars, request.Name))
-                return await unitOfWork.FailAsync(ServiceResult.Conflict("Calendar.NameExists", ServiceErrorKeys.CalendarExists), ct);
+            {
+                await unitOfWork.RollbackAsync(ct);
+                return ServiceResult.Conflict("Calendar.NameExists", ServiceErrorKeys.CalendarExists);
+            }
 
             var calendarResult = Calendar.Create(accountEmail, request.Name, request.Description, request.TimeZoneIanaId, request.HtmlColorCode, utcNow);
             if (calendarResult.IsError)
-                return await unitOfWork.FailAsync(calendarResult.FirstError, ct);
+            {
+                await unitOfWork.RollbackAsync(ct);
+                return ServiceResult.FromError(calendarResult.FirstError);
+            }
 
             var calendar = calendarResult.Value;
             await calendarRepository.CreateAsync(calendar, ct);
@@ -291,12 +297,18 @@ public class CalendarService(
             // UpdateEntityAsync's full-row snapshot below.
             Calendar? previous = await calendarRepository.FindByIdForUpdateAsync(request.Id, ct);
             if (previous == null || !previous.IsOwnedBy(accountEmail))
-                return await unitOfWork.FailAsync(ServiceResult.NotFound("Calendar.NotFound", ServiceErrorKeys.CalendarNotFound), ct);
+            {
+                await unitOfWork.RollbackAsync(ct);
+                return ServiceResult.NotFound("Calendar.NotFound", ServiceErrorKeys.CalendarNotFound);
+            }
 
             string previousTimeZone = previous.TimeZone.Value;
             var updateResult = previous.Update(request.Name, request.Description, request.TimeZoneIanaId, request.HtmlColorCode, utcNow);
             if (updateResult.IsError)
-                return await unitOfWork.FailAsync(updateResult.FirstError, ct);
+            {
+                await unitOfWork.RollbackAsync(ct);
+                return ServiceResult.FromError(updateResult.FirstError);
+            }
 
             await calendarRepository.UpdateEntityAsync(previous, ct);
             if (previous.TimeZone.Value != previousTimeZone)
@@ -329,7 +341,10 @@ public class CalendarService(
             List<Calendar> calendars = await calendarRepository.GetByAccountEmailAsync(accountEmail, ct);
             Calendar? existing = calendars.FirstOrDefault(c => c.Id == request.Id);
             if (existing == null)
-                return await unitOfWork.FailAsync(ServiceResult.NotFound("Calendar.NotFound", ServiceErrorKeys.CalendarNotFound), ct);
+            {
+                await unitOfWork.RollbackAsync(ct);
+                return ServiceResult.NotFound("Calendar.NotFound", ServiceErrorKeys.CalendarNotFound);
+            }
 
             await calendarRepository.DeleteByIdAsync(existing.Id, ct);
             await unitOfWork.CommitAsync(ct);
@@ -363,7 +378,10 @@ public class CalendarService(
             // first-visit provisioning does not fail on an action the user didn't request.
             var calendarResult = Calendar.CreateDefault(accountEmail, request.Name, request.Description, request.TimeZoneIanaId, request.HtmlColorCode, utcNow);
             if (calendarResult.IsError)
-                return await unitOfWork.FailAsync(calendarResult.FirstError, ct);
+            {
+                await unitOfWork.RollbackAsync(ct);
+                return ServiceResult.FromError(calendarResult.FirstError);
+            }
 
             var calendar = calendarResult.Value;
             await calendarRepository.CreateAsync(calendar, ct);
@@ -665,13 +683,19 @@ public class CalendarService(
         {
             List<Calendar> calendars = await calendarRepository.GetByAccountEmailAsync(email, ct);
             if (calendars.Count == 0)
-                return await unitOfWork.FailAsync(ServiceResult.NotFound("Calendar.None", ServiceErrorKeys.NoCalendarExists), ct);
+            {
+                await unitOfWork.RollbackAsync(ct);
+                return ServiceResult.NotFound("Calendar.None", ServiceErrorKeys.NoCalendarExists);
+            }
 
             CalendarEvent? evt = await calendarEventRepository.FindByIdAsync(calendarEventId, ct);
 
             // Ensure the event exists and belongs to one of the requesting user's calendars.
             if (!CalendarAccessPolicy.OwnsEvent(calendars, evt))
-                return await unitOfWork.FailAsync(ServiceResult.NotFound("CalendarEvent.NotFound", ServiceErrorKeys.CalendarEventNotFound), ct);
+            {
+                await unitOfWork.RollbackAsync(ct);
+                return ServiceResult.NotFound("CalendarEvent.NotFound", ServiceErrorKeys.CalendarEventNotFound);
+            }
 
             await calendarEventRepository.DeleteByIdAsync(evt.Id, ct);
             await unitOfWork.CommitAsync(ct);

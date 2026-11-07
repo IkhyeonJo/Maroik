@@ -35,7 +35,6 @@ public class CalendarControllerCalendarTests(MaroikWebApplicationFactory factory
 
     // -- Calendar forms ------------------------------------------------------------
 
-    // ReSharper disable once GrammarMistakeInComment
     /// <summary>The create / edit calendar forms cap the name at the domain's limit (ShortTextPolicy), like the event forms do.</summary>
     [Theory]
     [InlineData(Role.User, "/Calendar/UserIndex", "calendar-form-user@test.com")]

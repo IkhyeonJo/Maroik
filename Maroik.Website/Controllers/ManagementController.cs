@@ -1,5 +1,4 @@
 using Maroik.Core.Contract.Dtos;
-using Maroik.Core.Contract.Enums;
 using Maroik.Core.Contract.Extensions;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Contract.Settings;
@@ -947,54 +946,9 @@ public class ManagementController(
     [RequiredHttpPostAccess(Role = Role.User)]
     public async Task<IActionResult> UploadImageFile(IFormFile? summernoteImageFile)
     {
-        if (summernoteImageFile == null)
-            return Ok(new { result = false, errorMessage = localizer["Please attach a file."].Value });
-
-        // A refused upload is a security event: record who sent what (the attachment service logs its own refusals).
-        string uploaderEmail = HttpContext.GetLoggedInEmail();
-        if (summernoteImageFile.Length <= 0 || summernoteImageFile.Length > serverSettings.Value.MaxAttachedFileSizeBytes)
-        {
-            logger.LogWarning("Editor image upload refused: size {Size} bytes is outside the {MaxBytes}-byte limit for {Email}",
-                summernoteImageFile.Length, serverSettings.Value.MaxAttachedFileSizeBytes, uploaderEmail);
-            return Ok(new { result = false, errorMessage = localizer["File Size must be smaller than {0}MB.", serverSettings.Value.MaxAttachedFileSizeBytes / (1024 * 1024)].ToPlainString() });
-        }
-
-        var ext = Path.GetExtension(summernoteImageFile.FileName).ToLowerInvariant();
-        if (!ImageUploadPolicy.IsAllowedExtension(ext))
-        {
-            logger.LogWarning("Editor image upload refused: extension not allowed ({Extension}) for {Email}", ext, uploaderEmail);
-            return Ok(new { result = false, errorMessage = localizer["Only .jpg or jpeg or .png file allowed."].Value });
-        }
-
-        AttachedFileDto file = (await summernoteImageFile.ToAttachedFileInfoAsync(serverSettings.Value.MaxAttachedFileSizeBytes, HttpContext.RequestAborted))!;
-
-        SummernoteUploadResult uploadResult;
-        try
-        {
-            uploadResult = await boardService.UploadSummernoteImageAsync(file, "Management", BoardTypes.PrivateNote, uploaderEmail, HttpContext.RequestAborted);
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Editor image upload failed for {Email}", uploaderEmail);
-            return Ok(new { result = false, errorMessage = localizer[ServiceResult.TemporaryErrorKey].Value });
-        }
-
-        if (!uploadResult.Success)
-            return Ok(new { result = false, errorMessage = localizer[uploadResult.ErrorKey ?? "Input is invalid"].Value });
-
-        // The Summernote editor only needs the raw bytes (base64) + content type to build an object
-        // URL for the inserted <img>; return those explicitly rather than serializing a whole
-        // FileContentResult and relying on its property names.
-        return Ok(new
-        {
-            result = true,
-            file = new
-            {
-                fileContents = Convert.ToBase64String(uploadResult.FileBytes!),
-                contentType = uploadResult.ContentType!
-            },
-            filePath = dataProtection.Protect(ProtectedValue.StoredFilePath, uploadResult.FilePath!)
-        });
+        return await this.UploadEditorImageAsync(summernoteImageFile, serverSettings.Value.MaxAttachedFileSizeBytes, localizer, logger, dataProtection,
+            (file, uploaderEmail, token) => boardService.UploadSummernoteImageAsync(file, "Management", BoardTypes.PrivateNote, uploaderEmail, token),
+            HttpContext.RequestAborted);
     }
     #endregion
 

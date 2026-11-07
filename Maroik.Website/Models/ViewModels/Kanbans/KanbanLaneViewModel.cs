@@ -1,5 +1,3 @@
-// ReSharper disable PropertyCanBeMadeInitOnly.Global
-// ReSharper disable UnusedAutoPropertyAccessor.Global
 namespace Maroik.Website.Models.ViewModels.Kanbans;
 
 /// <summary>One lane of the board: its stored key (also the resx key of its label) and its cards, top to bottom.</summary>

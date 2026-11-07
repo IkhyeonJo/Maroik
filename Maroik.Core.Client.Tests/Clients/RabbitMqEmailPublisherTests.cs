@@ -76,7 +76,6 @@ public class RabbitMqEmailPublisherTests
             Times.Once);
     }
 
-    // ReSharper disable once GrammarMistakeInComment
     /// <summary>
     /// Regression test: without publisher confirmations enabled, BasicPublishAsync returns as
     /// soon as the message is locally buffered, so a dropped connection right after the write
@@ -288,7 +287,6 @@ public class RabbitMqEmailPublisherTests
         Assert.Equal(TimeSpan.FromSeconds(42), (TimeSpan)field!.GetValue(sut)!);
     }
 
-    // ReSharper disable once GrammarMistakeInComment
     /// <summary>
     /// A publish wedged on the broker keeps the lock past the dispose timeout: disposal is skipped and logged (the channel and
     /// connection stay with the call still using them), and a later dispose, once the publish has finished, cleans up.
@@ -357,7 +355,6 @@ public class RabbitMqEmailPublisherTests
         connection.Verify(c => c.DisposeAsync(), Times.Once);
     }
 
-    // ReSharper disable once GrammarMistakeInComment
     /// <summary>
     /// Two disposes that arrive together while a publish still holds the lock: one does the disposal, the other returns
     /// without waiting its turn — neither throws (on the already-disposed lock) and the channel is disposed once.
@@ -387,7 +384,6 @@ public class RabbitMqEmailPublisherTests
         connection.Verify(c => c.DisposeAsync(), Times.Once);
     }
 
-    // ReSharper disable once GrammarMistakeInComment
     /// <summary>
     /// A dispose that timed out behind a stuck publish disposed nothing, so a later dispose — once the publish has
     /// finished — still disposes the channel and the connection.
@@ -406,7 +402,6 @@ public class RabbitMqEmailPublisherTests
         await using var sut = CreateSut();
         Task stuckPublish = sut.PublishAsync(_message, CancellationToken.None);
 
-        // ReSharper disable once GrammarMistakeInComment
         await sut.DisposeAsync(); // times out (after its fixed 5 s bound): the publish still holds the lock
         unblock.SetResult();
         await stuckPublish;

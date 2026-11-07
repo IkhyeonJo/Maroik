@@ -9,7 +9,6 @@ using Npgsql;
 
 namespace Maroik.Website.Tests.Services;
 
-// ReSharper disable once GrammarMistakeInComment
 /// <summary>
 /// Lock order between renaming an asset and editing a record that uses it, against the real PostgreSQL schema. An
 /// income / expenditure edit locks its record, then its assets; a rename's <c>ON UPDATE CASCADE</c> rewrites the

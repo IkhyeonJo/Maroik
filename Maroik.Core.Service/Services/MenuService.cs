@@ -2,13 +2,11 @@ using System.Globalization;
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Domain.Menus;
-using Maroik.Core.Service.Extensions;
 using Maroik.Core.Service.Mappers;
 using Microsoft.Extensions.Logging;
 
 namespace Maroik.Core.Service.Services;
 
-// ReSharper disable once GrammarMistakeInComment
 /// <summary>
 /// Implementation of <see cref="IMenuService"/> that delegates navigation menu management
 /// to <see cref="ICategoryRepository"/> and <see cref="ISubCategoryRepository"/>.
@@ -115,12 +113,18 @@ public class MenuService(
             MenuSnapshot before = await LockMenuAsync(ct);
             Category? category = await categoryRepository.FindByIdForUpdateAsync(request.Id, ct);
             if (category == null)
-                return await unitOfWork.FailAsync(ServiceResult.NotFound("Category.NotFound", ServiceErrorKeys.InputInvalid), ct);
+            {
+                await unitOfWork.RollbackAsync(ct);
+                return ServiceResult.NotFound("Category.NotFound", ServiceErrorKeys.InputInvalid);
+            }
 
             var updateResult = category.Update(request.Name, request.DisplayName, request.IconPath,
                 request.Controller, request.Action, request.Role, request.Order);
             if (updateResult.IsError)
-                return await unitOfWork.FailAsync(updateResult.FirstError, ct);
+            {
+                await unitOfWork.RollbackAsync(ct);
+                return ServiceResult.FromError(updateResult.FirstError);
+            }
 
             var safeguardResult = MenuSafeguardPolicy.CheckChange(before, before.WithCategory(category));
             if (safeguardResult.IsError)
@@ -206,12 +210,18 @@ public class MenuService(
             MenuSnapshot before = await LockMenuAsync(ct);
             SubCategory? subCategory = await subCategoryRepository.FindByIdForUpdateAsync(request.Id, ct);
             if (subCategory == null)
-                return await unitOfWork.FailAsync(ServiceResult.NotFound("SubCategory.NotFound", ServiceErrorKeys.InputInvalid), ct);
+            {
+                await unitOfWork.RollbackAsync(ct);
+                return ServiceResult.NotFound("SubCategory.NotFound", ServiceErrorKeys.InputInvalid);
+            }
 
             var updateResult = subCategory.Update(request.CategoryId, request.Name,
                 request.DisplayName, request.IconPath, request.Action, request.Role, request.Order);
             if (updateResult.IsError)
-                return await unitOfWork.FailAsync(updateResult.FirstError, ct);
+            {
+                await unitOfWork.RollbackAsync(ct);
+                return ServiceResult.FromError(updateResult.FirstError);
+            }
 
             var safeguardResult = MenuSafeguardPolicy.CheckChange(before, before.WithSubCategory(subCategory));
             if (safeguardResult.IsError)

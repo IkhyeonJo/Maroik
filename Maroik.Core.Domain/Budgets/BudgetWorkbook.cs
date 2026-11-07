@@ -43,7 +43,6 @@ public sealed class BudgetWorkbook
         public FormulaScope Scope { get; set; } = null!;
     }
 
-    /// <summary>The loaded sheets by name.</summary>
     /// <summary>
     /// The most cells the stored formulas of one sheet may read in total (each formula's distinct cells, summed). Every request builds
     /// the dependency graph and evaluates every range from them, so a sheet full of whole-sheet ranges cost seconds and gigabytes per
@@ -69,6 +68,7 @@ public sealed class BudgetWorkbook
         return found.Value.References.Values.Sum() > MaxReferencesPerSheet ? TooManyReferences() : Result.Success;
     }
 
+    /// <summary>The loaded sheets by name.</summary>
     private readonly Dictionary<string, Sheet> _sheets = new(StringComparer.Ordinal);
 
     /// <summary>The actuals.</summary>

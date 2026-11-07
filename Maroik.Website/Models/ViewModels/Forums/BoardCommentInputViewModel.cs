@@ -1,4 +1,3 @@
-// ReSharper disable UnusedAutoPropertyAccessor.Global
 namespace Maroik.Website.Models.ViewModels.Forums;
 
 /// <summary>

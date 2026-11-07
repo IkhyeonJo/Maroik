@@ -62,7 +62,6 @@ public class EmailMessageHandlerTests
             Times.Never);
     }
 
-    // ReSharper disable once GrammarMistakeInComment
     /// <summary>Verifies that <c>HandleAsync</c> clears a previously recorded failure once the send succeeds.</summary>
     [Fact]
     public async Task HandleAsync_ClearsMailSendFailed_WhenMailSentSuccessfully()

@@ -96,7 +96,6 @@ public sealed class CalendarReminderDispatchService(
         return handled;
     }
 
-    // ReSharper disable once GrammarMistakeInComment
     /// <summary>
     /// The reminder e-mail: to the owner, the subject the event's title and start, the body (<see cref="IMailClient.GetCalendarReminderBody"/>)
     /// its time, place and calendar with a link to the owner's calendar page. A timed event's time is shown in the owner's time zone;

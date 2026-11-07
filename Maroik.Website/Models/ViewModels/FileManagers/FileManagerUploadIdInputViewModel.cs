@@ -1,4 +1,3 @@
-// ReSharper disable UnusedAutoPropertyAccessor.Global
 namespace Maroik.Website.Models.ViewModels.FileManagers;
 
 /// <summary>Names an upload to complete or abort; a completion also says whether it overwrites a file of the same name.</summary>

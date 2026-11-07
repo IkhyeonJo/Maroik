@@ -222,7 +222,6 @@ public class KanbanServiceTests
         Assert.DoesNotContain("SECRET", record.Message, StringComparison.Ordinal);
     }
 
-    // ReSharper disable once GrammarMistakeInComment
     /// <summary>A delete of a card the account does not own is "not found", deletes nothing, and is logged at Warning.</summary>
     [Fact]
     public async Task DeleteAsync_ReturnsNotFound_AndLogsAWarning_WhenTheCardIsNotTheAccounts()

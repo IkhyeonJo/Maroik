@@ -68,7 +68,6 @@ public sealed class BoardAttachedFile : AggregateRoot<long>
         if (size < 0)
             return DomainError.Validation("BoardAttachedFile.InvalidSize", "File size cannot be negative.");
 
-        // ReSharper disable once GrammarMistakeInComment
         // Name, Extension and Path are each persisted in a character varying(255) column: reject an
         // over-long value here (a clean validation error, before anything is uploaded) instead of a raw
         // "value too long" (SQLSTATE 22001) from the write.

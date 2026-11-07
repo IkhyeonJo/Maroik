@@ -21,7 +21,6 @@ public enum FormulaTokenKind
     /// <summary>A sheet name with its "!" (Income2025!).</summary>
     SheetPrefix,
 
-    // ReSharper disable once GrammarMistakeInComment
     /// <summary>A function name (the name just before "(").</summary>
     Function,
 

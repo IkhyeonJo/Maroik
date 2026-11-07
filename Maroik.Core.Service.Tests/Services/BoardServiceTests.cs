@@ -1442,7 +1442,6 @@ public class BoardServiceTests
         Assert.Equal("Failed to upload the attached file.", result.ErrorKey);
     }
 
-    // ReSharper disable once GrammarMistakeInComment
     /// <summary>A write that throws is logged with its board type and reported as the write failure.</summary>
     [Fact]
     public async Task WriteBoardAsync_LogsAndReportsWriteFailed_WhenTheRepositoryThrows()
@@ -1560,7 +1559,6 @@ public class BoardServiceTests
         AssertRolledBack();
     }
 
-    // ReSharper disable once GrammarMistakeInComment
     /// <summary>A refused delete is rolled back.</summary>
     [Fact]
     public async Task DeleteBoardAsync_RollsBack_WhenTheRequesterMayNotDelete()
@@ -1572,7 +1570,6 @@ public class BoardServiceTests
         AssertRolledBack();
     }
 
-    // ReSharper disable once GrammarMistakeInComment
     /// <summary>A delete that throws is logged with the post id.</summary>
     [Fact]
     public async Task DeleteBoardAsync_LogsTheFailure_WhenTheRepositoryThrows()
