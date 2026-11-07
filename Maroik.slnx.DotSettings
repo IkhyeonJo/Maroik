@@ -90,6 +90,7 @@
 	<s:String x:Key="/Default/CodeInspection/Highlighting/InspectionSeverities/=ForeachCanBePartlyConvertedToQueryUsingAnotherGetEnumerator/@EntryIndexedValue">DO_NOT_SHOW</s:String>
 	<s:String x:Key="/Default/CodeInspection/Highlighting/InspectionSeverities/=SwitchStatementHandlesSomeKnownEnumValuesWithDefault/@EntryIndexedValue">DO_NOT_SHOW</s:String>
 	<s:String x:Key="/Default/CodeInspection/Highlighting/InspectionSeverities/=SwitchStatementMissingSomeEnumCasesNoDefault/@EntryIndexedValue">DO_NOT_SHOW</s:String>
+    <s:Boolean x:Key="/Default/UserDictionary/Words/=ABCDEFGHIJKLMN/@EntryIndexedValue">True</s:Boolean>
 
 	<!-- ===== Migration marker ===== -->
 	<s:Boolean x:Key="/Default/Environment/SettingsMigration/IsMigratedToUnifiedSettings/@EntryValue">True</s:Boolean>
