@@ -21,13 +21,20 @@ public class TimeZoneCatalogServiceTests
         Assert.NotEmpty(options);
     }
 
-    /// <summary>Every system time zone is offered, under its own ID, which on Linux is an IANA ID.</summary>
+    /// <summary>
+    /// Each option carries an IANA ID on every OS, once. A system zone whose own ID is already an IANA ID (all of them on Linux)
+    /// is listed under it, in the system's order; there are never more options than system zones.
+    /// </summary>
     [Fact]
-    public void GetTimeZoneOptions_ListsEverySystemZone_UnderItsIanaId()
+    public void GetTimeZoneOptions_ListsTheSystemZones_UnderTheirIanaIds()
     {
         IReadOnlyList<TimeZoneOptionDto> options = CreateSut().GetTimeZoneOptions();
+        IReadOnlyCollection<TimeZoneInfo> systemZones = TimeZoneInfo.GetSystemTimeZones();
+        List<string> ianaSystemIds = [.. systemZones.Where(z => z.HasIanaId).Select(z => z.Id)];
 
-        Assert.Equal(TimeZoneInfo.GetSystemTimeZones().Select(z => z.Id), options.Select(o => o.IanaId));
+        Assert.Equal(ianaSystemIds, options.Select(o => o.IanaId).Where(ianaSystemIds.Contains));
+        Assert.InRange(options.Count, 1, systemZones.Count);
+        Assert.Equal(options.Count, options.Select(o => o.IanaId).Distinct(StringComparer.Ordinal).Count());
         Assert.All(options, o => Assert.True(TimeZoneInfo.FindSystemTimeZoneById(o.IanaId).HasIanaId, o.IanaId));
     }
 
