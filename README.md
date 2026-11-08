@@ -10,9 +10,9 @@
 `SeedDemo.sql` runs after `Init.sql` on every database rebuild and puts the demo account back to these values. A database
 restored from a backup keeps the backup's admin password.
 
-# [https://www.maroik.com]
+Website: <https://www.maroik.com>
 
-# Contact: admin@maroik.com
+Contact: <admin@maroik.com>
 
 ## Screenshots
 
