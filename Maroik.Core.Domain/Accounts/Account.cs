@@ -577,13 +577,6 @@ public sealed class Account : AggregateRoot<string>
         return Result.Success;
     }
 
-    /// <summary>Administrator operation: withdraws the account's acceptance of the service terms.</summary>
-    public void RevokeServiceTerms(DateTime utcNow)
-    {
-        AgreedServiceTerms = false;
-        Updated = utcNow;
-    }
-
     /// <summary>Administrator operation: undoes <see cref="SoftDelete"/>.</summary>
     public void Restore(DateTime utcNow)
     {

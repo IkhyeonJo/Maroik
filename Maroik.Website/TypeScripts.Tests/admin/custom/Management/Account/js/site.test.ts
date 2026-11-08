@@ -13,7 +13,7 @@ function fixture(): string {
        <tr class="clsGridRow" data-email="b@x.com"></tr>
        <tr class="clsGridRow" data-email="a+b&amp;c@x.com"></tr>
      </tbody></table>
-     <form id="formCreateAccount"></form><form id="formEditAccount"><input type="number" id="editAccountFileManagerQuotaGb" value="0" /><input type="checkbox" id="editAccountFileManagerScanDisabled" /><input type="checkbox" id="editAccountEmailConfirmed" /></form>
+     <form id="formCreateAccount"></form><form id="formEditAccount"><input type="number" id="editAccountFileManagerQuotaGb" value="0" /><input type="checkbox" id="editAccountFileManagerScanDisabled" /><input type="checkbox" id="editAccountEmailConfirmed" /><input type="checkbox" id="editAccountAgreedServiceTerms" /></form>
      <button id="btnExportExcelAccount"></button>
      <button id="btnEditAccountGridRow" data-errorMessageSelectGridRow="select a row"></button>
      <button id="btnConfirmDeleteAccount" data-errorMessageSelectGridRow="select a row"></button>
@@ -107,6 +107,30 @@ describe("Management/Account (admin)", () => {
 
         expect(h.$("#editAccountEmailConfirmed").is(":checked")).toBe(false);
         expect(h.$("#editAccountEmailConfirmed").prop("disabled")).toBe(false);
+    });
+
+    it("an agreeing account's terms agreement is ticked and cannot be changed", () => {
+        const h = loadSite("admin", "Management", "Account", fixture());
+        fireNative(h.win.document, "rowclick", { data: { Email: "a@x.com" } });
+        h.$("#btnEditAccountGridRow").trigger("click");
+
+        h.respond(0, { result: true, account: { ...ACCOUNT, agreedServiceTerms: true }, fileManagerQuotaGb: 0 });
+
+        expect(h.$("#editAccountAgreedServiceTerms").is(":checked")).toBe(true);
+        expect(h.$("#editAccountAgreedServiceTerms").prop("disabled")).toBe(true);
+    });
+
+    it("an account that has not agreed to the terms can be ticked, also after an agreeing account was opened", () => {
+        const h = loadSite("admin", "Management", "Account", fixture());
+        fireNative(h.win.document, "rowclick", { data: { Email: "a@x.com" } });
+        h.$("#btnEditAccountGridRow").trigger("click");
+        h.respond(0, { result: true, account: { ...ACCOUNT, agreedServiceTerms: true }, fileManagerQuotaGb: 0 });
+
+        h.$("#btnEditAccountGridRow").trigger("click");
+        h.respond(1, { result: true, account: { ...ACCOUNT, agreedServiceTerms: false }, fileManagerQuotaGb: 0 });
+
+        expect(h.$("#editAccountAgreedServiceTerms").is(":checked")).toBe(false);
+        expect(h.$("#editAccountAgreedServiceTerms").prop("disabled")).toBe(false);
     });
 
     it("sends whether the virus scan is turned off with the update", () => {

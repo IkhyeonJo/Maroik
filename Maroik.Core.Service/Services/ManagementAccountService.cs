@@ -251,10 +251,9 @@ public class ManagementAccountService(
         if (request.EmailConfirmed)
             account.ForceConfirmEmail(utcNow);
 
+        // One way only, like the confirmation (owner's decision, 2026-11-08): an agreement to the terms is never taken back.
         if (request.AgreedServiceTerms)
             account.AcceptServiceTerms(utcNow);
-        else
-            account.RevokeServiceTerms(utcNow);
 
         if (request.Deleted)
             account.SoftDelete(utcNow);

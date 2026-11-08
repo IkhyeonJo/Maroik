@@ -519,7 +519,41 @@ public class ManagementAccountServiceTests
         Assert.Equal("reg-token", account.RegistrationToken);
     }
 
-    /// <summary>Every admin change is applied: role, time zone, confirmation, terms, deletion and message. All but the confirmation go both ways.</summary>
+    /// <summary>
+    /// An administrator can record a terms agreement but not take one back, like the email confirmation: a request that does not
+    /// tick it keeps an agreeing account agreeing.
+    /// </summary>
+    [Fact]
+    public async Task UpdateAccountAsync_KeepsTheTermsAgreement_WhenTheRequestDoesNotTickIt()
+    {
+        Account account = ActiveAccount();
+        Assert.True(account.AgreedServiceTerms);
+        _accountRepo.Setup(r => r.FindByEmailForUpdateAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(account);
+
+        ServiceResult result = await CreateSut().UpdateAccountAsync(
+            new AdminUpdateAccountRequest { Email = "user@example.com", EmailConfirmed = true, AgreedServiceTerms = false },
+            null, Actor, TestContext.Current.CancellationToken);
+
+        Assert.True(result.Success);
+        Assert.True(account.AgreedServiceTerms);
+    }
+
+    /// <summary>An account that has not agreed to the terms stays that way while the request does not tick them.</summary>
+    [Fact]
+    public async Task UpdateAccountAsync_LeavesTheTermsNotAgreed_WhenTheRequestDoesNotTickThem()
+    {
+        Account account = DeletedUnconfirmedAccount();
+        _accountRepo.Setup(r => r.FindByEmailForUpdateAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(account);
+
+        ServiceResult result = await CreateSut().UpdateAccountAsync(
+            new AdminUpdateAccountRequest { Email = "user@example.com", AgreedServiceTerms = false, Deleted = true },
+            null, Actor, TestContext.Current.CancellationToken);
+
+        Assert.True(result.Success);
+        Assert.False(account.AgreedServiceTerms);
+    }
+
+    /// <summary>Every admin change is applied: role, time zone, confirmation, terms, deletion and message. All but the confirmation and the terms go both ways.</summary>
     [Fact]
     public async Task UpdateAccountAsync_AppliesEveryAdminChange()
     {
@@ -551,7 +585,7 @@ public class ManagementAccountServiceTests
         Assert.Equal(Role.Admin, account.Role.Value); // a null role keeps the current one
         Assert.Equal("Asia/Seoul", account.TimeZone.Value); // so does a null time zone
         Assert.True(account.EmailConfirmed); // a confirmation cannot be taken back
-        Assert.False(account.AgreedServiceTerms);
+        Assert.True(account.AgreedServiceTerms); // nor can a terms agreement
         Assert.True(account.Deleted);
         Assert.Null(account.Message);
     }

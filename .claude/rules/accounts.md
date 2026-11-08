@@ -52,6 +52,8 @@ that specific change. Check every candidate review finding in this area against 
 - An administrator can confirm an account's email (for a user whose confirmation fails) but cannot take a confirmation back
   (owner's decision, 2026-11-07): `Management/Account` disables the ticked box and `ManagementAccountService` ignores a request
   without the tick. A confirmed account therefore never goes back to the state `ReplaceUnconfirmedRegistration` may overwrite. Do not add it back.
+  The service-terms agreement works the same way (owner's decision, 2026-11-08): the box of an agreeing account is disabled,
+  and a request without the tick leaves the agreement in place (`Account.RevokeServiceTerms` is gone).
 - The Login page is pre-filled with the public demo account (`demo@maroik.com` / `demoO12!!`), and the demo
   account's dashboard always shows the fixed period from `ServerSetting.DemoDashboardYear/Month`. Its calendar first
   opens on that same period (`ICalendarService.GetFixedInitialDate`) and its budget pages on that year

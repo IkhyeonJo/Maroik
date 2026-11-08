@@ -207,7 +207,8 @@
                     $editAccountLocked.prop("checked", data.account.locked);
                     // A confirmation cannot be taken back. Authoritative in ManagementAccountService (server); mirrored here for form UX only.
                     $editAccountEmailConfirmed.prop({ checked: data.account.emailConfirmed, disabled: data.account.emailConfirmed });
-                    $editAccountAgreedServiceTerms.prop("checked", data.account.agreedServiceTerms);
+                    // Nor can a terms agreement. Authoritative in ManagementAccountService (server); mirrored here for form UX only.
+                    $editAccountAgreedServiceTerms.prop({ checked: data.account.agreedServiceTerms, disabled: data.account.agreedServiceTerms });
                     $editMessage.val(data.account.message);
                     $editAccountDeleted.prop("checked", data.account.deleted);
                     $editAccountFileManagerQuotaGb.val(data.fileManagerQuotaGb);

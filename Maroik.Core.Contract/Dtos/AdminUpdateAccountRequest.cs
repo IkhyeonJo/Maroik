@@ -22,7 +22,7 @@ public class AdminUpdateAccountRequest
     /// <summary>True confirms the account's email address; false changes nothing (a confirmation cannot be taken back).</summary>
     public bool EmailConfirmed { get; set; }
 
-    /// <summary>Whether the account has accepted the service terms of use.</summary>
+    /// <summary>True records the account's acceptance of the service terms; false changes nothing (an acceptance cannot be taken back).</summary>
     public bool AgreedServiceTerms { get; set; }
 
     /// <summary>Optional admin-facing note attached to the account.</summary>

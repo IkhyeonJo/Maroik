@@ -593,18 +593,6 @@ public class AccountTests
         Assert.Equal(before, account.TimeZone.Value);
     }
 
-    /// <summary>RevokeServiceTerms clears the accepted-terms flag.</summary>
-    [Fact]
-    public void RevokeServiceTerms_ClearsTheAcceptedFlag()
-    {
-        var account = ValidAccount();
-        account.AcceptServiceTerms(_now);
-
-        account.RevokeServiceTerms(_now);
-
-        Assert.False(account.AgreedServiceTerms);
-    }
-
     /// <summary>Restore undoes a soft delete.</summary>
     [Fact]
     public void Restore_ClearsTheDeletedFlag()
