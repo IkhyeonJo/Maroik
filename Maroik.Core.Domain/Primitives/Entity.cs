@@ -8,8 +8,11 @@ namespace Maroik.Core.Domain.Primitives;
 public abstract class Entity<TId>(TId id) : IEquatable<Entity<TId>>
     where TId : notnull
 {
-    /// <summary>Primary key that uniquely identifies this entity.</summary>
-    public TId Id { get; } = id;
+    /// <summary>
+    /// Primary key that uniquely identifies this entity. Only an aggregate whose natural key can change (a renamed
+    /// <see cref="Finances.Asset"/>) sets it after construction, so the instance keeps equaling its own row.
+    /// </summary>
+    public TId Id { get; protected set; } = id;
 
     /// <inheritdoc/>
     public bool Equals(Entity<TId>? other) =>

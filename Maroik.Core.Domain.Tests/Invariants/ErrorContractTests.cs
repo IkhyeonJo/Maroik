@@ -57,9 +57,9 @@ public class ErrorContractTests
     {
         Asset asset = Asset.Create("a", Email, "FreeDepositAndWithdrawal", 100m, "KRW", _now).Value;
 
-        ErrorAssert.Validation(asset.Update(" ", "FreeDepositAndWithdrawal", 1m, "KRW", null, false, _now), "Asset.ProductNameEmpty", "Product name cannot be empty.");
-        ErrorAssert.Validation(asset.Update("a", " ", 1m, "KRW", null, false, _now), "Asset.ItemEmpty", "Asset category cannot be empty.");
-        ErrorAssert.Validation(asset.Update("a", "Nonsense", 1m, "KRW", null, false, _now), "Asset.ItemInvalid", "Asset category (item) is not a recognized value.");
+        ErrorAssert.Validation(asset.Update(" ", "FreeDepositAndWithdrawal", 1m, "KRW", null, _now), "Asset.ProductNameEmpty", "Product name cannot be empty.");
+        ErrorAssert.Validation(asset.Update("a", " ", 1m, "KRW", null, _now), "Asset.ItemEmpty", "Asset category (item) cannot be empty.");
+        ErrorAssert.Validation(asset.Update("a", "Nonsense", 1m, "KRW", null, _now), "Asset.ItemInvalid", "Asset category (item) is not a recognized value.");
     }
 
     // ---- Account --------------------------------------------------------------------------

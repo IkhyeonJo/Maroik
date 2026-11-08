@@ -1,4 +1,6 @@
 using Maroik.Core.Contract.Dtos;
+using Maroik.Core.Contract.Enums;
+using Maroik.Core.Contract.Exceptions;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Contract.Settings;
 using Maroik.Core.Domain.Calendars;
@@ -218,8 +220,8 @@ public class CalendarServiceTests
     public async Task CreateCalendarAsync_ReturnsConflict_WhenConcurrentCreateWinsTheRace()
     {
         _calendarRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([]);
-        var pgException = new Exception("23505: duplicate key value violates unique constraint \"Calendar_AccountEmail_Name_unique\"");
-        _calendarRepo.Setup(r => r.CreateAsync(It.IsAny<Calendar>(), It.IsAny<CancellationToken>())).ThrowsAsync(pgException);
+        var duplicate = new DuplicateKeyException(DuplicateKey.CalendarName);
+        _calendarRepo.Setup(r => r.CreateAsync(It.IsAny<Calendar>(), It.IsAny<CancellationToken>())).ThrowsAsync(duplicate);
         var sut = CreateSut();
 
         ServiceResult result = await sut.CreateCalendarAsync("user@example.com", new CalendarRequest
@@ -236,17 +238,17 @@ public class CalendarServiceTests
     }
 
     /// <summary>
-    /// A unique-violation (23505) on a different constraint than the calendar-name uniqueness one
-    /// (e.g. the "Calendar_pk" surrogate-key PK, which can collide if its sequence ever falls behind
-    /// the table's existing rows) must not be misreported as "name already exists" -- there is no
-    /// name conflict here, and swallowing it that way would hide a real database-integrity problem.
+    /// A duplicate of anything but the calendar name must not be misreported as "name already exists" -- there is no
+    /// name conflict here, and swallowing it that way would hide a real problem. (A collision of the surrogate
+    /// "Calendar_pk", whose sequence can fall behind the table, reaches the service as the database's own exception:
+    /// the repository tests pin that it is not translated.)
     /// </summary>
     [Fact]
-    public async Task CreateCalendarAsync_ReturnsUnexpectedFailure_WhenUniqueViolationIsOnADifferentConstraint()
+    public async Task CreateCalendarAsync_ReturnsUnexpectedFailure_WhenTheDuplicateIsOfAnotherKey()
     {
         _calendarRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([]);
-        var pgException = new Exception("23505: duplicate key value violates unique constraint \"Calendar_pk\"");
-        _calendarRepo.Setup(r => r.CreateAsync(It.IsAny<Calendar>(), It.IsAny<CancellationToken>())).ThrowsAsync(pgException);
+        var duplicate = new DuplicateKeyException(DuplicateKey.AccountEmail);
+        _calendarRepo.Setup(r => r.CreateAsync(It.IsAny<Calendar>(), It.IsAny<CancellationToken>())).ThrowsAsync(duplicate);
         var sut = CreateSut();
 
         ServiceResult result = await sut.CreateCalendarAsync("user@example.com", new CalendarRequest
@@ -333,8 +335,8 @@ public class CalendarServiceTests
     {
         _calendarRepo.Setup(r => r.FindByIdForUpdateAsync(1, It.IsAny<CancellationToken>()))
             .ReturnsAsync(MakeCalendar(id: 1));
-        var pgException = new Exception("23505: duplicate key value violates unique constraint \"Calendar_AccountEmail_Name_unique\"");
-        _calendarRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<Calendar>(), It.IsAny<CancellationToken>())).ThrowsAsync(pgException);
+        var duplicate = new DuplicateKeyException(DuplicateKey.CalendarName);
+        _calendarRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<Calendar>(), It.IsAny<CancellationToken>())).ThrowsAsync(duplicate);
         var sut = CreateSut();
 
         ServiceResult result = await sut.UpdateCalendarAsync("user@example.com", new CalendarRequest
@@ -437,8 +439,8 @@ public class CalendarServiceTests
     public async Task EnsureDefaultCalendarAsync_ReturnsSuccess_WhenConcurrentRequestWinsTheRace()
     {
         _calendarRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([]);
-        var pgException = new Exception("23505: duplicate key value violates unique constraint \"Calendar_AccountEmail_Name_unique\"");
-        _calendarRepo.Setup(r => r.CreateAsync(It.IsAny<Calendar>(), It.IsAny<CancellationToken>())).ThrowsAsync(pgException);
+        var duplicate = new DuplicateKeyException(DuplicateKey.CalendarName);
+        _calendarRepo.Setup(r => r.CreateAsync(It.IsAny<Calendar>(), It.IsAny<CancellationToken>())).ThrowsAsync(duplicate);
         var sut = CreateSut();
 
         ServiceResult result = await sut.EnsureDefaultCalendarAsync("user@example.com", new CalendarRequest
@@ -1309,7 +1311,7 @@ public class CalendarServiceTests
 
     /// <summary>An exception whose message looks like a PostgreSQL unique violation on the <c>CalendarShared</c> primary key.</summary>
     private static Exception SharedPkViolation() =>
-        new("23505: duplicate key value violates unique constraint \"CalendarShared_pk\"");
+        new DuplicateKeyException(DuplicateKey.CalendarShared);
 
     /// <summary>The first attempt loses the CalendarShared PK race; the retry (in a fresh transaction) succeeds.</summary>
     [Fact]
@@ -1835,7 +1837,7 @@ public class CalendarServiceTests
 
         GivenOwnedCalendars();
         _calendarRepo.Setup(r => r.CreateAsync(It.IsAny<Calendar>(), It.IsAny<CancellationToken>()))
-            .ThrowsAsync(new Exception("23505: duplicate key value violates unique constraint \"Calendar_AccountEmail_Name_unique\""));
+            .ThrowsAsync(new DuplicateKeyException(DuplicateKey.CalendarName));
         AssertNameExists(await CreateSut().CreateCalendarAsync(Owner,
             new CalendarRequest { Name = "New", TimeZoneIanaId = "UTC", HtmlColorCode = "#3788d8" }, TestContext.Current.CancellationToken));
     }
@@ -1925,7 +1927,7 @@ public class CalendarServiceTests
     {
         _calendarRepo.Setup(r => r.FindByIdForUpdateAsync(1, It.IsAny<CancellationToken>())).ReturnsAsync(MakeCalendar());
         _calendarRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<Calendar>(), It.IsAny<CancellationToken>()))
-            .ThrowsAsync(new Exception("23505: duplicate key value violates unique constraint \"Calendar_AccountEmail_Name_unique\""));
+            .ThrowsAsync(new DuplicateKeyException(DuplicateKey.CalendarName));
 
         AssertNameExists(await CreateSut().UpdateCalendarAsync(Owner,
             new CalendarRequest { Id = 1, Name = "Taken", TimeZoneIanaId = "UTC", HtmlColorCode = "#3788d8" }, TestContext.Current.CancellationToken));

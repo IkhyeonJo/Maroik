@@ -1,3 +1,5 @@
+using Maroik.Core.Contract.Enums;
+using Maroik.Core.Contract.Exceptions;
 using Maroik.Core.Domain.Accounts;
 using Maroik.Core.PostgreSQL.Contexts;
 using Maroik.Core.Repository.Repositories;
@@ -320,60 +322,63 @@ public sealed class AccountRepositoryTests(DatabaseFixture database) : Repositor
         Assert.Equal("Asia/Seoul", retrieved.TimeZone.Value);
     }
 
-    /// <summary>PostgreSQL enforces the <c>Account</c> primary key — a duplicate e-mail throws (InMemory did not).</summary>
+    /// <summary>PostgreSQL enforces the <c>Account</c> primary key — a duplicate e-mail is reported as the e-mail being taken.</summary>
     [Fact]
-    public async Task CreateAsync_Throws_WhenEmailAlreadyExists()
+    public async Task CreateAsync_ReportsADuplicateEmail_WhenEmailAlreadyExists()
     {
         string email = UniqueEmail("dup");
         await SeedAsync(NewAccount(email, Unique("First")));
 
-        await Assert.ThrowsAsync<DbUpdateException>(
+        var ex = await Assert.ThrowsAsync<DuplicateKeyException>(
             () => Sut.CreateAsync(NewDomainAccount(email, Unique("Second")), TestContext.Current.CancellationToken));
+
+        Assert.Equal(DuplicateKey.AccountEmail, ex.Key);
+        Assert.Equal("Account_pk", Assert.IsType<Npgsql.PostgresException>(ex.InnerException?.InnerException).ConstraintName);
     }
 
-    /// <summary>PostgreSQL enforces <c>Account_Nickname_unique</c> — a duplicate nickname throws (InMemory did not).</summary>
+    /// <summary>Changing a nickname to another account's runs as its own UPDATE statement, and reports the same duplicate.</summary>
     [Fact]
-    public async Task CreateAsync_Throws_WhenNicknameAlreadyExists()
+    public async Task UpdateEntityAsync_ReportsADuplicateNickname_WhenAnotherAccountHasIt()
     {
-        string nickname = Unique("Twin");
-        await SeedAsync(NewAccount(nickname: nickname));
+        string email = UniqueEmail("rename");
+        string taken = Unique("Taken");
+        await SeedAsync(NewAccount(email, Unique("Mine")), NewAccount(nickname: taken));
 
-        await Assert.ThrowsAsync<DbUpdateException>(
-            () => Sut.CreateAsync(NewDomainAccount(UniqueEmail("other"), nickname), TestContext.Current.CancellationToken));
+        var ex = await Assert.ThrowsAsync<DuplicateKeyException>(
+            () => Sut.UpdateEntityAsync(NewDomainAccount(email, taken), TestContext.Current.CancellationToken));
+
+        Assert.Equal(DuplicateKey.AccountNickname, ex.Key);
     }
 
     /// <summary>
     /// PostgreSQL enforces <c>Account_unique_index_0</c>: a nickname that differs only by case
     /// from an existing one is rejected by the database itself (the app-level check alone cannot stop
-    /// two concurrent registrations), and the violation names that index so the service can report it
-    /// as a nickname conflict.
+    /// two concurrent registrations), and it is reported as the nickname being taken, not the e-mail.
     /// </summary>
     [Fact]
-    public async Task CreateAsync_Throws_WhenNicknameDiffersOnlyByCase()
+    public async Task CreateAsync_ReportsADuplicateNickname_WhenNicknameDiffersOnlyByCase()
     {
         string nickname = Unique("CaseTwin");
         await SeedAsync(NewAccount(nickname: nickname));
 
-        var ex = await Assert.ThrowsAsync<DbUpdateException>(
+        var ex = await Assert.ThrowsAsync<DuplicateKeyException>(
             () => Sut.CreateAsync(NewDomainAccount(UniqueEmail("case"), nickname.ToUpperInvariant()), TestContext.Current.CancellationToken));
 
-        var pg = Assert.IsType<Npgsql.PostgresException>(ex.InnerException);
-        Assert.Equal("23505", pg.SqlState);
-        Assert.Equal("Account_unique_index_0", pg.ConstraintName);
+        Assert.Equal(DuplicateKey.AccountNickname, ex.Key);
+        Assert.Equal("Account_unique_index_0", Assert.IsType<Npgsql.PostgresException>(ex.InnerException?.InnerException).ConstraintName);
     }
 
-    /// <summary>The exact-duplicate case is still reported against the original exact-match constraint.</summary>
+    /// <summary>An exact duplicate is the nickname being taken too, whichever of its two constraints PostgreSQL checks first.</summary>
     [Fact]
-    public async Task CreateAsync_ExactDuplicateNickname_ViolatesTheExactMatchConstraint()
+    public async Task CreateAsync_ReportsADuplicateNickname_WhenNicknameIsAnExactDuplicate()
     {
         string nickname = Unique("ExactTwin");
         await SeedAsync(NewAccount(nickname: nickname));
 
-        var ex = await Assert.ThrowsAsync<DbUpdateException>(
+        var ex = await Assert.ThrowsAsync<DuplicateKeyException>(
             () => Sut.CreateAsync(NewDomainAccount(UniqueEmail("exact"), nickname), TestContext.Current.CancellationToken));
 
-        var pg = Assert.IsType<Npgsql.PostgresException>(ex.InnerException);
-        Assert.Contains(pg.ConstraintName, (string[])["Account_Nickname_unique", "Account_unique_index_0"]);
+        Assert.Equal(DuplicateKey.AccountNickname, ex.Key);
     }
 
     // -- UpdateEntityAsync ---------------------------------------------------
@@ -634,7 +639,7 @@ public sealed class AccountRepositoryTests(DatabaseFixture database) : Repositor
     /// <summary>
     /// Concurrent failed-login sequences for the same account, each wrapped in its own transaction
     /// around <c>FindByEmailForUpdateAsync</c> + <c>UpdateEntityAsync</c> (mirroring
-    /// <c>AccountService.LoginAsync</c>). The row lock serializes the transactions — each blocks
+    /// <c>AccountLoginService.LoginAsync</c>). The row lock serializes the transactions — each blocks
     /// until the prior commits, then re-reads the current counter — so all five increments survive
     /// instead of racing on a stale read.
     /// </summary>

@@ -4,7 +4,7 @@ using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Contract.Messages;
 using Maroik.Core.Contract.Settings;
 using Maroik.Core.Domain.Accounts;
-using Maroik.Core.Service.Services;
+using Maroik.Core.Service.Tests.Fixtures;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Testing;
 using Microsoft.Extensions.Options;
@@ -14,7 +14,7 @@ using Moq;
 namespace Maroik.Core.Service.Tests.Services;
 
 /// <summary>
-/// The security / audit trail of <see cref="AccountService"/>: every login outcome, registration,
+/// The security / audit trail of the account services: every login outcome, registration,
 /// email confirmation and password reset leaves a log line an operator can search by account, at the
 /// level the CLAUDE.md logging rule prescribes, and never contains a password or token.
 /// </summary>
@@ -38,7 +38,7 @@ public class AccountServiceAuditLoggingTests
     /// <summary>Mock <c>IUnitOfWork</c> injected into the system under test.</summary>
     private readonly Mock<IUnitOfWork> _unitOfWork = new();
     /// <summary>Captures the log entries the system under test writes.</summary>
-    private readonly FakeLogger<AccountService> _logger = new();
+    private readonly FakeLogger _logger = new();
     /// <summary>Settings with a 3-attempt lockout threshold.</summary>
     private readonly IOptions<ServerSetting> _settings =
         Options.Create(new ServerSetting { MaxLoginAttempt = 3, DomainName = "https://example.com" });
@@ -63,8 +63,8 @@ public class AccountServiceAuditLoggingTests
     private readonly FakeTimeProvider _time = new(new DateTimeOffset(_now));
 
     /// <summary>The service under test over the mocked dependencies and the capturing logger.</summary>
-    private AccountService CreateSut() => new(_accountRepo.Object, _passwordService.Object, _mailClient.Object,
-        _emailPublisher.Object, _settings, _dataProtection.Object, _logger, _unitOfWork.Object, _time);
+    private AccountServicesHarness CreateSut() => new(_accountRepo.Object, _passwordService.Object, _mailClient.Object,
+        _emailPublisher.Object, _settings, _dataProtection.Object, _logger.Collector, _unitOfWork.Object, _time);
 
     /// <summary>A persisted account for <see cref="Email"/> whose state is set by the arguments.</summary>
     private static Account ExistingAccount(bool deleted = false, bool locked = false, bool emailConfirmed = true,
@@ -73,9 +73,10 @@ public class AccountServiceAuditLoggingTests
             emailConfirmed, agreedServiceTerms, registrationToken, resetPasswordToken, DateTime.UtcNow, DateTime.UtcNow,
             null, deleted, "stamp", false);
 
-    /// <summary>Arranges a login: the locked read returns <paramref name="account"/> and the password check returns <paramref name="passwordMatches"/>.</summary>
+    /// <summary>Arranges a login: both reads return <paramref name="account"/> and the password check returns <paramref name="passwordMatches"/>.</summary>
     private void AccountForLogin(Account? account, bool passwordMatches)
     {
+        _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(account);
         _accountRepo.Setup(r => r.FindByEmailForUpdateAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(account);
         _passwordService.Setup(p => p.VerifyPassword(It.IsAny<string>(), It.IsAny<string>())).Returns(passwordMatches);
         _accountRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);

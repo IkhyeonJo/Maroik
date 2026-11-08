@@ -18,6 +18,9 @@ public class ServiceCollectionExtensionsTests
     {
         { typeof(IPasswordService), typeof(PasswordService), ServiceLifetime.Scoped },
         { typeof(IAccountService), typeof(AccountService), ServiceLifetime.Scoped },
+        { typeof(IAccountLoginService), typeof(AccountLoginService), ServiceLifetime.Scoped },
+        { typeof(IAccountRegistrationService), typeof(AccountRegistrationService), ServiceLifetime.Scoped },
+        { typeof(IAccountPasswordResetService), typeof(AccountPasswordResetService), ServiceLifetime.Scoped },
         { typeof(IAccountMailStatusService), typeof(AccountMailStatusService), ServiceLifetime.Scoped },
         { typeof(IAssetService), typeof(AssetService), ServiceLifetime.Scoped },
         { typeof(IAssetBalanceStore), typeof(AssetBalanceStore), ServiceLifetime.Scoped },

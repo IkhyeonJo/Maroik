@@ -211,12 +211,66 @@ public class AssetTests
     {
         var asset = ValidAsset();
 
-        var result = asset.Update("New Name", "InvestmentAsset", 2000m, "KRW", "memo", false, _now);
+        var result = asset.Update("New Name", "InvestmentAsset", 2000m, "KRW", "memo", _now);
 
         Assert.False(result.IsError);
         Assert.Equal("New Name", asset.ProductName);
-        Assert.Equal("InvestmentAsset", asset.Item);
+        Assert.Equal("InvestmentAsset", asset.Item.Value);
         Assert.Equal(2000m, asset.Balance.Amount);
+    }
+
+    /// <summary>A rename moves the asset's identity with its name, so the instance equals a fresh load of the renamed row.</summary>
+    [Fact]
+    public void Update_MovesTheIdentity_WhenTheProductNameChanges()
+    {
+        var asset = ValidAsset(productName: "Old Name");
+        Asset reloaded = Asset.Reconstitute("New Name", asset.AccountEmail.Value, "CashAsset", 1m, "KRW", null, false, _now, _now);
+
+        Assert.False(asset.Update("New Name", "CashAsset", 1m, "KRW", null, _now).IsError);
+
+        Assert.Equal(("New Name", asset.AccountEmail.Value), asset.Id);
+        Assert.Equal(reloaded, asset);
+    }
+
+    /// <summary>An edit leaves the deleted flag to <see cref="Asset.SoftDelete"/> and <see cref="Asset.Restore"/>.</summary>
+    [Fact]
+    public void Update_LeavesTheDeletedFlagAlone()
+    {
+        var asset = ValidAsset();
+        asset.SoftDelete(_now);
+
+        Assert.False(asset.Update("My Bank", "CashAsset", 1m, "KRW", null, _now.AddMinutes(1)).IsError);
+
+        Assert.True(asset.Deleted);
+    }
+
+    /// <summary>Restore brings a deleted asset back and stamps Updated.</summary>
+    [Fact]
+    public void Restore_ClearsTheDeletedFlag_AndStampsUpdated()
+    {
+        var asset = ValidAsset();
+        asset.SoftDelete(_now);
+
+        asset.Restore(_now.AddMinutes(5));
+
+        Assert.False(asset.Deleted);
+        Assert.Equal(_now.AddMinutes(5), asset.Updated);
+    }
+
+    /// <summary>A refused edit changes nothing, the identity included.</summary>
+    [Fact]
+    public void Update_ChangesNothing_WhenRefused()
+    {
+        var asset = ValidAsset(productName: "Old Name");
+        var id = asset.Id;
+
+        Assert.True(asset.Update("New Name", "Nonsense", 1m, "KRW", "memo", _now.AddMinutes(1)).IsError);
+
+        Assert.Equal("Old Name", asset.ProductName);
+        Assert.Equal(id, asset.Id);
+        Assert.Equal(1000m, asset.Balance.Amount);
+        Assert.Null(asset.Note);
+        Assert.Equal(_now, asset.Updated);
     }
 
     /// <summary>Update returns error, when product name empty.</summary>
@@ -225,7 +279,7 @@ public class AssetTests
     {
         var asset = ValidAsset();
 
-        var result = asset.Update("", "FreeDepositAndWithdrawal", 0m, "KRW", null, false, _now);
+        var result = asset.Update("", "FreeDepositAndWithdrawal", 0m, "KRW", null, _now);
 
         Assert.True(result.IsError);
         Assert.Equal("Asset.ProductNameEmpty", result.FirstError.Code);
@@ -239,7 +293,7 @@ public class AssetTests
     {
         var asset = ValidAsset();
 
-        var result = asset.Update("Name", "", 0m, "KRW", null, false, _now);
+        var result = asset.Update("Name", "", 0m, "KRW", null, _now);
 
         Assert.True(result.IsError);
         Assert.Equal("Asset.ItemEmpty", result.FirstError.Code);
@@ -251,7 +305,7 @@ public class AssetTests
     {
         var asset = ValidAsset();
 
-        var result = asset.Update("Name", "Stock", 1000m, "KRW", null, false, _now);
+        var result = asset.Update("Name", "Stock", 1000m, "KRW", null, _now);
 
         Assert.True(result.IsError);
         Assert.Equal("Asset.ItemInvalid", result.FirstError.Code);
@@ -264,7 +318,7 @@ public class AssetTests
         var asset = ValidAsset();
         string originalCurrency = asset.Balance.Currency.Value;
 
-        var result = asset.Update("Name", "FreeDepositAndWithdrawal", 1000m, "", null, false, _now);
+        var result = asset.Update("Name", "FreeDepositAndWithdrawal", 1000m, "", null, _now);
 
         Assert.True(result.IsError);
         Assert.Equal("Money.CurrencyEmpty", result.FirstError.Code);

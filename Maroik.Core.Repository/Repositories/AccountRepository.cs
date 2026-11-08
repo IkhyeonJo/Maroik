@@ -1,7 +1,9 @@
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Domain.Accounts;
 using Maroik.Core.PostgreSQL.Contexts;
+using Maroik.Core.Repository.Translators;
 using Microsoft.EntityFrameworkCore;
+using Npgsql;
 using OrmAccount = Maroik.Core.PostgreSQL.Models.Account;
 
 namespace Maroik.Core.Repository.Repositories;
@@ -67,9 +69,16 @@ public class AccountRepository(ApplicationDbContext context)
         OrmAccount? current = await Set.FindAsync([email], ct);
         if (current != null && current.Nickname != nickname)
         {
-            await Set
-                .Where(e => e.Email == email)
-                .ExecuteUpdateAsync(s => s.SetProperty(e => e.Nickname, nickname), ct);
+            try
+            {
+                await Set
+                    .Where(e => e.Email == email)
+                    .ExecuteUpdateAsync(s => s.SetProperty(e => e.Nickname, nickname), ct);
+            }
+            catch (PostgresException e) when (DuplicateKeyTranslator.Translate(e) is { } duplicate)
+            {
+                throw duplicate;
+            }
 
             // The tracked row still holds the old nickname; drop it so the generic update reloads the row
             // (it overwrites every column of the reloaded row anyway).

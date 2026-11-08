@@ -1,4 +1,6 @@
 using Maroik.Core.Contract.Dtos;
+using Maroik.Core.Contract.Enums;
+using Maroik.Core.Contract.Exceptions;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Domain.Finances;
 using Maroik.Core.Service.Services;
@@ -184,9 +186,9 @@ public class AssetServiceTests
     public async Task CreateAsync_ReturnsFail_WhenConcurrentInsertViolatesUniqueConstraint()
     {
         SetupFindAsset(null);
-        var pgException = new Exception("23505: duplicate key value violates unique constraint \"Asset_pk\"");
+        var duplicate = new DuplicateKeyException(DuplicateKey.AssetProductName);
         _assetRepo.Setup(r => r.CreateAsync(It.IsAny<Asset>(), It.IsAny<CancellationToken>()))
-            .ThrowsAsync(new InvalidOperationException("insert failed", pgException));
+            .ThrowsAsync(duplicate);
         var sut = CreateSut();
 
         ServiceResult result = await sut.CreateAsync("user@example.com", ValidRequest(), TestContext.Current.CancellationToken);
@@ -286,9 +288,9 @@ public class AssetServiceTests
     public async Task UpdateAsync_ReturnsFail_WhenRenameViolatesUniqueConstraint()
     {
         SetupFindAsset(MakeAsset("OldName"));
-        var pgException = new Exception("23505: duplicate key value violates unique constraint \"Asset_pk\"");
+        var duplicate = new DuplicateKeyException(DuplicateKey.AssetProductName);
         _assetRepo.Setup(r => r.UpdateAssetWithProductNameAsync(It.IsAny<Asset>(), "OldName", It.IsAny<CancellationToken>()))
-            .ThrowsAsync(new InvalidOperationException("rename failed", pgException));
+            .ThrowsAsync(duplicate);
         var sut = CreateSut();
 
         ServiceResult result = await sut.UpdateAsync("user@example.com", ValidRequest("NewName"), "OldName", TestContext.Current.CancellationToken);
@@ -560,7 +562,7 @@ public class AssetServiceTests
     {
         SetupFindAsset(null);
         _assetRepo.Setup(r => r.CreateAsync(It.IsAny<Asset>(), It.IsAny<CancellationToken>()))
-            .ThrowsAsync(new InvalidOperationException("insert failed", new Exception("23505: duplicate key value violates unique constraint \"Asset_pk\"")));
+            .ThrowsAsync(new DuplicateKeyException(DuplicateKey.AssetProductName));
 
         AssertDuplicate(await CreateSut().CreateAsync(Email, ValidRequest(), TestContext.Current.CancellationToken));
         Assert.Empty(_logger.Collector.GetSnapshot());
@@ -622,7 +624,7 @@ public class AssetServiceTests
     {
         SetupFindAsset(MakeAsset("OldName"));
         _assetRepo.Setup(r => r.UpdateAssetWithProductNameAsync(It.IsAny<Asset>(), "OldName", It.IsAny<CancellationToken>()))
-            .ThrowsAsync(new InvalidOperationException("rename failed", new Exception("23505: duplicate key value violates unique constraint \"Asset_pk\"")));
+            .ThrowsAsync(new DuplicateKeyException(DuplicateKey.AssetProductName));
 
         AssertDuplicate(await CreateSut().UpdateAsync(Email, ValidRequest("NewName"), "OldName", TestContext.Current.CancellationToken));
     }
@@ -655,7 +657,26 @@ public class AssetServiceTests
 
         Assert.True(result.Success);
         Assert.Equal("KRW", written?.Balance.Currency.Value);
-        Assert.Equal("SavingsAsset", written?.Item);
+        Assert.Equal("SavingsAsset", written?.Item.Value);
+    }
+
+    /// <summary>The edit form's deleted box decides the stored flag, in both directions.</summary>
+    [Theory]
+    [InlineData(true, false, true)]
+    [InlineData(false, true, false)]
+    public async Task UpdateAsync_AppliesTheDeletedBox(bool requested, bool stored, bool expected)
+    {
+        SetupFindAsset(MakeAsset("MyBank", deleted: stored));
+        Asset? written = null;
+        _assetRepo.Setup(r => r.UpdateAssetWithProductNameAsync(It.IsAny<Asset>(), "MyBank", It.IsAny<CancellationToken>()))
+            .Callback<Asset, string, CancellationToken>((a, _, _) => written = a).ReturnsAsync(1);
+        AssetRequest request = ValidRequest();
+        request.Deleted = requested;
+
+        ServiceResult result = await CreateSut().UpdateAsync(Email, request, "MyBank", TestContext.Current.CancellationToken);
+
+        Assert.True(result.Success);
+        Assert.Equal(expected, written?.Deleted);
     }
 
     /// <summary>A request without a currency keeps the stored currency label.</summary>

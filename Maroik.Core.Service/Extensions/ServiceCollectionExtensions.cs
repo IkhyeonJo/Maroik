@@ -22,6 +22,9 @@ public static class ServiceCollectionExtensions
             services.TryAddSingleton(TimeProvider.System);
             services.AddScoped<IPasswordService, PasswordService>();
             services.AddScoped<IAccountService, AccountService>();
+            services.AddScoped<IAccountLoginService, AccountLoginService>();
+            services.AddScoped<IAccountRegistrationService, AccountRegistrationService>();
+            services.AddScoped<IAccountPasswordResetService, AccountPasswordResetService>();
             services.AddScoped<IAccountMailStatusService, AccountMailStatusService>();
             services.AddScoped<IAssetService, AssetService>();
             services.AddScoped<IAssetBalanceStore, AssetBalanceStore>();

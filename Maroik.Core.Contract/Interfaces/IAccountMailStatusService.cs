@@ -2,7 +2,7 @@ namespace Maroik.Core.Contract.Interfaces;
 
 /// <summary>
 /// Service interface for recording the outcome of asynchronously delivered account emails.
-/// Deliberately kept separate from <see cref="IAccountService"/>: consumers of this interface
+/// Deliberately kept separate from <see cref="IAccountRegistrationService"/> and <see cref="IAccountPasswordResetService"/>: consumers of this interface
 /// (e.g. Maroik.Worker, reacting to an SMTP failure reported by <c>IMailClient</c>) only need
 /// to update the account's status, not the full login/registration/password-reset surface,
 /// so this interface carries no dependency on password hashing, token protection, or

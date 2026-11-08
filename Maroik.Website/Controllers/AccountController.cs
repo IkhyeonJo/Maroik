@@ -16,7 +16,9 @@ namespace Maroik.Website.Controllers;
 /// </summary>
 public class AccountController(
     IHtmlLocalizer<AccountController> localizer,
-    IAccountService accountService,
+    IAccountLoginService loginService,
+    IAccountRegistrationService registrationService,
+    IAccountPasswordResetService passwordResetService,
     ISessionService sessionService,
     ILogger<AccountController> logger) : Controller
 {
@@ -51,7 +53,7 @@ public class AccountController(
 
         if (!ModelState.IsValid) return View();
 
-        var result = await accountService.LoginAsync(loginInputViewModel.Email!, loginInputViewModel.Password ?? "", ct);
+        var result = await loginService.LoginAsync(loginInputViewModel.Email!, loginInputViewModel.Password ?? "", ct);
 
         if (!result.Success)
         {
@@ -147,7 +149,7 @@ public class AccountController(
                 AgreedServiceTerms = true
             };
 
-            var result = await accountService.RegisterAsync(newAccount, emailTemplate, ct);
+            var result = await registrationService.RegisterAsync(newAccount, emailTemplate, ct);
 
             if (!result.Success)
             {
@@ -171,7 +173,7 @@ public class AccountController(
 
             var emailTemplate = localizer.ToConfirmationEmailTemplate();
 
-            var result = await accountService.ResendConfirmationEmailAsync(loginInputViewModel.Email!, emailTemplate, ct);
+            var result = await registrationService.ResendConfirmationEmailAsync(loginInputViewModel.Email!, emailTemplate, ct);
 
             if (!result.Success)
             {
@@ -200,7 +202,7 @@ public class AccountController(
     [HttpGet]
     public async Task<IActionResult> ConfirmEmail(string registrationToken, CancellationToken ct)
     {
-        var result = await accountService.ValidateRegistrationTokenAsync(registrationToken, ct);
+        var result = await registrationService.ValidateRegistrationTokenAsync(registrationToken, ct);
 
         ViewBag.InvalidToken = result.InvalidToken;
         ViewBag.AccountCreated = result.AccountCreated;
@@ -226,7 +228,7 @@ public class AccountController(
             return View();
         }
 
-        var result = await accountService.ConfirmEmailAsync(
+        var result = await registrationService.ConfirmEmailAsync(
             loginInputViewModel.RegistrationToken ?? "", loginInputViewModel.Password ?? "", ct);
 
         if (result.WrongPassword)
@@ -262,7 +264,7 @@ public class AccountController(
 
         var emailTemplate = localizer.ToResetPasswordEmailTemplate();
 
-        await accountService.ForgotPasswordAsync(loginInputViewModel.Email!, emailTemplate, ct);
+        await passwordResetService.ForgotPasswordAsync(loginInputViewModel.Email!, emailTemplate, ct);
 
         ViewBag.MailSent = true;
         return View();
@@ -272,7 +274,7 @@ public class AccountController(
     [HttpGet]
     public async Task<IActionResult> ResetPassword(string resetPasswordToken, CancellationToken ct)
     {
-        var result = await accountService.ValidateResetPasswordTokenAsync(resetPasswordToken, ct);
+        var result = await passwordResetService.ValidateResetPasswordTokenAsync(resetPasswordToken, ct);
         ViewBag.FailToResetPassword = result.FailToReset;
         ViewBag.ResetPasswordToken = result.ResetPasswordToken;
         return View();
@@ -293,7 +295,7 @@ public class AccountController(
             return View();
         }
 
-        var (result, signIn) = await accountService.ResetPasswordAsync(
+        var (result, signIn) = await passwordResetService.ResetPasswordAsync(
             loginInputViewModel.ResetPasswordToken ?? "",
             loginInputViewModel.Password ?? "",
             ct);

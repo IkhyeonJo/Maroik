@@ -1,3 +1,5 @@
+using Maroik.Core.Contract.Enums;
+using Maroik.Core.Contract.Exceptions;
 using Maroik.Core.Domain.Finances;
 using Maroik.Core.PostgreSQL.Contexts;
 using Maroik.Core.Repository.Repositories;
@@ -183,6 +185,34 @@ public sealed class AssetRepositoryTests(DatabaseFixture database) : RepositoryT
 
         await Assert.ThrowsAsync<DbUpdateException>(
             () => Sut.CreateAsync(asset, TestContext.Current.CancellationToken));
+    }
+
+    /// <summary>An insert that loses the (ProductName, AccountEmail) primary key reports the product name as taken.</summary>
+    [Fact]
+    public async Task CreateAsync_ReportsADuplicateProductName_WhenTheAccountAlreadyHasIt()
+    {
+        string email = UniqueEmail("twin");
+        await SeedAsync(MakeAsset("Twin", email));
+        var asset = Asset.Reconstitute("Twin", email, "CashAsset", 1m, "KRW", null, false, DateTime.UtcNow, DateTime.UtcNow);
+
+        var ex = await Assert.ThrowsAsync<DuplicateKeyException>(
+            () => Sut.CreateAsync(asset, TestContext.Current.CancellationToken));
+
+        Assert.Equal(DuplicateKey.AssetProductName, ex.Key);
+    }
+
+    /// <summary>The raw-SQL rename reports the same duplicate when the new name is taken.</summary>
+    [Fact]
+    public async Task UpdateAssetWithProductNameAsync_ReportsADuplicateProductName_WhenTheNewNameIsTaken()
+    {
+        string email = UniqueEmail("rename-twin");
+        await SeedAsync(MakeAsset("Old", email), MakeAsset("Taken", email));
+        var asset = Asset.Reconstitute("Taken", email, "CashAsset", 1m, "KRW", null, false, DateTime.UtcNow, DateTime.UtcNow);
+
+        var ex = await Assert.ThrowsAsync<DuplicateKeyException>(
+            () => Sut.UpdateAssetWithProductNameAsync(asset, "Old", TestContext.Current.CancellationToken));
+
+        Assert.Equal(DuplicateKey.AssetProductName, ex.Key);
     }
 
     // -- UpdateEntityAsync ---------------------------------------------------

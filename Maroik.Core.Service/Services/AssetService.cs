@@ -1,7 +1,8 @@
 using Maroik.Core.Contract.Dtos;
+using Maroik.Core.Contract.Enums;
+using Maroik.Core.Contract.Exceptions;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Domain.Finances;
-using Maroik.Core.Service.Extensions;
 using Maroik.Core.Service.Mappers;
 using Microsoft.Extensions.Logging;
 
@@ -74,12 +75,11 @@ public class AssetService(
         {
             await assetRepository.CreateAsync(asset, ct);
         }
-        catch (Exception e) when (e.IsPostgresUniqueViolation())
+        catch (DuplicateKeyException e) when (e.Key == DuplicateKey.AssetProductName)
         {
             // The prior FindAssetAsync check above is a read-then-write race: two concurrent
-            // requests for the same (ProductName, AccountEmail) can both pass it. The primary
-            // key constraint on that pair still rejects the second insert — turn that into the
-            // same friendly result instead of letting the raw DB exception escape.
+            // requests for the same (ProductName, AccountEmail) can both pass it. The database
+            // still rejects the second insert — turn that into the same friendly result.
             return ServiceResult.Conflict("Asset.Duplicate", ServiceErrorKeys.AssetExists);
         }
         catch (Exception e)
@@ -124,12 +124,18 @@ public class AssetService(
 
             // Fall back to the existing currency when the request does not specify one.
             string currency = request.MonetaryUnit ?? asset.Balance.Currency.Value;
-            var updateResult = asset.Update(request.ProductName ?? originalProductName, request.Item ?? asset.Item, request.Amount, currency, request.Note, request.Deleted, utcNow);
+            var updateResult = asset.Update(request.ProductName ?? originalProductName, request.Item ?? asset.Item.Value, request.Amount, currency, request.Note, utcNow);
             if (updateResult.IsError)
             {
                 await unitOfWork.RollbackAsync(ct);
                 return ServiceResult.FromError(updateResult.FirstError);
             }
+
+            // The edit form also carries the deleted box.
+            if (request.Deleted)
+                asset.SoftDelete(utcNow);
+            else
+                asset.Restore(utcNow);
 
             int updated = await assetRepository.UpdateAssetWithProductNameAsync(asset, originalProductName, ct);
             if (updated <= 0)
@@ -146,11 +152,11 @@ public class AssetService(
             await unitOfWork.CommitAsync(ct);
             return ServiceResult.Ok();
         }
-        catch (Exception ex) when (ex.IsPostgresUniqueViolation())
+        catch (DuplicateKeyException ex) when (ex.Key == DuplicateKey.AssetProductName)
         {
             // Renaming to a product name that already exists for this account hits the same
-            // (ProductName, AccountEmail) primary key CreateAsync guards against — report the
-            // same friendly message instead of the generic fallback below.
+            // rule CreateAsync guards against — report the same friendly message instead of
+            // the generic fallback below.
             await unitOfWork.RollbackAsync(ct);
             return ServiceResult.Conflict("Asset.Duplicate", ServiceErrorKeys.AssetExists);
         }

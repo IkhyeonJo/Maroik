@@ -1,6 +1,7 @@
 using System.Linq.Expressions;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.PostgreSQL.Contexts;
+using Maroik.Core.Repository.Translators;
 using Microsoft.EntityFrameworkCore;
 
 namespace Maroik.Core.Repository.Repositories;
@@ -89,8 +90,17 @@ public abstract class GenericRepository<TDomain, TEntity>(ApplicationDbContext c
     /// </summary>
     private async Task FlushUnlessInTransactionAsync(CancellationToken ct)
     {
-        if (Context.Database.CurrentTransaction is null)
+        if (Context.Database.CurrentTransaction is not null)
+            return;
+
+        try
+        {
             _ = await Context.SaveChangesAsync(ct);
+        }
+        catch (DbUpdateException e) when (DuplicateKeyTranslator.Translate(e) is { } duplicate)
+        {
+            throw duplicate;
+        }
     }
 
     /// <inheritdoc />

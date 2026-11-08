@@ -1,3 +1,5 @@
+using Maroik.Core.Contract.Enums;
+using Maroik.Core.Contract.Exceptions;
 using Maroik.Core.Domain.Calendars;
 using Maroik.Core.Repository.Repositories;
 using Microsoft.EntityFrameworkCore;
@@ -185,6 +187,25 @@ public sealed class CalendarRepositoryTests(DatabaseFixture database) : Reposito
 
         await Assert.ThrowsAsync<DbUpdateException>(
             () => Sut.CreateAsync(calendar, TestContext.Current.CancellationToken));
+    }
+
+    /// <summary>An insert that loses <c>Calendar_AccountEmail_Name_unique</c> reports the calendar name as taken.</summary>
+    [Fact]
+    public async Task CreateAsync_ReportsADuplicateName_WhenTheAccountAlreadyHasIt()
+    {
+        string alice = UniqueEmail("alice");
+        string name = Unique("Twin");
+        await InsertCalendarAsync(alice, name);
+
+        var calendar = Calendar.Reconstitute(
+            id: 0, accountEmail: alice, name: name, description: null,
+            timeZoneIanaId: "UTC", htmlColorCode: "#000000",
+            created: DateTime.UtcNow, updated: DateTime.UtcNow);
+
+        var ex = await Assert.ThrowsAsync<DuplicateKeyException>(
+            () => Sut.CreateAsync(calendar, TestContext.Current.CancellationToken));
+
+        Assert.Equal(DuplicateKey.CalendarName, ex.Key);
     }
 
     // -- FindByIdAsync ------------------------------------------------------------

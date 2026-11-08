@@ -1,8 +1,9 @@
 using ErrorOr;
 using Maroik.Core.Contract.Dtos;
+using Maroik.Core.Contract.Enums;
+using Maroik.Core.Contract.Exceptions;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Domain.Accounts;
-using Maroik.Core.Service.Extensions;
 using Maroik.Core.Service.Mappers;
 using Microsoft.Extensions.Logging;
 
@@ -93,15 +94,13 @@ public class ManagementAccountService(
             {
                 await accountRepository.CreateAsync(account, ct);
             }
-            catch (Exception e) when (e.IsPostgresUniqueViolation())
+            catch (DuplicateKeyException e)
             {
                 // The FindByEmailAsync / NicknameExistsIgnoreCaseAsync checks above are read-then-write
                 // races: two concurrent admin creates for the same not-yet-registered email or
-                // nickname can both pass them. Email is the actual primary key (Account_pk), while
-                // Nickname has its own separate unique constraint (Account_Nickname_unique) — report
-                // whichever one actually collided, same classification RegisterAsync uses.
-                bool isNicknameConflict = e.IsAccountNicknameUniqueViolation();
-                return isNicknameConflict
+                // nickname can both pass them. Report whichever one actually collided, the same
+                // classification RegisterAsync uses.
+                return e.Key == DuplicateKey.AccountNickname
                     ? ServiceResult.Conflict("Account.NicknameAlreadyExists", ServiceErrorKeys.NicknameExists, nickname)
                     : ServiceResult.Conflict("Account.AlreadyExists", ServiceErrorKeys.AccountAlreadyCreated);
             }

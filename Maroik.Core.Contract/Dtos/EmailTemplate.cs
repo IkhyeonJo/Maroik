@@ -2,7 +2,7 @@ namespace Maroik.Core.Contract.Dtos;
 
 /// <summary>
 /// Localized subject/title/body content for a transactional email (registration confirmation,
-/// password reset) that <see cref="Interfaces.IAccountService"/> sends on the caller's behalf.
+/// password reset) that <see cref="Interfaces.IAccountRegistrationService"/> and <see cref="Interfaces.IAccountPasswordResetService"/> send on the caller's behalf.
 /// </summary>
 public class EmailTemplate
 {

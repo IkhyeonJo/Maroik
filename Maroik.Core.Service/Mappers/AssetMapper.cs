@@ -11,7 +11,7 @@ internal static class AssetMapper
     {
         ProductName = asset.ProductName,
         AccountEmail = asset.AccountEmail.Value,
-        Item = asset.Item,
+        Item = asset.Item.Value,
         Amount = asset.Balance.Amount,
         MonetaryUnit = asset.Balance.Currency.Value,
         Created = asset.Created,
