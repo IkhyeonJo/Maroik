@@ -10,14 +10,10 @@ namespace Maroik.Core.Domain.Finances;
 /// (e.g. a bank account, stock portfolio, cash wallet).
 /// The composite identity is (<see cref="ProductName"/>, <see cref="AccountEmail"/>).
 /// <para>
-/// <see cref="Entity{TId}.Id"/> is captured once at construction. <see cref="Update"/> can change
-/// <see cref="ProductName"/> (a rename, persisted via <c>AssetRepository.UpdateAssetWithProductNameAsync</c>
-/// keyed on the original name, with <c>ON UPDATE CASCADE</c> propagating it to referencing rows),
-/// which leaves this in-memory instance's <see cref="Entity{TId}.Id"/> holding the pre-rename name
-/// until it is reloaded. The rename flow does exactly one load-mutate-persist per unit of work and
-/// never compares <see cref="Asset"/> instances by identity, so this is currently safe; a caller
-/// that put an <see cref="Asset"/> in a hash-keyed collection and looked it up again after a
-/// rename would not find it.
+/// <see cref="Update"/> can change <see cref="ProductName"/> (a rename, persisted via
+/// <c>AssetRepository.UpdateAssetWithProductNameAsync</c> keyed on the original name, with
+/// <c>ON UPDATE CASCADE</c> propagating it to referencing rows), and <see cref="Entity{TId}.Id"/> moves with
+/// it. An <see cref="Asset"/> held in a hash-keyed collection across a rename therefore has to be added again.
 /// </para>
 /// </summary>
 public sealed class Asset : AggregateRoot<(string ProductName, string AccountEmail)>
@@ -29,7 +25,7 @@ public sealed class Asset : AggregateRoot<(string ProductName, string AccountEma
     public Email AccountEmail { get; private set; }
 
     /// <summary>Asset category — an <see cref="AssetItemType"/> member name (e.g. "FreeDepositAndWithdrawal", "CashAsset").</summary>
-    public string Item { get; private set; }
+    public AssetItem Item { get; private set; }
 
     /// <summary>Current balance of the asset.</summary>
     public Money Balance { get; private set; }
@@ -50,7 +46,7 @@ public sealed class Asset : AggregateRoot<(string ProductName, string AccountEma
     private Asset(
         string productName,
         Email accountEmail,
-        string item,
+        AssetItem item,
         Money balance,
         DateTime utcNow) : base((productName, accountEmail.Value))
     {
@@ -64,7 +60,7 @@ public sealed class Asset : AggregateRoot<(string ProductName, string AccountEma
 
     /// <summary>Reconstitution constructor: assigns every field verbatim from trusted storage with no new timestamps.</summary>
     private Asset(
-        string productName, Email accountEmail, string item, Money balance,
+        string productName, Email accountEmail, AssetItem item, Money balance,
         string? note, bool deleted, DateTime created, DateTime updated) : base((productName, accountEmail.Value))
     {
         ProductName = productName;
@@ -99,7 +95,7 @@ public sealed class Asset : AggregateRoot<(string ProductName, string AccountEma
         return new Asset(
             productName,
             Email.FromTrustedSource(accountEmail),
-            item,
+            AssetItem.FromTrustedSource(item),
             Money.FromTrustedSource(amount, monetaryUnit),
             note,
             deleted,
@@ -119,31 +115,14 @@ public sealed class Asset : AggregateRoot<(string ProductName, string AccountEma
         DateTime utcNow,
         string? note = null)
     {
-        if (string.IsNullOrWhiteSpace(productName))
-            return DomainError.Validation("Asset.ProductNameEmpty", "Product name cannot be empty.");
-
-        var textResult = ValidateNameAndNote(productName, note);
-        if (textResult.IsError) return textResult.Errors;
-
-        var rangeResult = FinanceAmountPolicy.ValidateBalance(amount);
-        if (rangeResult.IsError) return rangeResult.Errors;
-
-        if (string.IsNullOrWhiteSpace(item))
-            return DomainError.Validation("Asset.ItemEmpty", "Asset category (item) cannot be empty.");
-
-        // Constrain to the known taxonomy here rather than trusting the caller: otherwise the DB
-        // Asset_Item_check constraint would be the only thing rejecting anything else, which
-        // surfaces as a raw DB exception instead of this validation error.
-        if (!AssetItems.IsKnown(item))
-            return DomainError.Validation("Asset.ItemInvalid", "Asset category (item) is not a recognized value.");
+        var fieldsResult = ValidateEditableFields(productName, item, amount, currency, note);
+        if (fieldsResult.IsError) return fieldsResult.Errors;
 
         var emailResult = Email.Create(accountEmailValue);
         if (emailResult.IsError) return emailResult.Errors;
 
-        var moneyResult = Money.Create(amount, currency);
-        if (moneyResult.IsError) return moneyResult.Errors;
-
-        var asset = new Asset(productName, emailResult.Value, item, moneyResult.Value, utcNow)
+        var (validName, validItem, balance) = fieldsResult.Value;
+        var asset = new Asset(validName, emailResult.Value, validItem, balance, utcNow)
         {
             Note = note
         };
@@ -156,19 +135,32 @@ public sealed class Asset : AggregateRoot<(string ProductName, string AccountEma
     // ------------------------------------------------------------------------
 
     /// <summary>
-    /// Product name and note are persisted in <c>character varying(255)</c> columns: reject an over-long
-    /// value here (a clean validation error) instead of letting the write fail with a raw
-    /// "value too long" (SQLSTATE 22001).
+    /// The one validation of what a creation and an edit both set. Product name and note are persisted in
+    /// <c>character varying(255)</c> columns: an over-long value is rejected here (a clean validation error) instead of
+    /// letting the write fail with a raw "value too long" (SQLSTATE 22001).
     /// </summary>
-    private static ErrorOr<Success> ValidateNameAndNote(string productName, string? note)
+    private static ErrorOr<(string ProductName, AssetItem Item, Money Balance)> ValidateEditableFields(
+        string? productName, string? item, decimal amount, string? currency, string? note)
     {
+        if (string.IsNullOrWhiteSpace(productName))
+            return DomainError.Validation("Asset.ProductNameEmpty", "Product name cannot be empty.");
+
         if (productName.Length > FinanceTextPolicy.MaxTextLength)
             return DomainError.Validation("Asset.ProductNameTooLong", "Product name must be {0} characters or fewer.", FinanceTextPolicy.MaxTextLength);
 
         if (note is { Length: > FinanceTextPolicy.MaxTextLength })
             return DomainError.Validation("Finance.NoteTooLong", "Note must be {0} characters or fewer.", FinanceTextPolicy.MaxTextLength);
 
-        return Result.Success;
+        var rangeResult = FinanceAmountPolicy.ValidateBalance(amount);
+        if (rangeResult.IsError) return rangeResult.Errors;
+
+        var itemResult = AssetItem.Create(item);
+        if (itemResult.IsError) return itemResult.Errors;
+
+        var moneyResult = Money.Create(amount, currency);
+        if (moneyResult.IsError) return moneyResult.Errors;
+
+        return (productName, itemResult.Value, moneyResult.Value);
     }
 
     /// <summary>Adds the given amount to the balance (e.g. on income deposit).</summary>
@@ -213,34 +205,17 @@ public sealed class Asset : AggregateRoot<(string ProductName, string AccountEma
     }
 
     /// <summary>
-    /// Updates all editable fields of the asset, including renaming and currency changes.
-    /// Used by the service layer when an admin/user modifies asset details.
+    /// Corrects the asset's details by hand: its name (a rename moves <see cref="Entity{TId}.Id"/>), category, balance,
+    /// currency and note. Whether it is deleted is not one of them: that is <see cref="SoftDelete"/> and <see cref="Restore"/>.
     /// </summary>
-    public ErrorOr<Success> Update(string productName, string item, decimal amount, string currency, string? note, bool deleted, DateTime utcNow)
+    public ErrorOr<Success> Update(string productName, string item, decimal amount, string currency, string? note, DateTime utcNow)
     {
-        if (string.IsNullOrWhiteSpace(productName))
-            return DomainError.Validation("Asset.ProductNameEmpty", "Product name cannot be empty.");
+        var fieldsResult = ValidateEditableFields(productName, item, amount, currency, note);
+        if (fieldsResult.IsError) return fieldsResult.Errors;
 
-        var textResult = ValidateNameAndNote(productName, note);
-        if (textResult.IsError) return textResult.Errors;
-
-        var rangeResult = FinanceAmountPolicy.ValidateBalance(amount);
-        if (rangeResult.IsError) return rangeResult.Errors;
-
-        if (string.IsNullOrWhiteSpace(item))
-            return DomainError.Validation("Asset.ItemEmpty", "Asset category cannot be empty.");
-
-        if (!AssetItems.IsKnown(item))
-            return DomainError.Validation("Asset.ItemInvalid", "Asset category (item) is not a recognized value.");
-
-        var moneyResult = Money.Create(amount, currency);
-        if (moneyResult.IsError) return moneyResult.Errors;
-
-        ProductName = productName;
-        Item = item;
-        Balance = moneyResult.Value;
+        (ProductName, Item, Balance) = fieldsResult.Value;
+        Id = (ProductName, AccountEmail.Value);
         Note = note;
-        Deleted = deleted;
         Updated = utcNow;
         return Result.Success;
     }
@@ -249,6 +224,13 @@ public sealed class Asset : AggregateRoot<(string ProductName, string AccountEma
     public void SoftDelete(DateTime utcNow)
     {
         Deleted = true;
+        Updated = utcNow;
+    }
+
+    /// <summary>Brings a logically deleted asset back.</summary>
+    public void Restore(DateTime utcNow)
+    {
+        Deleted = false;
         Updated = utcNow;
     }
 }

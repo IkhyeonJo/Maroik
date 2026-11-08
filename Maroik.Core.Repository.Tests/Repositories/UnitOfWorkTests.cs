@@ -1,5 +1,7 @@
 using System.Data;
 using System.Data.Common;
+using Maroik.Core.Contract.Enums;
+using Maroik.Core.Contract.Exceptions;
 using Maroik.Core.Repository.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
@@ -152,7 +154,9 @@ public sealed class UnitOfWorkTests(DatabaseFixture database) : RepositoryTestBa
             Updated = DateTime.UtcNow,
         });
 
-        await Assert.ThrowsAsync<DbUpdateException>(() => uow.CommitAsync(ct));
+        // A write in a transaction first reaches the database here, so this is where its duplicate surfaces.
+        var duplicate = await Assert.ThrowsAsync<DuplicateKeyException>(() => uow.CommitAsync(ct));
+        Assert.Equal(DuplicateKey.AccountEmail, duplicate.Key);
         // The catch-block pattern services use: must stay a harmless no-op.
         await uow.RollbackAsync(ct);
 
@@ -184,7 +188,7 @@ public sealed class UnitOfWorkTests(DatabaseFixture database) : RepositoryTestBa
             Created = DateTime.UtcNow,
             Updated = DateTime.UtcNow,
         });
-        await Assert.ThrowsAsync<DbUpdateException>(() => uow.CommitAsync(ct));
+        await Assert.ThrowsAsync<DuplicateKeyException>(() => uow.CommitAsync(ct));
         await uow.RollbackAsync(ct);
 
         Exception? ex = await Record.ExceptionAsync(async () =>

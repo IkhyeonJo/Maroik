@@ -46,8 +46,8 @@ try
 
     // Strongly-typed binding of the whole "ServerSetting" section, plus the handful of values that
     // live in a sibling section (FileStorage) or a nested subSection (SmtpOptions) the flat
-    // model can't reach directly. Replaces a handWritten Convert.ToX(section["..."]) wall in which
-    // a missing numeric silently became 0 (e.g. SessionExpireMinutes = 0 -> sessions expire at once).
+    // model can't reach directly. A value is range-checked below: a missing numeric binds as 0, and
+    // SessionExpireMinutes = 0 would expire every session at once.
     static void BindServerSetting(IConfiguration configuration, ServerSetting target)
     {
         configuration.GetSection("ServerSetting").Bind(target);
@@ -186,8 +186,8 @@ try
     {
         options.AddDefaultPolicy(corsPolicyBuilder =>
         {
-            // Origin = scheme + host (+ port), no trailing slash. The old Replace("/", "") also ate
-            // the "//" in "https://", producing the invalid origin "https:host" that matched nothing.
+            // Origin = scheme + host (+ port), no trailing slash. Only the trailing one goes: removing every
+            // "/" would also eat the "//" of "https://", an invalid origin that matches nothing.
             var corsOrigin = cfgDomainName.TrimEnd('/');
             if (!string.IsNullOrEmpty(corsOrigin))
                 _ = corsPolicyBuilder.WithOrigins(corsOrigin);
@@ -197,7 +197,7 @@ try
     #endregion
 
     builder.Services.AddHttpContextAccessor();
-    // builder.Services.AddMemoryCache(); // For IMemoryCache DI - unused; IDistributedCache(Valkey) used instead for scale-out
+    // No AddMemoryCache: what is cached goes through IDistributedCache (Valkey), which holds across instances.
     // No AddResponseCaching / UseResponseCaching: the middleware below stamps every response
     // Cache-Control: no-store, so nothing is ever cacheable and the response-caching middleware
     // would only ever be a no-op. [ResponseCache] on individual actions is header-only and needs
@@ -206,8 +206,7 @@ try
     builder.Services.AddHsts(options => // https://blog.elmah.io/the-asp-net-core-security-headers-guide/
     {
         options.IncludeSubDomains = true;
-        // 2 years — the value the (now-removed) hand-appended Strict-Transport-Security header
-        // carried; UseHsts() below is the single emitter, and it only fires over HTTPS.
+        // 2 years. UseHsts() below is the single emitter of the header, and it only fires over HTTPS.
         options.MaxAge = TimeSpan.FromDays(730);
         options.Preload = true;
         // Do NOT add the live domain here: ExcludedHosts is the set of hosts the header is
@@ -234,8 +233,8 @@ try
     #region Multi-Language
 
     builder.Services.AddLocalization(opt => { opt.ResourcesPath = "Resources"; });
-    // AddControllersWithViews (not AddMvc): this app has no Razor Pages, so AddMvc is extra Razor
-    // Pages services were dead weight. The filters/options for the same builder are added by the
+    // AddControllersWithViews (not AddMvc): this app has no Razor Pages, so the Razor Pages services
+    // AddMvc adds would be dead weight. The filters/options for the same builder are added by the
     // AddControllersWithViews call further below; the two calls merge into one MVC builder.
     builder.Services.AddControllersWithViews()
         .AddViewLocalization()
@@ -319,29 +318,21 @@ try
 
     #region Apply the following code to all pages. After logout, pressing back button shows logged-in page, so cache is disabled
 
-    //<META http-equiv="Expires" content="-1">
-    //<META http-equiv="Pragma" content="no-cache">
-    //<META http-equiv="Cache-Control" content="No-Cache">
-
-    //The code below is equivalent to the metadata content that goes into the HTML Header above.
-
     app.Use(async (context, next) =>
     {
         context.Response.GetTypedHeaders().CacheControl =
             new Microsoft.Net.Http.Headers.CacheControlHeaderValue
             {
-                //Public = true,
-                //MaxAge = TimeSpan.FromSeconds(10),
-                NoCache = true, // For resolve logout back button problem
-                NoStore = true // For resolve logout back button problem
+                NoCache = true, // So the back button shows no signed-in page after a logout
+                NoStore = true // So the back button shows no signed-in page after a logout
             };
         context.Response.Headers[Microsoft.Net.Http.Headers.HeaderNames.Vary] =
             (string[])["Accept-Encoding"];
 
         #region Security Headers [https://blog.elmah.io/the-asp-net-core-security-headers-guide/]
 
-        // Strict-Transport-Security is emitted by app.UseHsts() alone (see AddHsts above) — a second
-        // handWritten header here produced two conflicting max-age values on every HTTPS response.
+        // Strict-Transport-Security is emitted by app.UseHsts() alone (see AddHsts above): a second
+        // header here would send two conflicting max-age values on every HTTPS response.
         context.Response.Headers.Append("X-Frame-Options", "DENY");
         // X-XSS-Protection deliberately set to 0: the legacy auditor it enables is itself a source
         // of vulnerabilities in the browsers that still honor it, and modern guidance (OWASP) is to

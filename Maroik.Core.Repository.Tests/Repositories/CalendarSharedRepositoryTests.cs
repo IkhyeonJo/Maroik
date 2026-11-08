@@ -1,3 +1,5 @@
+using Maroik.Core.Contract.Enums;
+using Maroik.Core.Contract.Exceptions;
 using Maroik.Core.Domain.Calendars;
 using Maroik.Core.PostgreSQL.Contexts;
 using Maroik.Core.Repository.Repositories;
@@ -81,6 +83,21 @@ public sealed class CalendarSharedRepositoryTests(DatabaseFixture database) : Re
 
         await Assert.ThrowsAsync<DbUpdateException>(
             () => Sut.CreateAsync(shared, TestContext.Current.CancellationToken));
+    }
+
+    /// <summary>A second sharing row for one calendar (the race the service retries) reports the sharing row as taken.</summary>
+    [Fact]
+    public async Task CreateAsync_ReportsADuplicateSharingRow_WhenTheCalendarAlreadyHasOne()
+    {
+        long calendarId = await InsertCalendarAsync();
+        var ct = TestContext.Current.CancellationToken;
+        await Sut.CreateAsync(CalendarShared.Reconstitute(calendarId, user: true, anonymous: false), ct);
+        Context.ChangeTracker.Clear();
+
+        var ex = await Assert.ThrowsAsync<DuplicateKeyException>(
+            () => Sut.CreateAsync(CalendarShared.Reconstitute(calendarId, user: false, anonymous: true), ct));
+
+        Assert.Equal(DuplicateKey.CalendarShared, ex.Key);
     }
 
     // -- UpdateEntityAsync --------------------------------------------

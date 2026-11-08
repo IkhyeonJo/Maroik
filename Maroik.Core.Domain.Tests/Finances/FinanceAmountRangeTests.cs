@@ -161,9 +161,9 @@ public class FinanceAmountRangeTests
     {
         var asset = Asset.Create("Wallet", "user@example.com", "FreeDepositAndWithdrawal", 1m, "KRW", _now).Value;
 
-        Assert.Equal("Asset.ProductNameTooLong", asset.Update(new string('a', 256), "FreeDepositAndWithdrawal", 1m, "KRW", null, false, _now).FirstError.Code);
-        Assert.Equal("Finance.NoteTooLong", asset.Update("Wallet", "FreeDepositAndWithdrawal", 1m, "KRW", new string('n', 256), false, _now).FirstError.Code);
-        Assert.Equal("Finance.AmountOutOfRange", asset.Update("Wallet", "FreeDepositAndWithdrawal", OverMax, "KRW", null, false, _now).FirstError.Code);
-        Assert.False(asset.Update(new string('a', 255), "FreeDepositAndWithdrawal", Max, "KRW", new string('n', 255), false, _now).IsError);
+        Assert.Equal("Asset.ProductNameTooLong", asset.Update(new string('a', 256), "FreeDepositAndWithdrawal", 1m, "KRW", null, _now).FirstError.Code);
+        Assert.Equal("Finance.NoteTooLong", asset.Update("Wallet", "FreeDepositAndWithdrawal", 1m, "KRW", new string('n', 256), _now).FirstError.Code);
+        Assert.Equal("Finance.AmountOutOfRange", asset.Update("Wallet", "FreeDepositAndWithdrawal", OverMax, "KRW", null, _now).FirstError.Code);
+        Assert.False(asset.Update(new string('a', 255), "FreeDepositAndWithdrawal", Max, "KRW", new string('n', 255), _now).IsError);
     }
 }

@@ -1,9 +1,10 @@
 using Maroik.Core.Contract.Dtos;
+using Maroik.Core.Contract.Enums;
+using Maroik.Core.Contract.Exceptions;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Contract.Settings;
 using Maroik.Core.Domain.Accounts;
 using Maroik.Core.Domain.Calendars;
-using Maroik.Core.Service.Extensions;
 using Maroik.Core.Service.Mappers;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -33,21 +34,9 @@ public class CalendarService(
     TimeProvider timeProvider) : ICalendarService
 {
     /// <summary>
-    /// The per-account unique calendar-name constraint. Calendar also has a surrogate-key
-    /// "Calendar_pk" (on ID) that raises the same SQLSTATE 23505 on a PK collision; naming this
-    /// constraint explicitly (via IsPostgresUniqueViolationOn) keeps that unrelated failure mode from
-    /// being misreported as "name already exists" below.
-    /// </summary>
-    private const string NameUniqueConstraint = "Calendar_AccountEmail_Name_unique";
-
-    /// <summary>CalendarShared's primary-key constraint (on CalendarId), for classifying a concurrent-insert race.</summary>
-    private const string SharedPkConstraint = "CalendarShared_pk";
-
-    /// <summary>
-    /// Bound on retries for a CalendarShared "ensure/upsert" transaction that hits a concurrent
-    /// insert on <see cref="SharedPkConstraint"/>. Postgres aborts the whole transaction on any
-    /// statement error, so a caught unique-violation cannot be handled in place -- the fix is to
-    /// roll back and retry, re-reading which ids are still missing.
+    /// Bound on retries for a CalendarShared "ensure/upsert" transaction that loses a concurrent insert of the sharing
+    /// row (<see cref="DuplicateKey.CalendarShared"/>). The database aborts the whole transaction on any statement error,
+    /// so a duplicate cannot be handled in place -- the fix is to roll back and retry, re-reading which ids are still missing.
     /// </summary>
     private const int SharedRaceRetryLimit = 3;
 
@@ -166,7 +155,7 @@ public class CalendarService(
                 await unitOfWork.CommitAsync(ct);
                 return ServiceResult.Ok();
             }
-            catch (Exception ex) when (ex.IsPostgresUniqueViolationOn(SharedPkConstraint))
+            catch (DuplicateKeyException ex) when (ex.Key == DuplicateKey.CalendarShared)
             {
                 // The expected race described above: retry. Running out of retries is logged after the loop.
                 await unitOfWork.RollbackAsync(ct);
@@ -241,9 +230,9 @@ public class CalendarService(
             List<Calendar> calendars = await calendarRepository.GetByAccountEmailAsync(accountEmail, ct);
 
             // Prevent duplicate calendar names for the same account. This is a read-then-write
-            // check: two concurrent creates of the same name can both pass it under Postgres's
+            // check: two concurrent creates of the same name can both pass it under the
             // default READ COMMITTED isolation, since a plain SELECT takes no lock. The
-            // "Calendar_AccountEmail_Name_unique" constraint (caught below) is what actually
+            // database's uniqueness rule (DuplicateKey.CalendarName, caught below) is what actually
             // closes the race; this check only avoids the round trip in the common case.
             if (Calendar.IsNameTaken(calendars, request.Name))
             {
@@ -265,12 +254,12 @@ public class CalendarService(
             // The aggregate is built with ID 0 and the database generates the real one, so hand it back on
             // the request: the client builds the new calendar's checkbox / edit / delete controls from the
             // id the controller echoes (main returned the persisted entity, id included). Names are unique
-            // per account (Calendar_AccountEmail_Name_unique), so the row is found by name.
+            // per account, so the row is found by name.
             request.Id = (await calendarRepository.GetByAccountEmailAsync(accountEmail, ct))
                 .FirstOrDefault(c => c.Name == calendar.Name)?.Id ?? 0;
             return ServiceResult.Ok();
         }
-        catch (Exception ex) when (ex.IsPostgresUniqueViolationOn(NameUniqueConstraint))
+        catch (DuplicateKeyException ex) when (ex.Key == DuplicateKey.CalendarName)
         {
             // Expected, not a fault: the account already has a calendar of this name, answered as a Conflict.
             await unitOfWork.RollbackAsync(ct);
@@ -316,11 +305,11 @@ public class CalendarService(
             await unitOfWork.CommitAsync(ct);
             return ServiceResult.Ok();
         }
-        catch (Exception ex) when (ex.IsPostgresUniqueViolationOn(NameUniqueConstraint))
+        catch (DuplicateKeyException ex) when (ex.Key == DuplicateKey.CalendarName)
         {
             // Renaming to a name already used by another of this account's calendars hits the
-            // same "Calendar_AccountEmail_Name_unique" constraint CreateCalendarAsync guards
-            // against -- report the same friendly conflict instead of the generic fallback below.
+            // same rule CreateCalendarAsync guards against -- report the same friendly conflict
+            // instead of the generic fallback below.
             await unitOfWork.RollbackAsync(ct);
             return ServiceResult.Conflict("Calendar.NameExists", ServiceErrorKeys.CalendarExists);
         }
@@ -388,7 +377,7 @@ public class CalendarService(
             await unitOfWork.CommitAsync(ct);
             return ServiceResult.Ok();
         }
-        catch (Exception ex) when (ex.IsPostgresUniqueViolationOn(NameUniqueConstraint))
+        catch (DuplicateKeyException ex) when (ex.Key == DuplicateKey.CalendarName)
         {
             // A concurrent request (e.g. two tabs opened on first login) already created this
             // account's default calendar. This method's contract is "some calendar now exists" --
@@ -507,7 +496,7 @@ public class CalendarService(
                 await unitOfWork.CommitAsync(ct);
                 return ServiceResult.Ok();
             }
-            catch (Exception ex) when (ex.IsPostgresUniqueViolationOn(SharedPkConstraint))
+            catch (DuplicateKeyException ex) when (ex.Key == DuplicateKey.CalendarShared)
             {
                 // The expected race described above: retry. Running out of retries is logged after the loop.
                 await unitOfWork.RollbackAsync(ct);

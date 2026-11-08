@@ -19,7 +19,7 @@ that specific change. Check every candidate review finding in this area against 
   lock) spells out its own `BeginAsync` / `CommitAsync` / `RollbackAsync` (and the service tests assert them). Do not
   fold them into a decorator, filter or "unit of work per request" helper. A single column-scoped write runs on its own
   (`ProfileService.UpdateTimeZoneAsync`, the fixed income / expenditure CRUD), and so do the mail flows that persist a
-  token, send, then record the outcome (`AccountService.ForgotPasswordAsync`): a transaction around the send would hold
+  token, send, then record the outcome (`AccountPasswordResetService.ForgotPasswordAsync`): a transaction around the send would hold
   a row lock across the network call.
 - Several rows are locked in one statement, `... ORDER BY <column> FOR UPDATE` without `LIMIT` (e.g. the asset
   balance lock). This is the pattern that fixed a lost-update bug; do not report it as a deadlock-ordering

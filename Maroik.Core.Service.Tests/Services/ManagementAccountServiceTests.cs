@@ -1,4 +1,6 @@
 using Maroik.Core.Contract.Dtos;
+using Maroik.Core.Contract.Enums;
+using Maroik.Core.Contract.Exceptions;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Domain.Accounts;
 using Maroik.Core.Service.Services;
@@ -255,9 +257,9 @@ public class ManagementAccountServiceTests
     {
         _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync((Account?)null);
         _passwordService.Setup(p => p.HashPassword(It.IsAny<string>())).Returns("$2a$13$hashed");
-        // Simulate a unique constraint violation (Npgsql error code 23505) on the Nickname constraint specifically.
+        // The repository reports the nickname as the key that was already taken.
         _accountRepo.Setup(r => r.CreateAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>()))
-            .ThrowsAsync(new Exception("duplicate key", new Exception("23505: duplicate key value violates unique constraint \"Account_Nickname_unique\"")));
+            .ThrowsAsync(new DuplicateKeyException(DuplicateKey.AccountNickname));
         var sut = CreateSut();
 
         ServiceResult result = await sut.CreateAccountAsync(new AdminCreateAccountRequest
@@ -284,7 +286,7 @@ public class ManagementAccountServiceTests
         _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync((Account?)null);
         _passwordService.Setup(p => p.HashPassword(It.IsAny<string>())).Returns("$2a$13$hashed");
         _accountRepo.Setup(r => r.CreateAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>()))
-            .ThrowsAsync(new Exception("duplicate key", new Exception("23505: duplicate key value violates unique constraint \"Account_unique_index_0\"")));
+            .ThrowsAsync(new DuplicateKeyException(DuplicateKey.AccountNickname));
         var sut = CreateSut();
 
         ServiceResult result = await sut.CreateAccountAsync(new AdminCreateAccountRequest
@@ -311,7 +313,7 @@ public class ManagementAccountServiceTests
         _passwordService.Setup(p => p.HashPassword(It.IsAny<string>())).Returns("$2a$13$hashed");
         // Simulate a unique constraint violation on the Email primary key, not the Nickname constraint.
         _accountRepo.Setup(r => r.CreateAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>()))
-            .ThrowsAsync(new Exception("duplicate key", new Exception("23505: duplicate key value violates unique constraint \"Account_pk\"")));
+            .ThrowsAsync(new DuplicateKeyException(DuplicateKey.AccountEmail));
         var sut = CreateSut();
 
         ServiceResult result = await sut.CreateAccountAsync(new AdminCreateAccountRequest
@@ -872,7 +874,7 @@ public class ManagementAccountServiceTests
     {
         _passwordService.Setup(p => p.HashPassword(It.IsAny<string>())).Returns("$2a$13$hashed");
         _accountRepo.Setup(r => r.CreateAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>()))
-            .ThrowsAsync(new Exception("duplicate key", new Exception("23505: duplicate key value violates unique constraint \"Account_pk\"")));
+            .ThrowsAsync(new DuplicateKeyException(DuplicateKey.AccountEmail));
 
         ServiceResult result = await CreateSut().CreateAccountAsync(NewAccountRequest(), Actor, TestContext.Current.CancellationToken);
 

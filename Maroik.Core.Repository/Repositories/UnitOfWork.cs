@@ -2,6 +2,7 @@ using System.Data;
 using System.Data.Common;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.PostgreSQL.Contexts;
+using Maroik.Core.Repository.Translators;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 
@@ -60,7 +61,7 @@ public class UnitOfWork(ApplicationDbContext context) : IUnitOfWork
             await context.SaveChangesAsync(ct);
             await _transaction.CommitAsync(ct);
         }
-        catch
+        catch (Exception e)
         {
             // The flush (or the commit itself) failed. The finally below clears the transaction
             // slot, so a catch block's follow-up RollbackAsync is a no-op and would never reach
@@ -68,6 +69,11 @@ public class UnitOfWork(ApplicationDbContext context) : IUnitOfWork
             // the failed Added/Modified entries stay on the request-scoped context and a retry's
             // next SaveChanges re-flushes them (the CalendarShared_pk retry loops).
             context.ChangeTracker.Clear();
+
+            // A write left pending by a repository reaches the database only here.
+            if (DuplicateKeyTranslator.Translate(e) is { } duplicate)
+                throw duplicate;
+
             throw;
         }
         finally

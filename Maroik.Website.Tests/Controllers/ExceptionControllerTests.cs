@@ -103,16 +103,16 @@ public class ExceptionControllerTests(MaroikWebApplicationFactory factory)
     [Fact]
     public async Task UnhandledExceptionOnPost_RendersErrorPage()
     {
-        var throwingAccountService = new Mock<IAccountService>();
-        throwingAccountService
+        var throwingLoginService = new Mock<IAccountLoginService>();
+        throwingLoginService
             .Setup(a => a.LoginAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new InvalidOperationException("boom"));
 
         await using var factory1 = factory.WithWebHostBuilder(builder =>
             builder.ConfigureTestServices(services =>
             {
-                services.RemoveAll<IAccountService>();
-                services.AddScoped(_ => throwingAccountService.Object);
+                services.RemoveAll<IAccountLoginService>();
+                services.AddScoped(_ => throwingLoginService.Object);
             }));
         var client = factory1.CreateClient(new WebApplicationFactoryClientOptions
         {

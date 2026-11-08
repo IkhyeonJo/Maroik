@@ -108,7 +108,7 @@ public class FinanceAmountScaleTests
         AssertTooManyDecimals(Asset.Create("Wallet", "user@example.com", "FreeDepositAndWithdrawal", FiveDecimals, "KRW", _now).FirstError.Code);
 
         var asset = Asset.Create("Wallet", "user@example.com", "FreeDepositAndWithdrawal", 100m, "KRW", _now).Value;
-        AssertTooManyDecimals(asset.Update("Wallet", "FreeDepositAndWithdrawal", FiveDecimals, "KRW", null, false, _now).FirstError.Code);
+        AssertTooManyDecimals(asset.Update("Wallet", "FreeDepositAndWithdrawal", FiveDecimals, "KRW", null, _now).FirstError.Code);
         Assert.Equal(100m, asset.Balance.Amount);
     }
 
@@ -118,7 +118,7 @@ public class FinanceAmountScaleTests
     {
         var asset = Asset.Create("Wallet", "user@example.com", "FreeDepositAndWithdrawal", 1000.5m, "원", _now).Value;
 
-        Assert.False(asset.Update("Wallet", "FreeDepositAndWithdrawal", 1000.5m, "KRW", null, false, _now).IsError);
+        Assert.False(asset.Update("Wallet", "FreeDepositAndWithdrawal", 1000.5m, "KRW", null, _now).IsError);
         Assert.Equal("KRW", asset.Balance.Currency.Value);
     }
 

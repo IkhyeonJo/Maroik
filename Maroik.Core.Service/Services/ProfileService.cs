@@ -97,7 +97,7 @@ public class ProfileService(
         try
         {
             // The read must be locked (FOR UPDATE), not the plain FindByEmailAsync used elsewhere in
-            // this class: a concurrent AccountService.ResetPasswordAsync also writes HashedPassword /
+            // this class: a concurrent AccountPasswordResetService.ResetPasswordAsync also writes HashedPassword /
             // SecurityStamp. An unlocked read here could verify currentPassword against a
             // since-superseded hash and then blindly overwrite a password the user just reset via
             // "forgot password" on another device.

@@ -6,7 +6,7 @@ namespace Maroik.Website.Extensions;
 
 /// <summary>
 /// Builds the localized <see cref="EmailTemplate"/> content for the transactional emails
-/// <see cref="AccountController"/> asks <see cref="Maroik.Core.Contract.Interfaces.IAccountService"/> to send.
+/// <see cref="AccountController"/> asks <see cref="Maroik.Core.Contract.Interfaces.IAccountRegistrationService"/> and <see cref="Maroik.Core.Contract.Interfaces.IAccountPasswordResetService"/> to send.
 /// </summary>
 public static class AccountEmailTemplateExtensions
 {

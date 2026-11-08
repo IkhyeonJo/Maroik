@@ -1,7 +1,9 @@
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Domain.Finances;
 using Maroik.Core.PostgreSQL.Contexts;
+using Maroik.Core.Repository.Translators;
 using Microsoft.EntityFrameworkCore;
+using Npgsql;
 using OrmAsset = Maroik.Core.PostgreSQL.Models.Asset;
 
 namespace Maroik.Core.Repository.Repositories;
@@ -19,22 +21,29 @@ public class AssetRepository(ApplicationDbContext context)
     /// <inheritdoc />
     public async Task<int> UpdateAssetWithProductNameAsync(Asset asset, string originalProductName, CancellationToken ct = default)
     {
-        // Raw SQL is required because the composite PK (ProductName, AccountEmail) changes.
-        return await Context.Database.ExecuteSqlInterpolatedAsync(
-            $"""
-             UPDATE "Asset"
-             SET
-                 "ProductName" = {asset.ProductName},
-                 "Item" = {asset.Item},
-                 "Amount" = {asset.Balance.Amount},
-                 "MonetaryUnit" = {asset.Balance.Currency.Value},
-                 "Note" = {asset.Note ?? ""},
-                 "Deleted" = {asset.Deleted},
-                 "Updated" = {asset.Updated}
-             WHERE
-                 "ProductName" = {originalProductName}
-                 AND "AccountEmail" = {asset.AccountEmail.Value}
-             """, ct);
+        try
+        {
+            // Raw SQL is required because the composite PK (ProductName, AccountEmail) changes.
+            return await Context.Database.ExecuteSqlInterpolatedAsync(
+                $"""
+                 UPDATE "Asset"
+                 SET
+                     "ProductName" = {asset.ProductName},
+                     "Item" = {asset.Item.Value},
+                     "Amount" = {asset.Balance.Amount},
+                     "MonetaryUnit" = {asset.Balance.Currency.Value},
+                     "Note" = {asset.Note ?? ""},
+                     "Deleted" = {asset.Deleted},
+                     "Updated" = {asset.Updated}
+                 WHERE
+                     "ProductName" = {originalProductName}
+                     AND "AccountEmail" = {asset.AccountEmail.Value}
+                 """, ct);
+        }
+        catch (PostgresException e) when (DuplicateKeyTranslator.Translate(e) is { } duplicate)
+        {
+            throw duplicate;
+        }
     }
 
     /// <inheritdoc />
@@ -82,7 +91,7 @@ public class AssetRepository(ApplicationDbContext context)
     {
         ProductName = a.ProductName,
         AccountEmail = a.AccountEmail.Value,
-        Item = a.Item,
+        Item = a.Item.Value,
         Amount = a.Balance.Amount,
         MonetaryUnit = a.Balance.Currency.Value,
         Note = a.Note ?? "",
