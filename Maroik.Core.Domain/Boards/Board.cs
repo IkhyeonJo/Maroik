@@ -245,12 +245,6 @@ public sealed class Board : AggregateRoot<long>
     /// <summary>Whether this requester may pin a post site-wide: pinning is an administrator's action.</summary>
     public static bool CanBePinnedBy(bool requesterIsAdmin) => requesterIsAdmin;
 
-    /// <summary>How many posts a board's list page shows.</summary>
-    public const int ListPageSize = 5;
-
-    /// <summary>The list page to show for a requested one: there is no page before the first.</summary>
-    public static int ListPageOf(int requestedPage) => Math.Max(requestedPage, 1);
-
     /// <summary>Whether the edit page opens for a viewer: for the author of a post that still exists, with no administrator bypass.</summary>
     public static bool EditPageOpensFor(bool deleted, string? writer, string? viewerNickname) => !deleted && IsOwnedBy(writer, viewerNickname);
 

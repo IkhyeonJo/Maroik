@@ -1124,8 +1124,8 @@ public class ManagementController(
 
                 #region Board default paging logic
 
-                const int pageSize = PolicyLimits.BoardListPageSize;
-                page = boardPolicy.NormalizeListPage(page);
+                const int pageSize = BoardListPaging.PageSize;
+                page = BoardListPaging.PageOf(page);
 
                 #endregion
 
