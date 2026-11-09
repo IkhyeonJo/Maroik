@@ -128,22 +128,26 @@ public class ViewBagPopulatorFilter(
     /// <summary>Publishes the notification badge counts: a signed-in user's fixed income and expenditure notices, none for the other roles.</summary>
     private async Task PublishNoticeCountsAsync(ActionExecutingContext context, Controller controller, AccountResponse loggedInAccount)
     {
-        NotificationDto counts = new();
+        int fixedIncomesTotal = 0, fixedExpendituresTotal = 0, total = 0;
 
         if (loggedInAccount.Role == AccountRoles.User)
         {
             try
             {
-                counts = await dashboardService.GetNoticeCountsAsync(
+                NotificationDto counts = await dashboardService.GetNoticeCountsAsync(
                     loggedInAccount.Email ?? "",
                     loggedInAccount.RequireTimeZoneIanaId(),
                     context.HttpContext.RequestAborted);
+
+                fixedIncomesTotal = counts.FixedIncomesTotal;
+                fixedExpendituresTotal = counts.FixedExpendituresTotal;
+                total = counts.Total;
             }
             catch (Exception ex) { logger.LogWarning(ex, "Failed to load notice counts for {Email}", loggedInAccount.Email); }
         }
 
-        controller.ViewBag.FixedIncomesTotalNoticeCount = counts.FixedIncomesTotal;
-        controller.ViewBag.FixedExpenditureTotalNoticeCount = counts.FixedExpendituresTotal;
-        controller.ViewBag.TotalNoticeCount = counts.Total;
+        controller.ViewBag.FixedIncomesTotalNoticeCount = fixedIncomesTotal;
+        controller.ViewBag.FixedExpenditureTotalNoticeCount = fixedExpendituresTotal;
+        controller.ViewBag.TotalNoticeCount = total;
     }
 }
