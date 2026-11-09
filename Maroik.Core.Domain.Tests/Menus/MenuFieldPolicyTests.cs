@@ -127,11 +127,12 @@ public class MenuFieldPolicyTests
         Assert.Equal(2, sub.Order);
     }
 
-    /// <summary>A missing role is still accepted and means the most restrictive one, so an item is never exposed by accident.</summary>
+    /// <summary>A missing role is still accepted and is stored as the most restrictive one, so an item is never exposed by accident.</summary>
     [Fact]
-    public void AMissingRole_IsAdmin()
+    public void AMissingRole_IsStoredAsAdmin()
     {
-        Assert.Equal(Role.Admin, Category.Create("n", "d", "i", "c", "a", null, 1).Value.Role);
-        Assert.Equal(Role.Admin, SubCategory.Create(1, "n", "d", "i", "a", null, 1).Value.Role);
+        Assert.Equal(Role.Admin, Category.Create("n", "d", "i", "c", "a", null, 1).Value.RoleToStore);
+        Assert.Equal(Role.Admin, SubCategory.Create(1, "n", "d", "i", "a", null, 1).Value.RoleToStore);
+        Assert.Equal(Role.User, Category.Create("n", "d", "i", "c", "a", Role.User, 1).Value.RoleToStore);
     }
 }

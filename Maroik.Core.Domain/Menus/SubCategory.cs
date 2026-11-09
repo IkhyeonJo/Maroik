@@ -23,7 +23,10 @@ public sealed class SubCategory : AggregateRoot<long>
     public string? Action { get; private set; }
 
     /// <summary>The one role whose sidebar shows this sub-menu item ("Admin", "User" or "Anonymous"; matched exactly, not as a hierarchy).</summary>
-    public string Role { get; private set; }
+    public string? Role { get; private set; }
+
+    /// <summary>The role to store: a missing one is <see cref="MenuFieldPolicy.RoleOrDefault"/>'s.</summary>
+    public string RoleToStore => MenuFieldPolicy.RoleOrDefault(Role);
 
     /// <summary>Display order within the parent category (ascending).</summary>
     public long Order { get; private set; }
@@ -44,7 +47,7 @@ public sealed class SubCategory : AggregateRoot<long>
         DisplayName = displayName;
         IconPath = iconPath;
         Action = action;
-        Role = MenuFieldPolicy.RoleOrDefault(role);
+        Role = role;
         Order = order;
     }
 
@@ -87,7 +90,7 @@ public sealed class SubCategory : AggregateRoot<long>
         DisplayName = displayName;
         IconPath = iconPath;
         Action = action;
-        Role = MenuFieldPolicy.RoleOrDefault(role);
+        Role = role;
         Order = order;
         return Result.Success;
     }

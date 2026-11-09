@@ -15,8 +15,8 @@ namespace Maroik.Core.Domain.Calendars;
 /// </summary>
 public sealed class Calendar : AggregateRoot<long>
 {
-    /// <summary>The colour of the calendar an account gets on its first visit.</summary>
-    public const string DefaultHtmlColorCode = "#fc330e";
+    /// <summary>The color of the calendar an account gets on its first visit.</summary>
+    public const string DefaultHtmlColorCode = "#FC330E";
 
     /// <summary>Email of the account that owns this calendar.</summary>
     public Email AccountEmail { get; }

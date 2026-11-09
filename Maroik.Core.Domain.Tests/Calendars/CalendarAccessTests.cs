@@ -91,9 +91,9 @@ public class CalendarAccessTests
         Assert.Equal(expected, result.Value.TimeZone.Value);
     }
 
-    /// <summary>The first calendar of an account has the default colour.</summary>
+    /// <summary>The first calendar of an account has the default color.</summary>
     [Fact]
-    public void CreateDefault_HasTheDefaultColour()
+    public void CreateDefault_HasTheDefaultColor()
         => Assert.Equal(Calendar.DefaultHtmlColorCode, Calendar.CreateDefault("user@example.com", "My calendar", "UTC", _now).Value.ColorCode.Value);
 
     /// <summary>Every other field is still validated as for a normal calendar.</summary>

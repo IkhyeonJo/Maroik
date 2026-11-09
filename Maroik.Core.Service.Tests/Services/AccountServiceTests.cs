@@ -1318,7 +1318,8 @@ public class AccountServiceTests
     {
         Email = "new@example.com",
         PlainPassword = password,
-        Nickname = nickname
+        Nickname = nickname,
+        AgreedServiceTerms = true
     };
 
     /// <summary>Hash returned for the new password when an unconfirmed registration is re-submitted.</summary>
