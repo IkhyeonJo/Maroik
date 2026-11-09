@@ -386,6 +386,16 @@ public class DashboardServiceTests
 
         Assert.Equal(300m, summary.YearIncomeBreakdown["RegularIncome"].Total);
         Assert.Equal(100m, summary.YearMonthIncomeBreakdown["RegularIncome"].Total);
+
+        // One chart per main class and period, every sub-class in the taxonomy's order, the ones with no records as zero.
+        Assert.Equal(
+            ["RegularIncome/Year", "IrregularIncome/Year", "RegularSavings/Year", "NonConsumerSpending/Year", "ConsumerSpending/Year",
+             "RegularIncome/YearMonth", "IrregularIncome/YearMonth", "RegularSavings/YearMonth", "NonConsumerSpending/YearMonth", "ConsumerSpending/YearMonth"],
+            summary.Charts.Select(c => $"{c.MainClass}/{c.Period}"));
+        DashboardChartDto month = summary.Charts.Single(c => c.MainClass == "RegularIncome" && c.Period == "YearMonth");
+        Assert.Equal(["LaborIncome", "BusinessIncome", "PensionIncome", "FinancialIncome", "RentalIncome", "OtherIncome"], month.Slices.Select(s => s.SubClass));
+        Assert.Equal((100m, 100.0), (month.Slices[0].Amount, month.Slices[0].Percentage));
+        Assert.Equal((0m, 0.0), (month.Slices[1].Amount, month.Slices[1].Percentage));
         _incomeRepo.Verify(r => r.GetByAccountEmailAndDateRangeAsync(email, It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()), Times.Once);
         _expenditureRepo.Verify(r => r.GetByAccountEmailAndDateRangeAsync(email, It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()), Times.Once);
     }

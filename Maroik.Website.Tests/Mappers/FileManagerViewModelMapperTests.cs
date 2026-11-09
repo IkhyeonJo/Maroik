@@ -106,7 +106,7 @@ public class FileManagerViewModelMapperTests
     {
         var drive = new FileManagerDriveResponse
         {
-            UsedBytes = used, QuotaBytes = quota, RootItemCount = 3,
+            UsedBytes = used, QuotaBytes = quota, UsedPercent = percent, RootItemCount = 3,
             Folders = [new() { Id = 1, Name = "Docs", IsFolder = true, ItemCount = 2 }],
         };
 

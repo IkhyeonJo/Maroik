@@ -8,6 +8,35 @@ public class TimeZoneDisplayServiceTests
     /// <summary>The service under test.</summary>
     private readonly TimeZoneDisplayService _sut = new();
 
+    /// <summary>A viewer who sees local time gets the value in their time zone.</summary>
+    [Fact]
+    public void FormatForViewer_ConvertsForAViewerWhoSeesLocalTime()
+    {
+        Assert.Equal("06/15/2025 21:00:00", _sut.FormatForViewer(new DateTime(2025, 6, 15, 12, 0, 0, DateTimeKind.Utc), viewerSeesLocalTime: true, "Asia/Seoul"));
+    }
+
+    /// <summary>
+    /// Anyone else gets the raw UTC value in ISO-8601 form, whatever the thread's culture: a culture with another calendar (th-TH counts
+    /// Buddhist years, 2568 for 2025) must not change the year it prints.
+    /// </summary>
+    [Theory]
+    [InlineData("en-US")]
+    [InlineData("th-TH")]
+    public void FormatForViewer_IsRawUtcIso8601_ForAnyoneElse(string culture)
+    {
+        System.Globalization.CultureInfo original = System.Globalization.CultureInfo.CurrentCulture;
+        try
+        {
+            System.Globalization.CultureInfo.CurrentCulture = new System.Globalization.CultureInfo(culture);
+
+            Assert.Equal("2025-06-15T12:00:00Z", _sut.FormatForViewer(new DateTime(2025, 6, 15, 12, 0, 0, DateTimeKind.Utc), viewerSeesLocalTime: false, "Asia/Seoul"));
+        }
+        finally
+        {
+            System.Globalization.CultureInfo.CurrentCulture = original;
+        }
+    }
+
     /// <summary>An all-day date is the domain's instant: that date's midnight, marked UTC.</summary>
     [Fact]
     public void ToAllDayInstant_IsTheDatesMidnight_InUtc()

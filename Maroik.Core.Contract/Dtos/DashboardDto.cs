@@ -21,6 +21,9 @@ public class DashboardDto
     /// <summary>Per-main-class expenditure breakdown for the selected year + month.</summary>
     public Dictionary<string, FinanceBreakdownDto> YearMonthExpenditureBreakdown { get; set; } = new();
 
+    /// <summary>The page's charts: one per main class and period, each slice in the taxonomy's display order. Zeros when there is no default unit.</summary>
+    public List<DashboardChartDto> Charts { get; set; } = [];
+
     /// <summary>All active assets owned by the user.</summary>
     public List<AssetResponse> Assets { get; set; } = [];
 

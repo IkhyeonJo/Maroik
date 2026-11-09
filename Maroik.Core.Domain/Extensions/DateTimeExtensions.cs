@@ -1,4 +1,3 @@
-using System.Globalization;
 
 namespace Maroik.Core.Domain.Extensions;
 
@@ -34,19 +33,6 @@ public static class DateTimeExtensions
                 return value;
             }
         }
-
-        /// <summary>
-        /// Formats a UTC timestamp for display. When <paramref name="viewerSeesLocalTime"/> is
-        /// <see langword="true"/> (a logged-in viewer with a known time zone), the value is converted
-        /// to <paramref name="timeZoneIanaId"/>; otherwise (e.g. an anonymous viewer) the raw UTC value
-        /// is returned in ISO-8601 ("yyyy-MM-ddTHH:mm:ssZ") form. Whether a given viewer sees local
-        /// time is a caller decision (e.g. an Account bounded-context role check) — this helper stays
-        /// role-agnostic so Time does not depend on the Account bounded context.
-        /// </summary>
-        public string ToViewerFormattedString(bool viewerSeesLocalTime, string timeZoneIanaId) =>
-            viewerSeesLocalTime
-                ? value.ConvertTimeByTimeZoneIanaId(timeZoneIanaId).ToString(CultureInfo.InvariantCulture)
-                : value.ToString("yyyy-MM-ddTHH:mm:ssZ", CultureInfo.InvariantCulture);
 
         /// <summary>
         /// Converts a local (<see cref="DateTimeKind.Unspecified"/>) <see cref="DateTime"/> value to UTC,

@@ -84,10 +84,40 @@ public class DashboardService(
         if (summary.DefaultMonetaryUnit != null)
             await FillBreakdownsAsync(summary, summary.DefaultMonetaryUnit, accountEmail, yearInt, monthInt, timeZoneId, allAssets, ct);
 
+        summary.Charts =
+        [
+            .. ChartsOf("Year", IncomeClassPolicy.MainClasses, IncomeClassPolicy.SubClassesByMainClass, summary.YearIncomeBreakdown),
+            .. ChartsOf("Year", ExpenditureClassPolicy.MainClasses, ExpenditureClassPolicy.SubClassesByMainClass, summary.YearExpenditureBreakdown),
+            .. ChartsOf("YearMonth", IncomeClassPolicy.MainClasses, IncomeClassPolicy.SubClassesByMainClass, summary.YearMonthIncomeBreakdown),
+            .. ChartsOf("YearMonth", ExpenditureClassPolicy.MainClasses, ExpenditureClassPolicy.SubClassesByMainClass, summary.YearMonthExpenditureBreakdown)
+        ];
+
         summary.StartYear = await GetStartYearAsync(accountEmail, utcNow, timeZoneId, ct);
 
         return summary;
     }
+
+    /// <summary>One chart per main class of a period: every sub-class of the taxonomy in its display order, a sub-class with no records as zero.</summary>
+    private static IEnumerable<DashboardChartDto> ChartsOf(string period, IReadOnlyList<string> mainClasses,
+        IReadOnlyDictionary<string, IReadOnlyList<string>> subClasses, Dictionary<string, FinanceBreakdownDto> breakdowns) =>
+        mainClasses.Select(mainClass =>
+        {
+            FinanceBreakdownDto? breakdown = breakdowns.GetValueOrDefault(mainClass);
+            return new DashboardChartDto
+            {
+                MainClass = mainClass,
+                Period = period,
+                Slices =
+                [
+                    .. subClasses[mainClass].Select(subClass => new DashboardSliceDto
+                    {
+                        SubClass = subClass,
+                        Amount = breakdown?.AmountBySubClass.GetValueOrDefault(subClass) ?? 0m,
+                        Percentage = breakdown?.PercentageBySubClass.GetValueOrDefault(subClass) ?? 0.0
+                    })
+                ]
+            };
+        });
 
     /// <summary>The requested year and month, with the account's current one in place of a value that does not parse or is out of range.</summary>
     private static (int Year, int Month) NormalizePeriod(string year, string month, DateTime accountToday)

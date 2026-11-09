@@ -86,9 +86,7 @@ public static class FileManagerViewModelMapper
         public FileManagerDriveViewModel ToViewModel(ITimeZoneDisplayService timeZones, string timeZoneIanaId, string rootName) => new()
         {
             Usage = $"{drive.UsedBytes.ToSizeLabel()} / {drive.QuotaBytes.ToSizeLabel()}",
-            UsedPercent = drive.QuotaBytes <= 0
-                ? (drive.UsedBytes > 0 ? 100 : 0)
-                : (int)Math.Min(100, drive.UsedBytes * 100 / drive.QuotaBytes),
+            UsedPercent = drive.UsedPercent,
             RootItemCount = drive.RootItemCount,
             Folders = [.. drive.Folders.Select(f => f.ToViewModel(timeZones, timeZoneIanaId, rootName, withLocation: true))]
         };

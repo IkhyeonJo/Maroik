@@ -1,4 +1,3 @@
-using System.Globalization;
 using Maroik.Core.Domain.Extensions;
 namespace Maroik.Core.Domain.Tests.Extensions;
 
@@ -69,52 +68,6 @@ public class DateTimeExtensionsTests
         DateTime result = utcNoon.ConvertTimeByTimeZoneIanaId("America/New_York");
 
         Assert.Equal(7, result.Hour);
-    }
-
-    // -- ToViewerFormattedString ------------------------------------------------
-
-    /// <summary>Verifies that a viewer who sees local time gets the value converted to their time zone.</summary>
-    [Fact]
-    public void ToViewerFormattedString_ViewerSeesLocalTime_ReturnsLocalTimeConvertedValue()
-    {
-        var utcNoon = new DateTime(2025, 6, 15, 12, 0, 0, DateTimeKind.Utc);
-
-        string result = utcNoon.ToViewerFormattedString(viewerSeesLocalTime: true, "Asia/Seoul");
-
-        Assert.Equal(utcNoon.ConvertTimeByTimeZoneIanaId("Asia/Seoul").ToString(CultureInfo.InvariantCulture), result);
-    }
-
-    /// <summary>Verifies that a viewer who does not see local time gets the raw, unconverted UTC value in ISO-8601 form.</summary>
-    [Fact]
-    public void ToViewerFormattedString_ViewerDoesNotSeeLocalTime_ReturnsRawUtcIso8601()
-    {
-        var utcNoon = new DateTime(2025, 6, 15, 12, 0, 0, DateTimeKind.Utc);
-
-        string result = utcNoon.ToViewerFormattedString(viewerSeesLocalTime: false, "Asia/Seoul");
-
-        Assert.Equal("2025-06-15T12:00:00Z", result);
-    }
-
-    /// <summary>
-    /// The raw UTC form is ISO-8601 whatever the thread's culture: a culture with another calendar (th-TH counts Buddhist
-    /// years, 2568 for 2025) must not change the year it prints.
-    /// </summary>
-    [Fact]
-    public void ToViewerFormattedString_RawUtcForm_DoesNotDependOnTheCurrentCulture()
-    {
-        CultureInfo original = CultureInfo.CurrentCulture;
-        try
-        {
-            CultureInfo.CurrentCulture = new CultureInfo("th-TH");
-
-            string result = new DateTime(2025, 6, 15, 12, 0, 0, DateTimeKind.Utc).ToViewerFormattedString(viewerSeesLocalTime: false, "UTC");
-
-            Assert.Equal("2025-06-15T12:00:00Z", result);
-        }
-        finally
-        {
-            CultureInfo.CurrentCulture = original;
-        }
     }
 
     // -- ConvertToUtcByTimeZoneIanaId --------------------------------------------
