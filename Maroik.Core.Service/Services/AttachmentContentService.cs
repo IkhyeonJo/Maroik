@@ -79,7 +79,7 @@ public class AttachmentContentService(
         // A storage key, not a local path: always "/"-separated, whatever OS this runs on.
         string filePath = $"upload/{area}/{subArea}/summernote/images/{imageFile}";
 
-        bool uploaded = await fileClient.UploadAsync(stored.Bytes, stored.ContentType, filePath, settings.Value.FileStorageBaseUrl ?? "", ct);
+        bool uploaded = await fileClient.UploadAsync(stored.Bytes, stored.ContentType, filePath, ct);
         return !uploaded ? SummernoteUploadResult.Fail(ServiceResult.TemporaryErrorKey) :
             // File storage only reports success once it has stored the bytes as sent, so the editor gets
             // the bytes already in hand instead of a second round trip to read them back.
@@ -92,7 +92,7 @@ public class AttachmentContentService(
     {
         try
         {
-            return await fileClient.OpenReadAsync(filePath, settings.Value.FileStorageBaseUrl ?? "", ct);
+            return await fileClient.OpenReadAsync(filePath, ct);
         }
         catch (Exception ex)
         {
@@ -108,7 +108,7 @@ public class AttachmentContentService(
         {
             try
             {
-                byte[] fileData = await fileClient.DownloadAsync(alt, settings.Value.FileStorageBaseUrl ?? "", token);
+                byte[] fileData = await fileClient.DownloadAsync(alt, token);
                 return new HtmlImgPatch(
                     NewAlt: dataProtection.Protect(ProtectedValue.StoredFilePath, alt),
                     DataFile: Convert.ToBase64String(fileData),

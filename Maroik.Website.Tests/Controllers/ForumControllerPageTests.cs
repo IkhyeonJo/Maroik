@@ -77,6 +77,37 @@ public class ForumControllerPageTests(MaroikWebApplicationFactory factory)
         return await _client.SendAsync(request, TestContext.Current.CancellationToken);
     }
 
+    /// <summary>The write form offers "Noticed" to an administrator only; the page reads that from the view model.</summary>
+    [Theory]
+    [InlineData(Role.Admin, true)]
+    [InlineData(Role.User, false)]
+    public async Task WriteForm_OffersTheNoticeOption_ToAnAdministratorOnly(string role, bool offered)
+    {
+        var session = await LoginAsync($"forum-notice-option-{role}@test.com".ToLowerInvariant(), role);
+
+        var response = await GetAsync("/Forum/FreeForum?method=write", session);
+        string html = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        Assert.Contains("id=\"formWriteBoard\"", html, StringComparison.Ordinal);
+        Assert.Equal(offered, html.Contains("id=\"writeBoardNoticed\"", StringComparison.Ordinal));
+    }
+
+    /// <summary>The detail panel's comment form carries the post to comment on for a signed-in viewer; a visitor's holds only the sign-in hint.</summary>
+    [Fact]
+    public async Task DetailPanel_OffersTheCommentForm_ToASignedInViewerOnly()
+    {
+        var session = await LoginAsync("forum-comment-form@test.com");
+        long boardId = SeedBoard("forum-comment-form-writer", "Comment form");
+
+        var signedIn = await GetAsync($"/Forum/FreeForum?method=detail&boardId={boardId}", session);
+        var visitor = await GetAsync($"/Forum/FreeForum?method=detail&boardId={boardId}");
+
+        Assert.Contains("data-detailBoardId", await signedIn.Content.ReadAsStringAsync(TestContext.Current.CancellationToken), StringComparison.Ordinal);
+        string visitorHtml = await visitor.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        Assert.Contains("id=\"formWriteFreeComment\"", visitorHtml, StringComparison.Ordinal);
+        Assert.DoesNotContain("data-detailBoardId", visitorHtml, StringComparison.Ordinal);
+    }
+
     /// <summary>URL of the free-forum detail page for post <paramref name="id"/>.</summary>
     private static string Detail(long id) => $"/Forum/FreeForum?method=detail&boardId={id}";
     /// <summary>URL of the free-forum edit page for post <paramref name="id"/>.</summary>

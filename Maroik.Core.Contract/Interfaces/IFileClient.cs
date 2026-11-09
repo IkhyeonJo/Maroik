@@ -13,16 +13,15 @@ public interface IFileClient
     /// (rooted or <c>..</c>-containing) path, a non-2xx response or a transport error.
     /// </summary>
     /// <param name="filePath">Server-side path of the file within the storage service.</param>
-    /// <param name="fileStorageBaseUrl">Base URL of the Maroik.FileStorage service.</param>
     /// <param name="ct">Cancellation token.</param>
-    public Task<byte[]> DownloadAsync(string filePath, string fileStorageBaseUrl, CancellationToken ct = default);
+    public Task<byte[]> DownloadAsync(string filePath, CancellationToken ct = default);
 
     /// <summary>
     /// Opens a stored file as a stream that is read from the storage service as the caller consumes
     /// it (nothing is buffered up front). The caller owns and disposes the stream. Throws on an
     /// unsafe path or when the storage service does not answer with the file.
     /// </summary>
-    public Task<Stream> OpenReadAsync(string filePath, string fileStorageBaseUrl, CancellationToken ct = default);
+    public Task<Stream> OpenReadAsync(string filePath, CancellationToken ct = default);
 
     /// <summary>
     /// Uploads raw file bytes to the storage service.
@@ -32,9 +31,8 @@ public interface IFileClient
     /// <param name="fileData">Raw bytes of the file to upload.</param>
     /// <param name="contentType">MIME type (e.g. "image/png").</param>
     /// <param name="filePath">Destination path including file name within the storage service.</param>
-    /// <param name="fileStorageBaseUrl">Base URL of the Maroik.FileStorage service.</param>
     /// <param name="ct">Cancellation token.</param>
-    public Task<bool> UploadAsync(byte[] fileData, string contentType, string filePath, string fileStorageBaseUrl, CancellationToken ct = default);
+    public Task<bool> UploadAsync(byte[] fileData, string contentType, string filePath, CancellationToken ct = default);
 
     /// <summary>
     /// Same upload as <see cref="UploadAsync"/>, but reports <em>why</em> a refused file was refused —
@@ -44,9 +42,8 @@ public interface IFileClient
     /// <param name="fileData">Raw bytes of the file to upload.</param>
     /// <param name="contentType">MIME type (e.g. "image/png").</param>
     /// <param name="filePath">Destination path including file name within the storage service.</param>
-    /// <param name="fileStorageBaseUrl">Base URL of the Maroik.FileStorage service.</param>
     /// <param name="ct">Cancellation token.</param>
-    public Task<FileUploadResult> UploadWithResultAsync(byte[] fileData, string contentType, string filePath, string fileStorageBaseUrl, CancellationToken ct = default);
+    public Task<FileUploadResult> UploadWithResultAsync(byte[] fileData, string contentType, string filePath, CancellationToken ct = default);
 
     // -- File Manager (large files, in chunks; Maroik.FileStorage api/FileManager) -------------------------------
 
@@ -54,7 +51,7 @@ public interface IFileClient
     /// Appends <paramref name="chunk"/> at <paramref name="offset"/> of the File Manager upload <paramref name="uploadId"/>. Returns the
     /// length the storage service now holds, or null when it refused the chunk (a wrong offset) or could not be reached (logged).
     /// </summary>
-    public Task<long?> AppendFileManagerChunkAsync(Guid uploadId, long offset, Stream chunk, string fileStorageBaseUrl, CancellationToken ct = default);
+    public Task<long?> AppendFileManagerChunkAsync(Guid uploadId, long offset, Stream chunk, CancellationToken ct = default);
 
     /// <summary>
     /// Completes the File Manager upload <paramref name="uploadId"/> of <paramref name="expectedSize"/> bytes, and is called again until
@@ -63,11 +60,11 @@ public interface IFileClient
     /// failed. With <paramref name="skipScan"/> (the account's virus scan is off) the storage service stores the whole file at once,
     /// unscanned.
     /// </summary>
-    public Task<FileUploadResult> CompleteFileManagerUploadAsync(Guid uploadId, long expectedSize, bool skipScan, string fileStorageBaseUrl, CancellationToken ct = default);
+    public Task<FileUploadResult> CompleteFileManagerUploadAsync(Guid uploadId, long expectedSize, bool skipScan, CancellationToken ct = default);
 
     /// <summary>Drops what the storage service holds of an unfinished File Manager upload; false when refused or unreachable (logged).</summary>
-    public Task<bool> AbortFileManagerUploadAsync(Guid uploadId, string fileStorageBaseUrl, CancellationToken ct = default);
+    public Task<bool> AbortFileManagerUploadAsync(Guid uploadId, CancellationToken ct = default);
 
     /// <summary>Deletes the stored File Manager file at <paramref name="storagePath"/>; false when refused, missing or unreachable (logged).</summary>
-    public Task<bool> DeleteFileManagerFileAsync(string storagePath, string fileStorageBaseUrl, CancellationToken ct = default);
+    public Task<bool> DeleteFileManagerFileAsync(string storagePath, CancellationToken ct = default);
 }

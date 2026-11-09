@@ -36,7 +36,7 @@ public sealed class FakeFileClient : IFileClient
     public void Seed(string path, byte[] bytes) => _files[path] = (bytes, "application/octet-stream");
 
     /// <inheritdoc />
-    public Task<byte[]> DownloadAsync(string filePath, string fileStorageBaseUrl, CancellationToken ct = default)
+    public Task<byte[]> DownloadAsync(string filePath, CancellationToken ct = default)
     {
         lock (FetchedPaths) FetchedPaths.Add(filePath);
         return ThrowOnDownload ? throw new IOException("file storage unreachable") : _files.TryGetValue(filePath.TrimStart('/'), out var f) || _files.TryGetValue(filePath, out f)
@@ -45,7 +45,7 @@ public sealed class FakeFileClient : IFileClient
     }
 
     /// <inheritdoc />
-    public Task<Stream> OpenReadAsync(string filePath, string fileStorageBaseUrl, CancellationToken ct = default)
+    public Task<Stream> OpenReadAsync(string filePath, CancellationToken ct = default)
     {
         lock (FetchedPaths) FetchedPaths.Add(filePath);
         return ThrowOnDownload ? throw new IOException("file storage unreachable") : _files.TryGetValue(filePath.TrimStart('/'), out var f)
@@ -54,7 +54,7 @@ public sealed class FakeFileClient : IFileClient
     }
 
     /// <inheritdoc />
-    public Task<bool> UploadAsync(byte[] fileData, string contentType, string filePath, string fileStorageBaseUrl, CancellationToken ct = default)
+    public Task<bool> UploadAsync(byte[] fileData, string contentType, string filePath, CancellationToken ct = default)
     {
         if (Outcome != FileUploadResult.Stored) return Task.FromResult(false);
         Store(fileData, contentType, filePath);
@@ -62,7 +62,7 @@ public sealed class FakeFileClient : IFileClient
     }
 
     /// <inheritdoc />
-    public Task<FileUploadResult> UploadWithResultAsync(byte[] fileData, string contentType, string filePath, string fileStorageBaseUrl, CancellationToken ct = default)
+    public Task<FileUploadResult> UploadWithResultAsync(byte[] fileData, string contentType, string filePath, CancellationToken ct = default)
     {
         if (Outcome == FileUploadResult.Stored) Store(fileData, contentType, filePath);
         return Task.FromResult(Outcome);
@@ -90,7 +90,7 @@ public sealed class FakeFileClient : IFileClient
     public List<Guid> CompletedWithoutAScan { get; } = [];
 
     /// <inheritdoc />
-    public async Task<long?> AppendFileManagerChunkAsync(Guid uploadId, long offset, Stream chunk, string fileStorageBaseUrl, CancellationToken ct = default)
+    public async Task<long?> AppendFileManagerChunkAsync(Guid uploadId, long offset, Stream chunk, CancellationToken ct = default)
     {
         byte[] received = _staging.GetValueOrDefault(uploadId, []);
         if (offset != received.Length) return null;
@@ -101,7 +101,7 @@ public sealed class FakeFileClient : IFileClient
     }
 
     /// <inheritdoc />
-    public Task<FileUploadResult> CompleteFileManagerUploadAsync(Guid uploadId, long expectedSize, bool skipScan, string fileStorageBaseUrl, CancellationToken ct = default)
+    public Task<FileUploadResult> CompleteFileManagerUploadAsync(Guid uploadId, long expectedSize, bool skipScan, CancellationToken ct = default)
     {
         // The account's virus scan is off: the whole file is stored at once, whatever a scan would say.
         if (skipScan)
@@ -128,14 +128,14 @@ public sealed class FakeFileClient : IFileClient
     }
 
     /// <inheritdoc />
-    public Task<bool> AbortFileManagerUploadAsync(Guid uploadId, string fileStorageBaseUrl, CancellationToken ct = default)
+    public Task<bool> AbortFileManagerUploadAsync(Guid uploadId, CancellationToken ct = default)
     {
         _staging.TryRemove(uploadId, out _);
         return Task.FromResult(true);
     }
 
     /// <inheritdoc />
-    public Task<bool> DeleteFileManagerFileAsync(string storagePath, string fileStorageBaseUrl, CancellationToken ct = default)
+    public Task<bool> DeleteFileManagerFileAsync(string storagePath, CancellationToken ct = default)
     {
         return Task.FromResult(_files.TryRemove(storagePath, out _));
     }

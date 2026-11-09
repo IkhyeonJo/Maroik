@@ -1,13 +1,11 @@
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Enums;
 using Maroik.Core.Contract.Interfaces;
-using Maroik.Core.Contract.Settings;
 using Maroik.Core.Domain.Accounts;
 using Maroik.Core.Service.Services;
 using Maroik.Core.Service.Tests.Fixtures;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Testing;
-using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Time.Testing;
 using Moq;
 
@@ -46,7 +44,7 @@ public class ProfileServiceAuditLoggingTests
     /// <summary>The service under test over the mocked dependencies and the capturing logger.</summary>
     private ProfileService CreateSut() => new(_accountRepo.Object, _assetRepo.Object, _passwordService.Object,
         _fileClient.Object, _imageValidator.Object,
-        Options.Create(new ServerSetting { FileStorageBaseUrl = "http://localhost:5001" }), _unitOfWork.Object, _logger, _time);
+        _unitOfWork.Object, _logger, _time);
 
     /// <summary>The persisted account for <see cref="Email"/>; <paramref name="locked"/> gives it a failed-login lock.</summary>
     private static Account Existing(bool locked = false) =>
@@ -153,7 +151,7 @@ public class ProfileServiceAuditLoggingTests
         _imageValidator.Setup(v => v.IsValidImage(It.IsAny<byte[]>())).Returns(valid);
         _imageValidator.Setup(v => v.IsSvg(It.IsAny<byte[]>())).Returns(svg);
         if (uploaded != null)
-            _fileClient.Setup(c => c.UploadWithResultAsync(It.IsAny<byte[]>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            _fileClient.Setup(c => c.UploadWithResultAsync(It.IsAny<byte[]>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(uploaded.Value);
     }
 
@@ -242,7 +240,7 @@ public class ProfileServiceAuditLoggingTests
         using var activity = new System.Diagnostics.Activity("request");
         activity.Start();
         var failure = new HttpRequestException("404");
-        _fileClient.Setup(f => f.DownloadAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>())).ThrowsAsync(failure);
+        _fileClient.Setup(f => f.DownloadAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ThrowsAsync(failure);
 
         Assert.Null(await CreateSut().DownloadAvatarAsync("me.png", TestContext.Current.CancellationToken));
 

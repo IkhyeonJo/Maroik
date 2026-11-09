@@ -13,6 +13,12 @@ namespace Maroik.Core.Domain.Finances;
 public static partial class FinanceAmountPolicy
 {
     /// <summary>
+    /// The amount an income or expenditure (one-time or fixed) stores for what was typed: a negative number counts as its absolute
+    /// value. <see cref="ValidateAmount"/> then still refuses a negative amount, so a caller that skipped this rule is caught.
+    /// </summary>
+    public static decimal ToStoredAmount(decimal typedAmount) => decimal.Abs(typedAmount);
+
+    /// <summary>
     /// Returns a validation error when <paramref name="amount"/> is negative; otherwise
     /// <see cref="Result.Success"/>.
     /// </summary>

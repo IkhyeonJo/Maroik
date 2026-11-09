@@ -57,7 +57,7 @@ public class IncomeService(IIncomeRepository incomeRepository, IAssetBalanceStor
 
             string currency = depositAsset.Balance.Currency.Value;
             var incomeResult = Income.Record(accountEmail, request.MainClass, request.SubClass,
-                request.Content, Math.Abs(request.Amount), currency, request.DepositMyAssetProductName, utcNow, request.Note, request.Created);
+                request.Content, FinanceAmountPolicy.ToStoredAmount(request.Amount), currency, request.DepositMyAssetProductName, utcNow, request.Note, request.Created);
             if (incomeResult.IsError)
             {
                 await unitOfWork.RollbackAsync(ct);
@@ -129,7 +129,7 @@ public class IncomeService(IIncomeRepository incomeRepository, IAssetBalanceStor
             IReadOnlyList<BalanceMovement> before = previous.BalanceMovements();
 
             var updateResult = previous.Update(request.MainClass, request.SubClass, request.Content,
-                Math.Abs(request.Amount), newCurrency, request.DepositMyAssetProductName, request.Note, utcNow, request.Created);
+                FinanceAmountPolicy.ToStoredAmount(request.Amount), newCurrency, request.DepositMyAssetProductName, request.Note, utcNow, request.Created);
             if (updateResult.IsError)
             {
                 await unitOfWork.RollbackAsync(ct);

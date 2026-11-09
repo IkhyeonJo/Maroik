@@ -2,8 +2,10 @@ using System.Diagnostics;
 using System.Net;
 using Maroik.Core.Client.Clients;
 using Maroik.Core.Contract.Enums;
+using Maroik.Core.Contract.Settings;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.Options;
 
 namespace Maroik.Core.Client.Tests.Clients;
 
@@ -147,7 +149,10 @@ public class FileClientTests
     /// <summary>Factory handed to the client under test; each test sets its handler.</summary>
     private readonly FakeHttpClientFactory _httpClientFactory = new();
     /// <summary>Builds the client under test over <see cref="_httpClientFactory"/> (logging discarded).</summary>
-    private FileClient CreateSut() => new(_httpClientFactory, NullLogger<FileClient>.Instance);
+    private FileClient CreateSut() => new(_httpClientFactory, _storage, NullLogger<FileClient>.Instance);
+
+    /// <summary>Where the client under test finds the file storage.</summary>
+    private static readonly IOptions<ServerSetting> _storage = Options.Create(new ServerSetting { FileStorageBaseUrl = "http://filestorage.local" });
 
     // -- UploadAsync ----------------------------------------------------------
 
@@ -155,7 +160,7 @@ public class FileClientTests
     [Fact]
     public async Task UploadAsync_ReturnsFalse_WhenFileDataIsNull()
     {
-        bool result = await CreateSut().UploadAsync(null!, "image/png", "test.png", "http://localhost", TestContext.Current.CancellationToken);
+        bool result = await CreateSut().UploadAsync(null!, "image/png", "test.png", TestContext.Current.CancellationToken);
 
         Assert.False(result);
     }
@@ -164,7 +169,7 @@ public class FileClientTests
     [Fact]
     public async Task UploadAsync_ReturnsFalse_WhenFileDataIsEmpty()
     {
-        bool result = await CreateSut().UploadAsync([], "image/png", "test.png", "http://localhost", TestContext.Current.CancellationToken);
+        bool result = await CreateSut().UploadAsync([], "image/png", "test.png", TestContext.Current.CancellationToken);
 
         Assert.False(result);
         Assert.Empty(_httpClientFactory.Created); // refused before any request is built
@@ -179,7 +184,7 @@ public class FileClientTests
         var handler = new CapturingHandler();
         _httpClientFactory.InnerHandler = handler;
 
-        bool result = await CreateSut().UploadAsync([.. "payload-bytes"u8], "application/zip", "upload/Forum/FreeForum/42/report.zip", "http://filestorage.local", TestContext.Current.CancellationToken);
+        bool result = await CreateSut().UploadAsync([.. "payload-bytes"u8], "application/zip", "upload/Forum/FreeForum/42/report.zip", TestContext.Current.CancellationToken);
 
         Assert.True(result);
         string body = Assert.IsType<string>(handler.LastRequestBody);
@@ -194,10 +199,10 @@ public class FileClientTests
     {
         _httpClientFactory.InnerHandler = new CapturingHandler();
         var logger = new RecordingLogger();
-        var sut = new FileClient(_httpClientFactory, logger);
+        var sut = new FileClient(_httpClientFactory, _storage, logger);
 
-        await sut.UploadAsync([1], "image/png", "../../etc/passwd", "http://filestorage.local", TestContext.Current.CancellationToken);
-        await sut.UploadAsync([1], "image/png", "upload/a.png", "http://filestorage.local", TestContext.Current.CancellationToken);
+        await sut.UploadAsync([1], "image/png", "../../etc/passwd", TestContext.Current.CancellationToken);
+        await sut.UploadAsync([1], "image/png", "upload/a.png", TestContext.Current.CancellationToken);
 
         Assert.Contains((LogLevel.Warning, "Rejected file upload with unsafe storage path: ../../etc/passwd"), logger.Entries);
         Assert.Contains(logger.Entries, e => e.Level == LogLevel.Information && e.Message.StartsWith("Requesting file upload: upload/a.png.", StringComparison.Ordinal));
@@ -210,7 +215,7 @@ public class FileClientTests
         _httpClientFactory.InnerHandler = new ThrowingHandler();
         var logger = new RecordingLogger();
 
-        bool result = await new FileClient(_httpClientFactory, logger).UploadAsync([1], "image/png", "upload/a.png", "http://filestorage.local", TestContext.Current.CancellationToken);
+        bool result = await new FileClient(_httpClientFactory, _storage, logger).UploadAsync([1], "image/png", "upload/a.png", TestContext.Current.CancellationToken);
 
         Assert.False(result);
         Assert.Contains((LogLevel.Error, "File upload request failed for upload/a.png"), logger.Entries);
@@ -222,7 +227,7 @@ public class FileClientTests
     {
         // Any non-empty byte array will attempt a real HTTP call to an invalid host → returns false (caught exception)
         byte[] data = [0x89, 0x50, 0x4E, 0x47];
-        bool result = await CreateSut().UploadAsync(data, "image/png", "test.png", "http://invalid.host.that.does.not.exist.local", TestContext.Current.CancellationToken);
+        bool result = await CreateSut().UploadAsync(data, "image/png", "test.png", TestContext.Current.CancellationToken);
 
         Assert.False(result);
     }
@@ -239,9 +244,9 @@ public class FileClientTests
     {
         _httpClientFactory.InnerHandler = new RefusingHandler(HttpStatusCode.BadRequest, "The file could not be scanned for viruses. Please try again later.");
         var logger = new RecordingLogger();
-        var sut = new FileClient(_httpClientFactory, logger);
+        var sut = new FileClient(_httpClientFactory, _storage, logger);
 
-        bool result = await sut.UploadAsync([0x89, 0x50, 0x4E, 0x47], "image/png", "test.png", "http://filestorage.local", TestContext.Current.CancellationToken);
+        bool result = await sut.UploadAsync([0x89, 0x50, 0x4E, 0x47], "image/png", "test.png", TestContext.Current.CancellationToken);
 
         Assert.False(result);
         var (_, message) = Assert.Single(logger.Entries, e => e.Level == LogLevel.Warning);
@@ -255,9 +260,9 @@ public class FileClientTests
     {
         _httpClientFactory.InnerHandler = new UnreadableBodyHandler();
         var logger = new RecordingLogger();
-        var sut = new FileClient(_httpClientFactory, logger);
+        var sut = new FileClient(_httpClientFactory, _storage, logger);
 
-        bool result = await sut.UploadAsync([0x89, 0x50, 0x4E, 0x47], "image/png", "test.png", "http://filestorage.local", TestContext.Current.CancellationToken);
+        bool result = await sut.UploadAsync([0x89, 0x50, 0x4E, 0x47], "image/png", "test.png", TestContext.Current.CancellationToken);
 
         Assert.False(result);
         Assert.Single(logger.Entries, e => e.Level == LogLevel.Warning && e.Message.Contains("400", StringComparison.Ordinal));
@@ -271,9 +276,9 @@ public class FileClientTests
     {
         _httpClientFactory.InnerHandler = new RefusingHandler(HttpStatusCode.BadRequest, new string('x', 5000));
         var logger = new RecordingLogger();
-        var sut = new FileClient(_httpClientFactory, logger);
+        var sut = new FileClient(_httpClientFactory, _storage, logger);
 
-        await sut.UploadAsync([0x89, 0x50, 0x4E, 0x47], "image/png", "test.png", "http://filestorage.local", TestContext.Current.CancellationToken);
+        await sut.UploadAsync([0x89, 0x50, 0x4E, 0x47], "image/png", "test.png", TestContext.Current.CancellationToken);
 
         var (_, message) = Assert.Single(logger.Entries, e => e.Level == LogLevel.Warning);
         Assert.True(message.Length < 500);
@@ -292,7 +297,7 @@ public class FileClientTests
         _httpClientFactory.InnerHandler = new RefusingHandler(HttpStatusCode.BadRequest, reason);
         var sut = CreateSut();
 
-        FileUploadResult result = await sut.UploadWithResultAsync([0x89, 0x50, 0x4E, 0x47], "image/png", "test.png", "http://filestorage.local", TestContext.Current.CancellationToken);
+        FileUploadResult result = await sut.UploadWithResultAsync([0x89, 0x50, 0x4E, 0x47], "image/png", "test.png", TestContext.Current.CancellationToken);
 
         Assert.Equal(expected, result);
     }
@@ -304,8 +309,8 @@ public class FileClientTests
         _httpClientFactory.InnerHandler = new RefusingHandler(HttpStatusCode.OK, "File uploaded successfully.");
         var sut = CreateSut();
 
-        FileUploadResult result = await sut.UploadWithResultAsync([0x89, 0x50, 0x4E, 0x47], "image/png", "test.png", "http://filestorage.local", TestContext.Current.CancellationToken);
-        bool legacy = await sut.UploadAsync([0x89, 0x50, 0x4E, 0x47], "image/png", "test.png", "http://filestorage.local", TestContext.Current.CancellationToken);
+        FileUploadResult result = await sut.UploadWithResultAsync([0x89, 0x50, 0x4E, 0x47], "image/png", "test.png", TestContext.Current.CancellationToken);
+        bool legacy = await sut.UploadAsync([0x89, 0x50, 0x4E, 0x47], "image/png", "test.png", TestContext.Current.CancellationToken);
 
         Assert.Equal(FileUploadResult.Stored, result);
         Assert.True(legacy);
@@ -317,8 +322,8 @@ public class FileClientTests
     {
         var sut = CreateSut();
 
-        Assert.Equal(FileUploadResult.Failed, await sut.UploadWithResultAsync([], "image/png", "test.png", "http://localhost", TestContext.Current.CancellationToken));
-        Assert.Equal(FileUploadResult.Failed, await sut.UploadWithResultAsync([1], "image/png", "../escape.png", "http://localhost", TestContext.Current.CancellationToken));
+        Assert.Equal(FileUploadResult.Failed, await sut.UploadWithResultAsync([], "image/png", "test.png", TestContext.Current.CancellationToken));
+        Assert.Equal(FileUploadResult.Failed, await sut.UploadWithResultAsync([1], "image/png", "../escape.png", TestContext.Current.CancellationToken));
     }
 
     // -- Correlation id form field ----------------------------------------------
@@ -333,7 +338,7 @@ public class FileClientTests
         _httpClientFactory.InnerHandler = capturing;
         byte[] data = [0x89, 0x50, 0x4E, 0x47];
 
-        await CreateSut().UploadAsync(data, "image/png", "test.png", "http://filestorage.local", TestContext.Current.CancellationToken);
+        await CreateSut().UploadAsync(data, "image/png", "test.png", TestContext.Current.CancellationToken);
 
         Assert.Contains("name=correlationId", capturing.LastRequestBody, StringComparison.Ordinal);
         Assert.Contains(activity.Id!, capturing.LastRequestBody, StringComparison.Ordinal);
@@ -348,7 +353,7 @@ public class FileClientTests
         using var capturing = new CapturingHandler();
         _httpClientFactory.InnerHandler = capturing;
 
-        await CreateSut().DownloadAsync("some/path.png", "http://filestorage.local", TestContext.Current.CancellationToken);
+        await CreateSut().DownloadAsync("some/path.png", TestContext.Current.CancellationToken);
 
         Assert.Contains("name=correlationId", capturing.LastRequestBody, StringComparison.Ordinal);
         Assert.Contains(activity.Id!, capturing.LastRequestBody, StringComparison.Ordinal);
@@ -362,7 +367,7 @@ public class FileClientTests
         using var capturing = new CapturingHandler();
         _httpClientFactory.InnerHandler = capturing;
 
-        await CreateSut().DownloadAsync("some/path.png", "http://filestorage.local", TestContext.Current.CancellationToken);
+        await CreateSut().DownloadAsync("some/path.png", TestContext.Current.CancellationToken);
 
         Assert.Contains("name=correlationId", capturing.LastRequestBody, StringComparison.Ordinal);
     }
@@ -379,10 +384,10 @@ public class FileClientTests
     {
         _httpClientFactory.InnerHandler = new RefusingHandler(HttpStatusCode.NotFound, "File not found");
         var logger = new RecordingLogger();
-        var sut = new FileClient(_httpClientFactory, logger);
+        var sut = new FileClient(_httpClientFactory, _storage, logger);
 
         var thrown = await Assert.ThrowsAsync<HttpRequestException>(
-            () => sut.DownloadAsync("upload/a.png", "http://filestorage.local", TestContext.Current.CancellationToken));
+            () => sut.DownloadAsync("upload/a.png", TestContext.Current.CancellationToken));
 
         Assert.Contains("upload/a.png", thrown.Message, StringComparison.Ordinal);
         Assert.Equal(HttpStatusCode.NotFound, thrown.StatusCode);
@@ -415,7 +420,7 @@ public class FileClientTests
         using var handler = new BytesHandler([1, 2, 3, 4]);
         _httpClientFactory.InnerHandler = handler;
 
-        await using Stream stream = await CreateSut().OpenReadAsync(@"upload\Forum\a.zip", "http://filestorage.local", TestContext.Current.CancellationToken);
+        await using Stream stream = await CreateSut().OpenReadAsync(@"upload\Forum\a.zip", TestContext.Current.CancellationToken);
         using var copy = new MemoryStream();
         await stream.CopyToAsync(copy, TestContext.Current.CancellationToken);
 
@@ -438,16 +443,16 @@ public class FileClientTests
         _httpClientFactory.InnerHandler = new BytesHandler([1, 2, 3]);
         var sut = CreateSut();
 
-        Assert.Equal(FileUploadResult.Stored, await sut.UploadWithResultAsync([1], "application/zip", "upload/Forum/a.zip", "http://filestorage.local", ct));
-        Assert.Equal([1, 2, 3], await sut.DownloadAsync("upload/Forum/a.zip", "http://filestorage.local", ct));
-        await using (Stream stream = await sut.OpenReadAsync("upload/Forum/a.zip", "http://filestorage.local", ct))
+        Assert.Equal(FileUploadResult.Stored, await sut.UploadWithResultAsync([1], "application/zip", "upload/Forum/a.zip", ct));
+        Assert.Equal([1, 2, 3], await sut.DownloadAsync("upload/Forum/a.zip", ct));
+        await using (Stream stream = await sut.OpenReadAsync("upload/Forum/a.zip", ct))
         {
             using var copy = new MemoryStream();
             await stream.CopyToAsync(copy, ct);
             Assert.Equal([1, 2, 3], copy.ToArray());
         }
         _httpClientFactory.InnerHandler = new RefusingHandler(HttpStatusCode.NotFound, "File not found");
-        await Assert.ThrowsAsync<HttpRequestException>(() => sut.DownloadAsync("upload/Forum/a.zip", "http://filestorage.local", ct));
+        await Assert.ThrowsAsync<HttpRequestException>(() => sut.DownloadAsync("upload/Forum/a.zip", ct));
 
         Assert.Equal(4, _httpClientFactory.Created.Count);
         Assert.All(_httpClientFactory.Created, client => Assert.True(client.Disposed));
@@ -460,7 +465,7 @@ public class FileClientTests
         _httpClientFactory.InnerHandler = new RefusingHandler(HttpStatusCode.NotFound, "File not found");
 
         await Assert.ThrowsAsync<HttpRequestException>(
-            () => CreateSut().OpenReadAsync("upload/a.zip", "http://filestorage.local", TestContext.Current.CancellationToken));
+            () => CreateSut().OpenReadAsync("upload/a.zip", TestContext.Current.CancellationToken));
     }
 
     /// <summary><c>OpenReadAsync</c> refuses an unsafe path before any request is sent.</summary>
@@ -473,7 +478,7 @@ public class FileClientTests
         _httpClientFactory.InnerHandler = handler;
 
         await Assert.ThrowsAsync<ArgumentException>(
-            () => CreateSut().OpenReadAsync(unsafePath, "http://filestorage.local", TestContext.Current.CancellationToken));
+            () => CreateSut().OpenReadAsync(unsafePath, TestContext.Current.CancellationToken));
         Assert.Null(handler.LastRequestBody);
     }
 
@@ -495,7 +500,7 @@ public class FileClientTests
     public async Task DownloadAsync_ThrowsArgumentException_ForUnsafePath(string unsafePath)
     {
         await Assert.ThrowsAsync<ArgumentException>(
-            () => CreateSut().DownloadAsync(unsafePath, "http://filestorage.local", TestContext.Current.CancellationToken));
+            () => CreateSut().DownloadAsync(unsafePath, TestContext.Current.CancellationToken));
     }
 
     /// <summary>Same unsafe-path cases as <c>DownloadAsync</c>, but <c>UploadAsync</c> reports failure via its bool return instead of throwing.</summary>
@@ -510,7 +515,7 @@ public class FileClientTests
     {
         byte[] data = [0x89, 0x50, 0x4E, 0x47];
 
-        bool result = await CreateSut().UploadAsync(data, "image/png", unsafePath, "http://filestorage.local", TestContext.Current.CancellationToken);
+        bool result = await CreateSut().UploadAsync(data, "image/png", unsafePath, TestContext.Current.CancellationToken);
 
         Assert.False(result);
     }

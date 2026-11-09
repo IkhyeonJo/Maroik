@@ -1,12 +1,10 @@
 using System.Data;
 using Maroik.Core.Contract.Enums;
 using Maroik.Core.Contract.Interfaces;
-using Maroik.Core.Contract.Settings;
 using Maroik.Core.Domain.Accounts;
 using Maroik.Core.Domain.FileManagers;
 using Maroik.Core.Service.Services;
 using Microsoft.Extensions.Logging.Testing;
-using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Time.Testing;
 using Moq;
 
@@ -24,9 +22,6 @@ internal sealed class FileManagerServiceHarness
 
     /// <summary>Another account, whose items must stay invisible.</summary>
     public const string OtherEmail = "other@example.com";
-
-    /// <summary>The base URL the service passes to the file client.</summary>
-    public const string BaseUrl = "http://files.local";
 
     /// <summary>One GB in bytes.</summary>
     public const long Gb = 1024L * 1024 * 1024;
@@ -69,11 +64,11 @@ internal sealed class FileManagerServiceHarness
         UnitOfWork.Setup(u => u.BeginAsync(It.IsAny<IsolationLevel?>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
         UnitOfWork.Setup(u => u.CommitAsync(It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
         UnitOfWork.Setup(u => u.RollbackAsync(It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
-        Files.Setup(f => f.AppendFileManagerChunkAsync(It.IsAny<Guid>(), It.IsAny<long>(), It.IsAny<Stream>(), BaseUrl, It.IsAny<CancellationToken>()))
-            .ReturnsAsync((Guid _, long offset, Stream chunk, string _, CancellationToken _) => offset + chunk.Length);
-        Files.Setup(f => f.CompleteFileManagerUploadAsync(It.IsAny<Guid>(), It.IsAny<long>(), It.IsAny<bool>(), BaseUrl, It.IsAny<CancellationToken>())).ReturnsAsync(FileUploadResult.Stored);
-        Files.Setup(f => f.AbortFileManagerUploadAsync(It.IsAny<Guid>(), BaseUrl, It.IsAny<CancellationToken>())).ReturnsAsync(true);
-        Files.Setup(f => f.DeleteFileManagerFileAsync(It.IsAny<string>(), BaseUrl, It.IsAny<CancellationToken>())).ReturnsAsync(true);
+        Files.Setup(f => f.AppendFileManagerChunkAsync(It.IsAny<Guid>(), It.IsAny<long>(), It.IsAny<Stream>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((Guid _, long offset, Stream chunk, CancellationToken _) => offset + chunk.Length);
+        Files.Setup(f => f.CompleteFileManagerUploadAsync(It.IsAny<Guid>(), It.IsAny<long>(), It.IsAny<bool>(), It.IsAny<CancellationToken>())).ReturnsAsync(FileUploadResult.Stored);
+        Files.Setup(f => f.AbortFileManagerUploadAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>())).ReturnsAsync(true);
+        Files.Setup(f => f.DeleteFileManagerFileAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(true);
     }
 
     /// <summary>The account, as the repository loads it.</summary>
@@ -81,8 +76,7 @@ internal sealed class FileManagerServiceHarness
         null, null, Now, Now, null, false, "stamp", false, QuotaBytes, scanDisabled);
 
     /// <summary>The service under test.</summary>
-    public FileManagerService Sut => new(Nodes, Accounts.Object, UnitOfWork.Object, Files.Object,
-        Options.Create(new ServerSetting { FileStorageBaseUrl = BaseUrl }), Logger, Time);
+    public FileManagerService Sut => new(Nodes, Accounts.Object, UnitOfWork.Object, Files.Object, Logger, Time);
 
     /// <summary>Adds a folder and returns its id.</summary>
     public long Folder(string name, long? parentId = null, string email = Email)

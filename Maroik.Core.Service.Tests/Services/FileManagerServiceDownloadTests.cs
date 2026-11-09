@@ -25,7 +25,7 @@ public class FileManagerServiceDownloadTests
     {
         long id = _h.File("report.pdf");
         string path = _h.Node(id).StoragePath!;
-        _h.Files.Setup(f => f.OpenReadAsync(path, H.BaseUrl, It.IsAny<CancellationToken>())).ReturnsAsync(new MemoryStream([1, 2]));
+        _h.Files.Setup(f => f.OpenReadAsync(path, It.IsAny<CancellationToken>())).ReturnsAsync(new MemoryStream([1, 2]));
 
         var (result, file) = await _h.Sut.OpenFileAsync(H.Email, id, TestContext.Current.CancellationToken);
 
@@ -44,7 +44,7 @@ public class FileManagerServiceDownloadTests
 
         foreach (long id in new[] { theirs, folder, upload, 999L })
             Assert.Equal(ServiceErrorKeys.FileManagerItemNotFound, (await _h.Sut.OpenFileAsync(H.Email, id, TestContext.Current.CancellationToken)).Result.ErrorKey);
-        _h.Files.Verify(f => f.OpenReadAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+        _h.Files.Verify(f => f.OpenReadAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     /// <summary>A file storage cannot open is a temporary error, logged at Error with the exception and the path.</summary>
@@ -53,7 +53,7 @@ public class FileManagerServiceDownloadTests
     {
         long id = _h.File("a.txt");
         string path = _h.Node(id).StoragePath!;
-        _h.Files.Setup(f => f.OpenReadAsync(path, H.BaseUrl, It.IsAny<CancellationToken>())).ThrowsAsync(new HttpRequestException("404"));
+        _h.Files.Setup(f => f.OpenReadAsync(path, It.IsAny<CancellationToken>())).ThrowsAsync(new HttpRequestException("404"));
 
         var (result, file) = await _h.Sut.OpenFileAsync(H.Email, id, TestContext.Current.CancellationToken);
 
@@ -67,7 +67,7 @@ public class FileManagerServiceDownloadTests
     public async Task OpenPreviewAsync_AnswersTheImage_WithTheProvenContentType()
     {
         long id = _h.File("photo.jpg", size: _png.Length);
-        _h.Files.Setup(f => f.DownloadAsync(_h.Node(id).StoragePath!, H.BaseUrl, It.IsAny<CancellationToken>())).ReturnsAsync(_png);
+        _h.Files.Setup(f => f.DownloadAsync(_h.Node(id).StoragePath!, It.IsAny<CancellationToken>())).ReturnsAsync(_png);
 
         var (result, preview) = await _h.Sut.OpenPreviewAsync(H.Email, id, TestContext.Current.CancellationToken);
 
@@ -89,7 +89,7 @@ public class FileManagerServiceDownloadTests
 
         Assert.Equal(ServiceErrorKeys.FileManagerNoPreview, result.ErrorKey);
         Assert.Null(preview);
-        _h.Files.Verify(f => f.DownloadAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+        _h.Files.Verify(f => f.DownloadAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     /// <summary>A ".png" whose bytes are an HTML page (or anything not an image) is refused: the extension alone is not trusted.</summary>
@@ -97,7 +97,7 @@ public class FileManagerServiceDownloadTests
     public async Task OpenPreviewAsync_RefusesAFileWhoseBytesAreNotAnImage()
     {
         long id = _h.File("trick.png");
-        _h.Files.Setup(f => f.DownloadAsync(_h.Node(id).StoragePath!, H.BaseUrl, It.IsAny<CancellationToken>())).ReturnsAsync([.. "<html><script>alert(1)</script>"u8]);
+        _h.Files.Setup(f => f.DownloadAsync(_h.Node(id).StoragePath!, It.IsAny<CancellationToken>())).ReturnsAsync([.. "<html><script>alert(1)</script>"u8]);
 
         Assert.Equal(ServiceErrorKeys.FileManagerNoPreview, (await _h.Sut.OpenPreviewAsync(H.Email, id, TestContext.Current.CancellationToken)).Result.ErrorKey);
     }

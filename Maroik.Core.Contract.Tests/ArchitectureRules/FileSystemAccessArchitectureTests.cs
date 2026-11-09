@@ -49,9 +49,9 @@ public class FileSystemAccessArchitectureTests
         ["Maroik.Website/Middlewares/AvatarCacheMiddleware.cs::InvokeAsync"] = (
             ["Directory.CreateDirectory", "File.Exists", "File.Move", "File.WriteAllBytesAsync"],
             "a fixed wwwroot folder, under a file name UploadedAvatarFileName accepted (a GUID with an allowed image extension)"),
-        ["Maroik.Core.Service/Services/DashboardService.cs::GetServerResourceSummary"] = (
+        ["Maroik.Core.Client/Clients/ServerResourceReportClient.cs::Read"] = (
             ["File.Exists", "File.ReadAllText"],
-            "the two server-resource report files, whose paths are the controller's constants, never request input"),
+            "the two server-resource report files, whose paths are the client's constants, never request input"),
         ["Maroik.Website/Program.cs::<top-level>"] = (
             ["Directory.CreateDirectory", "new DirectoryInfo"],
             "the Data Protection key-ring folder named by server configuration"),

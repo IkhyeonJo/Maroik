@@ -153,7 +153,7 @@ public class AttachmentContentServiceTests
 
         Assert.False(result.Success);
         _fileClient.Verify(f => f.UploadAsync(
-            It.IsAny<byte[]>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+            It.IsAny<byte[]>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     /// <summary>A file whose extension / content type is outside the jpg-png allow-list is rejected before the decode check.</summary>
@@ -171,7 +171,7 @@ public class AttachmentContentServiceTests
 
         Assert.False(result.Success);
         _fileClient.Verify(f => f.UploadAsync(
-            It.IsAny<byte[]>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+            It.IsAny<byte[]>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     /// <summary>A jpg/png-labeled file that decodes as SVG is rejected (SVG can carry script).</summary>
@@ -186,7 +186,7 @@ public class AttachmentContentServiceTests
 
         Assert.False(result.Success);
         _fileClient.Verify(f => f.UploadAsync(
-            It.IsAny<byte[]>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+            It.IsAny<byte[]>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     /// <summary>Verifies that a failed upload short-circuits before attempting the re-download.</summary>
@@ -195,7 +195,7 @@ public class AttachmentContentServiceTests
     {
         _imageValidator.Setup(v => v.IsValidImage(It.IsAny<byte[]>())).Returns(true);
         _fileClient.Setup(f => f.UploadAsync(
-            It.IsAny<byte[]>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            It.IsAny<byte[]>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(false);
         var file = new AttachedFileDto { Bytes = [1, 2, 3], ContentType = "image/png", FileName = "x.png" };
 
@@ -203,7 +203,7 @@ public class AttachmentContentServiceTests
 
         Assert.False(result.Success);
         Assert.Equal(ServiceResult.TemporaryErrorKey, result.ErrorKey);
-        _fileClient.Verify(f => f.DownloadAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+        _fileClient.Verify(f => f.DownloadAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     /// <summary>
@@ -217,8 +217,8 @@ public class AttachmentContentServiceTests
         _imageValidator.Setup(v => v.StripMetadata(It.IsAny<byte[]>())).Returns<byte[]>(bytes => new StrippedImage(bytes, ".png", "image/png"));
         string? storedPath = null;
         _fileClient.Setup(f => f.UploadAsync(
-            It.IsAny<byte[]>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .Callback<byte[], string, string, string, CancellationToken>((_, _, path, _, _) => storedPath = path)
+            It.IsAny<byte[]>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Callback<byte[], string, string, CancellationToken>((_, _, path, _) => storedPath = path)
             .ReturnsAsync(true);
         var file = new AttachedFileDto { Bytes = [1, 2, 3], ContentType = "image/png", FileName = "x.png" };
 
@@ -228,7 +228,7 @@ public class AttachmentContentServiceTests
         Assert.Equal(file.Bytes, result.FileBytes);
         Assert.Equal("image/png", result.ContentType);
         Assert.Equal(storedPath, result.FilePath);
-        _fileClient.Verify(f => f.DownloadAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+        _fileClient.Verify(f => f.DownloadAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     /// <summary>
@@ -245,8 +245,8 @@ public class AttachmentContentServiceTests
         _imageValidator.Setup(v => v.StripMetadata(uploadedBytes)).Returns(new StrippedImage(strippedBytes, ".jpg", "image/jpeg"));
         byte[]? stored = null;
         _fileClient.Setup(f => f.UploadAsync(
-            It.IsAny<byte[]>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .Callback<byte[], string, string, string, CancellationToken>((bytes, _, _, _, _) => stored = bytes)
+            It.IsAny<byte[]>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Callback<byte[], string, string, CancellationToken>((bytes, _, _, _) => stored = bytes)
             .ReturnsAsync(true);
         var file = new AttachedFileDto { Bytes = uploadedBytes, ContentType = "image/jpeg", FileName = "photo.jpg" };
 
@@ -269,8 +269,8 @@ public class AttachmentContentServiceTests
         string? storedPath = null;
         string? storedType = null;
         _fileClient.Setup(f => f.UploadAsync(
-            It.IsAny<byte[]>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .Callback<byte[], string, string, string, CancellationToken>((_, type, path, _, _) => (storedType, storedPath) = (type, path))
+            It.IsAny<byte[]>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Callback<byte[], string, string, CancellationToken>((_, type, path, _) => (storedType, storedPath) = (type, path))
             .ReturnsAsync(true);
         var file = new AttachedFileDto { Bytes = jpeg, ContentType = "image/png", FileName = "photo.png" };
 
@@ -302,7 +302,7 @@ public class AttachmentContentServiceTests
     public async Task OpenFileAsync_ReturnsTheOpenedStream()
     {
         var stream = new MemoryStream([1, 2, 3]);
-        _fileClient.Setup(f => f.OpenReadAsync("upload/a.zip", "http://filestorage.local", It.IsAny<CancellationToken>())).ReturnsAsync(stream);
+        _fileClient.Setup(f => f.OpenReadAsync("upload/a.zip", It.IsAny<CancellationToken>())).ReturnsAsync(stream);
 
         Assert.Same(stream, await CreateSut().OpenFileAsync("upload/a.zip", TestContext.Current.CancellationToken));
     }
@@ -313,7 +313,7 @@ public class AttachmentContentServiceTests
     {
         var logger = new FakeLogger<AttachmentContentService>();
         var failure = new HttpRequestException("404");
-        _fileClient.Setup(f => f.OpenReadAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>())).ThrowsAsync(failure);
+        _fileClient.Setup(f => f.OpenReadAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ThrowsAsync(failure);
         var sut = new AttachmentContentService(_fileClient.Object, _dataProtection.Object, _imageValidator.Object, _htmlSanitizer.Object,
             _htmlParser.Object, _settings, logger);
 
@@ -342,7 +342,7 @@ public class AttachmentContentServiceTests
                 (_, factory, _) => capturedFactory = factory)
             .ReturnsAsync(("<html/>", true));
         byte[] fileData = [5, 6, 7];
-        _fileClient.Setup(f => f.DownloadAsync("upload/img.png", It.IsAny<string>(), It.IsAny<CancellationToken>()))
+        _fileClient.Setup(f => f.DownloadAsync("upload/img.png", It.IsAny<CancellationToken>()))
             .ReturnsAsync(fileData);
         _dataProtection.Setup(r => r.Protect(ProtectedValue.StoredFilePath, "upload/img.png")).Returns("encrypted-path");
 
@@ -372,7 +372,7 @@ public class AttachmentContentServiceTests
             .Callback<string, Func<string, CancellationToken, Task<HtmlImgPatch?>>, CancellationToken>(
                 (_, factory, _) => capturedFactory = factory)
             .ReturnsAsync(("<html/>", true));
-        _fileClient.Setup(f => f.DownloadAsync("upload/img.png", It.IsAny<string>(), It.IsAny<CancellationToken>()))
+        _fileClient.Setup(f => f.DownloadAsync("upload/img.png", It.IsAny<CancellationToken>()))
             .ThrowsAsync(new InvalidOperationException("storage unreachable"));
 
         await CreateSut().PrepareHtmlForDisplayAsync("<html/>", TestContext.Current.CancellationToken);
@@ -477,7 +477,7 @@ public class AttachmentContentServiceTests
                 It.IsAny<string>(), It.IsAny<Func<string, CancellationToken, Task<HtmlImgPatch?>>>(), It.IsAny<CancellationToken>()))
             .Callback<string, Func<string, CancellationToken, Task<HtmlImgPatch?>>, CancellationToken>((_, factory, _) => capturedFactory = factory)
             .ReturnsAsync(("<html/>", true));
-        _fileClient.Setup(f => f.DownloadAsync(path, It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([1, 2, 3]);
+        _fileClient.Setup(f => f.DownloadAsync(path, It.IsAny<CancellationToken>())).ReturnsAsync([1, 2, 3]);
         _dataProtection.Setup(r => r.Protect(ProtectedValue.StoredFilePath, path)).Returns("enc");
 
         await CreateSut().PrepareHtmlForDisplayAsync("<html/>", TestContext.Current.CancellationToken);
@@ -535,7 +535,7 @@ public class AttachmentContentServiceTests
 
         await CreateSut().UploadSummernoteImageAsync(file, "board", "post", "uploader@test.com", TestContext.Current.CancellationToken);
 
-        _fileClient.Verify(f => f.UploadAsync(It.IsAny<byte[]>(), It.IsAny<string>(), It.IsAny<string>(), "http://filestorage.local", It.IsAny<CancellationToken>()), Times.Once);
+        _fileClient.Verify(f => f.UploadAsync(It.IsAny<byte[]>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     /// <summary>A body image is downloaded from the configured file-storage address.</summary>
@@ -547,7 +547,7 @@ public class AttachmentContentServiceTests
                 It.IsAny<string>(), It.IsAny<Func<string, CancellationToken, Task<HtmlImgPatch?>>>(), It.IsAny<CancellationToken>()))
             .Callback<string, Func<string, CancellationToken, Task<HtmlImgPatch?>>, CancellationToken>((_, factory, _) => capturedFactory = factory)
             .ReturnsAsync(("<html/>", true));
-        _fileClient.Setup(f => f.DownloadAsync("upload/img.png", "http://filestorage.local", It.IsAny<CancellationToken>())).ReturnsAsync([1]);
+        _fileClient.Setup(f => f.DownloadAsync("upload/img.png", It.IsAny<CancellationToken>())).ReturnsAsync([1]);
 
         await CreateSut().PrepareHtmlForDisplayAsync("<html/>", TestContext.Current.CancellationToken);
         HtmlImgPatch? patch = await capturedFactory!("upload/img.png", TestContext.Current.CancellationToken);

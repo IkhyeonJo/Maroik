@@ -31,6 +31,8 @@ public class DashboardServiceTests
     private readonly Mock<IFixedIncomeRepository> _fixedIncomeRepo = new();
     /// <summary>Mock <c>IFixedExpenditureRepository</c> injected into the system under test.</summary>
     private readonly Mock<IFixedExpenditureRepository> _fixedExpenditureRepo = new();
+    /// <summary>Mock <c>IServerResourceReportClient</c> injected into the system under test.</summary>
+    private readonly Mock<IServerResourceReportClient> _serverResourceReports = new();
 
     /// <summary>The fixed "current time" of these tests.</summary>
     private static readonly DateTime _now = new(2026, 7, 1, 12, 0, 0, DateTimeKind.Utc);
@@ -45,8 +47,17 @@ public class DashboardServiceTests
         _expenditureRepo.Object,
         _fixedIncomeRepo.Object,
         _fixedExpenditureRepo.Object,
+        _serverResourceReports.Object,
         Options.Create(settings ?? new ServerSetting()),
         _time);
+
+    /// <summary>The service under test, given the two report texts by the (mocked) client that reads them.</summary>
+    private DashboardService SutReading(string host = "", string docker = "")
+    {
+        _serverResourceReports.Setup(r => r.ReadHostReport()).Returns(host);
+        _serverResourceReports.Setup(r => r.ReadDockerReport()).Returns(docker);
+        return CreateSut();
+    }
 
     // -- Helpers --------------------------------------------------------------
 
@@ -628,15 +639,11 @@ public class DashboardServiceTests
 
     // -- GetServerResourceSummary ---------------------------------------------
 
-    /// <summary>Verifies that <c>GetServerResourceSummary</c> returns empty when files do not exist.</summary>
+    /// <summary>Verifies that <c>GetServerResourceSummary</c> returns empty when there are no reports.</summary>
     [Fact]
-    public void GetServerResourceSummary_ReturnsEmpty_WhenFilesDoNotExist()
+    public void GetServerResourceSummary_ReturnsEmpty_WhenThereAreNoReports()
     {
-        var sut = CreateSut();
-
-        ServerResourceDto summary = sut.GetServerResourceSummary(
-            "nonexistent_host.txt",
-            "nonexistent_docker.txt");
+        ServerResourceDto summary = SutReading().GetServerResourceSummary();
 
         Assert.Empty(summary.HostCpuInfo);
         Assert.Empty(summary.HostMemoryInfo);
@@ -644,100 +651,58 @@ public class DashboardServiceTests
         Assert.Equal(0.0, summary.HostCpuNumeric);
     }
 
-    /// <summary>Verifies that <c>GetServerResourceSummary</c> parses host cpu numeric when from host file.</summary>
+    /// <summary>Verifies that <c>GetServerResourceSummary</c> parses host cpu numeric from the host report.</summary>
     [Fact]
-    public void GetServerResourceSummary_ParsesHostCpuNumeric_FromHostFile()
+    public void GetServerResourceSummary_ParsesHostCpuNumeric_FromTheHostReport()
     {
-        string hostFile = Path.GetTempFileName();
-        string dockerFile = Path.GetTempFileName();
-        try
-        {
-            File.WriteAllText(hostFile,
-                "Host CPU Information: 45.5%\nHost Memory Information: Memory: 4GB/8GB\nHost Disk Information: Disk: 100GB/500GB");
-            File.WriteAllText(dockerFile, "Docker Resource Usage:\napp 12.3% 100MiB / 512MiB");
+        ServerResourceDto summary = SutReading(
+            "Host CPU Information: 45.5%\nHost Memory Information: Memory: 4GB/8GB\nHost Disk Information: Disk: 100GB/500GB",
+            "Docker Resource Usage:\napp 12.3% 100MiB / 512MiB").GetServerResourceSummary();
 
-            var sut = CreateSut();
-            ServerResourceDto summary = sut.GetServerResourceSummary(hostFile, dockerFile);
-
-            Assert.Equal(45.5, summary.HostCpuNumeric, precision: 1);
-        }
-        finally
-        {
-            File.Delete(hostFile);
-            File.Delete(dockerFile);
-        }
+        Assert.Equal(45.5, summary.HostCpuNumeric, precision: 1);
     }
 
     /// <summary>Verifies that <c>GetServerResourceSummary</c> parses each docker container row into a typed <see cref="DockerContainerResourceDto"/>.</summary>
     [Fact]
     public void GetServerResourceSummary_ParsesDockerContainers_IntoTypedDtos()
     {
-        string hostFile = Path.GetTempFileName();
-        string dockerFile = Path.GetTempFileName();
-        try
-        {
-            File.WriteAllText(hostFile, "Host CPU Information: 1%\nHost Memory Information: Memory: 1GB/2GB\nHost Disk Information: Disk: 1GB/2GB");
-            File.WriteAllText(dockerFile,
-                "Docker Resource Usage:\n" +
-                "NAME CPU% MEM USED / LIMIT\n" +
-                "web 12.3% 100MiB / 512MiB\n" +
-                "db 4.5% 1GiB / 2GiB");
+        ServerResourceDto summary = SutReading(
+            "Host CPU Information: 1%\nHost Memory Information: Memory: 1GB/2GB\nHost Disk Information: Disk: 1GB/2GB",
+            "Docker Resource Usage:\n" +
+            "NAME CPU% MEM USED / LIMIT\n" +
+            "web 12.3% 100MiB / 512MiB\n" +
+            "db 4.5% 1GiB / 2GiB").GetServerResourceSummary();
 
-            var sut = CreateSut();
-            ServerResourceDto summary = sut.GetServerResourceSummary(hostFile, dockerFile);
-
-            Assert.Equal(2, summary.DockerContainerResult.Count);
-            Assert.Equal("web", summary.DockerContainerResult[0].Name);
-            Assert.Equal("12.3%", summary.DockerContainerResult[0].CpuPercent);
-            Assert.Equal("100MiB / 512MiB", summary.DockerContainerResult[0].MemUsageDisplay);
-            Assert.Equal("db", summary.DockerContainerResult[1].Name);
-        }
-        finally
-        {
-            File.Delete(hostFile);
-            File.Delete(dockerFile);
-        }
+        Assert.Equal(2, summary.DockerContainerResult.Count);
+        Assert.Equal("web", summary.DockerContainerResult[0].Name);
+        Assert.Equal("12.3%", summary.DockerContainerResult[0].CpuPercent);
+        Assert.Equal("100MiB / 512MiB", summary.DockerContainerResult[0].MemUsageDisplay);
+        Assert.Equal("db", summary.DockerContainerResult[1].Name);
     }
 
     /// <summary>A docker row with fewer than five columns (a cut-off line) is skipped; the rows around it are still read.</summary>
     [Fact]
     public void GetServerResourceSummary_SkipsAShortDockerRow()
     {
-        string hostFile = Path.GetTempFileName();
-        string dockerFile = Path.GetTempFileName();
-        try
-        {
-            File.WriteAllText(dockerFile,
-                "Docker Resource Usage:\n" +
-                "NAME CPU% MEM USED / LIMIT\n" +
-                "web 12.3% 100MiB / 512MiB\n" +
-                "broken 1%\n" +
-                "db 4.5% 1GiB / 2GiB");
+        ServerResourceDto summary = SutReading(docker:
+            "Docker Resource Usage:\n" +
+            "NAME CPU% MEM USED / LIMIT\n" +
+            "web 12.3% 100MiB / 512MiB\n" +
+            "broken 1%\n" +
+            "db 4.5% 1GiB / 2GiB").GetServerResourceSummary();
 
-            ServerResourceDto summary = CreateSut().GetServerResourceSummary(hostFile, dockerFile);
-
-            Assert.Equal(["web", "db"], summary.DockerContainerResult.Select(c => c.Name));
-        }
-        finally
-        {
-            File.Delete(hostFile);
-            File.Delete(dockerFile);
-        }
+        Assert.Equal(["web", "db"], summary.DockerContainerResult.Select(c => c.Name));
     }
 
-    /// <summary>Verifies that <c>GetServerResourceSummary</c> returns an empty (not null) docker container list when the docker file is missing.</summary>
+    /// <summary>Verifies that <c>GetServerResourceSummary</c> returns an empty (not null) docker container list when there is no docker report.</summary>
     [Fact]
-    public void GetServerResourceSummary_ReturnsEmptyDockerContainerList_WhenDockerFileMissing()
+    public void GetServerResourceSummary_ReturnsEmptyDockerContainerList_WhenThereIsNoDockerReport()
     {
-        var sut = CreateSut();
-
-        ServerResourceDto summary = sut.GetServerResourceSummary("nonexistent_host.txt", "nonexistent_docker.txt");
-
-        Assert.Empty(summary.DockerContainerResult);
+        Assert.Empty(SutReading().GetServerResourceSummary().DockerContainerResult);
     }
 
     /// <summary>
-    /// Regression test: when the docker resource file's content doesn't contain the
+    /// Regression test: when the docker report's content doesn't contain the
     /// "Docker Resource Usage:" marker at all (e.g. the collection script's output format
     /// changed, or it just wrote an error message), <c>ExtractSection</c> must return an empty
     /// section instead of a garbage substring taken from near the start of the unrelated content —
@@ -746,33 +711,20 @@ public class DashboardServiceTests
     /// instead of being treated as "not found".
     /// </summary>
     [Fact]
-    public void GetServerResourceSummary_ReturnsEmptyDockerContainerList_WhenStartMarkerMissingFromDockerFile()
+    public void GetServerResourceSummary_ReturnsEmptyDockerContainerList_WhenStartMarkerMissingFromDockerReport()
     {
-        string hostFile = Path.GetTempFileName();
-        string dockerFile = Path.GetTempFileName();
-        try
-        {
-            // No "Docker Resource Usage:" marker anywhere in this content. The leading junk line is
-            // longer than the marker text so that, under the pre-fix bug, the wrongly-computed start
-            // index still lands inside it — leaving the real header/data lines below intact in the
-            // (incorrectly non-empty) extracted section, which would otherwise get parsed into fake
-            // container rows despite the marker never having been found.
-            File.WriteAllText(dockerFile,
-                new string('x', 50) + "\n" +
-                "NAME CPU% MEM USED / LIMIT\n" +
-                "web 12.3% 100MiB / 512MiB\n" +
-                "db 4.5% 1GiB / 2GiB");
+        // No "Docker Resource Usage:" marker anywhere in this content. The leading junk line is
+        // longer than the marker text so that, under the pre-fix bug, the wrongly-computed start
+        // index still lands inside it — leaving the real header/data lines below intact in the
+        // (incorrectly non-empty) extracted section, which would otherwise get parsed into fake
+        // container rows despite the marker never having been found.
+        ServerResourceDto summary = SutReading(docker:
+            new string('x', 50) + "\n" +
+            "NAME CPU% MEM USED / LIMIT\n" +
+            "web 12.3% 100MiB / 512MiB\n" +
+            "db 4.5% 1GiB / 2GiB").GetServerResourceSummary();
 
-            var sut = CreateSut();
-            ServerResourceDto summary = sut.GetServerResourceSummary(hostFile, dockerFile);
-
-            Assert.Empty(summary.DockerContainerResult);
-        }
-        finally
-        {
-            File.Delete(hostFile);
-            File.Delete(dockerFile);
-        }
+        Assert.Empty(summary.DockerContainerResult);
     }
 
     // -- GetSummaryAsync: currency filter and start year ------------------------------
@@ -903,42 +855,23 @@ public class DashboardServiceTests
     [Fact]
     public void GetServerResourceSummary_RendersMemoryAndDiskAsUsageOverTotal()
     {
-        string hostFile = Path.GetTempFileName();
-        try
-        {
-            File.WriteAllText(hostFile,
-                "Host CPU Information:\nCPU Usage: 37.5%\nHost Memory Information:\nMemory: 8.0Gi / 3.2Gi\nHost Disk Information:\nDisk: 500GB / 120GB\n");
+        ServerResourceDto summary = SutReading(
+            "Host CPU Information:\nCPU Usage: 37.5%\nHost Memory Information:\nMemory: 8.0Gi / 3.2Gi\nHost Disk Information:\nDisk: 500GB / 120GB\n").GetServerResourceSummary();
 
-            ServerResourceDto summary = CreateSut().GetServerResourceSummary(hostFile, "nonexistent_docker.txt");
-
-            Assert.Equal("3.2Gi / 8.0Gi", summary.MemUsageLimit);
-            Assert.Equal("120GB / 500GB", summary.DiskUsageLimit);
-            Assert.Equal(37.5, summary.HostCpuNumeric, precision: 1);
-        }
-        finally
-        {
-            File.Delete(hostFile);
-        }
+        Assert.Equal("3.2Gi / 8.0Gi", summary.MemUsageLimit);
+        Assert.Equal("120GB / 500GB", summary.DiskUsageLimit);
+        Assert.Equal(37.5, summary.HostCpuNumeric, precision: 1);
     }
 
     /// <summary>A memory/disk line without the "total / usage" separator renders nothing instead of throwing.</summary>
     [Fact]
     public void GetServerResourceSummary_RendersNothing_WhenTheMemoryAndDiskLinesHaveNoSeparator()
     {
-        string hostFile = Path.GetTempFileName();
-        try
-        {
-            File.WriteAllText(hostFile, "Host CPU Information: 1%\nHost Memory Information:\nMemory: unavailable\nHost Disk Information:\nDisk: unknown\n");
+        ServerResourceDto summary = SutReading(
+            "Host CPU Information: 1%\nHost Memory Information:\nMemory: unavailable\nHost Disk Information:\nDisk: unknown\n").GetServerResourceSummary();
 
-            ServerResourceDto summary = CreateSut().GetServerResourceSummary(hostFile, "nonexistent_docker.txt");
-
-            Assert.Equal("", summary.MemUsageLimit);
-            Assert.Equal("", summary.DiskUsageLimit);
-        }
-        finally
-        {
-            File.Delete(hostFile);
-        }
+        Assert.Equal("", summary.MemUsageLimit);
+        Assert.Equal("", summary.DiskUsageLimit);
     }
 
     // -- Range edges, missing account, year window, notice counting and resource parsing ----
@@ -1022,23 +955,9 @@ public class DashboardServiceTests
         Assert.Equal(0, counts.FixedExpendituresNoticed);
     }
 
-    /// <summary>Writes the two resource files, runs the summary over them, and deletes them.</summary>
-    private ServerResourceDto SummarizeResources(string hostText, string dockerText)
-    {
-        string hostFile = Path.GetTempFileName();
-        string dockerFile = Path.GetTempFileName();
-        try
-        {
-            File.WriteAllText(hostFile, hostText);
-            File.WriteAllText(dockerFile, dockerText);
-            return CreateSut().GetServerResourceSummary(hostFile, dockerFile);
-        }
-        finally
-        {
-            File.Delete(hostFile);
-            File.Delete(dockerFile);
-        }
-    }
+    /// <summary>Runs the summary over the two report texts.</summary>
+    private ServerResourceDto SummarizeResources(string hostText, string dockerText) =>
+        SutReading(hostText, dockerText).GetServerResourceSummary();
 
     /// <summary>
     /// A docker row with fewer than five columns (a truncated line) is skipped, while a row with more than five keeps

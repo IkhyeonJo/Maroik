@@ -8,6 +8,16 @@ public class TimeZoneDisplayServiceTests
     /// <summary>The service under test.</summary>
     private readonly TimeZoneDisplayService _sut = new();
 
+    /// <summary>An all-day date is the domain's instant: that date's midnight, marked UTC.</summary>
+    [Fact]
+    public void ToAllDayInstant_IsTheDatesMidnight_InUtc()
+    {
+        DateTime instant = _sut.ToAllDayInstant(2026, 3, 9);
+
+        Assert.Equal(new DateTime(2026, 3, 9, 0, 0, 0, DateTimeKind.Utc), instant);
+        Assert.Equal(DateTimeKind.Utc, instant.Kind);
+    }
+
     /// <summary>Noon UTC, away from any daylight-saving change in the zones used here.</summary>
     private static readonly DateTime _utcNoon = new(2026, 6, 1, 12, 0, 0, DateTimeKind.Utc);
 

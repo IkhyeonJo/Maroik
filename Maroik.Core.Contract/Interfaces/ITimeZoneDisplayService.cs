@@ -9,6 +9,9 @@ public interface ITimeZoneDisplayService
     /// <summary>A local value in UTC.</summary>
     DateTime ToUtcFromTimeZone(DateTime local, string timeZoneIanaId);
 
+    /// <summary>The instant an all-day event's date is stored as: it has no time zone of its own.</summary>
+    DateTime ToAllDayInstant(int year, int month, int day);
+
     /// <summary>A UTC value as a viewer sees it: local time, or ISO-8601 UTC for one who does not see local time.</summary>
     string FormatForViewer(DateTime utc, bool viewerSeesLocalTime, string timeZoneIanaId);
 

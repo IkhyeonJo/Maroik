@@ -170,7 +170,8 @@ public class ForumController(
                     FormatViewerTime = timeZones.FormatForViewer,
                     Method = method,
                     LoggedInAccount = loggedInAccount,
-                    LoggedInAccountTimeZoneIanaId = loggedInAccount.RequireTimeZoneIanaId()
+                    LoggedInAccountTimeZoneIanaId = loggedInAccount.RequireTimeZoneIanaId(),
+                    CanPostNotice = loggedInAccount.Role == AccountRoles.Admin
                 };
 
                 bool isAccountSessionExist = loggedInAccount.Role != AccountRoles.Anonymous;
@@ -210,6 +211,7 @@ public class ForumController(
                     (freeBoard.Content, bool isImgTagIncluded) = await boardService.PrepareHtmlForDisplayAsync(freeBoard.Content ?? "", ct);
 
                     freeForumOutputViewModel.LoggedInAccount = loggedInAccount;
+                    freeForumOutputViewModel.CanWriteComment = loggedInAccount.Role != AccountRoles.Anonymous;
                     freeForumOutputViewModel.LoggedInAccountTimeZoneIanaId = freeForumOutputViewModel.LoggedInAccount.TimeZoneIanaId ?? "";
                     freeForumOutputViewModel.ViewerSeesLocalTime = accountPolicy.SeesLocalTime(loggedInAccount);
 
@@ -418,18 +420,10 @@ public class ForumController(
         try
         {
             BoardResponse? board = await boardService.GetBoardByIdAsync(id, BoardKinds.FreeForum, ct);
-            if (board == null || board.Deleted)
-                return Json(new { result = false, error = localizer["Input is invalid"].Value });
-
-            if (!board.Locked)
-            {
-                return Json(new { result = true, freeBoard = new { id = board.Id } });
-            }
-
-            // Re-fetched from the database by ViewBagPopulatorFilter on every request.
-            AccountResponse loggedInAccount = HttpContext.GetLoggedInAccount();
-            return !boardPolicy.IsContentOwnerOrAdmin(loggedInAccount, board.Writer) ? Json(new { result = false, error = localizer["Input is invalid"].Value }) : Json(new { result = true, freeBoard = new { id = board.Id } });
-
+            // The account is re-fetched from the database by ViewBagPopulatorFilter on every request.
+            return board == null || !boardService.CanView(board, HttpContext.GetLoggedInAccount())
+                ? Json(new { result = false, error = localizer["Input is invalid"].Value })
+                : Json(new { result = true, freeBoard = new { id = board.Id } });
         }
         catch (Exception ex)
         {

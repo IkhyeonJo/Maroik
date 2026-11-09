@@ -2,7 +2,9 @@ using System.Diagnostics;
 using Maroik.Core.Contract.Enums;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Contract.Messages;
+using Maroik.Core.Contract.Settings;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace Maroik.Core.Client.Clients;
 
@@ -10,8 +12,11 @@ namespace Maroik.Core.Client.Clients;
 /// Concrete implementation of <see cref="IFileClient"/> that communicates with the
 /// Maroik.FileStorage microservice via HTTP multipart/form-data requests.
 /// </summary>
-public class FileClient(IHttpClientFactory httpClientFactory, ILogger<FileClient> logger) : IFileClient
+public class FileClient(IHttpClientFactory httpClientFactory, IOptions<ServerSetting> settings, ILogger<FileClient> logger) : IFileClient
 {
+    /// <summary>Base URL of the Maroik.FileStorage service (<see cref="ServerSetting.FileStorageBaseUrl"/>).</summary>
+    private string BaseUrl => settings.Value.FileStorageBaseUrl ?? "";
+
     /// <summary>
     /// Rejects a storage path that is rooted or contains a <c>..</c> segment, so a value that ever
     /// reaches here from a less-trusted source can't be used to escape the storage root.
@@ -34,23 +39,23 @@ public class FileClient(IHttpClientFactory httpClientFactory, ILogger<FileClient
     }
 
     /// <inheritdoc />
-    public async Task<byte[]> DownloadAsync(string filePath, string fileStorageBaseUrl, CancellationToken ct = default)
+    public async Task<byte[]> DownloadAsync(string filePath, CancellationToken ct = default)
     {
         // A failure is not logged here: it is thrown (naming the path) to the caller that handles
         // it, which logs it once with the path and the correlation id.
         using HttpResponseMessage response = await SendDownloadRequestAsync(
-            filePath, fileStorageBaseUrl, Activity.Current?.Id ?? "", HttpCompletionOption.ResponseContentRead, ct);
+            filePath, Activity.Current?.Id ?? "", HttpCompletionOption.ResponseContentRead, ct);
         return await response.Content.ReadAsByteArrayAsync(ct); // Return raw file bytes
     }
 
     /// <inheritdoc />
-    public async Task<Stream> OpenReadAsync(string filePath, string fileStorageBaseUrl, CancellationToken ct = default)
+    public async Task<Stream> OpenReadAsync(string filePath, CancellationToken ct = default)
     {
         // Only the headers are awaited: the body is read from the storage service as the caller
         // copies the returned stream, so the file is never held in memory here. Disposing the
         // stream releases the connection.
         HttpResponseMessage response = await SendDownloadRequestAsync(
-            filePath, fileStorageBaseUrl, Activity.Current?.Id ?? "", HttpCompletionOption.ResponseHeadersRead, ct);
+            filePath, Activity.Current?.Id ?? "", HttpCompletionOption.ResponseHeadersRead, ct);
         return await response.Content.ReadAsStreamAsync(ct);
     }
 
@@ -60,7 +65,7 @@ public class FileClient(IHttpClientFactory httpClientFactory, ILogger<FileClient
     /// <see cref="HttpRequestException"/> for a non-success answer.
     /// </summary>
     private async Task<HttpResponseMessage> SendDownloadRequestAsync(
-        string filePath, string fileStorageBaseUrl, string correlationId, HttpCompletionOption completion, CancellationToken ct)
+        string filePath, string correlationId, HttpCompletionOption completion, CancellationToken ct)
     {
         if (!IsSafeRelativePath(filePath))
             throw new ArgumentException($"Unsafe storage path: '{filePath}'.", nameof(filePath));
@@ -84,7 +89,7 @@ public class FileClient(IHttpClientFactory httpClientFactory, ILogger<FileClient
         using StringContent correlationPart = new(correlationId);
         content.Add(correlationPart, "correlationId");
 
-        using var request = new HttpRequestMessage(HttpMethod.Post, $"{fileStorageBaseUrl}/api/File/download");
+        using var request = new HttpRequestMessage(HttpMethod.Post, $"{BaseUrl}/api/File/download");
         request.Content = content;
         HttpResponseMessage response = await httpClient.SendAsync(request, completion, ct);
         if (response.IsSuccessStatusCode)
@@ -110,8 +115,8 @@ public class FileClient(IHttpClientFactory httpClientFactory, ILogger<FileClient
     }
 
     /// <inheritdoc />
-    public async Task<bool> UploadAsync(byte[]? fileData, string contentType, string filePath, string fileStorageBaseUrl, CancellationToken ct = default)
-        => await UploadWithResultAsync(fileData, contentType, filePath, fileStorageBaseUrl, ct) == FileUploadResult.Stored;
+    public async Task<bool> UploadAsync(byte[]? fileData, string contentType, string filePath, CancellationToken ct = default)
+        => await UploadWithResultAsync(fileData, contentType, filePath, ct) == FileUploadResult.Stored;
 
     /// <summary>Maps the storage service's refusal reason back to a <see cref="FileUploadResult"/>.</summary>
     private static FileUploadResult ClassifyRefusal(string reason)
@@ -124,7 +129,7 @@ public class FileClient(IHttpClientFactory httpClientFactory, ILogger<FileClient
     }
 
     /// <inheritdoc />
-    public async Task<FileUploadResult> UploadWithResultAsync(byte[]? fileData, string contentType, string filePath, string fileStorageBaseUrl, CancellationToken ct = default)
+    public async Task<FileUploadResult> UploadWithResultAsync(byte[]? fileData, string contentType, string filePath, CancellationToken ct = default)
     {
         try
         {
@@ -168,7 +173,7 @@ public class FileClient(IHttpClientFactory httpClientFactory, ILogger<FileClient
             using StringContent correlationPart = new(correlationId);
             content.Add(correlationPart, "correlationId");
 
-            using HttpResponseMessage response = await httpClient.PostAsync($"{fileStorageBaseUrl}/api/File/upload", content, ct);
+            using HttpResponseMessage response = await httpClient.PostAsync($"{BaseUrl}/api/File/upload", content, ct);
 
             // Any 2xx means the storage service accepted the file — don't treat a 201/204 as a
             // failure (which would make the caller roll back over a file that was actually stored).
@@ -210,16 +215,16 @@ public class FileClient(IHttpClientFactory httpClientFactory, ILogger<FileClient
     /// POSTs <paramref name="content"/> (plus the correlation id) to <c>api/FileManager/{action}</c> and returns the response, which the
     /// caller disposes.
     /// </summary>
-    private async Task<HttpResponseMessage> PostFileManagerAsync(string action, MultipartFormDataContent content, string fileStorageBaseUrl, CancellationToken ct)
+    private async Task<HttpResponseMessage> PostFileManagerAsync(string action, MultipartFormDataContent content, CancellationToken ct)
     {
         AddText(content, "correlationId", Activity.Current?.Id ?? "");
         // Disposed, as in SendDownloadRequestAsync; the factory's pooled handler is not disposed with it.
         using HttpClient httpClient = httpClientFactory.CreateClient();
-        return await httpClient.PostAsync($"{fileStorageBaseUrl}/api/FileManager/{action}", content, ct);
+        return await httpClient.PostAsync($"{BaseUrl}/api/FileManager/{action}", content, ct);
     }
 
     /// <inheritdoc />
-    public async Task<long?> AppendFileManagerChunkAsync(Guid uploadId, long offset, Stream chunk, string fileStorageBaseUrl, CancellationToken ct = default)
+    public async Task<long?> AppendFileManagerChunkAsync(Guid uploadId, long offset, Stream chunk, CancellationToken ct = default)
     {
         try
         {
@@ -238,7 +243,7 @@ public class FileClient(IHttpClientFactory httpClientFactory, ILogger<FileClient
                 chunkPart?.Dispose();
             }
 
-            using HttpResponseMessage response = await PostFileManagerAsync("chunk", content, fileStorageBaseUrl, ct);
+            using HttpResponseMessage response = await PostFileManagerAsync("chunk", content, ct);
             if (response.IsSuccessStatusCode && long.TryParse(await response.Content.ReadAsStringAsync(ct), System.Globalization.NumberStyles.Integer,
                     System.Globalization.CultureInfo.InvariantCulture, out long length))
                 return length;
@@ -255,7 +260,7 @@ public class FileClient(IHttpClientFactory httpClientFactory, ILogger<FileClient
     }
 
     /// <inheritdoc />
-    public async Task<FileUploadResult> CompleteFileManagerUploadAsync(Guid uploadId, long expectedSize, bool skipScan, string fileStorageBaseUrl, CancellationToken ct = default)
+    public async Task<FileUploadResult> CompleteFileManagerUploadAsync(Guid uploadId, long expectedSize, bool skipScan, CancellationToken ct = default)
     {
         try
         {
@@ -264,7 +269,7 @@ public class FileClient(IHttpClientFactory httpClientFactory, ILogger<FileClient
             AddText(content, "expectedSize", expectedSize.ToString(System.Globalization.CultureInfo.InvariantCulture));
             AddText(content, "skipScan", skipScan ? "true" : "false");
 
-            using HttpResponseMessage response = await PostFileManagerAsync("complete", content, fileStorageBaseUrl, ct);
+            using HttpResponseMessage response = await PostFileManagerAsync("complete", content, ct);
             // 202: the virus scan is queued or still running in the background; the caller asks again.
             if (response.StatusCode == System.Net.HttpStatusCode.Accepted)
                 return FileUploadResult.Scanning;
@@ -283,14 +288,14 @@ public class FileClient(IHttpClientFactory httpClientFactory, ILogger<FileClient
     }
 
     /// <inheritdoc />
-    public async Task<bool> AbortFileManagerUploadAsync(Guid uploadId, string fileStorageBaseUrl, CancellationToken ct = default)
+    public async Task<bool> AbortFileManagerUploadAsync(Guid uploadId, CancellationToken ct = default)
     {
         try
         {
             using MultipartFormDataContent content = [];
             AddText(content, "uploadId", uploadId.ToString("D"));
 
-            using HttpResponseMessage response = await PostFileManagerAsync("abort", content, fileStorageBaseUrl, ct);
+            using HttpResponseMessage response = await PostFileManagerAsync("abort", content, ct);
             if (response.IsSuccessStatusCode)
                 return true;
 
@@ -305,14 +310,14 @@ public class FileClient(IHttpClientFactory httpClientFactory, ILogger<FileClient
     }
 
     /// <inheritdoc />
-    public async Task<bool> DeleteFileManagerFileAsync(string storagePath, string fileStorageBaseUrl, CancellationToken ct = default)
+    public async Task<bool> DeleteFileManagerFileAsync(string storagePath, CancellationToken ct = default)
     {
         try
         {
             using MultipartFormDataContent content = [];
             AddText(content, "filePath", storagePath);
 
-            using HttpResponseMessage response = await PostFileManagerAsync("delete", content, fileStorageBaseUrl, ct);
+            using HttpResponseMessage response = await PostFileManagerAsync("delete", content, ct);
             if (response.IsSuccessStatusCode)
                 return true;
 

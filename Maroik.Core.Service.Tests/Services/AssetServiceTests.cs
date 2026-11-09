@@ -410,6 +410,20 @@ public class AssetServiceTests
         Assert.Single(result);
     }
 
+    /// <summary>A form offers the account's assets that are not soft-deleted, by product name.</summary>
+    [Fact]
+    public async Task GetSelectableAssetsAsync_LeavesOutDeletedAssets_AndSortsByProductName()
+    {
+        Asset gone = MakeAsset("Middle");
+        gone.SoftDelete(_now);
+        _assetRepo.Setup(r => r.GetByAccountEmailAsync("user@example.com", It.IsAny<CancellationToken>()))
+            .ReturnsAsync([MakeAsset("Zebra"), gone, MakeAsset("Apple")]);
+
+        List<AssetResponse> result = await CreateSut().GetSelectableAssetsAsync("user@example.com", TestContext.Current.CancellationToken);
+
+        Assert.Equal(["Apple", "Zebra"], result.Select(a => a.ProductName));
+    }
+
     /// <summary>Verifies that <c>GetAssetAsync</c> delegates to repository.</summary>
     [Fact]
     public async Task GetAssetAsync_DelegatesToRepository()

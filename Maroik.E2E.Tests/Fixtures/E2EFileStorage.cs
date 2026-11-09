@@ -23,22 +23,22 @@ public sealed class E2EFileStorage : IFileClient
         : throw new HttpRequestException($"File not found: {path}", null, System.Net.HttpStatusCode.NotFound);
 
     /// <inheritdoc />
-    public Task<byte[]> DownloadAsync(string filePath, string fileStorageBaseUrl, CancellationToken ct = default)
+    public Task<byte[]> DownloadAsync(string filePath, CancellationToken ct = default)
         => Task.FromResult(Read(filePath));
 
     /// <inheritdoc />
-    public Task<Stream> OpenReadAsync(string filePath, string fileStorageBaseUrl, CancellationToken ct = default)
+    public Task<Stream> OpenReadAsync(string filePath, CancellationToken ct = default)
         => Task.FromResult<Stream>(new MemoryStream(Read(filePath), writable: false));
 
     /// <inheritdoc />
-    public Task<bool> UploadAsync(byte[] fileData, string contentType, string filePath, string fileStorageBaseUrl, CancellationToken ct = default)
+    public Task<bool> UploadAsync(byte[] fileData, string contentType, string filePath, CancellationToken ct = default)
     {
         Seed(filePath, fileData);
         return Task.FromResult(true);
     }
 
     /// <inheritdoc />
-    public Task<FileUploadResult> UploadWithResultAsync(byte[] fileData, string contentType, string filePath, string fileStorageBaseUrl, CancellationToken ct = default)
+    public Task<FileUploadResult> UploadWithResultAsync(byte[] fileData, string contentType, string filePath, CancellationToken ct = default)
     {
         Seed(filePath, fileData);
         return Task.FromResult(FileUploadResult.Stored);
@@ -66,7 +66,7 @@ public sealed class E2EFileStorage : IFileClient
     public byte[]? BytesOf(string path) => _files.TryGetValue(path.TrimStart('/'), out byte[]? bytes) ? bytes : null;
 
     /// <inheritdoc />
-    public async Task<long?> AppendFileManagerChunkAsync(Guid uploadId, long offset, Stream chunk, string fileStorageBaseUrl, CancellationToken ct = default)
+    public async Task<long?> AppendFileManagerChunkAsync(Guid uploadId, long offset, Stream chunk, CancellationToken ct = default)
     {
         byte[] received = _staging.GetValueOrDefault(uploadId, []);
         if (offset != received.Length) return null;
@@ -77,7 +77,7 @@ public sealed class E2EFileStorage : IFileClient
     }
 
     /// <inheritdoc />
-    public Task<FileUploadResult> CompleteFileManagerUploadAsync(Guid uploadId, long expectedSize, bool skipScan, string fileStorageBaseUrl, CancellationToken ct = default)
+    public Task<FileUploadResult> CompleteFileManagerUploadAsync(Guid uploadId, long expectedSize, bool skipScan, CancellationToken ct = default)
     {
         // The account's virus scan is off: the whole file is stored at once, whatever a scan would say.
         if (skipScan)
@@ -103,13 +103,13 @@ public sealed class E2EFileStorage : IFileClient
     }
 
     /// <inheritdoc />
-    public Task<bool> AbortFileManagerUploadAsync(Guid uploadId, string fileStorageBaseUrl, CancellationToken ct = default)
+    public Task<bool> AbortFileManagerUploadAsync(Guid uploadId, CancellationToken ct = default)
     {
         _staging.TryRemove(uploadId, out _);
         return Task.FromResult(true);
     }
 
     /// <inheritdoc />
-    public Task<bool> DeleteFileManagerFileAsync(string storagePath, string fileStorageBaseUrl, CancellationToken ct = default)
+    public Task<bool> DeleteFileManagerFileAsync(string storagePath, CancellationToken ct = default)
         => Task.FromResult(_files.TryRemove(storagePath.TrimStart('/'), out _));
 }

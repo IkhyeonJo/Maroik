@@ -1,11 +1,9 @@
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Enums;
 using Maroik.Core.Contract.Interfaces;
-using Maroik.Core.Contract.Settings;
 using Maroik.Core.Domain.Accounts;
 using Maroik.Core.Domain.FileManagers;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 
 namespace Maroik.Core.Service.Services;
 
@@ -27,12 +25,9 @@ public class FileManagerService(
     IAccountRepository accountRepository,
     IUnitOfWork unitOfWork,
     IFileClient fileClient,
-    IOptions<ServerSetting> settings,
     ILogger<FileManagerService> logger,
     TimeProvider timeProvider) : IFileManagerService
 {
-    /// <summary>The base URL of the file-storage service.</summary>
-    private string BaseUrl => settings.Value.FileStorageBaseUrl ?? "";
 
     /// <summary>The current UTC time.</summary>
     private DateTime UtcNow => timeProvider.GetUtcNow().UtcDateTime;
@@ -95,12 +90,12 @@ public class FileManagerService(
     {
         if (file.Uploading)
         {
-            if (file.StorageId is { } uploadId && !await fileClient.AbortFileManagerUploadAsync(uploadId, BaseUrl, ct))
+            if (file.StorageId is { } uploadId && !await fileClient.AbortFileManagerUploadAsync(uploadId, ct))
                 logger.LogWarning("File Manager: unfinished upload {UploadId} of {Email} could not be aborted", uploadId, accountEmail);
             return;
         }
 
-        if (file.StoragePath is { } path && !await fileClient.DeleteFileManagerFileAsync(path, BaseUrl, ct))
+        if (file.StoragePath is { } path && !await fileClient.DeleteFileManagerFileAsync(path, ct))
             logger.LogWarning("File Manager: stored file {FilePath} of {Email} could not be deleted; left as an orphan", path, accountEmail);
     }
 
@@ -439,7 +434,7 @@ public class FileManagerService(
         if (offset < 0 || offset > upload.Size - chunkLength)
             return (ServiceResult.Validation("FileManager.ChunkInvalid", ServiceErrorKeys.InputInvalid), 0);
 
-        long? length = await fileClient.AppendFileManagerChunkAsync(uploadId, offset, chunk, BaseUrl, ct);
+        long? length = await fileClient.AppendFileManagerChunkAsync(uploadId, offset, chunk, ct);
         if (length is { } received)
         {
             // A stored chunk keeps the upload alive, however long the whole upload takes.
@@ -462,7 +457,7 @@ public class FileManagerService(
 
         // Read when the upload completes, so an administrator's change made while it was sent is the one that counts.
         bool scanDisabled = (await accountRepository.FindByEmailAsync(accountEmail, ct))?.FileManagerScanDisabled == true;
-        FileUploadResult outcome = await fileClient.CompleteFileManagerUploadAsync(uploadId, upload.Size, scanDisabled, BaseUrl, ct);
+        FileUploadResult outcome = await fileClient.CompleteFileManagerUploadAsync(uploadId, upload.Size, scanDisabled, ct);
         // Still scanning in the background: nothing is decided, the reservation stays, and the page's poll keeps the upload alive.
         if (outcome == FileUploadResult.Scanning)
         {
@@ -473,7 +468,7 @@ public class FileManagerService(
         // A failure (a timeout, a lost answer) is not a refusal: file storage may still hold the staging file, a queued scan or the stored
         // file. It is aborted first; when the abort fails too, the row stays uploading, so the worker's hourly sweep aborts it once idle —
         // without the row no sweep could find the file.
-        if (outcome == FileUploadResult.Failed && !await fileClient.AbortFileManagerUploadAsync(uploadId, BaseUrl, ct))
+        if (outcome == FileUploadResult.Failed && !await fileClient.AbortFileManagerUploadAsync(uploadId, ct))
         {
             logger.LogWarning("File Manager: upload {UploadId} of {Email} could not be completed or aborted; left for the hourly sweep", uploadId, accountEmail);
             return (Temporary(), FileManagerCompletion.Decided);
@@ -563,7 +558,7 @@ public class FileManagerService(
         }
 
         // After the commit: drop the file nobody keeps, or the one an overwrite replaced.
-        if (discarded != null && !await fileClient.DeleteFileManagerFileAsync(StoragePathOf(uploadId), BaseUrl, ct))
+        if (discarded != null && !await fileClient.DeleteFileManagerFileAsync(StoragePathOf(uploadId), ct))
             logger.LogWarning("File Manager: stored file {FilePath} of {Email} could not be deleted; left as an orphan", StoragePathOf(uploadId), accountEmail);
         if (replaced != null)
         {
@@ -643,7 +638,7 @@ public class FileManagerService(
 
         try
         {
-            Stream content = await fileClient.OpenReadAsync(path, BaseUrl, ct);
+            Stream content = await fileClient.OpenReadAsync(path, ct);
             return (ServiceResult.Ok(), new AttachmentDownload(content, file.Name));
         }
         catch (Exception e)
@@ -666,7 +661,7 @@ public class FileManagerService(
         byte[] bytes;
         try
         {
-            bytes = await fileClient.DownloadAsync(path, BaseUrl, ct);
+            bytes = await fileClient.DownloadAsync(path, ct);
         }
         catch (Exception e)
         {

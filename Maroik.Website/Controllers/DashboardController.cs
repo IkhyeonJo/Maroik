@@ -22,12 +22,6 @@ public class DashboardController(
     ILogger<DashboardController> logger,
     TimeProvider timeProvider) : Controller
 {
-    /// <summary>Host CPU / memory / disk report written by the host's resource-monitoring cron job (mounted into the container).</summary>
-    private const string HostResourceFilePath = "/app/Maroik.Log/HostResourceInfo.txt";
-
-    /// <summary>Per-container <c>docker stats</c> report written by the same cron job.</summary>
-    private const string DockerResourceFilePath = "/app/Maroik.Log/DockerResourceInfo.txt";
-
     #region Language change
     /// <summary>Sets the UI culture cookie to the requested locale.</summary>
     [HttpPost]
@@ -59,7 +53,7 @@ public class DashboardController(
     [HttpGet]
     public IActionResult AdminIndex()
     {
-        var resource = dashboardService.GetServerResourceSummary(HostResourceFilePath, DockerResourceFilePath);
+        var resource = dashboardService.GetServerResourceSummary();
 
         ViewBag.HostCpuNumeric = resource.HostCpuNumeric;
         ViewBag.HostCpuInfo = resource.HostCpuInfo;

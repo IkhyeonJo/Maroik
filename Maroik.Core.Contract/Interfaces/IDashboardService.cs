@@ -25,8 +25,8 @@ public interface IDashboardService
     Task<NotificationDto> GetNoticeCountsAsync(string email, int noticeMaturityDateDay, string timeZoneId, CancellationToken ct = default);
 
     /// <summary>
-    /// Reads the host and Docker resource log files and returns the parsed metrics
+    /// Reads the host and Docker resource reports (<see cref="IServerResourceReportClient"/>) and returns the parsed metrics
     /// used by the admin dashboard.
     /// </summary>
-    ServerResourceDto GetServerResourceSummary(string hostResourceFilePath, string dockerResourceFilePath);
+    ServerResourceDto GetServerResourceSummary();
 }

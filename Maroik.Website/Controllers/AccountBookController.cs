@@ -107,8 +107,7 @@ public class AccountBookController(
             FinanceRules = financePolicy.GetFinanceFormRules(),
             Assets =
             [
-                .. (await assetService.GetAssetsAsync(pageAccount.RequireEmail(), ct))
-                .Where(x => !x.Deleted).OrderBy(x => x.ProductName)
+                .. (await assetService.GetSelectableAssetsAsync(pageAccount.RequireEmail(), ct))
             ]
         };
         vm.PopulateTimeData(timeZones, tz, timeProvider.GetUtcNow().UtcDateTime);
@@ -293,8 +292,7 @@ public class AccountBookController(
             FinanceRules = financePolicy.GetFinanceFormRules(),
             Assets =
             [
-                .. (await assetService.GetAssetsAsync(pageAccount.RequireEmail(), ct))
-                .Where(x => !x.Deleted).OrderBy(x => x.ProductName)
+                .. (await assetService.GetSelectableAssetsAsync(pageAccount.RequireEmail(), ct))
             ]
         };
         vm.PopulateTimeData(timeZones, tz, timeProvider.GetUtcNow().UtcDateTime);
@@ -511,8 +509,7 @@ public class AccountBookController(
             FinanceRules = financePolicy.GetFinanceFormRules(),
             Assets =
             [
-                .. (await assetService.GetAssetsAsync(pageAccount.RequireEmail(), ct))
-                .Where(x => !x.Deleted).OrderBy(x => x.ProductName)
+                .. (await assetService.GetSelectableAssetsAsync(pageAccount.RequireEmail(), ct))
             ]
         };
         vm.PopulateTimeData(timeZones, tz, timeProvider.GetUtcNow().UtcDateTime);
