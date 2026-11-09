@@ -156,6 +156,40 @@ public class AttachmentContentServiceTests
             It.IsAny<byte[]>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
+    /// <summary>An empty image, or one past the limit, is refused with the size message and its limit, is logged, and is never stored.</summary>
+    [Theory]
+    [InlineData(0)]
+    [InlineData(1025)]
+    public async Task UploadSummernoteImageAsync_RefusesASizeOutsideTheLimit(int size)
+    {
+        var settings = Options.Create(new ServerSetting { MaxAttachedFileSizeBytes = 1024 });
+        var sut = new AttachmentContentService(_fileClient.Object, _dataProtection.Object, _imageValidator.Object, _htmlSanitizer.Object, _htmlParser.Object, settings, _logger);
+        var file = new AttachedFileDto { Bytes = new byte[size], ContentType = "image/png", FileName = "x.png" };
+
+        var result = await sut.UploadSummernoteImageAsync(file, "board", "post", "uploader@test.com", TestContext.Current.CancellationToken);
+
+        Assert.False(result.Success);
+        Assert.Equal(ServiceErrorKeys.FileTooLarge, result.ErrorKey);
+        Assert.Equal([0L], result.ErrorArgs);
+        Assert.Contains(_logger.Collector.GetSnapshot(), r => r.Level == LogLevel.Warning && r.Message.Contains("uploader@test.com", StringComparison.Ordinal));
+        _imageValidator.Verify(v => v.IsValidImage(It.IsAny<byte[]>()), Times.Never);
+        _fileClient.Verify(f => f.UploadAsync(
+            It.IsAny<byte[]>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    /// <summary>An image exactly at the limit passes the size check.</summary>
+    [Fact]
+    public async Task UploadSummernoteImageAsync_AcceptsAnImageAtTheLimit()
+    {
+        _imageValidator.Setup(v => v.IsValidImage(It.IsAny<byte[]>())).Returns(true);
+        _fileClient.Setup(f => f.UploadAsync(It.IsAny<byte[]>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(true);
+        var file = new AttachedFileDto { Bytes = new byte[1024], ContentType = "image/png", FileName = "x.png" };
+
+        var result = await CreateSut().UploadSummernoteImageAsync(file, "board", "post", "uploader@test.com", TestContext.Current.CancellationToken);
+
+        Assert.True(result.Success);
+    }
+
     /// <summary>A file whose extension / content type is outside the jpg-png allow-list is rejected before the decode check.</summary>
     [Theory]
     [InlineData("photo.gif", "image/gif")]

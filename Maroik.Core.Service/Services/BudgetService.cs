@@ -37,9 +37,6 @@ public class BudgetService(
     ILogger<BudgetService> logger,
     TimeProvider timeProvider) : IBudgetService
 {
-    /// <summary>The most sheets one workbook loads (a formula naming more sheets reads #REF! for the rest).</summary>
-    private const int MaxSheets = 60;
-
     /// <summary>The current UTC time.</summary>
     private DateTime UtcNow => timeProvider.GetUtcNow().UtcDateTime;
 
@@ -57,12 +54,7 @@ public class BudgetService(
 
         // The year the dashboard pins for this account (see DashboardService.GetSummaryAsync), so a visitor finds the
         // pre-seeded sample budgets on the first screen whenever they browse the demo.
-        if (string.IsNullOrEmpty(server.DemoAccountEmail) || accountEmail != server.DemoAccountEmail) return null;
-
-        return int.TryParse(server.DemoDashboardYear, System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture, out int year)
-               && year is >= 1 and <= 9999
-            ? year
-            : null;
+        return DemoAccountPolicy.IsDemoAccount(server.DemoAccountEmail, accountEmail) ? DemoAccountPolicy.YearOf(server.DemoDashboardYear) : null;
     }
 
     /// <inheritdoc />
@@ -297,7 +289,7 @@ public class BudgetService(
 
     /// <summary>
     /// The account's workbook for the sheet asked for: every stored sheet, the sheet itself and last year's, and every sheet a stored
-    /// input or <paramref name="typed"/> names (at most <see cref="MaxSheets"/>), with the actual records of their years.
+    /// input or <paramref name="typed"/> names (at most <see cref="BudgetWorkbook.MaxSheetsLoaded"/>), with the actual records of their years.
     /// </summary>
     private async Task<BudgetWorkbook> LoadAsync(string accountEmail, BudgetKind kind, int year, string timeZoneIanaId, IReadOnlyList<string> typed, CancellationToken ct)
     {
@@ -306,16 +298,12 @@ public class BudgetService(
         List<BudgetSheetLine> lines = ids.Count == 0 ? [] : await lineRepository.GetBySheetIdsAsync(ids, ct);
         List<BudgetSheetCell> cells = ids.Count == 0 ? [] : await cellRepository.GetBySheetIdsAsync(ids, ct);
 
-        List<(BudgetKind Kind, int Year)> wanted = [(kind, year), (kind, year - 1), .. stored.Select(s => (s.Kind, s.Year))];
-        foreach (BudgetSheet sheet in stored)
-            foreach (BudgetSheetCell cell in cells.Where(c => c.SheetId == sheet.Id))
-                wanted.AddRange(BudgetWorkbook.SheetsReferencedBy(cell.Input, sheet.Year));
-        foreach (string input in typed)
-            wanted.AddRange(BudgetWorkbook.SheetsReferencedBy(input, year));
+        IEnumerable<(string Input, int HomeYear)> storedInputs =
+            stored.SelectMany(sheet => cells.Where(c => c.SheetId == sheet.Id).Select(c => (c.Input, sheet.Year)));
 
         string? currency = await DefaultCurrencyAsync(accountEmail, ct);
         List<BudgetSheetData> data = [];
-        foreach (var (k, y) in wanted.Where(w => w.Year is >= BudgetSheet.MinYear and <= BudgetSheet.MaxYear).Distinct().Take(MaxSheets))
+        foreach (var (k, y) in BudgetWorkbook.SheetsToLoad(kind, year, stored.Select(s => (s.Kind, s.Year)), storedInputs, typed))
         {
             BudgetSheet? sheet = stored.FirstOrDefault(s => s.Kind == k && s.Year == y);
             data.Add(sheet is null

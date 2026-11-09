@@ -11,9 +11,6 @@ public interface IAccountPolicyService
     /// <summary>Why a session no longer holds, or null while it does. <paramref name="current"/> is the account as stored now.</summary>
     string? GetSessionInvalidationReason(AccountResponse? current, AccountResponse session);
 
-    /// <summary>The message a freshly created account carries.</summary>
-    string GetAccountCreatedMessage();
-
     /// <summary>Whether the viewer sees local times rather than raw UTC.</summary>
     bool SeesLocalTime(AccountResponse viewer);
 

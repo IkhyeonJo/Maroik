@@ -471,7 +471,7 @@
                             <div class="form-group col-md-12 mb-3">
                                 <label for="createCalendarEventAttachment">@Localizer["Attachment (Only zip extension allowed.)"].Value</label>
                                 <br />
-                                <input type="file" id="createCalendarEventAttachment" name="createCalendarEventAttachment" accept=".zip" data-errorMessage="@Localizer["File size must be smaller than {0}MB.", maxAttachedFileSizeBytes.ToMegabytesLabel()]">
+                                <input type="file" id="createCalendarEventAttachment" name="createCalendarEventAttachment" accept="@PolicyLimits.AttachmentAccept" data-errorMessage="@Localizer["File size must be smaller than {0}MB.", maxAttachedFileSizeBytes.ToMegabytesLabel()]">
                             </div>
                         </div>
 
@@ -490,8 +490,8 @@
                                 <label for="createCalendarEventStatus">@Localizer["Status"].Value</label>
                                 <br />
                                 <select id="createCalendarEventStatus" name="createCalendarEventStatus" class="form-control form-control-sm" style="max-width:100%;text-overflow:ellipsis;">
-                                    <option value="Busy" selected>@Localizer["Busy"].Value</option>
-                                    <option value="Free">@Localizer["Free"].Value</option>
+                                    <option value="@CalendarKinds.Busy" selected>@Localizer["Busy"].Value</option>
+                                    <option value="@CalendarKinds.Free">@Localizer["Free"].Value</option>
                                 </select>
                             </div>
                         </div>
@@ -673,7 +673,7 @@
                             <div class="form-group col-md-12 mb-3">
                                 <label for="editCalendarEventAttachment">@Localizer["Attachment (Only zip extension allowed.)"].Value</label>
                                 <br />
-                                <input type="file" id="editCalendarEventAttachment" name="editCalendarEventAttachment" accept=".zip" data-errorMessage="@Localizer["File size must be smaller than {0}MB.", maxAttachedFileSizeBytes.ToMegabytesLabel()]">
+                                <input type="file" id="editCalendarEventAttachment" name="editCalendarEventAttachment" accept="@PolicyLimits.AttachmentAccept" data-errorMessage="@Localizer["File size must be smaller than {0}MB.", maxAttachedFileSizeBytes.ToMegabytesLabel()]">
                             </div>
                         </div>
 
@@ -687,8 +687,8 @@
                                 <label for="editCalendarEventStatus">@Localizer["Status"].Value</label>
                                 <br />
                                 <select id="editCalendarEventStatus" name="editCalendarEventStatus" class="form-control form-control-sm" style="max-width:100%;text-overflow:ellipsis;">
-                                    <option value="Busy" selected>@Localizer["Busy"].Value</option>
-                                    <option value="Free">@Localizer["Free"].Value</option>
+                                    <option value="@CalendarKinds.Busy" selected>@Localizer["Busy"].Value</option>
+                                    <option value="@CalendarKinds.Free">@Localizer["Free"].Value</option>
                                 </select>
                             </div>
                         </div>

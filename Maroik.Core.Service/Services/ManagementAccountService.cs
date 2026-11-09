@@ -4,6 +4,8 @@ using Maroik.Core.Contract.Enums;
 using Maroik.Core.Contract.Exceptions;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Domain.Accounts;
+using Maroik.Core.Contract.Extensions;
+using Maroik.Core.Domain.ValueObjects;
 using Maroik.Core.Service.Mappers;
 using Microsoft.Extensions.Logging;
 
@@ -75,20 +77,19 @@ public class ManagementAccountService(
                 hashedPassword,
                 nickname,
                 roleResult.Value,
-                request.TimeZoneIanaId ?? "UTC",
+                request.TimeZoneIanaId ?? TimeZoneId.Default,
                 defaultMonetaryUnit: null,
                 registrationToken: null,
-                request.AgreedServiceTerms, utcNow,
+                agreedServiceTerms: true, utcNow,
                 allowReservedNickname: true);
 
             if (createResult.IsError)
                 return ServiceResult.FromError(createResult.FirstError);
 
             var account = createResult.Value;
-            account.SetMessage(request.Message, utcNow);
-
-            if (request.EmailConfirmed)
-                account.ForceConfirmEmail(utcNow);
+            // The administrator vouches for the account: it needs neither the mailed confirmation nor the consent page.
+            account.SetMessage(AccountMessage.Success.GetDescription(), utcNow);
+            account.ForceConfirmEmail(utcNow);
 
             try
             {
@@ -170,7 +171,9 @@ public class ManagementAccountService(
                 }
             }
 
-            var updateResult = ApplyAdminChanges(account, request, utcNow);
+            var updateResult = account.ApplyAdminChanges(new AdminAccountChanges(
+                request.TimeZoneIanaId, request.FileManagerQuotaBytes, request.FileManagerScanDisabled, request.Role,
+                request.Locked, request.EmailConfirmed, request.AgreedServiceTerms, request.Deleted, request.Message), utcNow);
             if (updateResult.IsError)
             {
                 await unitOfWork.RollbackAsync(ct);
@@ -199,68 +202,6 @@ public class ManagementAccountService(
             await unitOfWork.RollbackAsync(ct);
             return ServiceResult.Failure("ManagementAccount.UpdateFailed", ServiceResult.TemporaryErrorKey);
         }
-    }
-
-    /// <summary>
-    /// Turns the admin form's desired state into the account's own operations. A null role or time
-    /// zone keeps the current value. Saving an account as unlocked always clears its failed-login
-    /// counter (<see cref="Account.Unlock"/>); locking keeps the counter. The admin's message is
-    /// applied last so it is what the account ends up showing, whatever lock/unlock wrote.
-    /// </summary>
-    private static ErrorOr<Success> ApplyAdminChanges(Account account, AdminUpdateAccountRequest request, DateTime utcNow)
-    {
-        if (request.TimeZoneIanaId != null)
-        {
-            var tzResult = account.ChangeTimeZone(request.TimeZoneIanaId, utcNow);
-            if (tzResult.IsError) return tzResult.Errors;
-        }
-
-        if (request.FileManagerQuotaBytes is { } quota)
-        {
-            var quotaResult = account.ChangeFileManagerQuota(quota, utcNow);
-            if (quotaResult.IsError) return quotaResult.Errors;
-        }
-
-        if (request.FileManagerScanDisabled is { } scanDisabled)
-            account.ChangeFileManagerScanDisabled(scanDisabled, utcNow);
-
-        if (request.Role != null)
-        {
-            var roleResult = AccountRole.Create(request.Role);
-            if (roleResult.IsError) return roleResult.Errors;
-            account.ChangeRole(roleResult.Value, utcNow);
-        }
-
-        switch (request.Locked)
-        {
-            // Locking an unlocked account is the admin's sanction and ends its sessions; re-saving an account that is
-            // already locked (e.g. by failed logins) keeps them, as that lock only refuses new logins.
-            case true when account.Locked:
-                account.Lock(utcNow);
-                break;
-            case true:
-                account.LockAndEndSessions(utcNow);
-                break;
-            default:
-                account.Unlock(utcNow);
-                break;
-        }
-
-        // One way only: an unconfirmed registration can be replaced by anyone who knows the address, so a confirmation is never taken back.
-        if (request.EmailConfirmed)
-            account.ForceConfirmEmail(utcNow);
-
-        // One way only, like the confirmation (owner's decision, 2026-11-08): an agreement to the terms is never taken back.
-        if (request.AgreedServiceTerms)
-            account.AcceptServiceTerms(utcNow);
-
-        if (request.Deleted)
-            account.SoftDelete(utcNow);
-        else
-            account.Restore(utcNow);
-
-        account.SetMessage(request.Message, utcNow);
-        return Result.Success;
     }
 
     /// <summary>

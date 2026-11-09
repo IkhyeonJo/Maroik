@@ -182,7 +182,13 @@ public sealed class Board : AggregateRoot<long>
     /// </summary>
     public ErrorOr<Success> AddComment(BoardComment comment, DateTime utcNow, string? commenterNickname = null, bool isAdmin = false)
     {
-        if (Locked && !((commenterNickname != null && IsOwnedBy(commenterNickname)) || isAdmin))
+        bool commenterIsOwner = commenterNickname != null && IsOwnedBy(commenterNickname);
+
+        // A private note is its author's alone, with no admin bypass (see CanBeViewedBy).
+        if (IsPrivateNote && !commenterIsOwner)
+            return DomainError.Conflict("Board.PrivateNoteComment", "Only its author can comment on a private note.");
+
+        if (Locked && !(commenterIsOwner || isAdmin))
             return DomainError.Conflict("Board.Locked", "Cannot add a comment to a locked post.");
 
         if (Deleted)
@@ -237,9 +243,27 @@ public sealed class Board : AggregateRoot<long>
         Updated = utcNow;
     }
 
-    /// <summary>Pins the post at the top of the list as a notice.</summary>
-    public void Pin(DateTime utcNow)
+    /// <summary>Whether this requester may pin a post site-wide: pinning is an administrator's action.</summary>
+    public static bool CanBePinnedBy(bool requesterIsAdmin) => requesterIsAdmin;
+
+    /// <summary>How many posts a board's list page shows.</summary>
+    public const int ListPageSize = 5;
+
+    /// <summary>The list page to show for a requested one: there is no page before the first.</summary>
+    public static int ListPageOf(int requestedPage) => Math.Max(requestedPage, 1);
+
+    /// <summary>Whether the edit page opens for a viewer: for the author of a post that still exists, with no administrator bypass.</summary>
+    public static bool EditPageOpensFor(bool deleted, string? writer, string? viewerNickname) => !deleted && IsOwnedBy(writer, viewerNickname);
+
+    /// <summary>
+    /// Pins the post at the top of the list as a notice when the requester may (<see cref="CanBePinnedBy"/>). Anyone else's request
+    /// is ignored, not refused: the post itself is still written, just not pinned.
+    /// </summary>
+    public void PinBy(bool requesterIsAdmin, DateTime utcNow)
     {
+        if (!CanBePinnedBy(requesterIsAdmin))
+            return;
+
         Noticed = true;
         Updated = utcNow;
     }
@@ -290,7 +314,7 @@ public sealed class Board : AggregateRoot<long>
         if (deleted)
             return false;
 
-        bool isOwner = viewerNickname != null && string.Equals(writer, viewerNickname, StringComparison.Ordinal);
+        bool isOwner = IsOwnedBy(writer, viewerNickname);
 
         return string.Equals(type, BoardTypes.PrivateNote, StringComparison.Ordinal)
             ? isOwner
@@ -314,6 +338,23 @@ public sealed class Board : AggregateRoot<long>
             _ => BoardSearchVisibility.Unsearched
         };
     }
+
+    /// <summary>
+    /// Field-level "the writer or any admin" comparison, for callers that hold only a projection of a post or a comment. It knows no
+    /// board type: <see cref="CanBeDeletedBy"/> and <see cref="CanCommentBeDeletedBy"/> narrow it for a private note.
+    /// </summary>
+    public static bool IsOwnedByOrAdmin(string? writer, string? viewerNickname, bool viewerIsAdmin) =>
+        IsOwnedBy(writer, viewerNickname) || viewerIsAdmin;
+
+    /// <summary>Whether a viewer may comment at all: anyone signed in; a visitor sees the sign-in hint.</summary>
+    public static bool AcceptsCommentsFrom(string? viewerRole) => !string.IsNullOrEmpty(viewerRole) && viewerRole != Role.Anonymous;
+
+    /// <summary>
+    /// Returns true when <paramref name="nickname"/> may delete <paramref name="comment"/> on this post: its writer or any admin,
+    /// except on a private note, which has no admin bypass (see <see cref="CanBeDeletedBy"/>).
+    /// </summary>
+    public bool CanCommentBeDeletedBy(BoardComment comment, string nickname, bool isAdmin) =>
+        comment.CanBeDeletedBy(nickname, isAdmin && !IsPrivateNote);
 
     /// <summary>Returns true when <paramref name="nickname"/> may edit this post (owner only, no admin bypass).</summary>
     public bool CanBeEditedBy(string nickname) => IsOwnedBy(nickname);

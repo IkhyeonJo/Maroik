@@ -29,7 +29,7 @@ public class SubCategoryRepository(ApplicationDbContext context)
         DisplayName = s.DisplayName ?? "",
         IconPath = s.IconPath ?? "",
         Action = s.Action ?? "",
-        Role = s.Role ?? "Admin",
+        Role = s.RoleToStore,
         Order = s.Order
     };
 

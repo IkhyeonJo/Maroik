@@ -2,12 +2,14 @@ using System.Diagnostics;
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Enums;
 using Maroik.Core.Contract.Interfaces;
+using Maroik.Core.Contract.Settings;
 using Maroik.Core.Domain.Accounts;
 using Maroik.Core.Domain.Finances;
 using Maroik.Core.Domain.Uploads;
 using Maroik.Core.Domain.ValueObjects;
 using Maroik.Core.Service.Mappers;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace Maroik.Core.Service.Services;
 
@@ -24,12 +26,13 @@ public class ProfileService(
     IPasswordService passwordService,
     IFileClient fileClient,
     IImageValidatorService imageValidator,
+    IOptions<ServerSetting> settings,
     IUnitOfWork unitOfWork,
     ILogger<ProfileService> logger,
     TimeProvider timeProvider) : IProfileService
 {
     /// <summary>Relative storage directory (under the file-storage root) that holds uploaded avatars.</summary>
-    private const string AvatarStorageDirectory = "upload/Management/Profile/Avatar";
+    private const string AvatarStorageDirectory = AttachmentStoragePaths.AvatarDirectory;
 
     /// <inheritdoc />
     public async Task<AccountResponse?> GetProfileAsync(string email, CancellationToken ct = default)
@@ -162,6 +165,14 @@ public class ProfileService(
             {
                 logger.LogWarning("Avatar upload refused: extension not allowed ({Extension}) for {Email}", extension, email);
                 return ServiceResult.Validation("Profile.InvalidImage", ServiceErrorKeys.Signals.InvalidImage);
+            }
+
+            // Re-asserted here, like the allow-list above: the controller checks first so a large body is never read into memory.
+            long maxBytes = settings.Value.MaxAttachedFileSizeBytes;
+            if (!ImageUploadPolicy.IsValidSize(imageBytes.Length, maxBytes))
+            {
+                logger.LogWarning("Avatar upload refused: size {Size} bytes is outside the {MaxBytes}-byte limit for {Email}", imageBytes.Length, maxBytes, email);
+                return ServiceResult.Validation("Profile.ImageSizeInvalid", ServiceErrorKeys.FileTooLarge, maxBytes / (1024 * 1024));
             }
 
             // SVG first: IsValidImage only accepts JPEG/PNG, so an SVG would otherwise be reported as a

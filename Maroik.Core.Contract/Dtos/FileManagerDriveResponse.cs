@@ -9,6 +9,9 @@ public class FileManagerDriveResponse
     /// <summary>The account's quota in bytes.</summary>
     public long QuotaBytes { get; set; }
 
+    /// <summary>How full the drive is, 0 to 100.</summary>
+    public int UsedPercent { get; set; }
+
     /// <summary>The number of finished items directly at the root ("My Drive").</summary>
     public int RootItemCount { get; set; }
 

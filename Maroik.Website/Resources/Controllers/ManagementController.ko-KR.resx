@@ -543,4 +543,7 @@
   <data name="FileManagerScanDisabled" xml:space="preserve">
     <value>바이러스 검사 끔</value>
   </data>
+  <data name="Only its author can comment on a private note." xml:space="preserve">
+    <value>개인 노트에는 작성자만 댓글을 달 수 있습니다.</value>
+  </data>
 </root>

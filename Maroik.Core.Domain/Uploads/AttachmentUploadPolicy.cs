@@ -8,8 +8,11 @@ namespace Maroik.Core.Domain.Uploads;
 /// </summary>
 public static class AttachmentUploadPolicy
 {
+    /// <summary>The one accepted file extension, lower-case, dot-prefixed.</summary>
+    public const string AcceptedExtension = ".zip";
+
     /// <summary>Accepted file extensions, lower-case, dot-prefixed.</summary>
-    public static readonly IReadOnlyList<string> AllowedExtensions = [".zip"];
+    public static readonly IReadOnlyList<string> AllowedExtensions = [AcceptedExtension];
 
     /// <summary>Whether <paramref name="extension"/> (case-insensitive) is an accepted attachment extension.</summary>
     public static bool IsAllowedExtension(string? extension)

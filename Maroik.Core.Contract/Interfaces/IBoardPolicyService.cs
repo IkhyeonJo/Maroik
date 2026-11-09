@@ -11,6 +11,18 @@ public interface IBoardPolicyService
     /// <summary>Whether the viewer wrote the content or is an administrator.</summary>
     bool IsContentOwnerOrAdmin(AccountResponse viewer, string? contentWriter);
 
+    /// <summary>Whether the write form offers the viewer the option to pin the post as a notice.</summary>
+    bool CanPostNotice(AccountResponse viewer);
+
+    /// <summary>Whether the detail panel offers the viewer the comment form.</summary>
+    bool CanWriteComment(AccountResponse viewer);
+
+    /// <summary>The list page to show for a requested one.</summary>
+    int NormalizeListPage(int requestedPage);
+
+    /// <summary>Whether the edit page opens for the viewer.</summary>
+    bool CanOpenEditPage(BoardResponse board, AccountResponse viewer);
+
     /// <summary>Whether a post's title may be shown to the viewer, an administrator seeing it too.</summary>
     bool IsTitleVisibleToOwnerOrAdmin(BoardResponse board, AccountResponse viewer);
 

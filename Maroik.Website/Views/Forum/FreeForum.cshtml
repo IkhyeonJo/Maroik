@@ -63,7 +63,7 @@
                         </div>
 
                         <div class="form-group">
-                            <input type="file" id="writeUploadedFile" name="writeUploadedFile" accept=".zip" data-errorMessage="@Localizer["File size must be smaller than {0}MB.", maxAttachedFileSizeBytes.ToMegabytesLabel()]">
+                            <input type="file" id="writeUploadedFile" name="writeUploadedFile" accept="@PolicyLimits.AttachmentAccept" data-errorMessage="@Localizer["File size must be smaller than {0}MB.", maxAttachedFileSizeBytes.ToMegabytesLabel()]">
                             <p class="help-block">@Localizer["Only zip extension allowed."].Value</p>
                         </div>
 
@@ -262,7 +262,7 @@
                         </div>
 
                         <div class="form-group">
-                            <input type="file" id="editUploadedFile" name="editUploadedFile" accept=".zip" data-errorMessage="@Localizer["File size must be smaller than {0}MB.", maxAttachedFileSizeBytes.ToMegabytesLabel()]">
+                            <input type="file" id="editUploadedFile" name="editUploadedFile" accept="@PolicyLimits.AttachmentAccept" data-errorMessage="@Localizer["File size must be smaller than {0}MB.", maxAttachedFileSizeBytes.ToMegabytesLabel()]">
                             <p class="help-block">@Localizer["Only zip extension allowed."].Value</p>
                         </div>
 

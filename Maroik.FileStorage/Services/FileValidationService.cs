@@ -2,6 +2,7 @@ using ICSharpCode.SharpZipLib.Zip;
 using Maroik.Core.Contract.Enums;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Contract.Messages;
+using Maroik.Core.Domain.Uploads;
 using Maroik.FileStorage.Helpers;
 using Maroik.FileStorage.Interfaces;
 using Maroik.FileStorage.Settings;
@@ -16,8 +17,8 @@ namespace Maroik.FileStorage.Services;
 /// </summary>
 public class FileValidationService(IClamavClient clamavClient, IOptions<FileStorageSetting> settings) : IFileValidationService
 {
-    /// <summary>Accepted extensions (lower-case): zip attachments plus the JPEG / PNG images (avatars, Summernote).</summary>
-    private static readonly string[] _allowedExtensions = [".zip", ".jpg", ".jpeg", ".png"];
+    /// <summary>Accepted extensions (lower-case), as the Domain's policies define them: zip attachments plus the images (avatars, Summernote).</summary>
+    private static readonly string[] _allowedExtensions = [.. AttachmentUploadPolicy.AllowedExtensions, .. ImageUploadPolicy.AllowedExtensions];
 
     /// <inheritdoc />
     public async Task<(bool Success, string? Error)> ValidateAndSaveAsync(IFormFile file, string filePath)

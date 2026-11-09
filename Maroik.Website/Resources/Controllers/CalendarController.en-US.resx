@@ -276,6 +276,12 @@
   <data name="An event can have at most {0} reminders." xml:space="preserve">
     <value>An event can have at most {0} reminders.</value>
   </data>
+  <data name="An all-day event's reminder must be set in days or weeks." xml:space="preserve">
+    <value>An all-day event's reminder must be set in days or weeks.</value>
+  </data>
+  <data name="An all-day event's reminder time must be on a {0}-minute step." xml:space="preserve">
+    <value>An all-day event's reminder time must be on a {0}-minute step.</value>
+  </data>
   <data name="Event dates must be between the years {0} and {1}." xml:space="preserve">
     <value>Event dates must be between the years {0} and {1}.</value>
   </data>

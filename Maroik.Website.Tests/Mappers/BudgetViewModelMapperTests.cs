@@ -66,23 +66,19 @@ public class BudgetViewModelMapperTests
         Assert.Equal("", BudgetViewModelMapper.Display(new BudgetValueResponse { Kind = "Empty" }));
     }
 
-    /// <summary>A budget cell carries its actual and remaining amounts and its color: for expenditure over is bad, for income under is a warning.</summary>
+    /// <summary>A budget cell carries its actual and remaining amounts and the color of its outcome.</summary>
     [Theory]
-    [InlineData("Expenditure", "Under", "good")]
-    [InlineData("Expenditure", "Reached", "warn")]
-    [InlineData("Expenditure", "Over", "bad")]
-    [InlineData("Income", "Under", "warn")]
-    [InlineData("Income", "Reached", "good")]
-    [InlineData("Income", "Over", "good")]
-    [InlineData("Income", "Unbudgeted", "unbudgeted")]
-    [InlineData("Expenditure", "Unbudgeted", "unbudgeted")]
-    [InlineData("Expenditure", "None", "")]
-    public void BudgetCells_AreColoredByKindAndState(string kind, string state, string color)
+    [InlineData("Good", "good")]
+    [InlineData("Warning", "warn")]
+    [InlineData("Bad", "bad")]
+    [InlineData("Unbudgeted", "unbudgeted")]
+    [InlineData("None", "")]
+    public void BudgetCells_AreColoredByTheirOutcome(string outcome, string color)
     {
         var sheet = new BudgetSheetResponse
         {
-            Kind = kind,
-            Cells = [new BudgetCellResponse { Address = "B2", Role = "Budget", Input = "=1", Value = Number(100), Budget = 100, Actual = 120, Remaining = -20, State = state }],
+            Kind = "Expenditure",
+            Cells = [new BudgetCellResponse { Address = "B2", Role = "Budget", Input = "=1", Value = Number(100), Budget = 100, Actual = 120, Remaining = -20, Outcome = outcome }],
         };
 
         BudgetCellViewModel cell = sheet.ToViewModel(L).Cells.Single();

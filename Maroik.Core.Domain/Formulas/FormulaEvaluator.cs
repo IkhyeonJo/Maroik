@@ -57,7 +57,7 @@ public static class FormulaEvaluator
     {
         TextValue => value,
         NumberValue n => new TextValue(FormatNumber(n.Value)),
-        BooleanValue b => new TextValue(b.Value ? "TRUE" : "FALSE"),
+        BooleanValue b => new TextValue(b.Text),
         EmptyValue => new TextValue(""),
         _ => value,
     };

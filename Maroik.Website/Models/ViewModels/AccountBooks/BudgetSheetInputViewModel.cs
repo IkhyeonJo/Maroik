@@ -1,3 +1,4 @@
+using Maroik.Core.Service.Constants;
 using System.ComponentModel.DataAnnotations;
 
 namespace Maroik.Website.Models.ViewModels.AccountBooks;
@@ -7,7 +8,7 @@ public class BudgetSheetInputViewModel
 {
     /// <summary>Income or Expenditure.</summary>
     [Required]
-    [RegularExpression("^(Income|Expenditure)$")]
+    [RegularExpression(PolicyLimits.BudgetSheetKindPattern)]
     public string Kind { get; set; } = "";
 
     /// <summary>The year.</summary>

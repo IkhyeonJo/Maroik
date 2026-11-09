@@ -55,7 +55,10 @@ public static class FileManagerNamePolicy
         {
             string suffix = $" ({n})";
             int room = ShortTextPolicy.MaxLength - suffix.Length - extension.Length;
-            string candidate = $"{(stem.Length > room ? stem[..room] : stem)}{suffix}{extension}";
+            // An extension too long to leave room for any of the stem counts as part of the name, which is cut instead.
+            string candidate = room < 1
+                ? $"{name[..(ShortTextPolicy.MaxLength - suffix.Length)]}{suffix}"
+                : $"{(stem.Length > room ? stem[..room] : stem)}{suffix}{extension}";
             if (!taken.Contains(candidate))
                 return candidate;
         }

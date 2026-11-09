@@ -111,6 +111,54 @@ public class BoardServiceTests
         BoardTypes.FreeForum, OwnerNickname: null, SearchType: null, SearchText: null,
         IsLoggedIn: false, ViewerRole: null, ViewerNickname: null, Page: 1, PageSize: 10);
 
+    /// <summary>A post the viewer may see is returned and its view counted; anything else comes back null with nothing counted.</summary>
+    [Theory]
+    [InlineData(BoardTypes.FreeForum, false, "Bob", true)]
+    [InlineData(BoardTypes.FreeForum, true, "Bob", false)]
+    [InlineData(BoardTypes.FreeForum, true, "Alice", true)]
+    [InlineData(BoardTypes.PrivateNote, false, "Bob", false)]
+    public async Task OpenForViewingAsync_CountsTheView_OnlyForAPostTheViewerMaySee(string type, bool locked, string viewer, bool opens)
+    {
+        DateTime at = new(2026, 7, 1, 12, 0, 0, DateTimeKind.Utc);
+        _boardRepo.Setup(r => r.FindActiveByIdAsync(1, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Board.Reconstitute(1, type, "Title", "Body", "Alice", at, at, 0, false, locked, false));
+
+        BoardResponse? board = await CreateSut().OpenForViewingAsync(1, type, new AccountResponse { Nickname = viewer, Role = Role.User }, TestContext.Current.CancellationToken);
+
+        Assert.Equal(opens, board != null);
+        _boardRepo.Verify(r => r.IncrementViewAsync(1, It.IsAny<CancellationToken>()), opens ? Times.Once() : Times.Never());
+    }
+
+    /// <summary>A post of another board type does not open, and its view is not counted.</summary>
+    [Fact]
+    public async Task OpenForViewingAsync_DoesNotOpenAPostOfAnotherType()
+    {
+        DateTime at = new(2026, 7, 1, 12, 0, 0, DateTimeKind.Utc);
+        _boardRepo.Setup(r => r.FindActiveByIdAsync(1, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Board.Reconstitute(1, BoardTypes.PrivateNote, "Title", "Body", "Alice", at, at, 0, false, false, false));
+
+        BoardResponse? board = await CreateSut().OpenForViewingAsync(1, BoardTypes.FreeForum, new AccountResponse { Nickname = "Alice", Role = Role.User }, TestContext.Current.CancellationToken);
+
+        Assert.Null(board);
+        _boardRepo.Verify(r => r.IncrementViewAsync(It.IsAny<long>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    /// <summary>A private-note page is always scoped to the viewer's own notes, whatever the role.</summary>
+    [Theory]
+    [InlineData(Role.User)]
+    [InlineData(Role.Admin)]
+    public async Task GetOwnPrivateNotePageAsync_AsksForTheViewersOwnNotes(string role)
+    {
+        BoardPageQuery? asked = null;
+        _boardRepo.Setup(r => r.QueryPageAsync(It.IsAny<BoardPageQuery>(), It.IsAny<BoardSearchVisibility>(), It.IsAny<CancellationToken>()))
+            .Callback<BoardPageQuery, BoardSearchVisibility, CancellationToken>((q, _, _) => asked = q)
+            .ReturnsAsync((new List<Board>(), 0));
+
+        await CreateSut().GetOwnPrivateNotePageAsync("Alice", role, "title", "x", 3, 20, TestContext.Current.CancellationToken);
+
+        Assert.Equal(new BoardPageQuery(BoardTypes.PrivateNote, "Alice", "title", "x", true, role, "Alice", 3, 20), asked);
+    }
+
     /// <summary>The repository is told the search scope the domain decides for the viewer; it does not judge the viewer itself.</summary>
     [Theory]
     [InlineData(false, null, BoardSearchVisibility.PublicOnly)]
@@ -1372,6 +1420,19 @@ public class BoardServiceTests
 
         Assert.Equal("report", found?.Name);
         Assert.Null(missing);
+    }
+
+    /// <summary>A record an edit emptied is no attachment, in both lookups.</summary>
+    [Fact]
+    public async Task TheAttachmentLookups_AnswerNull_ForTheClearedRecord()
+    {
+        BoardAttachedFile cleared = BoardAttachedFile.Reconstitute(5, 1, 4, "report", ".zip", "upload/x.zip").Cleared();
+        _attachedFileRepo.Setup(r => r.FindByBoardIdAsync(1, It.IsAny<CancellationToken>())).ReturnsAsync(cleared);
+        _attachedFileRepo.Setup(r => r.GetByBoardIdsAsync(It.IsAny<IEnumerable<long>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Dictionary<long, BoardAttachedFile?> { [1] = cleared });
+
+        Assert.Null(await CreateSut().GetAttachedFileByBoardIdAsync(1, TestContext.Current.CancellationToken));
+        Assert.Null((await CreateSut().GetAttachedFilesForBoardsAsync([1], TestContext.Current.CancellationToken))[1]);
     }
 
     /// <summary>The per-post attachment lookup keeps a post without an attachment as a null entry.</summary>

@@ -287,10 +287,7 @@ public class ManagementController(
                 PlainPassword = accountInputViewModel.Password, // service validates + hashes
                 Nickname = accountInputViewModel.Nickname,
                 Role = accountInputViewModel.Role,
-                TimeZoneIanaId = accountInputViewModel.TimeZoneIanaId,
-                EmailConfirmed = true,
-                AgreedServiceTerms = true,
-                Message = accountPolicy.GetAccountCreatedMessage()
+                TimeZoneIanaId = accountInputViewModel.TimeZoneIanaId
             }, AdminEmail, HttpContext.RequestAborted);
 
             return createResult.Success
@@ -1012,13 +1009,11 @@ public class ManagementController(
 
                 try
                 {
-                    BoardResponse? privateNoteBoard = await boardService.GetBoardByIdAsync(boardId.Value, BoardKinds.PrivateNote, HttpContext.RequestAborted);
-                    BoardAttachedFileDto? attachedFile = await boardService.GetAttachedFileByBoardIdAsync(boardId.Value, HttpContext.RequestAborted);
-
-                    if (privateNoteBoard == null || privateNoteBoard.Deleted || !boardService.CanView(privateNoteBoard, loggedInAccount))
+                    BoardResponse? privateNoteBoard = await boardService.OpenForViewingAsync(boardId.Value, BoardKinds.PrivateNote, loggedInAccount, HttpContext.RequestAborted);
+                    if (privateNoteBoard == null)
                         return RedirectToAction(BoardKinds.PrivateNote, "Management");
 
-                    await boardService.IncrementBoardViewAsync(boardId.Value, HttpContext.RequestAborted);
+                    BoardAttachedFileDto? attachedFile = await boardService.GetAttachedFileByBoardIdAsync(boardId.Value, HttpContext.RequestAborted);
 
                     (privateNoteBoard.Content, bool isImgTagIncluded) = await boardService.PrepareHtmlForDisplayAsync(privateNoteBoard.Content ?? "", HttpContext.RequestAborted);
 
@@ -1088,7 +1083,7 @@ public class ManagementController(
                     BoardResponse? privateNoteBoard = await boardService.GetBoardByIdAsync(boardId.Value, BoardKinds.PrivateNote, HttpContext.RequestAborted);
                     BoardAttachedFileDto? attachedFile = await boardService.GetAttachedFileByBoardIdAsync(boardId.Value, HttpContext.RequestAborted);
 
-                    if (privateNoteBoard == null || privateNoteBoard.Deleted || !boardPolicy.IsContentOwner(loggedInAccount, privateNoteBoard.Writer))
+                    if (privateNoteBoard == null || !boardPolicy.CanOpenEditPage(privateNoteBoard, loggedInAccount))
                     {
                         return RedirectToAction(BoardKinds.PrivateNote, "Management");
                     }
@@ -1129,32 +1124,15 @@ public class ManagementController(
 
                 #region Board default paging logic
 
-                const int pageSize = 5;
-                if (page < 1)
-                {
-                    page = 1;
-                }
+                const int pageSize = PolicyLimits.BoardListPageSize;
+                page = boardPolicy.NormalizeListPage(page);
 
                 #endregion
 
                 #region Logic to get all related board data
 
-                // Ownership scope, search, ordering, and paging are all pushed down into one SQL
-                // query (see BoardRepository.QueryPageAsync) instead of materializing every
-                // PrivateNote row into memory first. OwnerNickname being set means the repository
-                // applies no further role/lock visibility split — every candidate row already
-                // belongs to the caller (same "already scoped to the caller's own notes" behavior
-                // this replaced).
-                (IEnumerable<BoardResponse> pageItems, int totalCount) = await boardService.GetBoardPageAsync(new BoardPageQuery(
-                    Type: BoardKinds.PrivateNote,
-                    OwnerNickname: loggedInAccount.Nickname,
-                    SearchType: searchType,
-                    SearchText: searchText,
-                    IsLoggedIn: true,
-                    ViewerRole: loggedInAccount.Role,
-                    ViewerNickname: loggedInAccount.Nickname,
-                    Page: page,
-                    PageSize: pageSize), HttpContext.RequestAborted);
+                (IEnumerable<BoardResponse> pageItems, int totalCount) = await boardService.GetOwnPrivateNotePageAsync(
+                    loggedInAccount.Nickname, loggedInAccount.Role, searchType, searchText, page, pageSize, HttpContext.RequestAborted);
 
                 #endregion
 

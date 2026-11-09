@@ -5,6 +5,7 @@ using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Contract.Settings;
 using Maroik.Core.Domain.Accounts;
 using Maroik.Core.Domain.Calendars;
+using Maroik.Core.Domain.Uploads;
 using Maroik.Core.Service.Mappers;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -47,13 +48,9 @@ public class CalendarService(
 
         // The same period the dashboard pins for this account (see DashboardService.GetSummaryAsync), so a visitor
         // finds the pre-seeded sample events on the first screen whenever they browse the demo.
-        if (string.IsNullOrEmpty(server.DemoAccountEmail) || accountEmail != server.DemoAccountEmail) return null;
+        if (!DemoAccountPolicy.IsDemoAccount(server.DemoAccountEmail, accountEmail)) return null;
 
-        // Full names: a using of System.Globalization would make Calendar ambiguous with the domain's aggregate.
-        return DateOnly.TryParseExact($"{server.DemoDashboardYear}-{server.DemoDashboardMonth}", "yyyy-M",
-            System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.None, out DateOnly firstDay)
-            ? firstDay.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture)
-            : null;
+        return DemoAccountPolicy.FirstDayOf(server.DemoDashboardYear, server.DemoDashboardMonth)?.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture);
     }
 
     /// <inheritdoc />
@@ -82,8 +79,7 @@ public class CalendarService(
     public async Task<CalendarEventAttachedFileDto?> GetCalendarEventAttachedFileAsync(long calendarEventId, CancellationToken ct = default)
     {
         CalendarEventAttachedFile? file = await calendarEventAttachedFileRepository.FindByCalendarEventIdAsync(calendarEventId, ct);
-        // The record an edit emptied (see HandleAttachmentAsync) stands for "no attachment".
-        return file == null || string.IsNullOrEmpty(file.Name) ? null : CalendarEventAttachedFileMapper.ToResponse(file);
+        return file is { HasFile: true } ? CalendarEventAttachedFileMapper.ToResponse(file) : null;
     }
 
     /// <inheritdoc />
@@ -348,7 +344,7 @@ public class CalendarService(
     }
 
     /// <inheritdoc />
-    public async Task<ServiceResult> EnsureDefaultCalendarAsync(string accountEmail, CalendarRequest request, CancellationToken ct = default)
+    public async Task<ServiceResult> EnsureDefaultCalendarAsync(string accountEmail, string ownerNickname, string? timeZoneIanaId, CancellationToken ct = default)
     {
         DateTime utcNow = timeProvider.GetUtcNow().UtcDateTime;
         await unitOfWork.BeginAsync(ct: ct);
@@ -365,7 +361,7 @@ public class CalendarService(
 
             // CreateDefault falls back to UTC for a missing or unrecognized account time zone, so this
             // first-visit provisioning does not fail on an action the user didn't request.
-            var calendarResult = Calendar.CreateDefault(accountEmail, request.Name, request.Description, request.TimeZoneIanaId, request.HtmlColorCode, utcNow);
+            var calendarResult = Calendar.CreateDefault(accountEmail, ownerNickname, timeZoneIanaId, utcNow);
             if (calendarResult.IsError)
             {
                 await unitOfWork.RollbackAsync(ct);
@@ -726,12 +722,7 @@ public class CalendarService(
     /// or traverse paths, and each event gets its own folder.
     /// </summary>
     private static string BuildEventFilePath(string roleIndex, long eventId, string fileName)
-    {
-        string guid = Guid.NewGuid().ToString().ToUpperInvariant();
-        string ext = Path.GetExtension(fileName);
-        // A storage key, not a local path: always "/"-separated, whatever OS this runs on.
-        return $"upload/Calendar/{roleIndex}/calendarEventAttachedFiles/{eventId}/{guid}{ext}";
-    }
+    => AttachmentStoragePaths.CalendarEventAttachment(roleIndex, eventId, Guid.NewGuid(), fileName);
 
     /// <summary>
     /// Uploads <paramref name="attachedFile"/> to file storage and creates its
@@ -843,7 +834,7 @@ public class CalendarService(
         }
 
         CalendarEventAttachedFile? attachedFile = await calendarEventAttachedFileRepository.FindByCalendarEventIdAsync(calendarEventId, ct);
-        if (attachedFile == null || string.IsNullOrEmpty(attachedFile.Path))
+        if (attachedFile is not { HasFile: true })
             return (ServiceResult.NotFound("CalendarEvent.AttachedFileNotFound", ServiceErrorKeys.AttachedFileNotFound), null);
 
         // OpenFileAsync logs its own failure (with the storage path) where it happens.

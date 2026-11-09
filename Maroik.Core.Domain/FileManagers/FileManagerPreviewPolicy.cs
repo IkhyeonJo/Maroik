@@ -1,3 +1,5 @@
+using Maroik.Core.Domain.Uploads;
+
 namespace Maroik.Core.Domain.FileManagers;
 
 /// <summary>
@@ -23,9 +25,9 @@ public static class FileManagerPreviewPolicy
     /// <summary>The image Content-Type the leading bytes prove, or null when they prove none of the previewable formats.</summary>
     public static string? ContentTypeOf(ReadOnlySpan<byte> header)
     {
-        if (header.StartsWith((ReadOnlySpan<byte>)[0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A]))
+        if (ImageSignatures.IsPng(header))
             return "image/png";
-        if (header.StartsWith((ReadOnlySpan<byte>)[0xFF, 0xD8, 0xFF]))
+        if (ImageSignatures.IsJpeg(header))
             return "image/jpeg";
         if (header.StartsWith("GIF87a"u8) || header.StartsWith("GIF89a"u8))
             return "image/gif";

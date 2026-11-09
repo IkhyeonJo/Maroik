@@ -1,5 +1,6 @@
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Domain.Accounts;
+using Maroik.Core.Domain.ValueObjects;
 using Maroik.Core.PostgreSQL.Contexts;
 using Maroik.Core.Repository.Translators;
 using Microsoft.EntityFrameworkCore;
@@ -130,7 +131,7 @@ public class AccountRepository(ApplicationDbContext context)
         // Email is always persisted lower-cased (see Email.Create), but callers here pass raw,
         // un-normalized user input (login form, forgot-password form, etc.) — normalize the
         // lookup key too, or a differently-cased-but-identical email never matches.
-        string normalizedEmail = email.ToLowerInvariant();
+        string normalizedEmail = Email.NormalizeForLookup(email);
         return QueryFirstAsync(e => e.Email == normalizedEmail, ct: ct);
     }
 
@@ -162,7 +163,7 @@ public class AccountRepository(ApplicationDbContext context)
     public async Task<Account?> FindByEmailForUpdateAsync(string email, CancellationToken ct = default)
     {
         // Normalize for the same reason as FindByEmailAsync above (this is the login lookup path).
-        string normalizedEmail = email.ToLowerInvariant();
+        string normalizedEmail = Email.NormalizeForLookup(email);
 
         // Raw SQL is required because EF Core LINQ cannot emit FOR UPDATE.
         // ToListAsync on the raw root executes the SQL verbatim (no composition),
@@ -212,7 +213,7 @@ public class AccountRepository(ApplicationDbContext context)
     /// <inheritdoc />
     public Task<int> UpdateAvatarPathAsync(string email, string? avatarImagePath, DateTime updated, CancellationToken ct = default)
     {
-        string normalizedEmail = email.ToLowerInvariant();
+        string normalizedEmail = Email.NormalizeForLookup(email);
         // Keep parity with ToEntity: a null avatar persists as the shared default-avatar path.
         string stored = avatarImagePath ?? Account.DefaultAvatarImagePath;
         return Set.Where(e => e.Email == normalizedEmail)
@@ -224,7 +225,7 @@ public class AccountRepository(ApplicationDbContext context)
     /// <inheritdoc />
     public Task<int> UpdateTimeZoneAsync(string email, string timeZoneIanaId, DateTime updated, CancellationToken ct = default)
     {
-        string normalizedEmail = email.ToLowerInvariant();
+        string normalizedEmail = Email.NormalizeForLookup(email);
         return Set.Where(e => e.Email == normalizedEmail)
             .ExecuteUpdateAsync(s => s
                 .SetProperty(e => e.TimeZoneIanaId, timeZoneIanaId)
@@ -234,7 +235,7 @@ public class AccountRepository(ApplicationDbContext context)
     /// <inheritdoc />
     public Task<int> UpdatePasswordAsync(string email, string hashedPassword, string securityStamp, bool mustChangePassword, string? resetPasswordToken, bool locked, long loginAttempt, string? message, DateTime updated, CancellationToken ct = default)
     {
-        string normalizedEmail = email.ToLowerInvariant();
+        string normalizedEmail = Email.NormalizeForLookup(email);
         return Set.Where(e => e.Email == normalizedEmail)
             .ExecuteUpdateAsync(s => s
                 .SetProperty(e => e.HashedPassword, hashedPassword)
@@ -250,7 +251,7 @@ public class AccountRepository(ApplicationDbContext context)
     /// <inheritdoc />
     public Task<int> UpdateDefaultMonetaryUnitAsync(string email, string? defaultMonetaryUnit, CancellationToken ct = default)
     {
-        string normalizedEmail = email.ToLowerInvariant();
+        string normalizedEmail = Email.NormalizeForLookup(email);
         return Set.Where(e => e.Email == normalizedEmail)
             .ExecuteUpdateAsync(s => s.SetProperty(e => e.DefaultMonetaryUnit, defaultMonetaryUnit), ct);
     }
@@ -258,7 +259,7 @@ public class AccountRepository(ApplicationDbContext context)
     /// <inheritdoc />
     public Task<int> UpdateResetPasswordTokenAsync(string email, string? resetPasswordToken, DateTime updated, CancellationToken ct = default)
     {
-        string normalizedEmail = email.ToLowerInvariant();
+        string normalizedEmail = Email.NormalizeForLookup(email);
         return Set.Where(e => e.Email == normalizedEmail)
             .ExecuteUpdateAsync(s => s
                 .SetProperty(e => e.ResetPasswordToken, resetPasswordToken)
@@ -268,7 +269,7 @@ public class AccountRepository(ApplicationDbContext context)
     /// <inheritdoc />
     public Task<int> UpdateRegistrationTokenAsync(string email, string? registrationToken, DateTime updated, CancellationToken ct = default)
     {
-        string normalizedEmail = email.ToLowerInvariant();
+        string normalizedEmail = Email.NormalizeForLookup(email);
         return Set.Where(e => e.Email == normalizedEmail)
             .ExecuteUpdateAsync(s => s
                 .SetProperty(e => e.RegistrationToken, registrationToken)
@@ -278,7 +279,7 @@ public class AccountRepository(ApplicationDbContext context)
     /// <inheritdoc />
     public Task<int> UpdateAgreedServiceTermsAsync(string email, bool agreedServiceTerms, DateTime updated, CancellationToken ct = default)
     {
-        string normalizedEmail = email.ToLowerInvariant();
+        string normalizedEmail = Email.NormalizeForLookup(email);
         return Set.Where(e => e.Email == normalizedEmail)
             .ExecuteUpdateAsync(s => s
                 .SetProperty(e => e.AgreedServiceTerms, agreedServiceTerms)
@@ -288,7 +289,7 @@ public class AccountRepository(ApplicationDbContext context)
     /// <inheritdoc />
     public Task<int> UpdateMessageAsync(string email, string? message, DateTime updated, CancellationToken ct = default)
     {
-        string normalizedEmail = email.ToLowerInvariant();
+        string normalizedEmail = Email.NormalizeForLookup(email);
         return Set.Where(e => e.Email == normalizedEmail)
             .ExecuteUpdateAsync(s => s
                 .SetProperty(e => e.Message, message)
@@ -298,7 +299,7 @@ public class AccountRepository(ApplicationDbContext context)
     /// <inheritdoc />
     public Task<int> UpdateEmailConfirmationAsync(string email, string? registrationToken, string? message, DateTime updated, CancellationToken ct = default)
     {
-        string normalizedEmail = email.ToLowerInvariant();
+        string normalizedEmail = Email.NormalizeForLookup(email);
         return Set.Where(e => e.Email == normalizedEmail)
             .ExecuteUpdateAsync(s => s
                 .SetProperty(e => e.EmailConfirmed, true)

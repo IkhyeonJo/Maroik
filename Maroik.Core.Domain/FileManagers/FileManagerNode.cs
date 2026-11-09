@@ -114,6 +114,9 @@ public sealed class FileManagerNode : AggregateRoot<long>
     /// <summary>Whether the file may be previewed: a file that <see cref="FileManagerPreviewPolicy.IsPreviewable"/> accepts.</summary>
     public bool IsPreviewable => !IsFolder && FileManagerPreviewPolicy.IsPreviewable(Name, Size);
 
+    /// <summary>Whether an upload of the same name may replace this item: a file never overwrites a folder.</summary>
+    public bool CanBeOverwritten => !IsFolder;
+
     /// <summary>
     /// Whether this is an unfinished upload with no activity since <see cref="Updated"/> for longer than
     /// <see cref="FileManagerUploadPolicy.StaleUploadAge"/>, however long ago it started.

@@ -24,13 +24,4 @@ public class AdminCreateAccountRequest
 
     /// <summary>IANA time-zone ID used for date/time display (e.g. "Asia/Seoul").</summary>
     public string? TimeZoneIanaId { get; set; }
-
-    /// <summary>Whether the account starts with its email address already confirmed.</summary>
-    public bool EmailConfirmed { get; set; }
-
-    /// <summary>Whether the account starts with the service terms accepted.</summary>
-    public bool AgreedServiceTerms { get; set; }
-
-    /// <summary>Optional admin-facing note attached to the account.</summary>
-    public string? Message { get; set; }
 }

@@ -120,7 +120,7 @@ public class ViewBagPopulatorFilterTests
     private AccountResponse SignedInUserWithNotices()
     {
         _dashboardService
-            .Setup(d => d.GetNoticeCountsAsync("user@test.com", 7, It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(d => d.GetNoticeCountsAsync("user@test.com", It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new NotificationDto { FixedIncomesNoticed = 2, FixedExpendituresNoticed = 3, FixedIncomesExpired = 1, FixedExpendituresExpired = 4 });
         return new AccountResponse { Email = "user@test.com", Role = Role.User, TimeZoneIanaId = "UTC" };
     }
@@ -196,7 +196,7 @@ public class ViewBagPopulatorFilterTests
         Assert.Equal(0, controller.ViewBag.FixedExpenditureTotalNoticeCount);
         Assert.Equal(0, controller.ViewBag.TotalNoticeCount);
         _dashboardService.Verify(
-            d => d.GetNoticeCountsAsync(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<CancellationToken>()),
+            d => d.GetNoticeCountsAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()),
             Times.Never);
     }
 
@@ -211,7 +211,7 @@ public class ViewBagPopulatorFilterTests
     {
         var account = new AccountResponse { Email = "user@test.com", Role = Role.User, TimeZoneIanaId = "UTC" };
         _dashboardService
-            .Setup(d => d.GetNoticeCountsAsync("user@test.com", 7, It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(d => d.GetNoticeCountsAsync("user@test.com", It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new InvalidOperationException("db down"));
         var (context, controller) = BuildContext();
         SignIn(context, account);
@@ -233,7 +233,7 @@ public class ViewBagPopulatorFilterTests
     {
         var stashedAccount = new AccountResponse { Email = "user@test.com", Nickname = "FromAuthFilter", Role = Role.User, TimeZoneIanaId = "UTC" };
         _dashboardService
-            .Setup(d => d.GetNoticeCountsAsync("user@test.com", 7, It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(d => d.GetNoticeCountsAsync("user@test.com", It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new NotificationDto());
         var (context, _) = BuildContext();
         SignIn(context, stashedAccount);
@@ -252,7 +252,7 @@ public class ViewBagPopulatorFilterTests
     {
         var account = new AccountResponse { Email = "user@test.com", Role = Role.User, TimeZoneIanaId = "Asia/Seoul" };
         _dashboardService
-            .Setup(d => d.GetNoticeCountsAsync("user@test.com", 7, It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(d => d.GetNoticeCountsAsync("user@test.com", It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new NotificationDto());
         var (context, controller) = BuildContext();
         SignIn(context, account);
@@ -287,7 +287,7 @@ public class ViewBagPopulatorFilterTests
 
         Assert.Equal(0, controller.ViewBag.TotalNoticeCount);
         _dashboardService.Verify(
-            d => d.GetNoticeCountsAsync(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<CancellationToken>()),
+            d => d.GetNoticeCountsAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()),
             Times.Never);
     }
 
@@ -496,7 +496,7 @@ public class ViewBagPopulatorFilterTests
     public async Task OnActionExecutionAsync_KeepsZeroNoticeCounts_WhenDashboardServiceThrows()
     {
         _dashboardService
-            .Setup(d => d.GetNoticeCountsAsync(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(d => d.GetNoticeCountsAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new InvalidOperationException("db down"));
         var (context, controller) = BuildContext();
         SignIn(context, new AccountResponse { Email = "user@test.com", Role = Role.User, TimeZoneIanaId = "UTC" });

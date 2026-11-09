@@ -1,5 +1,4 @@
 using Maroik.Core.Contract.Dtos;
-using Maroik.Core.Contract.Extensions;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Domain.Accounts;
 
@@ -14,9 +13,6 @@ public sealed class AccountPolicyService : IAccountPolicyService
     /// <inheritdoc />
     public string? GetSessionInvalidationReason(AccountResponse? current, AccountResponse session) =>
         AccountSessionPolicy.InvalidationReason(current != null, current?.Deleted ?? false, current?.SecurityStamp, session.SecurityStamp)?.ToString();
-
-    /// <inheritdoc />
-    public string GetAccountCreatedMessage() => AccountMessage.Success.GetDescription();
 
     /// <inheritdoc />
     public bool SeesLocalTime(AccountResponse viewer) => AccountViewPolicy.SeesLocalTime(viewer.Role);

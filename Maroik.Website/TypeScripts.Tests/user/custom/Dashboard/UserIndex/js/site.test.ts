@@ -1,6 +1,4 @@
 import { describe, it, expect } from "vitest";
-import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
 import { loadSite, hidden, antiForgery, present } from "@tests/_common/harness";
 
 // wwwroot/user/custom/Dashboard/UserIndex/js/site.js — 10 donut charts + period/unit controls.
@@ -10,16 +8,29 @@ const CANVAS_IDS = [
     "nonConsumerSpendingYearMonth", "consumerSpendingYearMonth",
 ];
 
-/** The dashboard DOM: the chart canvases and the period / unit controls. */
-function fixture(): string {
+/** A hidden input carrying a JSON payload, as Razor encodes it into the attribute. */
+function hiddenJson(id: string, value: unknown): string {
+    return hidden(id, JSON.stringify(value).replaceAll('"', "&quot;"));
+}
+
+/** The dashboard DOM: the chart canvases, the server's charts and the period / unit controls. */
+function fixture(amount = 1500): string {
     return (
         antiForgery +
         `<select id="year"><option value="2024" selected>2024</option></select>
      <select id="month"><option value="5" selected>5</option></select>
      <select id="monetaryUnit"><option value="KRW" selected>KRW</option></select>` +
         CANVAS_IDS.map((id) => `<canvas id="${id}"></canvas>`).join("") +
-        // the Number($('#…').val()) inputs — absent ones just become NaN, which is fine
-        ["regularIncomeLaborIncomeYear", "regularIncomeBusinessIncomeYear"].map((id) => hidden(id, "10")).join("") +
+        hiddenJson("dashboardCharts", CANVAS_IDS.map((id, chart) => {
+            const count = chart % 5 === 4 ? 12 : 6;
+            return {
+                CanvasId: id,
+                SubClasses: Array.from({ length: count }, (_, slice) => `sub${slice}`),
+                Amounts: Array.from({ length: count }, () => amount),
+                Percentages: Array.from({ length: count }, () => 12.5),
+            };
+        })) +
+        hiddenJson("dashboardChartLabels", Array.from({ length: 12 }, (_, slice) => ({ Key: `sub${slice}`, Label: `Label ${slice}` }))) +
         hidden("amountMaxDecimalPlaces", "4")
     );
 }
@@ -51,23 +62,9 @@ describe("Dashboard/UserIndex", () => {
 });
 
 // ---- chart data and tooltips ------------------------------------------------------------------
-// Every `$("#id")` the compiled script reads is discovered from the script itself, so the fixture
-// stays in step with it: value inputs get 1500, percentage inputs 12.5, localizers their own id.
-function fullFixture(amount = "1500"): string {
-    const source = readFileSync(resolve(__dirname, "../../../../../../wwwroot/user/custom/Dashboard/UserIndex/js/site.js"), "utf8");
-    const ids = [...new Set([...source.matchAll(/\$\("#(\w+)"\)/g)].map((m) => present(m[1])))];
-    const base = fixture().replace(/<input[^>]*type="hidden"[^>]*id="regularIncome\w+Year"[^>]*>/g, "");
-    const skip = new Set([...base.matchAll(/id="(\w+)"/g)].map((m) => m[1]));
-    return (
-        base +
-        ids.filter((id) => !skip.has(id)).map((id) =>
-            hidden(id, id.startsWith("percentageOf") ? "12.5" : id.startsWith("localizer") ? id : amount)).join("")
-    );
-}
-
 describe("Dashboard/UserIndex — donut charts", () => {
-    it("each of the ten charts is a doughnut fed from its hidden inputs (one value per label)", () => {
-        const h = loadSite("user", "Dashboard", "UserIndex", fullFixture());
+    it("each of the ten charts is a doughnut fed from the server's charts (one value per label)", () => {
+        const h = loadSite("user", "Dashboard", "UserIndex", fixture());
         expect(h.charts).toHaveLength(10);
         for (const { cfg } of h.charts) {
             expect(cfg.type).toBe("doughnut");
@@ -79,7 +76,7 @@ describe("Dashboard/UserIndex — donut charts", () => {
     });
 
     it("every tooltip reads 'Label: 1,500 (12.50%)' for each slice, using the server-supplied percentage", () => {
-        const h = loadSite("user", "Dashboard", "UserIndex", fullFixture());
+        const h = loadSite("user", "Dashboard", "UserIndex", fixture());
         let checked = 0;
         for (const { cfg } of h.charts) {
             const label = cfg.options.tooltips.callbacks.label;
@@ -92,7 +89,7 @@ describe("Dashboard/UserIndex — donut charts", () => {
     });
 
     it("every tooltip shows the amount to the server-supplied number of decimal places (1234.5678 keeps all four)", () => {
-        const h = loadSite("user", "Dashboard", "UserIndex", fullFixture("1234.5678"));
+        const h = loadSite("user", "Dashboard", "UserIndex", fixture(1234.5678));
         const shown = (1234.5678).toLocaleString(undefined, { maximumFractionDigits: 4 });
         expect(shown).toContain("5678");
         let checked = 0;
@@ -104,6 +101,15 @@ describe("Dashboard/UserIndex — donut charts", () => {
             });
         }
         expect(checked).toBeGreaterThan(40);
+    });
+
+    it("labels each slice with the server's localized name, and colors a long chart from the long palette", () => {
+        const h = loadSite("user", "Dashboard", "UserIndex", fixture());
+        const { cfg } = present(h.charts[4]);
+        expect(cfg.data.labels[11]).toBe("Label 11");
+        expect(present(cfg.data.datasets[0]).backgroundColor).toHaveLength(12);
+        expect(present(cfg.data.datasets[0]).backgroundColor[0]).toBe("#FF0000");
+        expect(present(present(h.charts[0]).cfg.data.datasets[0]).backgroundColor[0]).toBe("#f56954");
     });
 
     it("fails fast when the page does not supply the number of decimal places", () => {

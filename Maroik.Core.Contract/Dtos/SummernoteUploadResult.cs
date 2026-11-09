@@ -25,11 +25,14 @@ public class SummernoteUploadResult
     /// <summary>Localization key describing the error (null on success).</summary>
     public string? ErrorKey { get; private init; }
 
+    /// <summary>The values <see cref="ErrorKey"/> is formatted with (empty when it has none).</summary>
+    public object[] ErrorArgs { get; private init; } = [];
+
     /// <summary>Creates a successful upload result with the stored file data.</summary>
     public static SummernoteUploadResult Ok(byte[] fileBytes, string contentType, string fileName, string filePath)
         => new() { Success = true, FileBytes = fileBytes, ContentType = contentType, FileName = fileName, FilePath = filePath };
 
-    /// <summary>Creates a failed upload result with the given error key.</summary>
-    public static SummernoteUploadResult Fail(string errorKey)
-        => new() { Success = false, ErrorKey = errorKey };
+    /// <summary>Creates a failed upload result with the given error key and the values it is formatted with.</summary>
+    public static SummernoteUploadResult Fail(string errorKey, params object[] errorArgs)
+        => new() { Success = false, ErrorKey = errorKey, ErrorArgs = errorArgs };
 }

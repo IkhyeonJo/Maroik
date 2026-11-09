@@ -31,8 +31,8 @@ public class AccountServiceTests
     private readonly Mock<IAccountRepository> _accountRepo = new();
     /// <summary>Mock <c>IPasswordService</c> injected into the system under test.</summary>
     private readonly Mock<IPasswordService> _passwordService = new();
-    /// <summary>Mock <c>IMailClient</c> injected into the system under test.</summary>
-    private readonly Mock<IMailClient> _mailClient = new();
+    /// <summary>Mock <c>IMailBodyComposer</c> injected into the system under test.</summary>
+    private readonly Mock<IMailBodyComposer> _mailBodies = new();
     /// <summary>Mock <c>IEmailPublisher</c> injected into the system under test.</summary>
     private readonly Mock<IEmailPublisher> _emailPublisher = new();
     /// <summary>Mock <c>IDataProtectionService</c> injected into the system under test.</summary>
@@ -68,7 +68,7 @@ public class AccountServiceTests
     private AccountServicesHarness CreateSut() => new(
         _accountRepo.Object,
         _passwordService.Object,
-        _mailClient.Object,
+        _mailBodies.Object,
         _emailPublisher.Object,
         _settings,
         _dataProtection.Object,
@@ -113,10 +113,10 @@ public class AccountServiceTests
     /// <summary>Arranges mail bodies to render and the e-mail queue publish to succeed.</summary>
     private void SetupMailSuccess()
     {
-        _mailClient.Setup(m => m.GetMailConfirmationBody(
+        _mailBodies.Setup(m => m.GetMailConfirmationBody(
             It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
             .Returns("email-body");
-        _mailClient.Setup(m => m.GetMailResetPasswordBody(
+        _mailBodies.Setup(m => m.GetMailResetPasswordBody(
             It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
             .Returns("email-body");
         _emailPublisher.Setup(p => p.PublishAsync(It.IsAny<SendEmailMessage>(), It.IsAny<CancellationToken>()))
@@ -126,10 +126,10 @@ public class AccountServiceTests
     /// <summary>Arranges mail bodies to render but the e-mail queue publish to throw (broker unreachable).</summary>
     private void SetupMailFailure()
     {
-        _mailClient.Setup(m => m.GetMailConfirmationBody(
+        _mailBodies.Setup(m => m.GetMailConfirmationBody(
             It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
             .Returns("email-body");
-        _mailClient.Setup(m => m.GetMailResetPasswordBody(
+        _mailBodies.Setup(m => m.GetMailResetPasswordBody(
             It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
             .Returns("email-body");
         _emailPublisher.Setup(p => p.PublishAsync(It.IsAny<SendEmailMessage>(), It.IsAny<CancellationToken>()))
@@ -420,7 +420,8 @@ public class AccountServiceTests
         {
             Email = "new@example.com",
             PlainPassword = "PlainPass1!",
-            Nickname = "TestUser"
+            Nickname = "TestUser",
+            AgreedServiceTerms = true
         };
 
         RegisterResult result = await sut.RegisterAsync(request, _emailTemplate, TestContext.Current.CancellationToken);
@@ -445,7 +446,7 @@ public class AccountServiceTests
         SetupMailSuccess();
 
         RegisterResult result = await CreateSut().RegisterAsync(
-            new RegisterAccountRequest { Email = "new@example.com", PlainPassword = "PlainPass1!", Nickname = "TestUser" },
+            new RegisterAccountRequest { Email = "new@example.com", PlainPassword = "PlainPass1!", Nickname = "TestUser", AgreedServiceTerms = true },
             _emailTemplate, TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
@@ -507,7 +508,7 @@ public class AccountServiceTests
         var sut = CreateSut();
 
         RegisterResult result = await sut.RegisterAsync(
-            new RegisterAccountRequest { Email = "new@example.com", PlainPassword = "PlainPass1!", Nickname = nickname },
+            new RegisterAccountRequest { Email = "new@example.com", PlainPassword = "PlainPass1!", Nickname = nickname, AgreedServiceTerms = true },
             _emailTemplate, TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
@@ -524,7 +525,7 @@ public class AccountServiceTests
         var sut = CreateSut();
 
         RegisterResult result = await sut.RegisterAsync(
-            new RegisterAccountRequest { Email = "new@example.com", PlainPassword = "PlainPass1!", Nickname = "Bo\u200Bb" },
+            new RegisterAccountRequest { Email = "new@example.com", PlainPassword = "PlainPass1!", Nickname = "Bo\u200Bb", AgreedServiceTerms = true },
             _emailTemplate, TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
@@ -545,7 +546,7 @@ public class AccountServiceTests
         var sut = CreateSut();
 
         RegisterResult result = await sut.RegisterAsync(
-            new RegisterAccountRequest { Email = "new@example.com", PlainPassword = "PlainPass1!", Nickname = "  bob " },
+            new RegisterAccountRequest { Email = "new@example.com", PlainPassword = "PlainPass1!", Nickname = "  bob ", AgreedServiceTerms = true },
             _emailTemplate, TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
@@ -569,7 +570,7 @@ public class AccountServiceTests
         var sut = CreateSut();
 
         RegisterResult result = await sut.RegisterAsync(
-            new RegisterAccountRequest { Email = "new@example.com", PlainPassword = "PlainPass1!", Nickname = "bob" },
+            new RegisterAccountRequest { Email = "new@example.com", PlainPassword = "PlainPass1!", Nickname = "bob", AgreedServiceTerms = true },
             _emailTemplate, TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
@@ -592,7 +593,7 @@ public class AccountServiceTests
         var sut = CreateSut();
 
         RegisterResult result = await sut.RegisterAsync(
-            new RegisterAccountRequest { Email = "new@example.com", PlainPassword = "PlainPass1!", Nickname = "  Ｂｏｂ   Smith " },
+            new RegisterAccountRequest { Email = "new@example.com", PlainPassword = "PlainPass1!", Nickname = "  Ｂｏｂ   Smith ", AgreedServiceTerms = true },
             _emailTemplate, TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
@@ -619,7 +620,8 @@ public class AccountServiceTests
         {
             Email = "new@example.com",
             PlainPassword = "PlainPass1!",
-            Nickname = "TestUser"
+            Nickname = "TestUser",
+            AgreedServiceTerms = true
         };
 
         await sut.RegisterAsync(request, _emailTemplate, TestContext.Current.CancellationToken);
@@ -644,7 +646,8 @@ public class AccountServiceTests
         var request = new RegisterAccountRequest
         {
             Email = "new@example.com",
-            PlainPassword = "PlainPass1!"
+            PlainPassword = "PlainPass1!",
+            AgreedServiceTerms = true
         };
 
         RegisterResult result = await sut.RegisterAsync(request, _emailTemplate, TestContext.Current.CancellationToken);
@@ -672,7 +675,8 @@ public class AccountServiceTests
         {
             Email = "new@example.com",
             PlainPassword = "PlainPass1!",
-            Nickname = "TestUser"
+            Nickname = "TestUser",
+            AgreedServiceTerms = true
         };
 
         RegisterResult result = await sut.RegisterAsync(request, _emailTemplate, TestContext.Current.CancellationToken);
@@ -696,7 +700,8 @@ public class AccountServiceTests
         {
             Email = "new@example.com",
             PlainPassword = "PlainPass1!",
-            Nickname = "TakenNick"
+            Nickname = "TakenNick",
+            AgreedServiceTerms = true
         };
 
         RegisterResult result = await sut.RegisterAsync(request, _emailTemplate, TestContext.Current.CancellationToken);
@@ -726,7 +731,8 @@ public class AccountServiceTests
         {
             Email = "raced@example.com",
             PlainPassword = "PlainPass1!",
-            Nickname = "SomeNick"
+            Nickname = "SomeNick",
+            AgreedServiceTerms = true
         };
 
         RegisterResult result = await sut.RegisterAsync(request, _emailTemplate, TestContext.Current.CancellationToken);
@@ -754,6 +760,38 @@ public class AccountServiceTests
         _emailPublisher.Verify(p => p.PublishAsync(It.IsAny<SendEmailMessage>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
+    /// <summary>Nobody registers a new address without accepting the service terms, whatever the page checked first.</summary>
+    [Fact]
+    public async Task RegisterAsync_RefusesANewAddress_WithoutConsent()
+    {
+        _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync((Account?)null);
+
+        RegisterResult result = await CreateSut().RegisterAsync(
+            new RegisterAccountRequest { Email = "new@example.com", PlainPassword = "PlainPass1!", Nickname = "TestUser", AgreedServiceTerms = false },
+            _emailTemplate, TestContext.Current.CancellationToken);
+
+        Assert.False(result.Success);
+        Assert.Equal("Please check the consent form", result.ErrorKey);
+        _passwordService.Verify(p => p.HashPassword(It.IsAny<string>()), Times.Never);
+        _accountRepo.Verify(r => r.CreateAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    /// <summary>Nor does a registration replace an unconfirmed one without it: the earlier registrant's row stays as it is.</summary>
+    [Fact]
+    public async Task RegisterAsync_RefusesToReplaceAnUnconfirmedRegistration_WithoutConsent()
+    {
+        var existing = ActiveAccount(emailConfirmed: false, registrationToken: GuidToken.Hash(GuidToken.Generate(_now)));
+        SetupUnconfirmedAccountForRegister(existing, lockedRead: existing);
+
+        RegisterResult result = await CreateSut().RegisterAsync(
+            new RegisterAccountRequest { Email = existing.Email.Value, PlainPassword = "PlainPass1!", Nickname = "TestUser", AgreedServiceTerms = false },
+            _emailTemplate, TestContext.Current.CancellationToken);
+
+        Assert.False(result.Success);
+        Assert.Equal("Please check the consent form", result.ErrorKey);
+        _accountRepo.Verify(r => r.UpdateEntityAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
     /// <summary>Verifies that <c>RegisterAsync</c> returns fail when account already confirmed.</summary>
     [Fact]
     public async Task RegisterAsync_ReturnsFail_WhenAccountAlreadyConfirmed()
@@ -763,7 +801,7 @@ public class AccountServiceTests
         _accountRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
         var sut = CreateSut();
 
-        var request = new RegisterAccountRequest { Email = existing.Email.Value, PlainPassword = "pw" };
+        var request = new RegisterAccountRequest { Email = existing.Email.Value, PlainPassword = "pw", AgreedServiceTerms = true };
         RegisterResult result = await sut.RegisterAsync(request, _emailTemplate, TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
@@ -783,7 +821,7 @@ public class AccountServiceTests
         _passwordService.Setup(p => p.VerifyPassword(It.IsAny<string>(), It.IsAny<string>())).Returns(false);
         var sut = CreateSut();
 
-        var request = new RegisterAccountRequest { Email = existing.Email.Value, PlainPassword = "not-the-password" };
+        var request = new RegisterAccountRequest { Email = existing.Email.Value, PlainPassword = "not-the-password", AgreedServiceTerms = true };
         RegisterResult result = await sut.RegisterAsync(request, _emailTemplate, TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
@@ -811,7 +849,7 @@ public class AccountServiceTests
         _passwordService.Setup(p => p.VerifyPassword(It.IsAny<string>(), It.IsAny<string>())).Returns(true);
         var sut = CreateSut();
 
-        var request = new RegisterAccountRequest { Email = existing.Email.Value, PlainPassword = "correct" };
+        var request = new RegisterAccountRequest { Email = existing.Email.Value, PlainPassword = "correct", AgreedServiceTerms = true };
         RegisterResult result = await sut.RegisterAsync(request, _emailTemplate, TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
@@ -1280,7 +1318,8 @@ public class AccountServiceTests
     {
         Email = "new@example.com",
         PlainPassword = password,
-        Nickname = nickname
+        Nickname = nickname,
+        AgreedServiceTerms = true
     };
 
     /// <summary>Hash returned for the new password when an unconfirmed registration is re-submitted.</summary>
@@ -2078,7 +2117,7 @@ public class AccountServiceTests
         await sut.LoginAsync(typed, "pw", TestContext.Current.CancellationToken);
         await sut.ForgotPasswordAsync(typed, _emailTemplate, TestContext.Current.CancellationToken);
         await sut.ResendConfirmationEmailAsync(typed, _emailTemplate, TestContext.Current.CancellationToken);
-        await sut.RegisterAsync(new RegisterAccountRequest { Email = typed, PlainPassword = "weak" }, _emailTemplate, TestContext.Current.CancellationToken);
+        await sut.RegisterAsync(new RegisterAccountRequest { Email = typed, PlainPassword = "weak", AgreedServiceTerms = true }, _emailTemplate, TestContext.Current.CancellationToken);
 
         _accountRepo.Verify(r => r.FindByEmailForUpdateAsync("user@example.com", It.IsAny<CancellationToken>()), Times.Once);
         _accountRepo.Verify(r => r.FindByEmailAsync("user@example.com", It.IsAny<CancellationToken>()), Times.Exactly(4));
@@ -2228,7 +2267,7 @@ public class AccountServiceTests
 
         await CreateSut().ForgotPasswordAsync(account.Email.Value, _emailTemplate, TestContext.Current.CancellationToken);
 
-        _mailClient.Verify(m => m.GetMailResetPasswordBody("enc-token", "title", "c0", "c1", "https://example.com"), Times.Once);
+        _mailBodies.Verify(m => m.GetMailResetPasswordBody("enc-token", "title", "c0", "c1", "https://example.com"), Times.Once);
         string expected = published ? AccountMessage.ResetPasswordMail.GetDescription() : "Fail to mail sent";
         _accountRepo.Verify(r => r.UpdateMessageAsync(account.Email.Value, expected, It.IsAny<DateTime>(), It.IsAny<CancellationToken>()), Times.Once);
     }
@@ -2388,7 +2427,7 @@ public class AccountServiceTests
 
         await CreateSut().ResendConfirmationEmailAsync(account.Email.Value, _emailTemplate, TestContext.Current.CancellationToken);
 
-        _mailClient.Verify(m => m.GetMailConfirmationBody("enc-token", "title", "c0", "c1", "https://example.com"), Times.Once);
+        _mailBodies.Verify(m => m.GetMailConfirmationBody("enc-token", "title", "c0", "c1", "https://example.com"), Times.Once);
     }
 
     /// <summary>A confirmation mail body that cannot be built is logged and reported as a send failure.</summary>

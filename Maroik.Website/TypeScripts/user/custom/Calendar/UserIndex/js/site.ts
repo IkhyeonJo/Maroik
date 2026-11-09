@@ -508,6 +508,7 @@
             },
             onSelect: function(this: HTMLInputElement) {
                 let startDate = $(this).datepicker("getDate");
+                // Authoritative in CalendarEvent (server): no end before its start; mirrored here for form UX only.
                 let endDate = $createCalendarEventAllDayUncheckedEndDate.datepicker("getDate");
                 if (endDate && endDate < startDate) {
                     $createCalendarEventAllDayUncheckedEndDate.datepicker("setDate", startDate);

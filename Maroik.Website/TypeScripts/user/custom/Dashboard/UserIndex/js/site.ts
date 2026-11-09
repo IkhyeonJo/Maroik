@@ -13,55 +13,37 @@
  *        non-consumer spending · consumer spending          × { Year, YearMonth }
  *
  * All the numbers are computed on the server and rendered into hidden inputs
- * (`#<seriesName>Year` for the slice value, `#percentageOf<seriesName>Year` for
- * its share). This script only reads those inputs and plots them — no maths
- * beyond `Number(...)` and `toLocaleString()` for display — to as many decimal
- * places as the server says an amount is stored with (`#amountMaxDecimalPlaces`).
+ * (`#dashboardCharts`, `#dashboardChartLabels`). This script only reads those
+ * inputs and plots them — no maths beyond `toLocaleString()` for display — to as
+ * many decimal places as the server says an amount is stored with
+ * (`#amountMaxDecimalPlaces`).
  *
- * Every chart block has the identical shape (see the first one, which is fully
- * commented); the rest carry only a one-line marker. The data / options objects
- * are typed with Chart.js 2's `Chart.ChartData` / `Chart.ChartOptions`.
  * IIFE-wrapped, no `import` / `export`.
  */
 (function() {
     // The runtime-check helpers the _Layout script defines (see TypeScripts/global.d.ts).
-    const { check, onReply, required, byId, fieldValue } = window;
+    const { check, onReply, required, byId, fieldValue, parseJson } = window;
 
     // The replies this page reads, mirroring the controllers' Json(...) results (see window.replies).
     const resultReply = check.object({ result: check.boolean });
     // Authoritative in FinanceAmountPolicy.MaxDecimalPlaces (server): the stored scale of an amount, so a
     // tooltip shows 1234.5678 as "1,234.5678" instead of the browser default's three decimals.
     const amountMaxDecimalPlaces = parseInt(fieldValue($("#amountMaxDecimalPlaces")), 10);
-    // Localized category names, read from hidden inputs the view rendered from
-    // the resource files. Used as the chart slice labels below.
-    const localizer = {
-        LaborIncome: fieldValue($("#localizerLaborIncome")),
-        BusinessIncome: fieldValue($("#localizerBusinessIncome")),
-        PensionIncome: fieldValue($("#localizerPensionIncome")),
-        FinancialIncome: fieldValue($("#localizerFinancialIncome")),
-        RentalIncome: fieldValue($("#localizerRentalIncome")),
-        OtherIncome: fieldValue($("#localizerOtherIncome")),
-        Deposit: fieldValue($("#localizerDeposit")),
-        Investment: fieldValue($("#localizerInvestment")),
-        PublicPension: fieldValue($("#localizerPublicPension")),
-        DebtRepayment: fieldValue($("#localizerDebtRepayment")),
-        Tax: fieldValue($("#localizerTax")),
-        SocialInsurance: fieldValue($("#localizerSocialInsurance")),
-        InterHouseholdTransferExpenses: fieldValue($("#localizerInterHouseholdTransferExpenses")),
-        NonProfitOrganizationTransfer: fieldValue($("#localizerNonProfitOrganizationTransfer")),
-        MealOrEatOutExpenses: fieldValue($("#localizerMealOrEatOutExpenses")),
-        HousingOrSuppliesCost: fieldValue($("#localizerHousingOrSuppliesCost")),
-        EducationExpenses: fieldValue($("#localizerEducationExpenses")),
-        MedicalExpenses: fieldValue($("#localizerMedicalExpenses")),
-        TransportationCost: fieldValue($("#localizerTransportationCost")),
-        CommunicationCost: fieldValue($("#localizerCommunicationCost")),
-        LeisureOrCulture: fieldValue($("#localizerLeisureOrCulture")),
-        ClothingOrShoes: fieldValue($("#localizerClothingOrShoes")),
-        PinMoney: fieldValue($("#localizerPinMoney")),
-        ProtectionTypeInsurance: fieldValue($("#localizerProtectionTypeInsurance")),
-        OtherExpenses: fieldValue($("#localizerOtherExpenses")),
-        UnknownExpenditure: fieldValue($("#localizerUnknownExpenditure"))
-    };
+    // The charts, computed on the server (one per main class and period, in the domain's display order).
+    const charts = parseJson(fieldValue($("#dashboardCharts")), check.array(check.object({
+        CanvasId: check.string,
+        SubClasses: check.array(check.string),
+        Amounts: check.array(check.number),
+        Percentages: check.array(check.number)
+    })), "the dashboard charts");
+    // Localized category names, rendered by the view from the resource files. Used as the chart slice labels below.
+    const labels = new Map(parseJson(fieldValue($("#dashboardChartLabels")), check.array(check.object({
+        Key: check.string,
+        Label: check.string
+    })), "the dashboard chart labels").map((label): [string, string] => [label.Key, label.Label]));
+    // The slice colors: a chart of up to six slices takes the first, a longer one the second.
+    const shortPalette = ["#f56954", "#00a65a", "#f39c12", "#00c0ef", "#3c8dbc", "#d2d6de"];
+    const longPalette = ["#FF0000", "#FFA200", "#FBFF00", "#70FF00", "#00FFE0", "#003EFF", "#D500FF", "#813F3F", "#7D813F", "#3F815A", "#3F8180", "#3F4B81"];
 
     // --- Period / currency pickers -------------------------------------
     // Year / month changes just reload the dashboard for the new period.
@@ -97,633 +79,36 @@
 
     // --- Charts (drawn once the DOM is ready) -------------------------
     $(function() {
-        // ===== Chart 1/10: regular income, whole year =====
-        // 1. Read each slice's value from its hidden input.
-        let regularIncomeLaborIncomeYear = Number($("#regularIncomeLaborIncomeYear").val());
-        let regularIncomeBusinessIncomeYear = Number($("#regularIncomeBusinessIncomeYear").val());
-        let regularIncomePensionIncomeYear = Number($("#regularIncomePensionIncomeYear").val());
-        let regularIncomeFinancialIncomeYear = Number($("#regularIncomeFinancialIncomeYear").val());
-        let regularIncomeRentalIncomeYear = Number($("#regularIncomeRentalIncomeYear").val());
-        let regularIncomeOtherIncomeYear = Number($("#regularIncomeOtherIncomeYear").val());
-
-        // 2. Grab the <canvas> 2D context and build the Chart.js data object
-        //    (localized labels + one dataset of the values, with fixed colors).
-        let donutChartCanvasRegularIncomeYear = required(byId("regularIncomeYear", HTMLCanvasElement).getContext("2d"), "the 2D context of #regularIncomeYear");
-        let donutDataRegularIncomeYear: Chart.ChartData = {
-            labels: [
-                localizer.LaborIncome,
-                localizer.BusinessIncome,
-                localizer.PensionIncome,
-                localizer.FinancialIncome,
-                localizer.RentalIncome,
-                localizer.OtherIncome,
-            ],
-            datasets: [
-                {
-                    data: [regularIncomeLaborIncomeYear, regularIncomeBusinessIncomeYear, regularIncomePensionIncomeYear, regularIncomeFinancialIncomeYear, regularIncomeRentalIncomeYear, regularIncomeOtherIncomeYear],
-                    backgroundColor: ["#f56954", "#00a65a", "#f39c12", "#00c0ef", "#3c8dbc", "#d2d6de"],
-                }
-            ]
-        };
-
-        // 3. Options: white legend text; the tooltip `label` callback formats
-        //    each slice as "Label: 1,234 (12.34%)" using the server-supplied
-        //    percentage for that slice index.
-        let donutOptionsRegularIncomeYear: Chart.ChartOptions = {
-            maintainAspectRatio: false,
-            responsive: true,
-            legend: {
-                labels: {
-                    fontColor: "#fff",
-                    fontSize: 15
-                }
-            },
-            tooltips: {
-                callbacks: {
-                    label: function(tooltipItem: Chart.ChartTooltipItem, data: Chart.ChartData) {
-                        const index = required(tooltipItem.index, "the slice index");
-                        const label = required(data.labels, "the chart labels")[index];
-                        const dataset = required(required(data.datasets, "the chart datasets")[0], "the chart dataset");
-                        const value = Number(required(dataset.data, "the slice values")[index]);
-
-                        const percentages = [
-                            Number($("#percentageOfRegularIncomeLaborIncomeYear").val()),
-                            Number($("#percentageOfRegularIncomeBusinessIncomeYear").val()),
-                            Number($("#percentageOfRegularIncomePensionIncomeYear").val()),
-                            Number($("#percentageOfRegularIncomeFinancialIncomeYear").val()),
-                            Number($("#percentageOfRegularIncomeRentalIncomeYear").val()),
-                            Number($("#percentageOfRegularIncomeOtherIncomeYear").val())
-                        ];
-
-                        return `${label}: ${value.toLocaleString(undefined, { maximumFractionDigits: amountMaxDecimalPlaces })} (${required(percentages[index], "the slice percentage").toFixed(2)}%)`;
+        for (const chart of charts) {
+            const palette = chart.Amounts.length > shortPalette.length ? longPalette : shortPalette;
+            new Chart(required(byId(chart.CanvasId, HTMLCanvasElement).getContext("2d"), `the 2D context of #${chart.CanvasId}`), {
+                type: "doughnut",
+                data: {
+                    labels: chart.SubClasses.map((subClass) => required(labels.get(subClass), "the slice label")),
+                    datasets: [{ data: chart.Amounts, backgroundColor: palette.slice(0, chart.Amounts.length) }]
+                },
+                options: {
+                    maintainAspectRatio: false,
+                    responsive: true,
+                    legend: {
+                        labels: {
+                            fontColor: "#fff",
+                            fontSize: 15
+                        }
+                    },
+                    tooltips: {
+                        callbacks: {
+                            // Each slice as "Label: 1,234 (12.34%)", with the server-supplied percentage of that slice.
+                            label: function(tooltipItem: Chart.ChartTooltipItem, data: Chart.ChartData) {
+                                const index = required(tooltipItem.index, "the slice index");
+                                const label = required(data.labels, "the chart labels")[index];
+                                const value = required(chart.Amounts[index], "the slice value");
+                                return `${label}: ${value.toLocaleString(undefined, { maximumFractionDigits: amountMaxDecimalPlaces })} (${required(chart.Percentages[index], "the slice percentage").toFixed(2)}%)`;
+                            }
+                        }
                     }
                 }
-            }
-        };
-
-        // 4. Draw it.
-        new Chart(donutChartCanvasRegularIncomeYear, {
-            type: "doughnut",
-            data: donutDataRegularIncomeYear,
-            options: donutOptionsRegularIncomeYear
-        });
-
-        // ===== Chart 2/10: irregular income, whole year (same shape as chart 1) =====
-        let irregularIncomeLaborIncomeYear = Number($("#irregularIncomeLaborIncomeYear").val());
-        let irregularIncomeOtherIncomeYear = Number($("#irregularIncomeOtherIncomeYear").val());
-
-        let donutChartCanvasIrregularIncomeYear = required(byId("irregularIncomeYear", HTMLCanvasElement).getContext("2d"), "the 2D context of #irregularIncomeYear");
-        let donutDataIrregularIncomeYear: Chart.ChartData = {
-            labels: [
-                localizer.LaborIncome,
-                localizer.OtherIncome,
-            ],
-            datasets: [
-                {
-                    data: [irregularIncomeLaborIncomeYear, irregularIncomeOtherIncomeYear],
-                    backgroundColor: ["#f56954", "#00a65a"],
-                }
-            ]
-        };
-
-        let donutOptionsIrregularIncomeYear: Chart.ChartOptions = {
-            maintainAspectRatio: false,
-            responsive: true,
-            legend: {
-                labels: {
-                    fontColor: "#fff",
-                    fontSize: 15
-                }
-            },
-            tooltips: {
-                callbacks: {
-                    label: function(tooltipItem: Chart.ChartTooltipItem, data: Chart.ChartData) {
-                        const index = required(tooltipItem.index, "the slice index");
-                        const label = required(data.labels, "the chart labels")[index];
-                        const dataset = required(required(data.datasets, "the chart datasets")[0], "the chart dataset");
-                        const value = Number(required(dataset.data, "the slice values")[index]);
-
-                        const percentages = [
-                            Number($("#percentageOfIrregularIncomeLaborIncomeYear").val()),
-                            Number($("#percentageOfIrregularIncomeOtherIncomeYear").val())
-                        ];
-
-                        return `${label}: ${value.toLocaleString(undefined, { maximumFractionDigits: amountMaxDecimalPlaces })} (${required(percentages[index], "the slice percentage").toFixed(2)}%)`;
-                    }
-                }
-            }
-        };
-
-        new Chart(donutChartCanvasIrregularIncomeYear, {
-            type: "doughnut",
-            data: donutDataIrregularIncomeYear,
-            options: donutOptionsIrregularIncomeYear
-        });
-
-        // ===== Chart 3/10: regular savings, whole year (same shape as chart 1) =====
-        let regularSavingsDepositYear = Number($("#regularSavingsDepositYear").val());
-        let regularSavingsInvestmentYear = Number($("#regularSavingsInvestmentYear").val());
-
-        let donutChartCanvasRegularSavingsYear = required(byId("regularSavingsYear", HTMLCanvasElement).getContext("2d"), "the 2D context of #regularSavingsYear");
-        let donutDataRegularSavingsYear: Chart.ChartData = {
-            labels: [
-                localizer.Deposit,
-                localizer.Investment,
-            ],
-            datasets: [
-                {
-                    data: [regularSavingsDepositYear, regularSavingsInvestmentYear],
-                    backgroundColor: ["#f56954", "#00a65a"],
-                }
-            ]
-        };
-        let donutOptionsRegularSavingsYear: Chart.ChartOptions = {
-            maintainAspectRatio: false,
-            responsive: true,
-            legend: {
-                labels: {
-                    fontColor: "#fff",
-                    fontSize: 15
-                }
-            },
-            tooltips: {
-                callbacks: {
-                    label: function(tooltipItem: Chart.ChartTooltipItem, data: Chart.ChartData) {
-                        const index = required(tooltipItem.index, "the slice index");
-                        const label = required(data.labels, "the chart labels")[index];
-                        const dataset = required(required(data.datasets, "the chart datasets")[0], "the chart dataset");
-                        const value = Number(required(dataset.data, "the slice values")[index]);
-
-                        const percentages = [
-                            Number($("#percentageOfRegularSavingsDepositYear").val()),
-                            Number($("#percentageOfRegularSavingsInvestmentYear").val())
-                        ];
-
-                        return `${label}: ${value.toLocaleString(undefined, { maximumFractionDigits: amountMaxDecimalPlaces })} (${required(percentages[index], "the slice percentage").toFixed(2)}%)`;
-                    }
-                }
-            }
-        };
-
-        new Chart(donutChartCanvasRegularSavingsYear, {
-            type: "doughnut",
-            data: donutDataRegularSavingsYear,
-            options: donutOptionsRegularSavingsYear
-        });
-
-        // ===== Chart 4/10: non-consumer spending, whole year (same shape as chart 1) =====
-        let nonConsumerSpendingPublicPensionYear = Number($("#nonConsumerSpendingPublicPensionYear").val());
-        let nonConsumerSpendingDebtRepaymentYear = Number($("#nonConsumerSpendingDebtRepaymentYear").val());
-        let nonConsumerSpendingTaxYear = Number($("#nonConsumerSpendingTaxYear").val());
-        let nonConsumerSpendingSocialInsuranceYear = Number($("#nonConsumerSpendingSocialInsuranceYear").val());
-        let nonConsumerSpendingInterHouseholdTransferExpensesYear = Number($("#nonConsumerSpendingInterHouseholdTransferExpensesYear").val());
-        let nonConsumerSpendingNonProfitOrganizationTransferYear = Number($("#nonConsumerSpendingNonProfitOrganizationTransferYear").val());
-
-        let donutChartCanvasNonConsumerSpendingYear = required(byId("nonConsumerSpendingYear", HTMLCanvasElement).getContext("2d"), "the 2D context of #nonConsumerSpendingYear");
-        let donutDataNonConsumerSpendingYear: Chart.ChartData = {
-            labels: [
-                localizer.PublicPension,
-                localizer.DebtRepayment,
-                localizer.Tax,
-                localizer.SocialInsurance,
-                localizer.InterHouseholdTransferExpenses,
-                localizer.NonProfitOrganizationTransfer,
-            ],
-            datasets: [
-                {
-                    data: [nonConsumerSpendingPublicPensionYear, nonConsumerSpendingDebtRepaymentYear, nonConsumerSpendingTaxYear, nonConsumerSpendingSocialInsuranceYear, nonConsumerSpendingInterHouseholdTransferExpensesYear, nonConsumerSpendingNonProfitOrganizationTransferYear],
-                    backgroundColor: ["#f56954", "#00a65a", "#f39c12", "#00c0ef", "#3c8dbc", "#d2d6de"],
-                }
-            ]
-        };
-        let donutOptionsNonConsumerSpendingYear: Chart.ChartOptions = {
-            maintainAspectRatio: false,
-            responsive: true,
-            legend: {
-                labels: {
-                    fontColor: "#fff",
-                    fontSize: 15
-                }
-            },
-            tooltips: {
-                callbacks: {
-                    label: function(tooltipItem: Chart.ChartTooltipItem, data: Chart.ChartData) {
-                        const index = required(tooltipItem.index, "the slice index");
-                        const label = required(data.labels, "the chart labels")[index];
-                        const dataset = required(required(data.datasets, "the chart datasets")[0], "the chart dataset");
-                        const value = Number(required(dataset.data, "the slice values")[index]);
-
-                        const percentages = [
-                            Number($("#percentageOfNonConsumerSpendingPublicPensionYear").val()),
-                            Number($("#percentageOfNonConsumerSpendingDebtRepaymentYear").val()),
-                            Number($("#percentageOfNonConsumerSpendingTaxYear").val()),
-                            Number($("#percentageOfNonConsumerSpendingSocialInsuranceYear").val()),
-                            Number($("#percentageOfNonConsumerSpendingInterHouseholdTransferExpensesYear").val()),
-                            Number($("#percentageOfNonConsumerSpendingNonProfitOrganizationTransferYear").val())
-                        ];
-
-                        return `${label}: ${value.toLocaleString(undefined, { maximumFractionDigits: amountMaxDecimalPlaces })} (${required(percentages[index], "the slice percentage").toFixed(2)}%)`;
-                    }
-                }
-            }
-        };
-
-        new Chart(donutChartCanvasNonConsumerSpendingYear, {
-            type: "doughnut",
-            data: donutDataNonConsumerSpendingYear,
-            options: donutOptionsNonConsumerSpendingYear
-        });
-
-        // ===== Chart 5/10: consumer spending, whole year (same shape as chart 1) =====
-        let consumerSpendingMealOrEatOutExpensesYear = Number($("#consumerSpendingMealOrEatOutExpensesYear").val());
-        let consumerSpendingHousingOrSuppliesCostYear = Number($("#consumerSpendingHousingOrSuppliesCostYear").val());
-        let consumerSpendingEducationExpensesYear = Number($("#consumerSpendingEducationExpensesYear").val());
-        let consumerSpendingMedicalExpensesYear = Number($("#consumerSpendingMedicalExpensesYear").val());
-        let consumerSpendingTransportationCostYear = Number($("#consumerSpendingTransportationCostYear").val());
-        let consumerSpendingCommunicationCostYear = Number($("#consumerSpendingCommunicationCostYear").val());
-        let consumerSpendingLeisureOrCultureYear = Number($("#consumerSpendingLeisureOrCultureYear").val());
-        let consumerSpendingClothingOrShoesYear = Number($("#consumerSpendingClothingOrShoesYear").val());
-        let consumerSpendingPinMoneyYear = Number($("#consumerSpendingPinMoneyYear").val());
-        let consumerSpendingProtectionTypeInsuranceYear = Number($("#consumerSpendingProtectionTypeInsuranceYear").val());
-        let consumerSpendingOtherExpensesYear = Number($("#consumerSpendingOtherExpensesYear").val());
-        let consumerSpendingUnknownExpenditureYear = Number($("#consumerSpendingUnknownExpenditureYear").val());
-
-        let donutChartCanvasConsumerSpendingYear = required(byId("consumerSpendingYear", HTMLCanvasElement).getContext("2d"), "the 2D context of #consumerSpendingYear");
-        let donutDataConsumerSpendingYear: Chart.ChartData = {
-            labels: [
-                localizer.MealOrEatOutExpenses,
-                localizer.HousingOrSuppliesCost,
-                localizer.EducationExpenses,
-                localizer.MedicalExpenses,
-                localizer.TransportationCost,
-                localizer.CommunicationCost,
-                localizer.LeisureOrCulture,
-                localizer.ClothingOrShoes,
-                localizer.PinMoney,
-                localizer.ProtectionTypeInsurance,
-                localizer.OtherExpenses,
-                localizer.UnknownExpenditure,
-            ],
-            datasets: [
-                {
-                    data: [consumerSpendingMealOrEatOutExpensesYear, consumerSpendingHousingOrSuppliesCostYear, consumerSpendingEducationExpensesYear, consumerSpendingMedicalExpensesYear, consumerSpendingTransportationCostYear, consumerSpendingCommunicationCostYear, consumerSpendingLeisureOrCultureYear, consumerSpendingClothingOrShoesYear, consumerSpendingPinMoneyYear, consumerSpendingProtectionTypeInsuranceYear, consumerSpendingOtherExpensesYear, consumerSpendingUnknownExpenditureYear],
-                    backgroundColor: ["#FF0000", "#FFA200", "#FBFF00", "#70FF00", "#00FFE0", "#003EFF", "#D500FF", "#813F3F", "#7D813F", "#3F815A", "#3F8180", "#3F4B81"],
-                }
-            ]
-        };
-        let donutOptionsConsumerSpendingYear: Chart.ChartOptions = {
-            maintainAspectRatio: false,
-            responsive: true,
-            legend: {
-                labels: {
-                    fontColor: "#fff",
-                    fontSize: 15
-                }
-            },
-            tooltips: {
-                callbacks: {
-                    label: function(tooltipItem: Chart.ChartTooltipItem, data: Chart.ChartData) {
-                        const index = required(tooltipItem.index, "the slice index");
-                        const label = required(data.labels, "the chart labels")[index];
-                        const dataset = required(required(data.datasets, "the chart datasets")[0], "the chart dataset");
-                        const value = Number(required(dataset.data, "the slice values")[index]);
-
-                        const percentages = [
-                            Number($("#percentageOfConsumerSpendingMealOrEatOutExpensesYear").val()),
-                            Number($("#percentageOfConsumerSpendingHousingOrSuppliesCostYear").val()),
-                            Number($("#percentageOfConsumerSpendingEducationExpensesYear").val()),
-                            Number($("#percentageOfConsumerSpendingMedicalExpensesYear").val()),
-                            Number($("#percentageOfConsumerSpendingTransportationCostYear").val()),
-                            Number($("#percentageOfConsumerSpendingCommunicationCostYear").val()),
-                            Number($("#percentageOfConsumerSpendingLeisureOrCultureYear").val()),
-                            Number($("#percentageOfConsumerSpendingClothingOrShoesYear").val()),
-                            Number($("#percentageOfConsumerSpendingPinMoneyYear").val()),
-                            Number($("#percentageOfConsumerSpendingProtectionTypeInsuranceYear").val()),
-                            Number($("#percentageOfConsumerSpendingOtherExpensesYear").val()),
-                            Number($("#percentageOfConsumerSpendingUnknownExpenditureYear").val())
-                        ];
-
-                        return `${label}: ${value.toLocaleString(undefined, { maximumFractionDigits: amountMaxDecimalPlaces })} (${required(percentages[index], "the slice percentage").toFixed(2)}%)`;
-                    }
-                }
-            }
-        };
-
-        new Chart(donutChartCanvasConsumerSpendingYear, {
-            type: "doughnut",
-            data: donutDataConsumerSpendingYear,
-            options: donutOptionsConsumerSpendingYear
-        });
-
-        // ===== Chart 6/10: regular income, selected month (same shape as chart 1) =====
-        let regularIncomeLaborIncomeYearMonth = Number($("#regularIncomeLaborIncomeYearMonth").val());
-        let regularIncomeBusinessIncomeYearMonth = Number($("#regularIncomeBusinessIncomeYearMonth").val());
-        let regularIncomePensionIncomeYearMonth = Number($("#regularIncomePensionIncomeYearMonth").val());
-        let regularIncomeFinancialIncomeYearMonth = Number($("#regularIncomeFinancialIncomeYearMonth").val());
-        let regularIncomeRentalIncomeYearMonth = Number($("#regularIncomeRentalIncomeYearMonth").val());
-        let regularIncomeOtherIncomeYearMonth = Number($("#regularIncomeOtherIncomeYearMonth").val());
-
-        let donutChartCanvasRegularIncomeYearMonth = required(byId("regularIncomeYearMonth", HTMLCanvasElement).getContext("2d"), "the 2D context of #regularIncomeYearMonth");
-        let donutDataRegularIncomeYearMonth: Chart.ChartData = {
-            labels: [
-                localizer.LaborIncome,
-                localizer.BusinessIncome,
-                localizer.PensionIncome,
-                localizer.FinancialIncome,
-                localizer.RentalIncome,
-                localizer.OtherIncome,
-            ],
-            datasets: [
-                {
-                    data: [regularIncomeLaborIncomeYearMonth, regularIncomeBusinessIncomeYearMonth, regularIncomePensionIncomeYearMonth, regularIncomeFinancialIncomeYearMonth, regularIncomeRentalIncomeYearMonth, regularIncomeOtherIncomeYearMonth],
-                    backgroundColor: ["#f56954", "#00a65a", "#f39c12", "#00c0ef", "#3c8dbc", "#d2d6de"],
-                }
-            ]
-        };
-
-        let donutOptionsRegularIncomeYearMonth: Chart.ChartOptions = {
-            maintainAspectRatio: false,
-            responsive: true,
-            legend: {
-                labels: {
-                    fontColor: "#fff",
-                    fontSize: 15
-                }
-            },
-            tooltips: {
-                callbacks: {
-                    label: function(tooltipItem: Chart.ChartTooltipItem, data: Chart.ChartData) {
-                        const index = required(tooltipItem.index, "the slice index");
-                        const label = required(data.labels, "the chart labels")[index];
-                        const dataset = required(required(data.datasets, "the chart datasets")[0], "the chart dataset");
-                        const value = Number(required(dataset.data, "the slice values")[index]);
-
-                        const percentages = [
-                            Number($("#percentageOfRegularIncomeLaborIncomeYearMonth").val()),
-                            Number($("#percentageOfRegularIncomeBusinessIncomeYearMonth").val()),
-                            Number($("#percentageOfRegularIncomePensionIncomeYearMonth").val()),
-                            Number($("#percentageOfRegularIncomeFinancialIncomeYearMonth").val()),
-                            Number($("#percentageOfRegularIncomeRentalIncomeYearMonth").val()),
-                            Number($("#percentageOfRegularIncomeOtherIncomeYearMonth").val())
-                        ];
-
-                        return `${label}: ${value.toLocaleString(undefined, { maximumFractionDigits: amountMaxDecimalPlaces })} (${required(percentages[index], "the slice percentage").toFixed(2)}%)`;
-                    }
-                }
-            }
-        };
-
-        new Chart(donutChartCanvasRegularIncomeYearMonth, {
-            type: "doughnut",
-            data: donutDataRegularIncomeYearMonth,
-            options: donutOptionsRegularIncomeYearMonth
-        });
-
-        // ===== Chart 7/10: irregular income, selected month (same shape as chart 1) =====
-        let irregularIncomeLaborIncomeYearMonth = Number($("#irregularIncomeLaborIncomeYearMonth").val());
-        let irregularIncomeOtherIncomeYearMonth = Number($("#irregularIncomeOtherIncomeYearMonth").val());
-
-        let donutChartCanvasIrregularIncomeYearMonth = required(byId("irregularIncomeYearMonth", HTMLCanvasElement).getContext("2d"), "the 2D context of #irregularIncomeYearMonth");
-        let donutDataIrregularIncomeYearMonth: Chart.ChartData = {
-            labels: [
-                localizer.LaborIncome,
-                localizer.OtherIncome,
-            ],
-            datasets: [
-                {
-                    data: [irregularIncomeLaborIncomeYearMonth, irregularIncomeOtherIncomeYearMonth],
-                    backgroundColor: ["#f56954", "#00a65a"],
-                }
-            ]
-        };
-
-        let donutOptionsIrregularIncomeYearMonth: Chart.ChartOptions = {
-            maintainAspectRatio: false,
-            responsive: true,
-            legend: {
-                labels: {
-                    fontColor: "#fff",
-                    fontSize: 15
-                }
-            },
-            tooltips: {
-                callbacks: {
-                    label: function(tooltipItem: Chart.ChartTooltipItem, data: Chart.ChartData) {
-                        const index = required(tooltipItem.index, "the slice index");
-                        const label = required(data.labels, "the chart labels")[index];
-                        const dataset = required(required(data.datasets, "the chart datasets")[0], "the chart dataset");
-                        const value = Number(required(dataset.data, "the slice values")[index]);
-
-                        const percentages = [
-                            Number($("#percentageOfIrregularIncomeLaborIncomeYearMonth").val()),
-                            Number($("#percentageOfIrregularIncomeOtherIncomeYearMonth").val())
-                        ];
-
-                        return `${label}: ${value.toLocaleString(undefined, { maximumFractionDigits: amountMaxDecimalPlaces })} (${required(percentages[index], "the slice percentage").toFixed(2)}%)`;
-                    }
-                }
-            }
-        };
-
-        new Chart(donutChartCanvasIrregularIncomeYearMonth, {
-            type: "doughnut",
-            data: donutDataIrregularIncomeYearMonth,
-            options: donutOptionsIrregularIncomeYearMonth
-        });
-
-        // ===== Chart 8/10: regular savings, selected month (same shape as chart 1) =====
-        let regularSavingsDepositYearMonth = Number($("#regularSavingsDepositYearMonth").val());
-        let regularSavingsInvestmentYearMonth = Number($("#regularSavingsInvestmentYearMonth").val());
-
-        let donutChartCanvasRegularSavingsYearMonth = required(byId("regularSavingsYearMonth", HTMLCanvasElement).getContext("2d"), "the 2D context of #regularSavingsYearMonth");
-        let donutDataRegularSavingsYearMonth: Chart.ChartData = {
-            labels: [
-                localizer.Deposit,
-                localizer.Investment,
-            ],
-            datasets: [
-                {
-                    data: [regularSavingsDepositYearMonth, regularSavingsInvestmentYearMonth],
-                    backgroundColor: ["#f56954", "#00a65a"],
-                }
-            ]
-        };
-        let donutOptionsRegularSavingsYearMonth: Chart.ChartOptions = {
-            maintainAspectRatio: false,
-            responsive: true,
-            legend: {
-                labels: {
-                    fontColor: "#fff",
-                    fontSize: 15
-                }
-            },
-            tooltips: {
-                callbacks: {
-                    label: function(tooltipItem: Chart.ChartTooltipItem, data: Chart.ChartData) {
-                        const index = required(tooltipItem.index, "the slice index");
-                        const label = required(data.labels, "the chart labels")[index];
-                        const dataset = required(required(data.datasets, "the chart datasets")[0], "the chart dataset");
-                        const value = Number(required(dataset.data, "the slice values")[index]);
-
-                        const percentages = [
-                            Number($("#percentageOfRegularSavingsDepositYearMonth").val()),
-                            Number($("#percentageOfRegularSavingsInvestmentYearMonth").val())
-                        ];
-
-                        return `${label}: ${value.toLocaleString(undefined, { maximumFractionDigits: amountMaxDecimalPlaces })} (${required(percentages[index], "the slice percentage").toFixed(2)}%)`;
-                    }
-                }
-            }
-        };
-
-        new Chart(donutChartCanvasRegularSavingsYearMonth, {
-            type: "doughnut",
-            data: donutDataRegularSavingsYearMonth,
-            options: donutOptionsRegularSavingsYearMonth
-        });
-
-        // ===== Chart 9/10: non-consumer spending, selected month (same shape as chart 1) =====
-        let nonConsumerSpendingPublicPensionYearMonth = Number($("#nonConsumerSpendingPublicPensionYearMonth").val());
-        let nonConsumerSpendingDebtRepaymentYearMonth = Number($("#nonConsumerSpendingDebtRepaymentYearMonth").val());
-        let nonConsumerSpendingTaxYearMonth = Number($("#nonConsumerSpendingTaxYearMonth").val());
-        let nonConsumerSpendingSocialInsuranceYearMonth = Number($("#nonConsumerSpendingSocialInsuranceYearMonth").val());
-        let nonConsumerSpendingInterHouseholdTransferExpensesYearMonth = Number($("#nonConsumerSpendingInterHouseholdTransferExpensesYearMonth").val());
-        let nonConsumerSpendingNonProfitOrganizationTransferYearMonth = Number($("#nonConsumerSpendingNonProfitOrganizationTransferYearMonth").val());
-
-        let donutChartCanvasNonConsumerSpendingYearMonth = required(byId("nonConsumerSpendingYearMonth", HTMLCanvasElement).getContext("2d"), "the 2D context of #nonConsumerSpendingYearMonth");
-        let donutDataNonConsumerSpendingYearMonth: Chart.ChartData = {
-            labels: [
-                localizer.PublicPension,
-                localizer.DebtRepayment,
-                localizer.Tax,
-                localizer.SocialInsurance,
-                localizer.InterHouseholdTransferExpenses,
-                localizer.NonProfitOrganizationTransfer,
-            ],
-            datasets: [
-                {
-                    data: [nonConsumerSpendingPublicPensionYearMonth, nonConsumerSpendingDebtRepaymentYearMonth, nonConsumerSpendingTaxYearMonth, nonConsumerSpendingSocialInsuranceYearMonth, nonConsumerSpendingInterHouseholdTransferExpensesYearMonth, nonConsumerSpendingNonProfitOrganizationTransferYearMonth],
-                    backgroundColor: ["#f56954", "#00a65a", "#f39c12", "#00c0ef", "#3c8dbc", "#d2d6de"],
-                }
-            ]
-        };
-        let donutOptionsNonConsumerSpendingYearMonth: Chart.ChartOptions = {
-            maintainAspectRatio: false,
-            responsive: true,
-            legend: {
-                labels: {
-                    fontColor: "#fff",
-                    fontSize: 15
-                }
-            },
-            tooltips: {
-                callbacks: {
-                    label: function(tooltipItem: Chart.ChartTooltipItem, data: Chart.ChartData) {
-                        const index = required(tooltipItem.index, "the slice index");
-                        const label = required(data.labels, "the chart labels")[index];
-                        const dataset = required(required(data.datasets, "the chart datasets")[0], "the chart dataset");
-                        const value = Number(required(dataset.data, "the slice values")[index]);
-
-                        const percentages = [
-                            Number($("#percentageOfNonConsumerSpendingPublicPensionYearMonth").val()),
-                            Number($("#percentageOfNonConsumerSpendingDebtRepaymentYearMonth").val()),
-                            Number($("#percentageOfNonConsumerSpendingTaxYearMonth").val()),
-                            Number($("#percentageOfNonConsumerSpendingSocialInsuranceYearMonth").val()),
-                            Number($("#percentageOfNonConsumerSpendingInterHouseholdTransferExpensesYearMonth").val()),
-                            Number($("#percentageOfNonConsumerSpendingNonProfitOrganizationTransferYearMonth").val())
-                        ];
-
-                        return `${label}: ${value.toLocaleString(undefined, { maximumFractionDigits: amountMaxDecimalPlaces })} (${required(percentages[index], "the slice percentage").toFixed(2)}%)`;
-                    }
-                }
-            }
-        };
-
-        new Chart(donutChartCanvasNonConsumerSpendingYearMonth, {
-            type: "doughnut",
-            data: donutDataNonConsumerSpendingYearMonth,
-            options: donutOptionsNonConsumerSpendingYearMonth
-        });
-
-        // ===== Chart 10/10: consumer spending, selected month (same shape as chart 1) =====
-        let consumerSpendingMealOrEatOutExpensesYearMonth = Number($("#consumerSpendingMealOrEatOutExpensesYearMonth").val());
-        let consumerSpendingHousingOrSuppliesCostYearMonth = Number($("#consumerSpendingHousingOrSuppliesCostYearMonth").val());
-        let consumerSpendingEducationExpensesYearMonth = Number($("#consumerSpendingEducationExpensesYearMonth").val());
-        let consumerSpendingMedicalExpensesYearMonth = Number($("#consumerSpendingMedicalExpensesYearMonth").val());
-        let consumerSpendingTransportationCostYearMonth = Number($("#consumerSpendingTransportationCostYearMonth").val());
-        let consumerSpendingCommunicationCostYearMonth = Number($("#consumerSpendingCommunicationCostYearMonth").val());
-        let consumerSpendingLeisureOrCultureYearMonth = Number($("#consumerSpendingLeisureOrCultureYearMonth").val());
-        let consumerSpendingClothingOrShoesYearMonth = Number($("#consumerSpendingClothingOrShoesYearMonth").val());
-        let consumerSpendingPinMoneyYearMonth = Number($("#consumerSpendingPinMoneyYearMonth").val());
-        let consumerSpendingProtectionTypeInsuranceYearMonth = Number($("#consumerSpendingProtectionTypeInsuranceYearMonth").val());
-        let consumerSpendingOtherExpensesYearMonth = Number($("#consumerSpendingOtherExpensesYearMonth").val());
-        let consumerSpendingUnknownExpenditureYearMonth = Number($("#consumerSpendingUnknownExpenditureYearMonth").val());
-
-        let donutChartCanvasConsumerSpendingYearMonth = required(byId("consumerSpendingYearMonth", HTMLCanvasElement).getContext("2d"), "the 2D context of #consumerSpendingYearMonth");
-        let donutDataConsumerSpendingYearMonth: Chart.ChartData = {
-            labels: [
-                localizer.MealOrEatOutExpenses,
-                localizer.HousingOrSuppliesCost,
-                localizer.EducationExpenses,
-                localizer.MedicalExpenses,
-                localizer.TransportationCost,
-                localizer.CommunicationCost,
-                localizer.LeisureOrCulture,
-                localizer.ClothingOrShoes,
-                localizer.PinMoney,
-                localizer.ProtectionTypeInsurance,
-                localizer.OtherExpenses,
-                localizer.UnknownExpenditure,
-            ],
-            datasets: [
-                {
-                    data: [consumerSpendingMealOrEatOutExpensesYearMonth, consumerSpendingHousingOrSuppliesCostYearMonth, consumerSpendingEducationExpensesYearMonth, consumerSpendingMedicalExpensesYearMonth, consumerSpendingTransportationCostYearMonth, consumerSpendingCommunicationCostYearMonth, consumerSpendingLeisureOrCultureYearMonth, consumerSpendingClothingOrShoesYearMonth, consumerSpendingPinMoneyYearMonth, consumerSpendingProtectionTypeInsuranceYearMonth, consumerSpendingOtherExpensesYearMonth, consumerSpendingUnknownExpenditureYearMonth],
-                    backgroundColor: ["#FF0000", "#FFA200", "#FBFF00", "#70FF00", "#00FFE0", "#003EFF", "#D500FF", "#813F3F", "#7D813F", "#3F815A", "#3F8180", "#3F4B81"],
-                }
-            ]
-        };
-        let donutOptionsConsumerSpendingYearMonth: Chart.ChartOptions = {
-            maintainAspectRatio: false,
-            responsive: true,
-            legend: {
-                labels: {
-                    fontColor: "#fff",
-                    fontSize: 15
-                }
-            },
-            tooltips: {
-                callbacks: {
-                    label: function(tooltipItem: Chart.ChartTooltipItem, data: Chart.ChartData) {
-                        const index = required(tooltipItem.index, "the slice index");
-                        const label = required(data.labels, "the chart labels")[index];
-                        const dataset = required(required(data.datasets, "the chart datasets")[0], "the chart dataset");
-                        const value = Number(required(dataset.data, "the slice values")[index]);
-
-                        const percentages = [
-                            Number($("#percentageOfConsumerSpendingMealOrEatOutExpensesYearMonth").val()),
-                            Number($("#percentageOfConsumerSpendingHousingOrSuppliesCostYearMonth").val()),
-                            Number($("#percentageOfConsumerSpendingEducationExpensesYearMonth").val()),
-                            Number($("#percentageOfConsumerSpendingMedicalExpensesYearMonth").val()),
-                            Number($("#percentageOfConsumerSpendingTransportationCostYearMonth").val()),
-                            Number($("#percentageOfConsumerSpendingCommunicationCostYearMonth").val()),
-                            Number($("#percentageOfConsumerSpendingLeisureOrCultureYearMonth").val()),
-                            Number($("#percentageOfConsumerSpendingClothingOrShoesYearMonth").val()),
-                            Number($("#percentageOfConsumerSpendingPinMoneyYearMonth").val()),
-                            Number($("#percentageOfConsumerSpendingProtectionTypeInsuranceYearMonth").val()),
-                            Number($("#percentageOfConsumerSpendingOtherExpensesYearMonth").val()),
-                            Number($("#percentageOfConsumerSpendingUnknownExpenditureYearMonth").val())
-                        ];
-
-                        return `${label}: ${value.toLocaleString(undefined, { maximumFractionDigits: amountMaxDecimalPlaces })} (${required(percentages[index], "the slice percentage").toFixed(2)}%)`;
-                    }
-                }
-            }
-        };
-
-        new Chart(donutChartCanvasConsumerSpendingYearMonth, {
-            type: "doughnut",
-            data: donutDataConsumerSpendingYearMonth,
-            options: donutOptionsConsumerSpendingYearMonth
-        });
+            });
+        }
     });
 })();

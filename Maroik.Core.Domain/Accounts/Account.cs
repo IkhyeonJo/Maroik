@@ -317,6 +317,10 @@ public sealed class Account : AggregateRoot<string>
         : !AgreedServiceTerms ? SignInRefusal.ServiceTermsNotAgreed
         : null;
 
+    /// <summary>The self-registration rule: nobody registers without accepting the service terms. An administrator's create is not held to it.</summary>
+    public static ErrorOr<Success> RequireServiceTermsForRegistration(bool agreedServiceTerms) =>
+        agreedServiceTerms ? Result.Success : DomainError.Validation("Account.ServiceTermsRequired", "Please check the consent form");
+
     /// <summary>
     /// Whether a password-reset mail is sent for this account: only for one that is confirmed and not deleted. A
     /// locked account qualifies — resetting the password is how a user recovers from a lockout.
@@ -342,6 +346,9 @@ public sealed class Account : AggregateRoot<string>
         if (!EmailConfirmed)
             return DomainError.Failure("Account.NotConfirmed", "Email must be confirmed before resetting the password.");
 
+        if (Deleted)
+            return DomainError.Failure("Account.Deleted", "A deleted account cannot reset its password.");
+
         ResetPasswordToken = GuidToken.Hash(resetToken);
         Updated = utcNow;
         return Result.Success;
@@ -356,12 +363,15 @@ public sealed class Account : AggregateRoot<string>
     /// </summary>
     public ErrorOr<Success> ResetPassword(string token, string newHashedPassword, DateTime utcNow)
     {
-        if (!TokensMatch(ResetPasswordToken, token) || !GuidToken.IsTokenAlive(token, utcNow))
+        // A deleted account's link is simply invalid, as in ConfirmEmail.
+        if (Deleted || !TokensMatch(ResetPasswordToken, token) || !GuidToken.IsTokenAlive(token, utcNow))
             return DomainError.Validation("Account.InvalidToken", "Invalid or expired password-reset token.");
 
         if (string.IsNullOrWhiteSpace(newHashedPassword))
             return DomainError.Validation("Account.PasswordEmpty", "New hashed password cannot be empty.");
 
+        // Always unlocks, an administrator's lock included: the mailed single-use token is the way back from a lockout.
+        Unlock(utcNow);
         HashedPassword = newHashedPassword;
         ResetPasswordToken = null;
         SecurityStamp = GenerateSecurityStamp();
@@ -408,6 +418,68 @@ public sealed class Account : AggregateRoot<string>
     {
         Lock(utcNow);
         SecurityStamp = GenerateSecurityStamp();
+    }
+
+    /// <summary>
+    /// Turns the admin form's desired state into the account's own operations. A null role or time
+    /// zone keeps the current value. Saving an account as unlocked always clears its failed-login
+    /// counter (<see cref="Account.Unlock"/>); locking keeps the counter. The admin's message is
+    /// applied last so it is what the account ends up showing, whatever lock/unlock wrote.
+    /// </summary>
+    public ErrorOr<Success> ApplyAdminChanges(AdminAccountChanges changes, DateTime utcNow)
+    {
+        if (changes.TimeZoneIanaId != null)
+        {
+            var tzResult = ChangeTimeZone(changes.TimeZoneIanaId, utcNow);
+            if (tzResult.IsError) return tzResult.Errors;
+        }
+
+        if (changes.FileManagerQuotaBytes is { } quota)
+        {
+            var quotaResult = ChangeFileManagerQuota(quota, utcNow);
+            if (quotaResult.IsError) return quotaResult.Errors;
+        }
+
+        if (changes.FileManagerScanDisabled is { } scanDisabled)
+            ChangeFileManagerScanDisabled(scanDisabled, utcNow);
+
+        if (changes.Role != null)
+        {
+            var roleResult = AccountRole.Create(changes.Role);
+            if (roleResult.IsError) return roleResult.Errors;
+            ChangeRole(roleResult.Value, utcNow);
+        }
+
+        switch (changes.Locked)
+        {
+            // Locking an unlocked account is the admin's sanction and ends its sessions; re-saving an account that is
+            // already locked (e.g. by failed logins) keeps them, as that lock only refuses new logins.
+            case true when Locked:
+                Lock(utcNow);
+                break;
+            case true:
+                LockAndEndSessions(utcNow);
+                break;
+            default:
+                Unlock(utcNow);
+                break;
+        }
+
+        // One way only: an unconfirmed registration can be replaced by anyone who knows the address, so a confirmation is never taken back.
+        if (changes.EmailConfirmed)
+            ForceConfirmEmail(utcNow);
+
+        // One way only, like the confirmation (owner's decision, 2026-11-08): an agreement to the terms is never taken back.
+        if (changes.AgreedServiceTerms)
+            AcceptServiceTerms(utcNow);
+
+        if (changes.Deleted)
+            SoftDelete(utcNow);
+        else
+            Restore(utcNow);
+
+        SetMessage(changes.Message, utcNow);
+        return Result.Success;
     }
 
     /// <summary>Unlocks the account and resets the login-attempt counter.</summary>

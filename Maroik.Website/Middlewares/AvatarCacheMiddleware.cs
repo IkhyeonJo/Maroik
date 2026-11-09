@@ -1,4 +1,5 @@
 using Maroik.Core.Contract.Interfaces;
+using Maroik.Core.Service.Constants;
 
 namespace Maroik.Website.Middlewares;
 
@@ -16,7 +17,7 @@ namespace Maroik.Website.Middlewares;
 public sealed class AvatarCacheMiddleware(RequestDelegate next)
 {
     /// <summary>Request-path prefix of avatar URLs (matched case-sensitively; see InvokeAsync).</summary>
-    private const string UrlPrefix = "/upload/Management/Profile/Avatar/";
+    private const string UrlPrefix = StorageLocations.AvatarUrlPrefix;
 
     /// <summary>
     /// The file name of <paramref name="requestPath"/> when it is a name an uploaded avatar can have, otherwise null: a

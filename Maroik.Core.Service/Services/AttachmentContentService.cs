@@ -57,6 +57,15 @@ public class AttachmentContentService(
             return SummernoteUploadResult.Fail(ServiceErrorKeys.InvalidImageFile);
         }
 
+        // Re-asserted here, like the allow-list above: the HTTP layer checks first so a large body is never read into memory.
+        long maxBytes = settings.Value.MaxAttachedFileSizeBytes;
+        if (!ImageUploadPolicy.IsValidSize(file.Bytes.Length, maxBytes))
+        {
+            logger.LogWarning("Editor image upload refused: size {Size} bytes is outside the {MaxBytes}-byte limit in {Area}/{SubArea} for {Email}",
+                file.Bytes.Length, maxBytes, area, subArea, actorEmail);
+            return SummernoteUploadResult.Fail(ServiceErrorKeys.FileTooLarge, maxBytes / (1024 * 1024));
+        }
+
         if (imageValidator.IsSvg(file.Bytes))
         {
             logger.LogWarning("Editor image upload refused: SVG is not allowed in {Area}/{SubArea} for {Email}", area, subArea, actorEmail);
@@ -76,8 +85,7 @@ public class AttachmentContentService(
         // Use a GUID-based file name to avoid collisions and prevent path traversal via the original name.
         // Named and typed after the format the image actually is, not the name / type the upload claimed.
         string imageFile = $"{Guid.NewGuid():N}{stored.Extension}";
-        // A storage key, not a local path: always "/"-separated, whatever OS this runs on.
-        string filePath = $"upload/{area}/{subArea}/summernote/images/{imageFile}";
+        string filePath = AttachmentStoragePaths.EditorImage(area, subArea, imageFile);
 
         bool uploaded = await fileClient.UploadAsync(stored.Bytes, stored.ContentType, filePath, ct);
         return !uploaded ? SummernoteUploadResult.Fail(ServiceResult.TemporaryErrorKey) :

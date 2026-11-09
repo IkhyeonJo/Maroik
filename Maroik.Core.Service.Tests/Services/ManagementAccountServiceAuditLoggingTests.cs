@@ -79,7 +79,7 @@ public class ManagementAccountServiceAuditLoggingTests
 
         await CreateSut().CreateAccountAsync(new AdminCreateAccountRequest
         {
-            Email = Email, PlainPassword = "Plain1234!", Nickname = "NewUser", Role = Role.Admin, EmailConfirmed = true,
+            Email = Email, PlainPassword = "Plain1234!", Nickname = "NewUser", Role = Role.Admin,
         }, Actor, TestContext.Current.CancellationToken);
 
         FakeLogRecord record = Only(LogLevel.Information, "Admin created account");

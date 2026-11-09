@@ -1,11 +1,9 @@
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Contract.Messages;
-using Maroik.Core.Contract.Settings;
 using Maroik.Worker.Handlers;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Testing;
-using Microsoft.Extensions.Options;
 using Moq;
 
 namespace Maroik.Worker.Tests.Handlers;
@@ -21,18 +19,6 @@ public class EmailMessageHandlerTests
     private readonly Mock<IMailClient> _mailClient = new();
     /// <summary>Mock <c>IAccountMailStatusService</c> injected into the system under test.</summary>
     private readonly Mock<IAccountMailStatusService> _accountMailStatusService = new();
-    /// <summary>SMTP settings for the handler under test (the mail client is mocked, so nothing is contacted).</summary>
-    private readonly IOptions<ServerSetting> _settings = Options.Create(new ServerSetting
-    {
-        SmtpHost = "smtp.example.com",
-        SmtpPort = 587,
-        SmtpSsl = true,
-        SmtpUserName = "user",
-        SmtpPassword = "pass",
-        FromEmail = "noreply@maroik.com",
-        FromFullName = "Maroik"
-    });
-
     /// <summary>Records what the handler logs.</summary>
     private readonly FakeLogger<EmailMessageHandler> _logger = new();
 
@@ -40,7 +26,6 @@ public class EmailMessageHandlerTests
     private EmailMessageHandler CreateSut() => new(
         _mailClient.Object,
         _accountMailStatusService.Object,
-        _settings,
         _logger);
 
     /// <summary>Verifies that <c>HandleAsync</c> does not mark the account failed when the SMTP send succeeds.</summary>
@@ -49,7 +34,7 @@ public class EmailMessageHandlerTests
     {
         _mailClient.Setup(m => m.SendMailAsync(
                 It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
-                It.IsAny<ServerSetting>(), It.IsAny<CancellationToken>()))
+                It.IsAny<CancellationToken>()))
             .ReturnsAsync(ServiceResult.Ok());
 
         var sut = CreateSut();
@@ -68,7 +53,7 @@ public class EmailMessageHandlerTests
     {
         _mailClient.Setup(m => m.SendMailAsync(
                 It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
-                It.IsAny<ServerSetting>(), It.IsAny<CancellationToken>()))
+                It.IsAny<CancellationToken>()))
             .ReturnsAsync(ServiceResult.Ok());
 
         var sut = CreateSut();
@@ -88,7 +73,7 @@ public class EmailMessageHandlerTests
     {
         _mailClient.Setup(m => m.SendMailAsync(
                 It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
-                It.IsAny<ServerSetting>(), It.IsAny<CancellationToken>()))
+                It.IsAny<CancellationToken>()))
             .ReturnsAsync(ServiceResult.Fail("SMTP connection refused"));
 
         var sut = CreateSut();
@@ -114,7 +99,7 @@ public class EmailMessageHandlerTests
     {
         _mailClient.Setup(m => m.SendMailAsync(
                 It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
-                It.IsAny<ServerSetting>(), It.IsAny<CancellationToken>()))
+                It.IsAny<CancellationToken>()))
             .ReturnsAsync(ServiceResult.Fail("SMTP connection refused"));
 
         var sut = CreateSut();

@@ -48,18 +48,6 @@ public class FileManagerService(
     private async Task<FileManagerTree> LoadTreeAsync(string accountEmail, CancellationToken ct) =>
         new(await nodeRepository.GetByAccountEmailAsync(accountEmail, ct));
 
-    /// <summary>Whether <paramref name="folderId"/> is the root or a folder of the drive.</summary>
-    private static bool IsFolderOf(FileManagerTree tree, long? folderId) => folderId is not { } id || tree.Find(id) is { IsFolder: true };
-
-    /// <summary>The finished node with this id, or null (another account's, missing, or an unfinished upload).</summary>
-    private static FileManagerNode? Finished(FileManagerTree tree, long id) => tree.Find(id) is { Uploading: false } node ? node : null;
-
-    /// <summary>The finished items directly in <paramref name="folderId"/>.</summary>
-    private static IEnumerable<FileManagerNode> FinishedChildren(FileManagerTree tree, long? folderId) => tree.Children(folderId).Where(n => !n.Uploading);
-
-    /// <summary>The bytes the drive uses: every file, unfinished uploads included.</summary>
-    private static long UsedBytes(IEnumerable<FileManagerNode> nodes) => nodes.Where(n => !n.IsFolder).Sum(n => n.Size);
-
     /// <summary>Folders first, then by name ignoring case (then exactly, so the order is stable).</summary>
     private static IEnumerable<FileManagerNode> Sorted(IEnumerable<FileManagerNode> nodes) =>
         nodes.OrderBy(n => !n.IsFolder).ThenBy(n => n.Name, StringComparer.OrdinalIgnoreCase).ThenBy(n => n.Name, StringComparer.Ordinal);
@@ -106,10 +94,12 @@ public class FileManagerService(
     {
         FileManagerTree tree = await LoadTreeAsync(accountEmail, ct);
         long quota = (await accountRepository.FindByEmailAsync(accountEmail, ct))?.FileManagerQuotaBytes ?? 0;
+        long used = FileManagerTree.UsedBytes(tree.Nodes);
         return new FileManagerDriveResponse
         {
-            UsedBytes = UsedBytes(tree.Nodes),
+            UsedBytes = used,
             QuotaBytes = quota,
+            UsedPercent = FileManagerTree.UsedPercent(used, quota),
             RootItemCount = tree.ItemCount(null),
             Folders = [.. Sorted(tree.Nodes.Where(n => n.IsFolder)).Select(n => ToItem(tree, n))]
         };
@@ -119,14 +109,14 @@ public class FileManagerService(
     public async Task<(ServiceResult Result, FileManagerFolderResponse? Folder)> GetFolderAsync(string accountEmail, long? folderId, CancellationToken ct = default)
     {
         FileManagerTree tree = await LoadTreeAsync(accountEmail, ct);
-        if (!IsFolderOf(tree, folderId))
+        if (!tree.IsFolderOrRoot(folderId))
             return (ItemNotFound(), null);
 
         return (ServiceResult.Ok(), new FileManagerFolderResponse
         {
             FolderId = folderId,
             Breadcrumb = [.. tree.Ancestry(folderId).Reverse().Select(id => new FileManagerCrumbResponse { Id = id, Name = tree.Find(id)!.Name })],
-            Items = [.. Sorted(FinishedChildren(tree, folderId)).Select(n => ToItem(tree, n))]
+            Items = [.. Sorted(tree.FinishedChildren(folderId)).Select(n => ToItem(tree, n))]
         });
     }
 
@@ -148,7 +138,7 @@ public class FileManagerService(
         Dictionary<long, FileManagerNode> files = [];
         foreach (long id in ids)
         {
-            if (Finished(tree, id) is not { } node)
+            if (tree.FindFinished(id) is not { } node)
                 return (ItemNotFound(), []);
 
             IEnumerable<FileManagerNode> found = node.IsFolder ? tree.Descendants(node.Id).Where(n => n is { IsFolder: false, Uploading: false }) : [node];
@@ -169,7 +159,7 @@ public class FileManagerService(
         {
             await accountRepository.FindByEmailForUpdateAsync(accountEmail, ct);
             FileManagerTree tree = await LoadTreeAsync(accountEmail, ct);
-            if (!IsFolderOf(tree, parentId))
+            if (!tree.IsFolderOrRoot(parentId))
             {
                 await unitOfWork.RollbackAsync(ct);
                 return (ItemNotFound(), null);
@@ -183,7 +173,7 @@ public class FileManagerService(
             }
 
             FileManagerNode folder = created.Value;
-            if (FinishedChildren(tree, parentId).FirstOrDefault(n => n.Name == folder.Name) is { } existing)
+            if (tree.FindFinishedNamed(parentId, folder.Name) is { } existing)
             {
                 await unitOfWork.RollbackAsync(ct);
                 // A folder upload merges into a folder of the same name; anything else is a taken name.
@@ -212,7 +202,7 @@ public class FileManagerService(
         {
             await accountRepository.FindByEmailForUpdateAsync(accountEmail, ct);
             FileManagerTree tree = await LoadTreeAsync(accountEmail, ct);
-            if (Finished(tree, id) is not { } node)
+            if (tree.FindFinished(id) is not { } node)
             {
                 await unitOfWork.RollbackAsync(ct);
                 return ItemNotFound();
@@ -225,7 +215,7 @@ public class FileManagerService(
                 return ServiceResult.FromError(renamed.FirstError);
             }
 
-            if (FinishedChildren(tree, node.ParentId).Any(n => n.Id != id && n.Name == node.Name))
+            if (tree.IsNameTakenByAnother(node.ParentId, node.Name, id))
             {
                 await unitOfWork.RollbackAsync(ct);
                 return NameTaken(node.Name);
@@ -251,8 +241,8 @@ public class FileManagerService(
         {
             await accountRepository.FindByEmailForUpdateAsync(accountEmail, ct);
             FileManagerTree tree = await LoadTreeAsync(accountEmail, ct);
-            List<FileManagerNode?> found = [.. ids.Distinct().Select(id => Finished(tree, id))];
-            if (!IsFolderOf(tree, targetFolderId) || found.Any(n => n == null))
+            List<FileManagerNode?> found = [.. ids.Distinct().Select(id => tree.FindFinished(id))];
+            if (!tree.IsFolderOrRoot(targetFolderId) || found.Any(n => n == null))
             {
                 await unitOfWork.RollbackAsync(ct);
                 return ItemNotFound();
@@ -271,13 +261,10 @@ public class FileManagerService(
                 }
             }
 
-            // The names the target folder would hold: what stays there plus everything moved in.
-            HashSet<long> movedIds = [.. moved.Select(n => n.Id)];
-            List<string> names = [.. FinishedChildren(tree, targetFolderId).Where(n => !movedIds.Contains(n.Id)).Select(n => n.Name), .. moved.Select(n => n.Name)];
-            if (names.GroupBy(n => n, StringComparer.Ordinal).FirstOrDefault(g => g.Count() > 1) is { } duplicate)
+            if (tree.NameConflictAfterMoving(moved, targetFolderId) is { } duplicate)
             {
                 await unitOfWork.RollbackAsync(ct);
-                return NameTaken(duplicate.Key);
+                return NameTaken(duplicate);
             }
 
             foreach (FileManagerNode node in moved)
@@ -337,7 +324,7 @@ public class FileManagerService(
         FileManagerTree tree = await LoadTreeAsync(accountEmail, ct);
         // Abandoned uploads do not count, as in BeginUploadAsync: an account they filled must still reach the upload that removes them.
         DateTime utcNow = UtcNow;
-        var result = FileManagerUploadPolicy.CheckQuota(quota, UsedBytes(tree.Nodes.Where(n => !n.IsStaleUpload(utcNow))), totalBytes);
+        var result = FileManagerUploadPolicy.CheckQuota(quota, FileManagerTree.UsedBytes(tree.Nodes.Where(n => !n.IsStaleUpload(utcNow))), totalBytes);
         return result.IsError ? ServiceResult.FromError(result.FirstError) : ServiceResult.Ok();
     }
 
@@ -355,7 +342,7 @@ public class FileManagerService(
             bool scanDisabled = account?.FileManagerScanDisabled == true;
             FileManagerTree tree = await LoadTreeAsync(accountEmail, ct);
             DateTime utcNow = UtcNow;
-            if (!IsFolderOf(tree, request.ParentId))
+            if (!tree.IsFolderOrRoot(request.ParentId))
             {
                 await unitOfWork.RollbackAsync(ct);
                 return (ItemNotFound(), null);
@@ -372,7 +359,7 @@ public class FileManagerService(
             // Uploads idle for more than an hour are removed now, ahead of the worker's hourly sweep: they stop counting against the quota.
             stale = [.. tree.Nodes.Where(n => n.IsStaleUpload(utcNow))];
             string name = started.Value.Name;
-            if (FinishedChildren(tree, request.ParentId).FirstOrDefault(n => n.Name == name) is { } existing)
+            if (tree.FindFinishedNamed(request.ParentId, name) is { } existing)
             {
                 switch (request.Conflict)
                 {
@@ -382,14 +369,13 @@ public class FileManagerService(
                     case FileManagerConflictOption.KeepBoth:
                         name = FileManagerNamePolicy.KeepBothName(name, [.. tree.Children(request.ParentId).Except(stale).Select(n => n.Name)]);
                         break;
-                    // A file never overwrites a folder.
-                    case FileManagerConflictOption.Overwrite when existing.IsFolder:
+                    case FileManagerConflictOption.Overwrite when !existing.CanBeOverwritten:
                         await unitOfWork.RollbackAsync(ct);
                         return (NameTaken(name), null);
                 }
             }
 
-            long used = UsedBytes(tree.Nodes.Except(stale));
+            long used = FileManagerTree.UsedBytes(tree.Nodes.Except(stale));
             var quotaResult = FileManagerUploadPolicy.CheckQuota(quota, used, request.Size);
             if (quotaResult.IsError)
             {
@@ -513,7 +499,7 @@ public class FileManagerService(
             await accountRepository.FindByEmailForUpdateAsync(accountEmail, ct);
             FileManagerTree tree = await LoadTreeAsync(accountEmail, ct);
             FileManagerNode? current = tree.Find(upload.Id);
-            FileManagerNode? sibling = current == null ? null : FinishedChildren(tree, current.ParentId).FirstOrDefault(n => n.Name == current.Name);
+            FileManagerNode? sibling = current == null ? null : tree.FindFinishedNamed(current.ParentId, current.Name);
             if (current is { Uploading: false })
             {
                 // Completed meanwhile by another answer for the same upload: the file is kept, nothing to write.
@@ -527,7 +513,7 @@ public class FileManagerService(
                 discarded = upload;
                 result = UploadNotFound();
             }
-            else if (sibling != null && (!overwrite || sibling.IsFolder))
+            else if (sibling != null && (!overwrite || !sibling.CanBeOverwritten))
             {
                 await nodeRepository.DeleteByEmailAndIdsAsync(accountEmail, [current.Id], ct);
                 await unitOfWork.CommitAsync(ct);

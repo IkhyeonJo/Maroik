@@ -171,7 +171,7 @@ public class ForumController(
                     Method = method,
                     LoggedInAccount = loggedInAccount,
                     LoggedInAccountTimeZoneIanaId = loggedInAccount.RequireTimeZoneIanaId(),
-                    CanPostNotice = loggedInAccount.Role == AccountRoles.Admin
+                    CanPostNotice = boardPolicy.CanPostNotice(loggedInAccount)
                 };
 
                 bool isAccountSessionExist = loggedInAccount.Role != AccountRoles.Anonymous;
@@ -192,26 +192,21 @@ public class ForumController(
 
                 try
                 {
-                    BoardResponse? freeBoard = await boardService.GetBoardByIdAsync(boardId.Value, BoardKinds.FreeForum, ct);
-                    BoardAttachedFileDto? boardAttachedFile = await boardService.GetAttachedFileByBoardIdAsync(boardId.Value, ct);
-
-                    if (freeBoard == null || freeBoard.Deleted)
-                        return RedirectToAction(BoardKinds.FreeForum, "Forum");
-
                     // The account from HttpContext.GetLoggedInAccount() is re-fetched from the database by ViewBagPopulatorFilter
                     // on every request (not the session-cached snapshot), so a mid-session Role
                     // change (e.g. an admin demotion) is reflected immediately in the CanView check
                     // below — matching the "edit" case's use of HttpContext.GetLoggedInAccount().
                     AccountResponse loggedInAccount = HttpContext.GetLoggedInAccount();
-                    if (!boardService.CanView(freeBoard, loggedInAccount))
+                    BoardResponse? freeBoard = await boardService.OpenForViewingAsync(boardId.Value, BoardKinds.FreeForum, loggedInAccount, ct);
+                    if (freeBoard == null)
                         return RedirectToAction(BoardKinds.FreeForum, "Forum");
 
-                    await boardService.IncrementBoardViewAsync(boardId.Value, ct);
+                    BoardAttachedFileDto? boardAttachedFile = await boardService.GetAttachedFileByBoardIdAsync(boardId.Value, ct);
 
                     (freeBoard.Content, bool isImgTagIncluded) = await boardService.PrepareHtmlForDisplayAsync(freeBoard.Content ?? "", ct);
 
                     freeForumOutputViewModel.LoggedInAccount = loggedInAccount;
-                    freeForumOutputViewModel.CanWriteComment = loggedInAccount.Role != AccountRoles.Anonymous;
+                    freeForumOutputViewModel.CanWriteComment = boardPolicy.CanWriteComment(loggedInAccount);
                     freeForumOutputViewModel.LoggedInAccountTimeZoneIanaId = freeForumOutputViewModel.LoggedInAccount.TimeZoneIanaId ?? "";
                     freeForumOutputViewModel.ViewerSeesLocalTime = accountPolicy.SeesLocalTime(loggedInAccount);
 
@@ -268,14 +263,11 @@ public class ForumController(
                     BoardResponse? freeBoard = await boardService.GetBoardByIdAsync(boardId.Value, BoardKinds.FreeForum, ct);
                     BoardAttachedFileDto? boardAttachedFile = await boardService.GetAttachedFileByBoardIdAsync(boardId.Value, ct);
 
-                    if (freeBoard == null || freeBoard.Deleted)
-                        return RedirectToAction(BoardKinds.FreeForum, "Forum");
-
                     // The account from HttpContext.GetLoggedInAccount() is re-fetched from the database by ViewBagPopulatorFilter
                     // on every request (not the session-cached snapshot), so ownership is always checked
                     // against the account's current state. The edit page is owner-only (no admin bypass).
                     AccountResponse loggedInAccount = HttpContext.GetLoggedInAccount();
-                    if (!boardPolicy.IsContentOwner(loggedInAccount, freeBoard.Writer))
+                    if (freeBoard == null || !boardPolicy.CanOpenEditPage(freeBoard, loggedInAccount))
                         return RedirectToAction(BoardKinds.FreeForum, "Forum");
 
                     (freeBoard.Content, bool isImgTagIncluded) = await boardService.PrepareHtmlForDisplayAsync(freeBoard.Content ?? "", ct);
@@ -308,8 +300,8 @@ public class ForumController(
             // List
             default:
             {
-                const int pageSize = 5;
-                if (page < 1) page = 1;
+                const int pageSize = PolicyLimits.BoardListPageSize;
+                page = boardPolicy.NormalizeListPage(page);
 
                 // The account from HttpContext.GetLoggedInAccount() is re-fetched from the database by ViewBagPopulatorFilter
                 // on every request (not the session-cached snapshot), so a mid-session Role change

@@ -142,12 +142,7 @@ public class CalendarController(
         {
             // First visit for this account: auto-provision a default personal calendar
             // so the grid is never empty and events can be created immediately.
-            await calendarService.EnsureDefaultCalendarAsync(loggedInAccount.RequireEmail(), new CalendarRequest
-            {
-                Name = loggedInAccount.RequireNickname(),
-                TimeZoneIanaId = loggedInAccount.TimeZoneIanaId,
-                HtmlColorCode = "#fc330e"
-            }, HttpContext.RequestAborted);
+            await calendarService.EnsureDefaultCalendarAsync(loggedInAccount.RequireEmail(), loggedInAccount.RequireNickname(), loggedInAccount.TimeZoneIanaId, HttpContext.RequestAborted);
             calendars = await calendarService.GetCalendarsAsync(loggedInAccount.RequireEmail(), HttpContext.RequestAborted);
         }
 
@@ -174,12 +169,7 @@ public class CalendarController(
         if (calendars.Count == 0)
         {
             // Same first-visit provisioning as AdminIndex (see comment there).
-            await calendarService.EnsureDefaultCalendarAsync(loggedInAccount.RequireEmail(), new CalendarRequest
-            {
-                Name = loggedInAccount.RequireNickname(),
-                TimeZoneIanaId = loggedInAccount.TimeZoneIanaId,
-                HtmlColorCode = "#fc330e"
-            }, HttpContext.RequestAborted);
+            await calendarService.EnsureDefaultCalendarAsync(loggedInAccount.RequireEmail(), loggedInAccount.RequireNickname(), loggedInAccount.TimeZoneIanaId, HttpContext.RequestAborted);
             calendars = await calendarService.GetCalendarsAsync(loggedInAccount.RequireEmail(), HttpContext.RequestAborted);
         }
 
@@ -204,7 +194,7 @@ public class CalendarController(
     [HttpGet]
     public async Task<IActionResult> AnonymousIndex()
     {
-        const string userTimezone = "UTC";
+        const string userTimezone = DefaultTimeZone.Id;
         AccountResponse loggedInAccount = new() { Role = AccountRoles.Anonymous, TimeZoneIanaId = userTimezone };
 
         List<CalendarResponse> otherCalendars = await calendarService.GetVisibleOtherCalendarsAsync(null, HttpContext.RequestAborted);

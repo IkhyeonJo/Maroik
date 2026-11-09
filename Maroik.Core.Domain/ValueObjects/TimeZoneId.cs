@@ -11,6 +11,9 @@ namespace Maroik.Core.Domain.ValueObjects;
 /// </summary>
 public sealed class TimeZoneId : ValueObject
 {
+    /// <summary>The zone of an account or calendar that has none: registration without a choice, a visitor, an unusable stored zone.</summary>
+    public const string Default = "UTC";
+
     /// <summary>The validated IANA time-zone ID string.</summary>
     public string Value { get; }
 

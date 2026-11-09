@@ -50,6 +50,25 @@ public sealed class BudgetWorkbook
     /// </summary>
     public const int MaxReferencesPerSheet = 10_000;
 
+    /// <summary>The most sheets one workbook loads, so a formula naming many years cannot load them all.</summary>
+    public const int MaxSheetsLoaded = 60;
+
+    /// <summary>The most cell edits one save carries (one, or several for an undo / redo of a paste).</summary>
+    public const int MaxEditsPerRequest = 2000;
+
+    /// <summary>
+    /// The sheets a workbook needs for the sheet asked for: that sheet and last year's, every stored sheet, and every sheet a stored
+    /// input or a <paramref name="typed"/> one names, within the valid years and at most <see cref="MaxSheetsLoaded"/>.
+    /// </summary>
+    public static IReadOnlyList<(BudgetKind Kind, int Year)> SheetsToLoad(
+        BudgetKind kind, int year, IEnumerable<(BudgetKind Kind, int Year)> stored, IEnumerable<(string Input, int HomeYear)> storedInputs, IEnumerable<string> typed)
+    {
+        IEnumerable<(BudgetKind Kind, int Year)> wanted = [(kind, year), (kind, year - 1), .. stored,
+            .. storedInputs.SelectMany(c => SheetsReferencedBy(c.Input, c.HomeYear)),
+            .. typed.SelectMany(input => SheetsReferencedBy(input, year))];
+        return [.. wanted.Where(w => w.Year is >= BudgetSheet.MinYear and <= BudgetSheet.MaxYear).Distinct().Take(MaxSheetsLoaded)];
+    }
+
     /// <summary>The refusal of formulas that would read more than <see cref="MaxReferencesPerSheet"/> cells.</summary>
     private static Error TooManyReferences() =>
         DomainError.Validation("Budget.TooManyReferences", "The formulas of a sheet can read at most {0} cells in total.", MaxReferencesPerSheet);
@@ -169,8 +188,9 @@ public sealed class BudgetWorkbook
         BudgetCellRole role = sheet.Layout.Role(key.RowKey, key.Column)!.Value;
         string? input = sheet.Inputs.GetValueOrDefault(key) ?? sheet.Layout.ComputedFormula(key.RowKey, key.Column);
         FormulaValue value = _engine.ValueOf(new CellAddress(sheet.Name, key.RowKey, key.Column));
+        BudgetCellStatus? status = role == BudgetCellRole.Budget ? Status(sheet, key, value) : null;
         return new BudgetCellView(sheet.Layout.A1(key.RowKey, key.Column), role, input is null ? null : FormulaRewriter.ToA1(input, sheet.Scope), value,
-            role == BudgetCellRole.Budget ? Status(sheet, key, value) : null);
+            status, status?.OutcomeFor(sheet.Data.Kind) ?? BudgetCellOutcome.None);
     }
 
     /// <summary>A budget cell against the actuals.</summary>

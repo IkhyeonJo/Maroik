@@ -15,6 +15,15 @@ public interface IBoardService
     /// </summary>
     Task<(IEnumerable<BoardResponse> Items, int TotalCount)> GetBoardPageAsync(BoardPageQuery query, CancellationToken ct = default);
 
+    /// <summary>
+    /// Opens a post for <paramref name="viewer"/> to read and counts the view; null, with nothing counted, when it is missing,
+    /// deleted, of another type or not visible to the viewer.
+    /// </summary>
+    Task<BoardResponse?> OpenForViewingAsync(long boardId, string requiredType, AccountResponse viewer, CancellationToken ct = default);
+
+    /// <summary>A page of the viewer's own private notes: nobody lists anyone else's, an administrator included.</summary>
+    Task<(IEnumerable<BoardResponse> Items, int TotalCount)> GetOwnPrivateNotePageAsync(string? ownerNickname, string? viewerRole, string? searchType, string? searchText, int page, int pageSize, CancellationToken ct = default);
+
     /// <summary>Returns all non-deleted, pinned ("Noticed") posts of the specified board type, newest first.</summary>
     Task<IEnumerable<BoardResponse>> GetNoticedBoardsAsync(string type, CancellationToken ct = default);
 

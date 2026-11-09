@@ -1,9 +1,12 @@
 using Maroik.Core.Domain.Accounts;
+using Maroik.Core.Domain.Boards;
+using Maroik.Core.Domain.Budgets;
 using Maroik.Core.Domain.Calendars;
 using Maroik.Core.Domain.FileManagers;
 using Maroik.Core.Domain.Finances;
 using Maroik.Core.Domain.Menus;
 using Maroik.Core.Domain.Primitives;
+using Maroik.Core.Domain.Uploads;
 using Maroik.Core.Domain.ValueObjects;
 
 namespace Maroik.Core.Service.Constants;
@@ -15,6 +18,18 @@ namespace Maroik.Core.Service.Constants;
 /// </summary>
 public static class PolicyLimits
 {
+    /// <summary><see cref="Board.ListPageSize"/>.</summary>
+    public const int BoardListPageSize = Board.ListPageSize;
+
+    /// <summary><see cref="AttachmentUploadPolicy.AcceptedExtension"/>, as a file input's <c>accept</c>.</summary>
+    public const string AttachmentAccept = AttachmentUploadPolicy.AcceptedExtension;
+
+    /// <summary>What a budget request's sheet kind may be: a <see cref="BudgetKind"/>.</summary>
+    public const string BudgetSheetKindPattern = "^(" + nameof(BudgetKind.Income) + "|" + nameof(BudgetKind.Expenditure) + ")$";
+
+    /// <summary><see cref="BudgetWorkbook.MaxEditsPerRequest"/>.</summary>
+    public const int BudgetMaxEditsPerRequest = BudgetWorkbook.MaxEditsPerRequest;
+
     /// <summary><see cref="PasswordPolicy.MinLength"/>.</summary>
     public const int PasswordMinLength = PasswordPolicy.MinLength;
 

@@ -29,7 +29,7 @@ public class CategoryRepository(ApplicationDbContext context)
         IconPath = c.IconPath ?? "",
         Controller = c.Controller ?? "",
         Action = c.Action,
-        Role = c.Role ?? "Admin",
+        Role = c.RoleToStore,
         Order = c.Order
     };
 

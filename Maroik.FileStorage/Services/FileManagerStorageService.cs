@@ -1,6 +1,7 @@
 using Maroik.Core.Contract.Enums;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Contract.Messages;
+using Maroik.Core.Domain.FileManagers;
 using Maroik.FileStorage.Helpers;
 using Maroik.FileStorage.Interfaces;
 using Maroik.FileStorage.Settings;
@@ -27,10 +28,10 @@ public class FileManagerStorageService(IClamavClient clamavClient, IFileManagerS
     public static readonly TimeSpan ScanTimeout = TimeSpan.FromMinutes(15);
 
     /// <summary>The directory the stored File Manager files live in.</summary>
-    private const string FileManagerDirectory = "upload/FileManager";
+    private const string FileManagerDirectory = FileManagerUploadPolicy.StorageDirectory;
 
     /// <summary>The directory the unfinished uploads' staging files live in.</summary>
-    private const string StagingDirectory = "upload/FileManager/.staging";
+    private const string StagingDirectory = FileManagerDirectory + "/.staging";
 
     /// <summary>The upload id in its canonical form, or null when it is not a GUID.</summary>
     private static string? CanonicalId(string? uploadId) =>

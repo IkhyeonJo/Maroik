@@ -205,6 +205,7 @@
     $(function() {
         $createFixedExpenditureTabs.tabs();
         $editFixedExpenditureTabs.tabs();
+        // Authoritative in FixedExpenditure (server): no maturity date in the past; mirrored here for form UX only.
         // Maturity-date pickers. `minDate: 0` forbids past dates. `beforeShow` /
         // `onChangeMonthYear` (deferred a tick with `setTimeout`) append two
         // custom buttons: "No maturity date" -> the far-future `NO_MATURITY_DATE`

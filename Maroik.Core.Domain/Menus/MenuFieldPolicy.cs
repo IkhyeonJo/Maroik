@@ -12,12 +12,15 @@ namespace Maroik.Core.Domain.Menus;
 /// instead of a raw database exception (SQLSTATE 22001 / 23514).
 /// <para>
 /// Blank values are still accepted where they were before (the repository stores a missing text as
-/// <c>""</c> and a missing <c>Role</c> as <c>Admin</c> — the most restrictive role, so a menu item
-/// with no role is never exposed by accident); only values the database would refuse are rejected.
+/// <c>""</c>, and <see cref="RoleOrDefault"/> reads a missing <c>Role</c> as <c>Admin</c>); only values
+/// the database would refuse are rejected.
 /// </para>
 /// </summary>
 public static class MenuFieldPolicy
 {
+    /// <summary>The role of a menu item: a missing one is Admin, the most restrictive, so an item with no role is never exposed by accident.</summary>
+    public static string RoleOrDefault(string? role) => role ?? Accounts.Role.Admin;
+
     /// <summary>Role a menu item is restricted to (the values <c>Role</c> may hold in the database).</summary>
     public static class Roles
     {

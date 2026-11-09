@@ -83,8 +83,8 @@ public interface ICalendarService
     /// </summary>
     Task<ServiceResult> UpdateCalendarSharedAsync(string email, IEnumerable<CalendarSharedRequest> requests, CancellationToken ct = default);
 
-    /// <summary>Creates a default calendar for <paramref name="accountEmail"/> if one does not already exist.</summary>
-    Task<ServiceResult> EnsureDefaultCalendarAsync(string accountEmail, CalendarRequest request, CancellationToken ct = default);
+    /// <summary>Creates the default calendar of <paramref name="accountEmail"/>, named after its owner, if the account has none yet.</summary>
+    Task<ServiceResult> EnsureDefaultCalendarAsync(string accountEmail, string ownerNickname, string? timeZoneIanaId, CancellationToken ct = default);
 
     /// <summary>Creates a new calendar event with optional reminders and an optional file attachment.</summary>
     Task<ServiceResult> CreateCalendarEventAsync(CalendarEventRequest request, string email, string roleIndex, List<CalendarReminderDto> reminders, AttachedFileDto? attachedFile, CancellationToken ct = default);

@@ -99,6 +99,7 @@ internal static class WorkerHost
                 ClientProvidedName = "maroik-worker-reminder-publisher"
             },
             sp.GetRequiredService<ILogger<RabbitMqEmailPublisher>>()));
+        builder.Services.AddScoped<IMailBodyComposer, MailBodyComposer>();
         builder.Services.AddScoped<ICalendarReminderDispatchService, CalendarReminderDispatchService>();
         builder.Services.AddHostedService<CalendarReminderScheduler>();
         builder.Services.AddSingleton<EmailDeadLetterRedriver>();

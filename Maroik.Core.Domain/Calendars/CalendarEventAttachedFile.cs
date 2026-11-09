@@ -43,6 +43,9 @@ public sealed class CalendarEventAttachedFile : AggregateRoot<long>
         Path = path;
     }
 
+    /// <summary>Whether a file is attached: an edit that removes the attachment empties the record (see <see cref="Cleared"/>) instead of deleting it.</summary>
+    public bool HasFile => !string.IsNullOrEmpty(Name) && !string.IsNullOrEmpty(Path);
+
     /// <summary>
     /// Rebuilds a <see cref="CalendarEventAttachedFile"/> from trusted data from the repository layer.
     /// Bypasses validation — use only with data from the trusted repository layer.

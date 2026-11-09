@@ -32,6 +32,42 @@ public sealed class FileManagerTree
     /// <summary>The direct children of <paramref name="folderId"/> (null = the root).</summary>
     public IEnumerable<FileManagerNode> Children(long? folderId) => _children[folderId ?? 0];
 
+    /// <summary>Whether <paramref name="folderId"/> can hold items: the root (null), or a folder of this drive.</summary>
+    public bool IsFolderOrRoot(long? folderId) => folderId is not { } id || Find(id) is { IsFolder: true };
+
+    /// <summary>The finished node with this id, or null (another account's, missing, or an unfinished upload).</summary>
+    public FileManagerNode? FindFinished(long nodeId) => Find(nodeId) is { Uploading: false } node ? node : null;
+
+    /// <summary>The finished items directly in <paramref name="folderId"/>; an unfinished upload holds no name yet.</summary>
+    public IEnumerable<FileManagerNode> FinishedChildren(long? folderId) => Children(folderId).Where(n => !n.Uploading);
+
+    /// <summary>The finished item called <paramref name="name"/> directly in <paramref name="folderId"/>, or null: names are unique within a folder.</summary>
+    public FileManagerNode? FindFinishedNamed(long? folderId, string name) =>
+        FinishedChildren(folderId).FirstOrDefault(n => n.Name == name);
+
+    /// <summary>Whether another finished item than <paramref name="nodeId"/> is called <paramref name="name"/> directly in <paramref name="folderId"/>.</summary>
+    public bool IsNameTakenByAnother(long? folderId, string name, long nodeId) =>
+        FinishedChildren(folderId).Any(n => n.Id != nodeId && n.Name == name);
+
+    /// <summary>
+    /// The first name that would appear twice in <paramref name="targetFolderId"/> once <paramref name="moved"/> are in it, or null:
+    /// what stays there plus everything moved in, so two moved items of one name conflict as well.
+    /// </summary>
+    public string? NameConflictAfterMoving(IReadOnlyCollection<FileManagerNode> moved, long? targetFolderId)
+    {
+        HashSet<long> movedIds = [.. moved.Select(n => n.Id)];
+        IEnumerable<string> names = FinishedChildren(targetFolderId).Where(n => !movedIds.Contains(n.Id)).Select(n => n.Name)
+            .Concat(moved.Select(n => n.Name));
+        return names.GroupBy(n => n, StringComparer.Ordinal).FirstOrDefault(g => g.Count() > 1)?.Key;
+    }
+
+    /// <summary>How full the drive is, 0 to 100: with no quota, anything stored counts as full.</summary>
+    public static int UsedPercent(long usedBytes, long quotaBytes) =>
+        quotaBytes <= 0 ? (usedBytes > 0 ? 100 : 0) : (int)Math.Min(100m, (decimal)usedBytes * 100 / quotaBytes);
+
+    /// <summary>The bytes <paramref name="nodes"/> use against the quota: every file, unfinished uploads included.</summary>
+    public static long UsedBytes(IEnumerable<FileManagerNode> nodes) => nodes.Where(n => !n.IsFolder).Sum(n => n.Size);
+
     /// <summary>The folder itself and then each folder above it up to the root; empty for the root.</summary>
     public IReadOnlyList<long> Ancestry(long? folderId)
     {
@@ -46,7 +82,7 @@ public sealed class FileManagerTree
     }
 
     /// <summary>The number of finished items directly in <paramref name="folderId"/> (null = the root); unfinished uploads are not counted.</summary>
-    public int ItemCount(long? folderId) => Children(folderId).Count(n => !n.Uploading);
+    public int ItemCount(long? folderId) => FinishedChildren(folderId).Count();
 
     /// <summary>The names of the folders above the node, from the root down.</summary>
     public IReadOnlyList<string> Location(long nodeId) =>

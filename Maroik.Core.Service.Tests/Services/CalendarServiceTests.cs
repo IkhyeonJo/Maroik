@@ -399,13 +399,7 @@ public class CalendarServiceTests
         _calendarRepo.Setup(r => r.CreateAsync(It.IsAny<Calendar>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
         var sut = CreateSut();
 
-        ServiceResult result = await sut.EnsureDefaultCalendarAsync("user@example.com", new CalendarRequest
-        {
-            AccountEmail = "user@example.com",
-            Name = "Default",
-            TimeZoneIanaId = "UTC",
-            HtmlColorCode = "#3788d8"
-        }, TestContext.Current.CancellationToken);
+        ServiceResult result = await sut.EnsureDefaultCalendarAsync("user@example.com", "Default", "UTC", TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
         _calendarRepo.Verify(r => r.CreateAsync(It.IsAny<Calendar>(), It.IsAny<CancellationToken>()), Times.Once);
@@ -419,11 +413,7 @@ public class CalendarServiceTests
             .ReturnsAsync([MakeCalendar()]);
         var sut = CreateSut();
 
-        ServiceResult result = await sut.EnsureDefaultCalendarAsync("user@example.com", new CalendarRequest
-        {
-            AccountEmail = "user@example.com",
-            Name = "Default"
-        }, TestContext.Current.CancellationToken);
+        ServiceResult result = await sut.EnsureDefaultCalendarAsync("user@example.com", "Default", null, TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
         _calendarRepo.Verify(r => r.CreateAsync(It.IsAny<Calendar>(), It.IsAny<CancellationToken>()), Times.Never);
@@ -443,13 +433,7 @@ public class CalendarServiceTests
         _calendarRepo.Setup(r => r.CreateAsync(It.IsAny<Calendar>(), It.IsAny<CancellationToken>())).ThrowsAsync(duplicate);
         var sut = CreateSut();
 
-        ServiceResult result = await sut.EnsureDefaultCalendarAsync("user@example.com", new CalendarRequest
-        {
-            AccountEmail = "user@example.com",
-            Name = "Default",
-            TimeZoneIanaId = "UTC",
-            HtmlColorCode = "#3788d8"
-        }, TestContext.Current.CancellationToken);
+        ServiceResult result = await sut.EnsureDefaultCalendarAsync("user@example.com", "Default", "UTC", TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
         _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
@@ -1438,8 +1422,7 @@ public class CalendarServiceTests
         _calendarRepo.Setup(r => r.CreateAsync(It.IsAny<Calendar>(), It.IsAny<CancellationToken>()))
             .Callback<Calendar, CancellationToken>((c, _) => created = c).Returns(Task.CompletedTask);
 
-        ServiceResult result = await CreateSut().EnsureDefaultCalendarAsync("user@example.com",
-            new CalendarRequest { Name = "Nick", TimeZoneIanaId = timeZone, HtmlColorCode = "#3788d8" }, TestContext.Current.CancellationToken);
+        ServiceResult result = await CreateSut().EnsureDefaultCalendarAsync("user@example.com", "Nick", timeZone, TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
         Assert.Equal("UTC", created?.TimeZone.Value);
@@ -1452,8 +1435,7 @@ public class CalendarServiceTests
         _calendarRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new InvalidOperationException("db down"));
 
-        ServiceResult result = await CreateSut().EnsureDefaultCalendarAsync("user@example.com",
-            new CalendarRequest { Name = "Nick", TimeZoneIanaId = "UTC", HtmlColorCode = "#3788d8" }, TestContext.Current.CancellationToken);
+        ServiceResult result = await CreateSut().EnsureDefaultCalendarAsync("user@example.com", "Nick", "UTC", TestContext.Current.CancellationToken);
 
         Assert.Equal("Calendar.Unexpected", result.ErrorCode);
         Assert.Equal(ServiceResult.TemporaryErrorKey, result.ErrorKey);
@@ -1466,8 +1448,7 @@ public class CalendarServiceTests
     {
         _calendarRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([]);
 
-        ServiceResult result = await CreateSut().EnsureDefaultCalendarAsync("user@example.com",
-            new CalendarRequest { Name = "a<b", TimeZoneIanaId = "UTC", HtmlColorCode = "#3788d8" }, TestContext.Current.CancellationToken);
+        ServiceResult result = await CreateSut().EnsureDefaultCalendarAsync("user@example.com", "a<b", "UTC", TestContext.Current.CancellationToken);
 
         Assert.Equal("Calendar.NameInvalid", result.ErrorCode);
         _calendarRepo.Verify(r => r.CreateAsync(It.IsAny<Calendar>(), It.IsAny<CancellationToken>()), Times.Never);
@@ -1986,8 +1967,7 @@ public class CalendarServiceTests
     {
         GivenOwnedCalendars();
 
-        ServiceResult result = await CreateSut().EnsureDefaultCalendarAsync(Owner,
-            new CalendarRequest { Name = "Default", TimeZoneIanaId = "Asia/Seoul", HtmlColorCode = "#3788d8" }, TestContext.Current.CancellationToken);
+        ServiceResult result = await CreateSut().EnsureDefaultCalendarAsync(Owner, "Default", "Asia/Seoul", TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
         _calendarRepo.Verify(r => r.CreateAsync(It.Is<Calendar>(c => c.TimeZone.Value == "Asia/Seoul"), It.IsAny<CancellationToken>()), Times.Once);
@@ -2000,7 +1980,7 @@ public class CalendarServiceTests
     {
         GivenOwnedCalendars(MakeCalendar());
 
-        await CreateSut().EnsureDefaultCalendarAsync(Owner, new CalendarRequest { Name = "Default" }, TestContext.Current.CancellationToken);
+        await CreateSut().EnsureDefaultCalendarAsync(Owner, "Default", null, TestContext.Current.CancellationToken);
 
         _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
         _unitOfWork.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Never);
@@ -2013,7 +1993,7 @@ public class CalendarServiceTests
         var thrown = new InvalidOperationException("db down");
         _calendarRepo.Setup(r => r.GetByAccountEmailAsync(Owner, It.IsAny<CancellationToken>())).ThrowsAsync(thrown);
 
-        await CreateSut().EnsureDefaultCalendarAsync(Owner, new CalendarRequest { Name = "Default" }, TestContext.Current.CancellationToken);
+        await CreateSut().EnsureDefaultCalendarAsync(Owner, "Default", null, TestContext.Current.CancellationToken);
 
         AssertLoggedError($"Failed to ensure default calendar for account {Owner}", thrown);
     }

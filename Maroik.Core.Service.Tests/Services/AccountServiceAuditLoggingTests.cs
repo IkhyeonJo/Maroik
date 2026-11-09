@@ -29,8 +29,8 @@ public class AccountServiceAuditLoggingTests
     private readonly Mock<IAccountRepository> _accountRepo = new();
     /// <summary>Mock <c>IPasswordService</c> injected into the system under test.</summary>
     private readonly Mock<IPasswordService> _passwordService = new();
-    /// <summary>Mock <c>IMailClient</c> injected into the system under test.</summary>
-    private readonly Mock<IMailClient> _mailClient = new();
+    /// <summary>Mock <c>IMailBodyComposer</c> injected into the system under test.</summary>
+    private readonly Mock<IMailBodyComposer> _mailBodies = new();
     /// <summary>Mock <c>IEmailPublisher</c> injected into the system under test.</summary>
     private readonly Mock<IEmailPublisher> _emailPublisher = new();
     /// <summary>Mock <c>IDataProtectionService</c> injected into the system under test.</summary>
@@ -63,7 +63,7 @@ public class AccountServiceAuditLoggingTests
     private readonly FakeTimeProvider _time = new(new DateTimeOffset(_now));
 
     /// <summary>The service under test over the mocked dependencies and the capturing logger.</summary>
-    private AccountServicesHarness CreateSut() => new(_accountRepo.Object, _passwordService.Object, _mailClient.Object,
+    private AccountServicesHarness CreateSut() => new(_accountRepo.Object, _passwordService.Object, _mailBodies.Object,
         _emailPublisher.Object, _settings, _dataProtection.Object, _logger.Collector, _unitOfWork.Object, _time);
 
     /// <summary>A persisted account for <see cref="Email"/> whose state is set by the arguments.</summary>
@@ -185,11 +185,11 @@ public class AccountServiceAuditLoggingTests
         _passwordService.Setup(p => p.HashPassword(It.IsAny<string>())).Returns("$2a$13$hashed");
         _accountRepo.Setup(r => r.CreateAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
         _dataProtection.Setup(r => r.Protect(ProtectedValue.MailToken, It.IsAny<string>())).Returns("enc-token");
-        _mailClient.Setup(m => m.GetMailConfirmationBody(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>())).Returns("body");
+        _mailBodies.Setup(m => m.GetMailConfirmationBody(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>())).Returns("body");
         _emailPublisher.Setup(p => p.PublishAsync(It.IsAny<SendEmailMessage>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
 
         await CreateSut().RegisterAsync(
-            new RegisterAccountRequest { Email = Email, PlainPassword = "PlainPass1!", Nickname = "TestUser" },
+            new RegisterAccountRequest { Email = Email, PlainPassword = "PlainPass1!", Nickname = "TestUser", AgreedServiceTerms = true },
             _emailTemplate, TestContext.Current.CancellationToken);
 
         Only(LogLevel.Information, "Account registered");
@@ -238,7 +238,7 @@ public class AccountServiceAuditLoggingTests
         _accountRepo.Setup(r => r.FindByEmailForUpdateAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(existing);
         _passwordService.Setup(p => p.HashPassword(It.IsAny<string>())).Returns("$2a$13$replaced");
         _dataProtection.Setup(r => r.Protect(ProtectedValue.MailToken, It.IsAny<string>())).Returns("enc-token");
-        _mailClient.Setup(m => m.GetMailConfirmationBody(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>())).Returns("body");
+        _mailBodies.Setup(m => m.GetMailConfirmationBody(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>())).Returns("body");
         _emailPublisher.Setup(p => p.PublishAsync(It.IsAny<SendEmailMessage>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
 
         await CreateSut().RegisterAsync(
@@ -301,7 +301,7 @@ public class AccountServiceAuditLoggingTests
         _accountRepo.Setup(r => r.UpdateResetPasswordTokenAsync(It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>())).ReturnsAsync(1);
         _accountRepo.Setup(r => r.UpdateMessageAsync(It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>())).ReturnsAsync(1);
         _dataProtection.Setup(r => r.Protect(ProtectedValue.MailToken, It.IsAny<string>())).Returns("enc-reset-token");
-        _mailClient.Setup(m => m.GetMailResetPasswordBody(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>())).Returns("body");
+        _mailBodies.Setup(m => m.GetMailResetPasswordBody(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>())).Returns("body");
         _emailPublisher.Setup(p => p.PublishAsync(It.IsAny<SendEmailMessage>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
 
         await CreateSut().ForgotPasswordAsync(Email, _emailTemplate, TestContext.Current.CancellationToken);

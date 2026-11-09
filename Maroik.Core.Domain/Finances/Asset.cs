@@ -166,6 +166,9 @@ public sealed class Asset : AggregateRoot<(string ProductName, string AccountEma
     /// <summary>Adds the given amount to the balance (e.g. on income deposit).</summary>
     public ErrorOr<Success> Deposit(Money amount, DateTime utcNow)
     {
+        if (Deleted)
+            return DomainError.Conflict("Asset.Deleted", "A deleted asset's balance cannot change.");
+
         if (amount.Currency != Balance.Currency)
             return DomainError.Validation("Asset.CurrencyMismatch", "Cannot deposit a different currency into this asset.");
 
@@ -189,6 +192,9 @@ public sealed class Asset : AggregateRoot<(string ProductName, string AccountEma
     /// <summary>Subtracts the given amount from the balance (e.g. on expenditure payment).</summary>
     public ErrorOr<Success> Withdraw(Money amount, DateTime utcNow)
     {
+        if (Deleted)
+            return DomainError.Conflict("Asset.Deleted", "A deleted asset's balance cannot change.");
+
         if (amount.Currency != Balance.Currency)
             return DomainError.Validation("Asset.CurrencyMismatch", "Cannot withdraw a different currency from this asset.");
 

@@ -1,4 +1,5 @@
 using Maroik.Core.Contract.Dtos;
+using Maroik.Core.Service.Constants;
 
 namespace Maroik.Website.Models.ViewModels.Calendars;
 
@@ -31,7 +32,7 @@ public class CalendarOutputViewModel
     public AccountResponse LoggedInAccount { get; set; } = new();
 
     /// <summary>IANA time-zone ID of the logged-in user (e.g. "Asia/Seoul"), used to convert displayed times.</summary>
-    public string LoggedInAccountTimeZoneIanaId { get; set; } = "UTC";
+    public string LoggedInAccountTimeZoneIanaId { get; set; } = DefaultTimeZone.Id;
 
     /// <summary>The date (<c>yyyy-MM-dd</c>) the grid first opens on, or null to open on today (see <c>ICalendarService.GetFixedInitialDate</c>).</summary>
     public string? InitialDate { get; set; }
