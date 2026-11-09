@@ -128,30 +128,22 @@ public class ViewBagPopulatorFilter(
     /// <summary>Publishes the notification badge counts: a signed-in user's fixed income and expenditure notices, none for the other roles.</summary>
     private async Task PublishNoticeCountsAsync(ActionExecutingContext context, Controller controller, AccountResponse loggedInAccount)
     {
-        int fixedIncomesNoticedCount = 0, fixedExpenditureNoticedCount = 0;
-        int fixedIncomesExpiredCount = 0, fixedExpenditureExpiredCount = 0;
+        NotificationDto counts = new();
 
         if (loggedInAccount.Role == AccountRoles.User)
         {
             try
             {
-                var counts = await dashboardService.GetNoticeCountsAsync(
+                counts = await dashboardService.GetNoticeCountsAsync(
                     loggedInAccount.Email ?? "",
-                    serverSettings.Value.NoticeMaturityDateDay,
                     loggedInAccount.RequireTimeZoneIanaId(),
                     context.HttpContext.RequestAborted);
-
-                fixedIncomesNoticedCount = counts.FixedIncomesNoticed;
-                fixedExpenditureNoticedCount = counts.FixedExpendituresNoticed;
-                fixedIncomesExpiredCount = counts.FixedIncomesExpired;
-                fixedExpenditureExpiredCount = counts.FixedExpendituresExpired;
             }
             catch (Exception ex) { logger.LogWarning(ex, "Failed to load notice counts for {Email}", loggedInAccount.Email); }
         }
 
-        controller.ViewBag.FixedIncomesTotalNoticeCount = fixedIncomesNoticedCount + fixedIncomesExpiredCount;
-        controller.ViewBag.FixedExpenditureTotalNoticeCount = fixedExpenditureNoticedCount + fixedExpenditureExpiredCount;
-        controller.ViewBag.TotalNoticeCount = fixedIncomesNoticedCount + fixedExpenditureNoticedCount +
-                                               fixedIncomesExpiredCount + fixedExpenditureExpiredCount;
+        controller.ViewBag.FixedIncomesTotalNoticeCount = counts.FixedIncomesTotal;
+        controller.ViewBag.FixedExpenditureTotalNoticeCount = counts.FixedExpendituresTotal;
+        controller.ViewBag.TotalNoticeCount = counts.Total;
     }
 }

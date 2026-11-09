@@ -1009,13 +1009,11 @@ public class ManagementController(
 
                 try
                 {
-                    BoardResponse? privateNoteBoard = await boardService.GetBoardByIdAsync(boardId.Value, BoardKinds.PrivateNote, HttpContext.RequestAborted);
-                    BoardAttachedFileDto? attachedFile = await boardService.GetAttachedFileByBoardIdAsync(boardId.Value, HttpContext.RequestAborted);
-
-                    if (privateNoteBoard == null || privateNoteBoard.Deleted || !boardService.CanView(privateNoteBoard, loggedInAccount))
+                    BoardResponse? privateNoteBoard = await boardService.OpenForViewingAsync(boardId.Value, BoardKinds.PrivateNote, loggedInAccount, HttpContext.RequestAborted);
+                    if (privateNoteBoard == null)
                         return RedirectToAction(BoardKinds.PrivateNote, "Management");
 
-                    await boardService.IncrementBoardViewAsync(boardId.Value, HttpContext.RequestAborted);
+                    BoardAttachedFileDto? attachedFile = await boardService.GetAttachedFileByBoardIdAsync(boardId.Value, HttpContext.RequestAborted);
 
                     (privateNoteBoard.Content, bool isImgTagIncluded) = await boardService.PrepareHtmlForDisplayAsync(privateNoteBoard.Content ?? "", HttpContext.RequestAborted);
 
@@ -1126,11 +1124,8 @@ public class ManagementController(
 
                 #region Board default paging logic
 
-                const int pageSize = 5;
-                if (page < 1)
-                {
-                    page = 1;
-                }
+                const int pageSize = PolicyLimits.BoardListPageSize;
+                page = boardPolicy.NormalizeListPage(page);
 
                 #endregion
 

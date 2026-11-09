@@ -26,6 +26,19 @@ public class BoardPolicyServiceTests
         Assert.Equal(expected, _sut.CanPostNotice(new AccountResponse { Role = role }));
     }
 
+    // -- NormalizeListPage ---------------------------------------------------------
+
+    /// <summary>There is no page before the first; any other page stands.</summary>
+    [Theory]
+    [InlineData(-3, 1)]
+    [InlineData(0, 1)]
+    [InlineData(1, 1)]
+    [InlineData(7, 7)]
+    public void NormalizeListPage_HasNoPageBeforeTheFirst(int requested, int expected)
+    {
+        Assert.Equal(expected, _sut.NormalizeListPage(requested));
+    }
+
     // -- CanOpenEditPage -----------------------------------------------------------
 
     /// <summary>Its author opens the edit page of a post that exists; a deleted post and anyone else, an administrator included, do not.</summary>

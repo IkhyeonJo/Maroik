@@ -188,8 +188,9 @@ public class DashboardService(
     }
 
     /// <inheritdoc />
-    public async Task<NotificationDto> GetNoticeCountsAsync(string email, int noticeMaturityDateDay, string timeZoneId, CancellationToken ct = default)
+    public async Task<NotificationDto> GetNoticeCountsAsync(string email, string timeZoneId, CancellationToken ct = default)
     {
+        int noticeMaturityDateDay = settings.Value.NoticeMaturityDateDay;
         int incomesNoticed = 0, expendituresNoticed = 0;
         int incomesExpired = 0, expendituresExpired = 0;
 

@@ -17,4 +17,13 @@ public class NotificationDto
 
     /// <summary>Number of fixed expenditure items whose maturity date has already passed.</summary>
     public int FixedExpendituresExpired { get; init; }
+
+    /// <summary>Everything the fixed income badge counts.</summary>
+    public int FixedIncomesTotal => FixedIncomesNoticed + FixedIncomesExpired;
+
+    /// <summary>Everything the fixed expenditure badge counts.</summary>
+    public int FixedExpendituresTotal => FixedExpendituresNoticed + FixedExpendituresExpired;
+
+    /// <summary>Everything the header badge counts.</summary>
+    public int Total => FixedIncomesTotal + FixedExpendituresTotal;
 }

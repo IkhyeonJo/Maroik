@@ -22,6 +22,9 @@ public sealed class BoardPolicyService : IBoardPolicyService
     public bool CanWriteComment(AccountResponse viewer) => Board.AcceptsCommentsFrom(viewer.Role);
 
     /// <inheritdoc />
+    public int NormalizeListPage(int requestedPage) => Board.ListPageOf(requestedPage);
+
+    /// <inheritdoc />
     public bool CanOpenEditPage(BoardResponse board, AccountResponse viewer) => Board.EditPageOpensFor(board.Deleted, board.Writer, viewer.Nickname);
 
     /// <inheritdoc />

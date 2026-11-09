@@ -33,6 +33,17 @@ public class BoardService(
     /// Used when building attachment storage paths.
     /// </summary>
     /// <inheritdoc />
+    public async Task<BoardResponse?> OpenForViewingAsync(long boardId, string requiredType, AccountResponse viewer, CancellationToken ct = default)
+    {
+        BoardResponse? board = await GetBoardByIdAsync(boardId, requiredType, ct);
+        if (board == null || board.Deleted || !CanView(board, viewer))
+            return null;
+
+        await IncrementBoardViewAsync(boardId, ct);
+        return board;
+    }
+
+    /// <inheritdoc />
     public Task<(IEnumerable<BoardResponse> Items, int TotalCount)> GetOwnPrivateNotePageAsync(string? ownerNickname, string? viewerRole, string? searchType, string? searchText, int page, int pageSize, CancellationToken ct = default) =>
         // OwnerNickname being set means the repository applies no further role / lock split: every candidate row is the viewer's.
         GetBoardPageAsync(new BoardPageQuery(BoardTypes.PrivateNote, ownerNickname, searchType, searchText, IsLoggedIn: true, viewerRole, ownerNickname, page, pageSize), ct);
