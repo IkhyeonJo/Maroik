@@ -37,7 +37,7 @@ public class DashboardService(
         // The public demo account always shows a fixed, pre-seeded period (configured via
         // ServerSetting.DemoAccountEmail/DemoDashboardYear/DemoDashboardMonth) so visitors see
         // consistent sample data regardless of when they browse the demo.
-        bool isDemoAccount = !string.IsNullOrEmpty(settings.Value.DemoAccountEmail) && accountEmail == settings.Value.DemoAccountEmail;
+        bool isDemoAccount = DemoAccountPolicy.IsDemoAccount(settings.Value.DemoAccountEmail, accountEmail);
         if (isDemoAccount)
         {
             year = settings.Value.DemoDashboardYear ?? year;

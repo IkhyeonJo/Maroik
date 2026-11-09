@@ -5,6 +5,7 @@ using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Spreadsheet;
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
+using Maroik.Core.Service.Constants;
 using Maroik.Website.Extensions;
 using Maroik.Website.Interfaces;
 using Maroik.Website.Mappers;
@@ -345,11 +346,11 @@ public class ExcelExportService(TimeProvider timeProvider, IFinancePolicyService
     public MemoryStream CreateBudgetExcel(BudgetSheetResponse sheet, Func<string, string> localize)
     {
         // Columns A..Z of the sheet: A is the label (split here into label and currency), B..M the months, N the year total, O..Z free.
-        string[] columns = [.. Enumerable.Range(0, 26).Select(i => ((char)('A' + i)).ToString())];
+        string[] columns = [.. Enumerable.Range(0, BudgetLayout.ColumnCount).Select(i => ((char)('A' + i)).ToString())];
         var headers = new List<string> { localize("Item"), localize("Currency") };
         headers.AddRange(_budgetMonthKeys.Select(localize));
         headers.Add(localize("Year total"));
-        headers.AddRange(columns.Skip(14));
+        headers.AddRange(columns.Skip(BudgetLayout.FirstFreeColumnIndex));
 
         Dictionary<string, BudgetValueResponse> values = sheet.Cells.ToDictionary(c => c.Address, c => c.Value, StringComparer.Ordinal);
         BudgetSheetViewModel labeled = sheet.ToViewModel(localize);
@@ -359,10 +360,10 @@ public class ExcelExportService(TimeProvider timeProvider, IFinancePolicyService
             XlsxCell Value(string column) => values.TryGetValue(column + number, out BudgetValueResponse? value)
                 ? value.Number is { } n ? XlsxCell.Number(n) : (XlsxCell)(value.Text ?? "")
                 : "";
-            XlsxCell label = row.Kind == "Free" ? Value("A") : row.Label;
+            XlsxCell label = row.Kind == BudgetLayout.FreeRowKind ? Value("A") : row.Label;
             return (Cells: (IEnumerable<XlsxCell>)[label, row.Currency, .. columns.Skip(1).Select(Value)], row.Kind);
         })
-        .Where(r => r.Kind != "Free" || r.Cells.Any(c => c.Text.Length > 0))
+        .Where(r => r.Kind != BudgetLayout.FreeRowKind || r.Cells.Any(c => c.Text.Length > 0))
         .Select(r => r.Cells);
 
         return BuildExcel(headers, rows);

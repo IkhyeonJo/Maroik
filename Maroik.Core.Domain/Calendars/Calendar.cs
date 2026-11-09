@@ -15,6 +15,9 @@ namespace Maroik.Core.Domain.Calendars;
 /// </summary>
 public sealed class Calendar : AggregateRoot<long>
 {
+    /// <summary>The colour of the calendar an account gets on its first visit.</summary>
+    public const string DefaultHtmlColorCode = "#fc330e";
+
     /// <summary>Email of the account that owns this calendar.</summary>
     public Email AccountEmail { get; }
 
@@ -98,10 +101,9 @@ public sealed class Calendar : AggregateRoot<long>
     /// Creates an account's default calendar like <see cref="Create"/>, except that an unusable time zone falls back to
     /// UTC instead of failing: the account did not ask for this calendar, so the provisioning must not fail on it.
     /// </summary>
-    public static ErrorOr<Calendar> CreateDefault(
-        string? accountEmailValue, string? name, string? description, string? timeZoneValue, string? htmlColorCode, DateTime utcNow)
-        => Create(accountEmailValue, name, description,
-            TimeZoneId.Create(timeZoneValue).IsError ? "UTC" : timeZoneValue, htmlColorCode, utcNow);
+    public static ErrorOr<Calendar> CreateDefault(string? accountEmailValue, string? ownerNickname, string? timeZoneValue, DateTime utcNow)
+        => Create(accountEmailValue, ownerNickname, description: null,
+            TimeZoneId.Create(timeZoneValue).IsError ? TimeZoneId.Default : timeZoneValue, DefaultHtmlColorCode, utcNow);
 
     /// <summary>Whether <paramref name="name"/> is already the name of one of <paramref name="accountCalendars"/> (names are unique per account).</summary>
     public static bool IsNameTaken(IEnumerable<Calendar> accountCalendars, string? name) =>

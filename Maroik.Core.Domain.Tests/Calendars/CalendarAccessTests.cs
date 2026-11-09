@@ -86,13 +86,18 @@ public class CalendarAccessTests
     [InlineData("Asia/Seoul", "Asia/Seoul")]
     public void CreateDefault_FallsBackToUtc_ForAnUnusableTimeZone(string? timeZone, string expected)
     {
-        var result = Calendar.CreateDefault("user@example.com", "My calendar", null, timeZone, "#112233", _now);
+        var result = Calendar.CreateDefault("user@example.com", "My calendar", timeZone, _now);
 
         Assert.Equal(expected, result.Value.TimeZone.Value);
     }
 
+    /// <summary>The first calendar of an account has the default colour.</summary>
+    [Fact]
+    public void CreateDefault_HasTheDefaultColour()
+        => Assert.Equal(Calendar.DefaultHtmlColorCode, Calendar.CreateDefault("user@example.com", "My calendar", "UTC", _now).Value.ColorCode.Value);
+
     /// <summary>Every other field is still validated as for a normal calendar.</summary>
     [Fact]
     public void CreateDefault_StillRejectsAnInvalidName()
-        => Assert.True(Calendar.CreateDefault("user@example.com", " ", null, "UTC", "#112233", _now).IsError);
+        => Assert.True(Calendar.CreateDefault("user@example.com", " ", "UTC", _now).IsError);
 }

@@ -1,4 +1,5 @@
 using Maroik.Core.Domain.Accounts;
+using Maroik.Core.Domain.Budgets;
 using Maroik.Core.Domain.Calendars;
 using Maroik.Core.Domain.FileManagers;
 using Maroik.Core.Domain.Finances;
@@ -15,6 +16,9 @@ namespace Maroik.Core.Service.Constants;
 /// </summary>
 public static class PolicyLimits
 {
+    /// <summary><see cref="BudgetWorkbook.MaxEditsPerRequest"/>.</summary>
+    public const int BudgetMaxEditsPerRequest = BudgetWorkbook.MaxEditsPerRequest;
+
     /// <summary><see cref="PasswordPolicy.MinLength"/>.</summary>
     public const int PasswordMinLength = PasswordPolicy.MinLength;
 

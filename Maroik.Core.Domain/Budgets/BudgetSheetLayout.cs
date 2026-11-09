@@ -28,6 +28,9 @@ public sealed class BudgetSheetLayout
     public static ErrorOr<Success> CanAddLine(int lineCount) =>
         lineCount >= MaxLines ? DomainError.Validation("Budget.TooManyLines", "A sheet can have at most {0} lines.", MaxLines) : Result.Success;
 
+    /// <summary>The index of the first free column (O): A is the label, B..M the months, N the year total.</summary>
+    public const int FirstFreeColumnIndex = 14;
+
     /// <summary>The year-total column.</summary>
     public const string YearColumn = "N";
 

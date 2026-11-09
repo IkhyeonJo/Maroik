@@ -48,13 +48,9 @@ public class CalendarService(
 
         // The same period the dashboard pins for this account (see DashboardService.GetSummaryAsync), so a visitor
         // finds the pre-seeded sample events on the first screen whenever they browse the demo.
-        if (string.IsNullOrEmpty(server.DemoAccountEmail) || accountEmail != server.DemoAccountEmail) return null;
+        if (!DemoAccountPolicy.IsDemoAccount(server.DemoAccountEmail, accountEmail)) return null;
 
-        // Full names: a using of System.Globalization would make Calendar ambiguous with the domain's aggregate.
-        return DateOnly.TryParseExact($"{server.DemoDashboardYear}-{server.DemoDashboardMonth}", "yyyy-M",
-            System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.None, out DateOnly firstDay)
-            ? firstDay.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture)
-            : null;
+        return DemoAccountPolicy.FirstDayOf(server.DemoDashboardYear, server.DemoDashboardMonth)?.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture);
     }
 
     /// <inheritdoc />
@@ -348,7 +344,7 @@ public class CalendarService(
     }
 
     /// <inheritdoc />
-    public async Task<ServiceResult> EnsureDefaultCalendarAsync(string accountEmail, CalendarRequest request, CancellationToken ct = default)
+    public async Task<ServiceResult> EnsureDefaultCalendarAsync(string accountEmail, string ownerNickname, string? timeZoneIanaId, CancellationToken ct = default)
     {
         DateTime utcNow = timeProvider.GetUtcNow().UtcDateTime;
         await unitOfWork.BeginAsync(ct: ct);
@@ -365,7 +361,7 @@ public class CalendarService(
 
             // CreateDefault falls back to UTC for a missing or unrecognized account time zone, so this
             // first-visit provisioning does not fail on an action the user didn't request.
-            var calendarResult = Calendar.CreateDefault(accountEmail, request.Name, request.Description, request.TimeZoneIanaId, request.HtmlColorCode, utcNow);
+            var calendarResult = Calendar.CreateDefault(accountEmail, ownerNickname, timeZoneIanaId, utcNow);
             if (calendarResult.IsError)
             {
                 await unitOfWork.RollbackAsync(ct);

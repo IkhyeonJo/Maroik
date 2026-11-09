@@ -1,3 +1,4 @@
+using Maroik.Core.Service.Constants;
 using System.ComponentModel.DataAnnotations;
 
 namespace Maroik.Website.Models.ViewModels.AccountBooks;
@@ -8,6 +9,6 @@ public sealed class BudgetEditsInputViewModel : BudgetSheetInputViewModel
     /// <summary>The edits.</summary>
     [Required]
     [MinLength(1)]
-    [MaxLength(2000)]
+    [MaxLength(PolicyLimits.BudgetMaxEditsPerRequest)]
     public List<BudgetCellEditInputViewModel> Edits { get; set; } = [];
 }
