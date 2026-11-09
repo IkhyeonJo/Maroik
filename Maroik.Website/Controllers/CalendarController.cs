@@ -204,7 +204,7 @@ public class CalendarController(
     [HttpGet]
     public async Task<IActionResult> AnonymousIndex()
     {
-        const string userTimezone = "UTC";
+        const string userTimezone = DefaultTimeZone.Id;
         AccountResponse loggedInAccount = new() { Role = AccountRoles.Anonymous, TimeZoneIanaId = userTimezone };
 
         List<CalendarResponse> otherCalendars = await calendarService.GetVisibleOtherCalendarsAsync(null, HttpContext.RequestAborted);

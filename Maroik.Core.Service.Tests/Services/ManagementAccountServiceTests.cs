@@ -175,12 +175,30 @@ public class ManagementAccountServiceTests
         {
             Email = "new@example.com",
             PlainPassword = "Plain1234!",
-            Nickname = "NewUser",
-            EmailConfirmed = true
+            Nickname = "NewUser"
         }, Actor, TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
         _accountRepo.Verify(r => r.CreateAsync(It.Is<Account>(a => a.HashedPassword == "$2a$13$hashedvalue"), It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    /// <summary>The administrator vouches for an account they create: it is confirmed and agreed from the start, and says so in its message.</summary>
+    [Fact]
+    public async Task CreateAccountAsync_CreatesAConfirmedAndAgreedAccount()
+    {
+        _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync((Account?)null);
+        _passwordService.Setup(p => p.HashPassword(It.IsAny<string>())).Returns("$2a$13$hashed");
+        _accountRepo.Setup(r => r.CreateAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+
+        await CreateSut().CreateAccountAsync(new AdminCreateAccountRequest
+        {
+            Email = "new@example.com",
+            PlainPassword = "Plain1234!",
+            Nickname = "NewUser"
+        }, Actor, TestContext.Current.CancellationToken);
+
+        _accountRepo.Verify(r => r.CreateAsync(
+            It.Is<Account>(a => a.EmailConfirmed && a.RegistrationToken == null && a.AgreedServiceTerms && a.Message == "Success"), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     /// <summary>An administrator may create an account under a reserved nickname (e.g. a second staff account).</summary>
@@ -197,8 +215,7 @@ public class ManagementAccountServiceTests
             Email = "staff@example.com",
             PlainPassword = "Plain1234!",
             Nickname = "Admin",
-            Role = Role.Admin,
-            EmailConfirmed = true
+            Role = Role.Admin
         }, Actor, TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
@@ -703,7 +720,7 @@ public class ManagementAccountServiceTests
     /// <summary>An admin create-account request with the given e-mail, password and nickname.</summary>
     private static AdminCreateAccountRequest NewAccountRequest(string email = "new@example.com", string password = "Plain1234!", string nickname = "NewUser") => new()
     {
-        Email = email, PlainPassword = password, Nickname = nickname, EmailConfirmed = true
+        Email = email, PlainPassword = password, Nickname = nickname
     };
 
     /// <summary>An admin-created account still has to meet the password rule; nothing is hashed or stored otherwise.</summary>
@@ -746,22 +763,6 @@ public class ManagementAccountServiceTests
 
         Assert.Equal("Email.Invalid", result.ErrorCode);
         _accountRepo.Verify(r => r.CreateAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>()), Times.Never);
-    }
-
-    /// <summary>The admin's "email confirmed" checkbox and status message are applied to the created account.</summary>
-    [Fact]
-    public async Task CreateAccountAsync_AppliesTheConfirmedFlagAndMessage_FromTheRequest()
-    {
-        _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync((Account?)null);
-        _passwordService.Setup(p => p.HashPassword(It.IsAny<string>())).Returns("$2a$13$hashed");
-        AdminCreateAccountRequest request = NewAccountRequest();
-        request.Message = "created by admin";
-        request.EmailConfirmed = true;
-
-        ServiceResult result = await CreateSut().CreateAccountAsync(request, Actor, TestContext.Current.CancellationToken);
-
-        Assert.True(result.Success);
-        _accountRepo.Verify(r => r.CreateAsync(It.Is<Account>(a => a.EmailConfirmed && a.Message == "created by admin" && a.RegistrationToken == null), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     /// <summary>An unexpected repository failure is caught and reported without leaking internals.</summary>

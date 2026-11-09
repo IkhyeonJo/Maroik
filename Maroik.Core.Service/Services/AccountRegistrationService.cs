@@ -80,7 +80,7 @@ public class AccountRegistrationService(
             hashedPassword,
             nickname,
             AccountRole.User,
-            newAccount.TimeZoneIanaId ?? "UTC",
+            newAccount.TimeZoneIanaId ?? TimeZoneId.Default,
             defaultMonetaryUnit: null,
             registrationToken,
             newAccount.AgreedServiceTerms, utcNow);
@@ -184,7 +184,7 @@ public class AccountRegistrationService(
 
             // A fresh token always: every link mailed for the replaced registration dies with it.
             var replaceResult = found.ReplaceUnconfirmedRegistration(
-                hashedPassword, nickname, newAccount.TimeZoneIanaId ?? "UTC", registrationToken, newAccount.AgreedServiceTerms, utcNow);
+                hashedPassword, nickname, newAccount.TimeZoneIanaId ?? TimeZoneId.Default, registrationToken, newAccount.AgreedServiceTerms, utcNow);
             if (replaceResult.IsError)
             {
                 await unitOfWork.RollbackAsync(ct);

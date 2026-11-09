@@ -118,8 +118,4 @@ public class AccountPolicyServiceTests
         Assert.Equal("AccountDeleted", _sut.GetSessionInvalidationReason(new AccountResponse { SecurityStamp = "a", Deleted = true }, session));
         Assert.Equal("SecurityStampChanged", _sut.GetSessionInvalidationReason(new AccountResponse { SecurityStamp = "b" }, session));
     }
-
-    /// <summary>A new account's message is the domain's "Success".</summary>
-    [Fact]
-    public void GetAccountCreatedMessage_IsSuccess() => Assert.Equal("Success", _sut.GetAccountCreatedMessage());
 }

@@ -420,6 +420,68 @@ public sealed class Account : AggregateRoot<string>
         SecurityStamp = GenerateSecurityStamp();
     }
 
+    /// <summary>
+    /// Turns the admin form's desired state into the account's own operations. A null role or time
+    /// zone keeps the current value. Saving an account as unlocked always clears its failed-login
+    /// counter (<see cref="Account.Unlock"/>); locking keeps the counter. The admin's message is
+    /// applied last so it is what the account ends up showing, whatever lock/unlock wrote.
+    /// </summary>
+    public ErrorOr<Success> ApplyAdminChanges(AdminAccountChanges changes, DateTime utcNow)
+    {
+        if (changes.TimeZoneIanaId != null)
+        {
+            var tzResult = ChangeTimeZone(changes.TimeZoneIanaId, utcNow);
+            if (tzResult.IsError) return tzResult.Errors;
+        }
+
+        if (changes.FileManagerQuotaBytes is { } quota)
+        {
+            var quotaResult = ChangeFileManagerQuota(quota, utcNow);
+            if (quotaResult.IsError) return quotaResult.Errors;
+        }
+
+        if (changes.FileManagerScanDisabled is { } scanDisabled)
+            ChangeFileManagerScanDisabled(scanDisabled, utcNow);
+
+        if (changes.Role != null)
+        {
+            var roleResult = AccountRole.Create(changes.Role);
+            if (roleResult.IsError) return roleResult.Errors;
+            ChangeRole(roleResult.Value, utcNow);
+        }
+
+        switch (changes.Locked)
+        {
+            // Locking an unlocked account is the admin's sanction and ends its sessions; re-saving an account that is
+            // already locked (e.g. by failed logins) keeps them, as that lock only refuses new logins.
+            case true when Locked:
+                Lock(utcNow);
+                break;
+            case true:
+                LockAndEndSessions(utcNow);
+                break;
+            default:
+                Unlock(utcNow);
+                break;
+        }
+
+        // One way only: an unconfirmed registration can be replaced by anyone who knows the address, so a confirmation is never taken back.
+        if (changes.EmailConfirmed)
+            ForceConfirmEmail(utcNow);
+
+        // One way only, like the confirmation (owner's decision, 2026-11-08): an agreement to the terms is never taken back.
+        if (changes.AgreedServiceTerms)
+            AcceptServiceTerms(utcNow);
+
+        if (changes.Deleted)
+            SoftDelete(utcNow);
+        else
+            Restore(utcNow);
+
+        SetMessage(changes.Message, utcNow);
+        return Result.Success;
+    }
+
     /// <summary>Unlocks the account and resets the login-attempt counter.</summary>
     public void Unlock(DateTime utcNow)
     {

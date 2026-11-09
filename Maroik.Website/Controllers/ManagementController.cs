@@ -287,10 +287,7 @@ public class ManagementController(
                 PlainPassword = accountInputViewModel.Password, // service validates + hashes
                 Nickname = accountInputViewModel.Nickname,
                 Role = accountInputViewModel.Role,
-                TimeZoneIanaId = accountInputViewModel.TimeZoneIanaId,
-                EmailConfirmed = true,
-                AgreedServiceTerms = true,
-                Message = accountPolicy.GetAccountCreatedMessage()
+                TimeZoneIanaId = accountInputViewModel.TimeZoneIanaId
             }, AdminEmail, HttpContext.RequestAborted);
 
             return createResult.Success
