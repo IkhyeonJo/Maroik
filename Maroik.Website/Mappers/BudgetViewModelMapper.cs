@@ -94,10 +94,10 @@ public static class BudgetViewModelMapper
         Remaining = cell.Remaining is { } remaining ? Amount(remaining) : "",
         State = cell.Outcome switch
         {
-            "Unbudgeted" => "unbudgeted",
-            "Good" => "good",
-            "Warning" => "warn",
-            "Bad" => "bad",
+            BudgetOutcome.Unbudgeted => "unbudgeted",
+            BudgetOutcome.Good => "good",
+            BudgetOutcome.Warning => "warn",
+            BudgetOutcome.Bad => "bad",
             _ => "",
         },
     };
