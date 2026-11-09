@@ -56,7 +56,7 @@ public class ExceptionControllerTests(MaroikWebApplicationFactory factory)
     public async Task Error_LoggedInUser_Returns200()
     {
         var session = await AuthenticatedSessionHelper.LoginAsync(
-            factory, _client, "exception-error-user@test.com", "UserPassword1!", Core.Domain.Accounts.Role.User,
+            factory, _client, "exception-error-user@test.com", "UserPassword1!", Core.Domain.Primitives.Role.User,
             TestContext.Current.CancellationToken);
         using var request = new HttpRequestMessage(HttpMethod.Get, "/Exception/Error");
         request.Headers.Add("Cookie", session.CookieHeader);

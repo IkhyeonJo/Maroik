@@ -1,6 +1,7 @@
 using ErrorOr;
 using Maroik.Core.Domain.Errors;
 using Maroik.Core.Domain.Primitives;
+using Maroik.Core.Domain.Uploads;
 
 namespace Maroik.Core.Domain.Boards;
 
@@ -41,6 +42,13 @@ public sealed class BoardAttachedFile : AggregateRoot<long>
         Name = name;
         Extension = extension;
         Path = path;
+    }
+
+    /// <summary>The storage key of a post's attachment: a private note under Management, every other post under Forum.</summary>
+    public static string StoragePathFor(string boardType, long boardId, Guid id, string fileName)
+    {
+        string area = string.Equals(boardType, BoardTypes.PrivateNote, StringComparison.OrdinalIgnoreCase) ? "Management" : "Forum";
+        return $"upload/{area}/{boardType}/boardAttachedFiles/{boardId}/{AttachmentStoragePaths.StoredName(id, fileName)}";
     }
 
     /// <summary>Whether a file is attached: an edit that removes the attachment empties the record (see <see cref="Cleared"/>) instead of deleting it.</summary>

@@ -62,6 +62,20 @@ are plain IDs, not object references), the same criterion applied to
 `Category`/`SubCategory` in commit `284dc52f`. Enforced by
 `ContractArchitectureTests.EveryRepositoryInterface_MustPersist_AnAggregateRoot`.
 
+## Bounded contexts
+
+`Maroik.Core.Domain` is eight bounded contexts, one folder each (`Accounts`, `Boards`, `Budgets`, `Calendars`, `FileManagers`,
+`Finances`, `Kanbans`, `Menus`), on a shared kernel (`Errors`, `Extensions`, `Formulas`, `Primitives`, `Uploads`, `ValueObjects`).
+A context names no other context, and the shared kernel names none at all; where one needs another's data it keeps a plain
+identifier (a post's `Writer` is a nickname, not an `Account`). The one intended dependency is `Budgets` -> `Finances` (a budget is
+measured against the finance records). What several contexts need lives in the shared kernel: the role names (`Primitives/Role`)
+are read by accounts, menus and posts alike.
+
+Enforced by `DomainArchitectureTests` (`Maroik.Core.Domain.Tests`): `BoundedContext_ShouldNot_DependOnAnotherBoundedContext` (the
+IL), `DomainSources_ShouldNot_NameAnotherBoundedContext` (the source, since a `const` leaves nothing in the IL: `Boards` and
+`Menus` read `Accounts.Role` unnoticed until 2026-11-10) and `EveryDomainFolder_IsABoundedContext_OrPartOfTheSharedKernel` (a new
+folder has to be declared one or the other).
+
 ## Domain error messages must go through DomainError
 
 The domain speaks English only and does no translation. Every `Maroik.Core.Domain` error is built via

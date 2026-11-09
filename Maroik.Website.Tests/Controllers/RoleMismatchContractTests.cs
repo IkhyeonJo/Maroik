@@ -1,6 +1,6 @@
 using System.Text.Json;
 using Maroik.Core.Contract.Dtos;
-using Maroik.Core.Domain.Accounts;
+using Maroik.Core.Domain.Primitives;
 using Maroik.Website.Constants;
 using Maroik.Website.Extensions;
 using Maroik.Website.Tests.Fixtures;

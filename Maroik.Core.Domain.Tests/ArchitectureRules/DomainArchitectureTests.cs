@@ -1,4 +1,6 @@
 using System.Reflection;
+using System.Text.RegularExpressions;
+using Maroik.Core.Domain.Tests.Fixtures;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
 using NetArchTest.Rules;
@@ -111,52 +113,103 @@ public class DomainArchitectureTests
             "Failing types: " + string.Join(", ", result.FailingTypeNames ?? []));
     }
 
-    /// <summary>
-    /// Bounded contexts recognized within Maroik.Core.Domain. Each one models a distinct
-    /// area of the business (Account, Board, Calendar, Finance, Menu) and must stay
-    /// independent of the others — cross-context collaboration, if ever needed, should go
-    /// through an explicit integration pattern (e.g. a loosely-coupled reference such as
-    /// Board.Writer being a plain string instead of an Account reference) rather than a
-    /// direct type dependency.
-    /// </summary>
-    private static readonly string[] _boundedContextNamespaces =
-    [
-        "Maroik.Core.Domain.Accounts",
-        "Maroik.Core.Domain.Boards",
-        "Maroik.Core.Domain.Calendars",
-        "Maroik.Core.Domain.Finances",
-        "Maroik.Core.Domain.Menus"
-    ];
+    /// <summary>The root namespace of the domain.</summary>
+    private const string DomainNamespace = "Maroik.Core.Domain";
 
-    /// <summary>Bounded context should not depend on another bounded context.</summary>
-    [Theory]
-    [InlineData("Maroik.Core.Domain.Accounts")]
-    [InlineData("Maroik.Core.Domain.Boards")]
-    [InlineData("Maroik.Core.Domain.Calendars")]
-    [InlineData("Maroik.Core.Domain.Finances")]
-    [InlineData("Maroik.Core.Domain.Menus")]
-    public void BoundedContext_ShouldNot_DependOnAnotherBoundedContext(string boundedContextNamespace)
+    /// <summary>The folder holding the domain's sources.</summary>
+    private static readonly string _domainSources = Path.Combine(RepositoryPaths.Root, DomainNamespace);
+
+    /// <summary>
+    /// The bounded contexts of Maroik.Core.Domain, one folder each. Each models a distinct area of the business and stays
+    /// independent of the others: where one needs another's data it keeps a plain identifier (Board.Writer is a nickname,
+    /// not an Account) rather than a type of the other context.
+    /// </summary>
+    private static readonly string[] _boundedContexts =
+        ["Accounts", "Boards", "Budgets", "Calendars", "FileManagers", "Finances", "Kanbans", "Menus"];
+
+    /// <summary>The shared kernel: what every context may build on, and which itself depends on no context.</summary>
+    private static readonly string[] _sharedKernel = ["Errors", "Extensions", "Formulas", "Primitives", "Uploads", "ValueObjects"];
+
+    /// <summary>The dependencies between contexts that are intended: a budget is measured against the finance records.</summary>
+    private static readonly Dictionary<string, string[]> _allowedContextDependencies = new() { ["Budgets"] = ["Finances"] };
+
+    /// <summary>The contexts the sources of <paramref name="folder"/> may not depend on: every other one, the intended dependencies aside.</summary>
+    private static string[] ForbiddenContextsFor(string folder) =>
+        [.. _boundedContexts.Where(context => context != folder && !_allowedContextDependencies.GetValueOrDefault(folder, []).Contains(context))];
+
+    /// <summary>A new folder has to be declared a context or part of the shared kernel, or the rules below would not see it.</summary>
+    [Fact]
+    public void EveryDomainFolder_IsABoundedContext_OrPartOfTheSharedKernel()
     {
-        string[] otherContexts =
+        string[] expected = [.. _boundedContexts.Concat(_sharedKernel).Order(StringComparer.Ordinal)];
+        string[] folders =
         [
-            .. _boundedContextNamespaces
-                .Where(ns => ns != boundedContextNamespace)
+            .. new DirectoryInfo(_domainSources).GetDirectories().Select(folder => folder.Name)
+                .Where(name => name is not ("bin" or "obj")).Order(StringComparer.Ordinal)
         ];
+
+        Assert.Equal(expected, folders);
+    }
+
+    /// <summary>Bounded context should not depend on another bounded context (the compiled types).</summary>
+    [Theory]
+    [InlineData("Accounts")]
+    [InlineData("Boards")]
+    [InlineData("Budgets")]
+    [InlineData("Calendars")]
+    [InlineData("FileManagers")]
+    [InlineData("Finances")]
+    [InlineData("Kanbans")]
+    [InlineData("Menus")]
+    public void BoundedContext_ShouldNot_DependOnAnotherBoundedContext(string boundedContext)
+    {
+        string[] otherContexts = [.. ForbiddenContextsFor(boundedContext).Select(context => $"{DomainNamespace}.{context}")];
 
         NetArchTest.Rules.TestResult result = Types.InAssembly(_domainAssembly)
             .That()
-            .ResideInNamespace(boundedContextNamespace)
+            .ResideInNamespace($"{DomainNamespace}.{boundedContext}")
             .ShouldNot()
             .HaveDependencyOnAny(otherContexts)
             .GetResult();
 
         Assert.True(
             result.IsSuccessful,
-            $"Types in {boundedContextNamespace} must not depend on another bounded context " +
+            $"Types in {boundedContext} must not depend on another bounded context " +
             $"({string.Join(", ", otherContexts)}). Bounded contexts must stay independent; " +
             "use a loosely-coupled reference (e.g. a plain identifier/string) instead of a " +
             "direct type dependency if cross-context data is needed.\n" +
             "Failing types: " + string.Join(", ", result.FailingTypeNames ?? []));
+    }
+
+    /// <summary>
+    /// The source-side half of <see cref="BoundedContext_ShouldNot_DependOnAnotherBoundedContext"/>. The compiler copies a
+    /// <c>const</c> into the code that reads it, so a context using another's constant leaves nothing in the IL: Boards and Menus
+    /// read the Accounts context's role names that way until 2026-11-10. No source of a context, and none of the shared kernel,
+    /// names another context: not in a using, not qualified. Comments are documentation and may.
+    /// </summary>
+    [Fact]
+    public void DomainSources_ShouldNot_NameAnotherBoundedContext()
+    {
+        List<string> offenders = [];
+        foreach (string folder in _boundedContexts.Concat(_sharedKernel))
+        {
+            string contexts = string.Join('|', ForbiddenContextsFor(folder));
+            Regex named = new($@"Maroik\.Core\.Domain\.(?:{contexts})\b|(?<![\w.])(?:Domain\.)?(?:{contexts})\.[A-Z]", RegexOptions.CultureInvariant);
+            foreach (string file in Directory.EnumerateFiles(Path.Combine(_domainSources, folder), "*.cs", SearchOption.AllDirectories))
+            {
+                string[] lines = File.ReadAllLines(file);
+                for (int index = 0; index < lines.Length; index++)
+                {
+                    int comment = lines[index].IndexOf("//", StringComparison.Ordinal);
+                    string code = comment < 0 ? lines[index] : lines[index][..comment];
+                    if (named.IsMatch(code))
+                        offenders.Add($"{folder}/{Path.GetFileName(file)}:{index + 1}: {code.Trim()}");
+                }
+            }
+        }
+
+        Assert.True(offenders.Count == 0,
+            "A bounded context (and the shared kernel) must not name another bounded context:\n" + string.Join("\n", offenders));
     }
 
     /// <summary>

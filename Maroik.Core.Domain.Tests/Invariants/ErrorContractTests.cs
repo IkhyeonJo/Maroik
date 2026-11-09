@@ -4,6 +4,7 @@ using Maroik.Core.Domain.Boards;
 using Maroik.Core.Domain.Calendars;
 using Maroik.Core.Domain.Finances;
 using Maroik.Core.Domain.Menus;
+using Maroik.Core.Domain.Primitives;
 using Maroik.Core.Domain.Tests.Fixtures;
 using Maroik.Core.Domain.ValueObjects;
 using DomainAccount = Maroik.Core.Domain.Accounts.Account;

@@ -5,7 +5,7 @@ namespace Maroik.Core.Domain.Finances;
 /// <summary>
 /// Membership check for <see cref="AssetItemType"/>, the source of truth for
 /// <see cref="Asset.Item"/> values — mirrors the DB's <c>Asset_Item_check</c> constraint.
-/// Domain-validated by <see cref="ValueObjects.AssetItem.Create"/>; also exposed here so
+/// Domain-validated by <see cref="AssetItem.Create"/>; also exposed here so
 /// the service layer's pre-repository-lookup short-circuit (<c>AssetService</c>) can check the same
 /// allow-list without hand-duplicating the member list. Built from <see cref="AssetItemType"/>'s
 /// member names (rather than a hand-curated constant list, as the other taxonomies use) so it can

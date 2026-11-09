@@ -5,6 +5,7 @@ using Maroik.Core.Contract.Exceptions;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Domain.Accounts;
 using Maroik.Core.Contract.Extensions;
+using Maroik.Core.Domain.Primitives;
 using Maroik.Core.Domain.ValueObjects;
 using Maroik.Core.Service.Mappers;
 using Microsoft.Extensions.Logging;

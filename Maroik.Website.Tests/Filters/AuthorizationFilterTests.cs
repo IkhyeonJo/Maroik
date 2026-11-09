@@ -1,7 +1,7 @@
 using Maroik.Core.Service.Services;
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
-using Maroik.Core.Domain.Accounts;
+using Maroik.Core.Domain.Primitives;
 using Maroik.Website.Constants;
 using Maroik.Website.Filters;
 using Maroik.Website.Interfaces;

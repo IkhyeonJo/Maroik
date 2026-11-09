@@ -1,9 +1,8 @@
 using ErrorOr;
 using Maroik.Core.Domain.Errors;
-using Maroik.Core.Domain.Finances;
 using Maroik.Core.Domain.Primitives;
 
-namespace Maroik.Core.Domain.ValueObjects;
+namespace Maroik.Core.Domain.Finances;
 
 /// <summary>
 /// Value object that holds an asset's category: a member name of <see cref="AssetItemType"/> (e.g. "CashAsset"), the same

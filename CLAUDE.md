@@ -182,6 +182,7 @@ heading, so a comment that cites "CLAUDE.md, <section>" is found through this li
 - Folder names are plural nouns — `.claude/rules/csharp-code-structure.md`
 - One type per file, named after it — `.claude/rules/csharp-code-structure.md`
 - Aggregate model — `.claude/rules/csharp-code-structure.md`
+- Bounded contexts — `.claude/rules/csharp-code-structure.md`
 - Domain error messages must go through DomainError — `.claude/rules/csharp-code-structure.md`
 - Service error keys must come from ServiceErrorKeys — `.claude/rules/csharp-code-structure.md`
 - Repository tests — `.claude/rules/repository-tests.md`

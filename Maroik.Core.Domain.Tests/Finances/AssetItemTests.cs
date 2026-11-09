@@ -1,6 +1,6 @@
-using Maroik.Core.Domain.ValueObjects;
+using Maroik.Core.Domain.Finances;
 
-namespace Maroik.Core.Domain.Tests.ValueObjects;
+namespace Maroik.Core.Domain.Tests.Finances;
 
 /// <summary>Unit tests for <see cref="AssetItem"/>, an asset's validated category.</summary>
 public class AssetItemTests

@@ -1,6 +1,6 @@
 using System.Net;
 using System.Text.RegularExpressions;
-using Maroik.Core.Domain.Accounts;
+using Maroik.Core.Domain.Primitives;
 using Maroik.Website.Constants;
 using Maroik.Website.Tests.Fixtures;
 

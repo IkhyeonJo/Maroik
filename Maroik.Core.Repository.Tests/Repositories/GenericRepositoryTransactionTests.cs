@@ -1,6 +1,7 @@
 using Maroik.Core.Domain.Accounts;
 using Maroik.Core.Domain.Calendars;
 using Maroik.Core.Domain.Menus;
+using Maroik.Core.Domain.Primitives;
 using Maroik.Core.PostgreSQL.Contexts;
 using Maroik.Core.Repository.Repositories;
 using Microsoft.EntityFrameworkCore;

@@ -1,6 +1,7 @@
 using ErrorOr;
 using Maroik.Core.Domain.Errors;
 using Maroik.Core.Domain.Primitives;
+using Maroik.Core.Domain.Uploads;
 
 namespace Maroik.Core.Domain.Calendars;
 
@@ -42,6 +43,10 @@ public sealed class CalendarEventAttachedFile : AggregateRoot<long>
         Extension = extension;
         Path = path;
     }
+
+    /// <summary>The storage key of an event's attachment, in the event's own folder.</summary>
+    public static string StoragePathFor(string roleIndex, long eventId, Guid id, string fileName) =>
+        $"upload/Calendar/{roleIndex}/calendarEventAttachedFiles/{eventId}/{AttachmentStoragePaths.StoredName(id, fileName)}";
 
     /// <summary>Whether a file is attached: an edit that removes the attachment empties the record (see <see cref="Cleared"/>) instead of deleting it.</summary>
     public bool HasFile => !string.IsNullOrEmpty(Name) && !string.IsNullOrEmpty(Path);

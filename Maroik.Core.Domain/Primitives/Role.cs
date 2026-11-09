@@ -1,4 +1,4 @@
-namespace Maroik.Core.Domain.Accounts;
+namespace Maroik.Core.Domain.Primitives;
 
 /// <summary>
 /// String constants for the three access roles used throughout the application.
