@@ -182,6 +182,7 @@
     $(function() {
         $createFixedIncomeTabs.tabs();
         $editFixedIncomeTabs.tabs();
+        // Authoritative in FixedIncome (server): no maturity date in the past; mirrored here for form UX only.
         // Maturity-date pickers. `minDate: 0` forbids past dates. `beforeShow`
         // and `onChangeMonthYear` (deferred a tick with `setTimeout` so the
         // widget exists) append two custom buttons to the button panel:

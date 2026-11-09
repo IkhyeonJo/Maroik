@@ -71,8 +71,8 @@
                                 <label for="createAccountRole">@Localizer["Role"].Value</label>
                                 <br />
                                 <select id="createAccountRole" name="createAccountRole" style="max-width:90%;">
-                                    <option value="Admin">@Localizer["Admin"].Value</option>
-                                    <option value="User">@Localizer["User"].Value</option>
+                                    <option value="@AccountRoles.Admin">@Localizer["Admin"].Value</option>
+                                    <option value="@AccountRoles.User">@Localizer["User"].Value</option>
                                 </select>
                             </div>
                         </div>
@@ -131,8 +131,8 @@
                                 <label for="editAccountRole">@Localizer["Role"].Value</label>
                                 <br />
                                 <select id="editAccountRole" name="editAccountRole" style="max-width:90%;">
-                                    <option value="Admin">@Localizer["Admin"].Value</option>
-                                    <option value="User">@Localizer["User"].Value</option>
+                                    <option value="@AccountRoles.Admin">@Localizer["Admin"].Value</option>
+                                    <option value="@AccountRoles.User">@Localizer["User"].Value</option>
                                 </select>
                             </div>
                         </div>
