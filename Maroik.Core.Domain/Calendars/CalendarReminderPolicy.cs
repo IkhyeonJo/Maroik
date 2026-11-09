@@ -50,6 +50,21 @@ public static class CalendarReminderPolicy
             : Result.Success;
 
     /// <summary>
+    /// What an all-day event's reminder must look like, the same choice its form offers: a lead time in days or weeks (the event has no
+    /// start time to count minutes or hours from), at a time of day on the <see cref="ReminderTimeOfDayStepMinutes"/> step.
+    /// </summary>
+    public static ErrorOr<Success> CheckAllDayReminder(long? minutesBefore, long? hoursBefore, TimeOnly? timeOfDay)
+    {
+        if (minutesBefore.HasValue || hoursBefore.HasValue)
+            return DomainError.Validation("Reminder.AllDayLeadTimeUnit", "An all-day event's reminder must be set in days or weeks.");
+
+        if (timeOfDay is not { Second: 0, Millisecond: 0, Microsecond: 0, Nanosecond: 0 } time || time.Minute % ReminderTimeOfDayStepMinutes != 0)
+            return DomainError.Validation("Reminder.AllDayTimeOfDay", "An all-day event's reminder time must be on a {0}-minute step.", ReminderTimeOfDayStepMinutes);
+
+        return Result.Success;
+    }
+
+    /// <summary>
     /// Returns <see langword="true"/> when the single non-null lead-time value falls within
     /// <see cref="MinLeadTimeBeforeEvent"/>..its per-unit maximum (inclusive). Returns <see langword="true"/> when no
     /// lead-time field is set — the "exactly one must be set" rule is enforced separately by

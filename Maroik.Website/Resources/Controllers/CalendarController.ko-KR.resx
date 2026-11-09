@@ -276,6 +276,12 @@
   <data name="An event can have at most {0} reminders." xml:space="preserve">
     <value>일정 하나에는 알림을 최대 {0}개까지 둘 수 있습니다.</value>
   </data>
+  <data name="An all-day event's reminder must be set in days or weeks." xml:space="preserve">
+    <value>종일 일정의 알림은 일 또는 주 단위로만 설정할 수 있습니다.</value>
+  </data>
+  <data name="An all-day event's reminder time must be on a {0}-minute step." xml:space="preserve">
+    <value>종일 일정의 알림 시각은 {0}분 단위여야 합니다.</value>
+  </data>
   <data name="Event dates must be between the years {0} and {1}." xml:space="preserve">
     <value>일정 날짜는 {0}년부터 {1}년 사이여야 합니다.</value>
   </data>

@@ -110,6 +110,9 @@ public sealed class CalendarEventReminder : AggregateRoot<long>
             return DomainError.Validation("Reminder.LeadTimeOutOfRange",
                 "Reminder lead time is outside the allowed range (0 to 28 days before the event).");
 
+        if (calendarEvent.AllDay && CalendarReminderPolicy.CheckAllDayReminder(minutesBefore, hoursBefore, timesBefore) is { IsError: true } refused)
+            return refused.Errors;
+
         DateTime fireAtUtc = ReminderSchedule.FireAtUtc(calendarEvent.AllDay, calendarEvent.StartDate, calendarTimeZoneIanaId,
             minutesBefore, hoursBefore, daysBefore, weeksBefore, timesBefore);
 
