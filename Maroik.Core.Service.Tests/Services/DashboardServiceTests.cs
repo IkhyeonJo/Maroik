@@ -848,7 +848,7 @@ public class DashboardServiceTests
             FixedExpenditureDue(DateTime.UtcNow.Date.AddYears(-1)),
         ]);
 
-        NotificationDto counts = await CreateSut().GetNoticeCountsAsync("user@example.com", 7, "UTC", TestContext.Current.CancellationToken);
+        NotificationDto counts = await CreateSut(new ServerSetting { NoticeMaturityDateDay = 7 }).GetNoticeCountsAsync("user@example.com", "UTC", TestContext.Current.CancellationToken);
 
         Assert.Equal(1, counts.FixedExpendituresNoticed);
         Assert.Equal(1, counts.FixedExpendituresExpired);
@@ -960,7 +960,7 @@ public class DashboardServiceTests
         _fixedExpenditureRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync([FixedExpenditureDue(_now.AddYears(1))]); // due 1 January; "today" is 1 July
 
-        NotificationDto counts = await CreateSut().GetNoticeCountsAsync("user@example.com", 7, "UTC", TestContext.Current.CancellationToken);
+        NotificationDto counts = await CreateSut(new ServerSetting { NoticeMaturityDateDay = 7 }).GetNoticeCountsAsync("user@example.com", "UTC", TestContext.Current.CancellationToken);
 
         Assert.Equal(0, counts.FixedExpendituresNoticed);
     }

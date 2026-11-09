@@ -449,7 +449,7 @@ public class ViewBagPopulatorFilterTests
     {
         var created = new DateTime(2026, 1, 1, 20, 0, 0, DateTimeKind.Utc);
         _dashboardService
-            .Setup(d => d.GetNoticeCountsAsync("user@test.com", It.IsAny<int>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(d => d.GetNoticeCountsAsync("user@test.com", It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new NotificationDto());
         var (context, controller) = BuildContext();
         SignIn(context, new AccountResponse { Email = "user@test.com", Role = Role.User, TimeZoneIanaId = "Asia/Seoul", Created = created });
