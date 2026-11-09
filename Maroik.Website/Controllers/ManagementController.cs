@@ -1085,7 +1085,7 @@ public class ManagementController(
                     BoardResponse? privateNoteBoard = await boardService.GetBoardByIdAsync(boardId.Value, BoardKinds.PrivateNote, HttpContext.RequestAborted);
                     BoardAttachedFileDto? attachedFile = await boardService.GetAttachedFileByBoardIdAsync(boardId.Value, HttpContext.RequestAborted);
 
-                    if (privateNoteBoard == null || privateNoteBoard.Deleted || !boardPolicy.IsContentOwner(loggedInAccount, privateNoteBoard.Writer))
+                    if (privateNoteBoard == null || !boardPolicy.CanOpenEditPage(privateNoteBoard, loggedInAccount))
                     {
                         return RedirectToAction(BoardKinds.PrivateNote, "Management");
                     }
@@ -1136,22 +1136,8 @@ public class ManagementController(
 
                 #region Logic to get all related board data
 
-                // Ownership scope, search, ordering, and paging are all pushed down into one SQL
-                // query (see BoardRepository.QueryPageAsync) instead of materializing every
-                // PrivateNote row into memory first. OwnerNickname being set means the repository
-                // applies no further role/lock visibility split — every candidate row already
-                // belongs to the caller (same "already scoped to the caller's own notes" behavior
-                // this replaced).
-                (IEnumerable<BoardResponse> pageItems, int totalCount) = await boardService.GetBoardPageAsync(new BoardPageQuery(
-                    Type: BoardKinds.PrivateNote,
-                    OwnerNickname: loggedInAccount.Nickname,
-                    SearchType: searchType,
-                    SearchText: searchText,
-                    IsLoggedIn: true,
-                    ViewerRole: loggedInAccount.Role,
-                    ViewerNickname: loggedInAccount.Nickname,
-                    Page: page,
-                    PageSize: pageSize), HttpContext.RequestAborted);
+                (IEnumerable<BoardResponse> pageItems, int totalCount) = await boardService.GetOwnPrivateNotePageAsync(
+                    loggedInAccount.Nickname, loggedInAccount.Role, searchType, searchText, page, pageSize, HttpContext.RequestAborted);
 
                 #endregion
 

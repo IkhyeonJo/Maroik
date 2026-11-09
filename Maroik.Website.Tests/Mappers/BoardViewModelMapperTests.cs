@@ -50,13 +50,11 @@ public class BoardViewModelMapperTests
         Assert.True(row.IsWriterAdmin);
     }
 
-    /// <summary>No attachment, or an attachment record without a name, shows no paperclip.</summary>
-    [Theory]
-    [InlineData(false)]
-    [InlineData(true)]
-    public void ToListRow_HasNoAttachment_WithoutANamedFile(bool emptyRecord)
+    /// <summary>No attachment shows no paperclip (the service answers null for a record an edit emptied, too).</summary>
+    [Fact]
+    public void ToListRow_HasNoAttachment_WithoutAFile()
     {
-        BoardListRowViewModel row = Post("Alice").ToListRow(true, _admins, 0, emptyRecord ? new BoardAttachedFileDto { Name = "" } : null);
+        BoardListRowViewModel row = Post("Alice").ToListRow(true, _admins, 0, attachedFile: null);
 
         Assert.False(row.HasAttachment);
     }

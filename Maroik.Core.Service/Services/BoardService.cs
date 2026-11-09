@@ -3,6 +3,7 @@ using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Domain.Accounts;
 using Maroik.Core.Domain.Boards;
+using Maroik.Core.Domain.Uploads;
 using Maroik.Core.Service.Mappers;
 using Microsoft.Extensions.Logging;
 
@@ -31,11 +32,10 @@ public class BoardService(
     /// Maps each board type name to its corresponding file-storage area folder name.
     /// Used when building attachment storage paths.
     /// </summary>
-    private static readonly Dictionary<string, string> _boardAreaMap = new(StringComparer.OrdinalIgnoreCase)
-    {
-        [BoardTypes.FreeForum] = "Forum",
-        [BoardTypes.PrivateNote] = "Management"
-    };
+    /// <inheritdoc />
+    public Task<(IEnumerable<BoardResponse> Items, int TotalCount)> GetOwnPrivateNotePageAsync(string? ownerNickname, string? viewerRole, string? searchType, string? searchText, int page, int pageSize, CancellationToken ct = default) =>
+        // OwnerNickname being set means the repository applies no further role / lock split: every candidate row is the viewer's.
+        GetBoardPageAsync(new BoardPageQuery(BoardTypes.PrivateNote, ownerNickname, searchType, searchText, IsLoggedIn: true, viewerRole, ownerNickname, page, pageSize), ct);
 
     /// <inheritdoc />
     public async Task<(IEnumerable<BoardResponse> Items, int TotalCount)> GetBoardPageAsync(BoardPageQuery query, CancellationToken ct = default)
@@ -81,7 +81,7 @@ public class BoardService(
     public async Task<BoardAttachedFileDto?> GetAttachedFileByBoardIdAsync(long boardId, CancellationToken ct = default)
     {
         BoardAttachedFile? file = await boardAttachedFileRepository.FindByBoardIdAsync(boardId, ct);
-        return file == null ? null : BoardAttachedFileMapper.ToResponse(file);
+        return file is { HasFile: true } ? BoardAttachedFileMapper.ToResponse(file) : null;
     }
 
     /// <inheritdoc />
@@ -90,7 +90,7 @@ public class BoardService(
         Dictionary<long, BoardAttachedFile?> domain = await boardAttachedFileRepository.GetByBoardIdsAsync(boardIds, ct);
         return domain.ToDictionary(
             kvp => kvp.Key,
-            kvp => kvp.Value == null ? null : (BoardAttachedFileDto?)BoardAttachedFileMapper.ToResponse(kvp.Value));
+            kvp => kvp.Value is { HasFile: true } file ? BoardAttachedFileMapper.ToResponse(file) : null);
     }
 
     /// <inheritdoc />
@@ -482,7 +482,7 @@ public class BoardService(
         }
 
         BoardAttachedFile? attachedFile = await boardAttachedFileRepository.FindByBoardIdAsync(boardId, ct);
-        if (attachedFile == null || string.IsNullOrEmpty(attachedFile.Path))
+        if (attachedFile is not { HasFile: true })
             return (ServiceResult.NotFound("Board.AttachedFileNotFound", ServiceErrorKeys.AttachedFileNotFound), null);
 
         // OpenFileAsync logs its own failure (with the storage path) where it happens.
@@ -498,14 +498,7 @@ public class BoardService(
     /// traverse paths; the original name is kept on the attachment record instead.
     /// </summary>
     private static string BuildAttachedFilePath(string boardType, long boardId, string fileName)
-    {
-        // Map the board type to the correct storage area; default to "Forum" for unknown types.
-        string area = _boardAreaMap.GetValueOrDefault(boardType, "Forum");
-        string guid = Guid.NewGuid().ToString().ToUpperInvariant();
-        string ext = Path.GetExtension(fileName);
-        // A storage key, not a local path: always "/"-separated, whatever OS this runs on.
-        return $"upload/{area}/{boardType}/boardAttachedFiles/{boardId}/{guid}{ext}";
-    }
+    => AttachmentStoragePaths.BoardAttachment(boardType, boardId, Guid.NewGuid(), fileName);
 
     /// <inheritdoc />
     public Task<(string Html, bool HasImages)> PrepareHtmlForDisplayAsync(string html, CancellationToken ct = default)

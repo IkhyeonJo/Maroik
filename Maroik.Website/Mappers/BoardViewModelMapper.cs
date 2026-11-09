@@ -27,7 +27,7 @@ public static class BoardViewModelMapper
             TitleVisible = titleVisible,
             IsWriterAdmin = adminNicknames.Contains(board.Writer ?? ""),
             CommentCount = commentCount,
-            HasAttachment = !string.IsNullOrEmpty(attachedFile?.Name)
+            HasAttachment = attachedFile != null
         };
     }
 

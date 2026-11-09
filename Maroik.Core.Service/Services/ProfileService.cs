@@ -32,7 +32,7 @@ public class ProfileService(
     TimeProvider timeProvider) : IProfileService
 {
     /// <summary>Relative storage directory (under the file-storage root) that holds uploaded avatars.</summary>
-    private const string AvatarStorageDirectory = "upload/Management/Profile/Avatar";
+    private const string AvatarStorageDirectory = AttachmentStoragePaths.AvatarDirectory;
 
     /// <inheritdoc />
     public async Task<AccountResponse?> GetProfileAsync(string email, CancellationToken ct = default)

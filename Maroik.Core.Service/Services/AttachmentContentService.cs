@@ -85,8 +85,7 @@ public class AttachmentContentService(
         // Use a GUID-based file name to avoid collisions and prevent path traversal via the original name.
         // Named and typed after the format the image actually is, not the name / type the upload claimed.
         string imageFile = $"{Guid.NewGuid():N}{stored.Extension}";
-        // A storage key, not a local path: always "/"-separated, whatever OS this runs on.
-        string filePath = $"upload/{area}/{subArea}/summernote/images/{imageFile}";
+        string filePath = AttachmentStoragePaths.EditorImage(area, subArea, imageFile);
 
         bool uploaded = await fileClient.UploadAsync(stored.Bytes, stored.ContentType, filePath, ct);
         return !uploaded ? SummernoteUploadResult.Fail(ServiceResult.TemporaryErrorKey) :

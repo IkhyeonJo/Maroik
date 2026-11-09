@@ -268,14 +268,11 @@ public class ForumController(
                     BoardResponse? freeBoard = await boardService.GetBoardByIdAsync(boardId.Value, BoardKinds.FreeForum, ct);
                     BoardAttachedFileDto? boardAttachedFile = await boardService.GetAttachedFileByBoardIdAsync(boardId.Value, ct);
 
-                    if (freeBoard == null || freeBoard.Deleted)
-                        return RedirectToAction(BoardKinds.FreeForum, "Forum");
-
                     // The account from HttpContext.GetLoggedInAccount() is re-fetched from the database by ViewBagPopulatorFilter
                     // on every request (not the session-cached snapshot), so ownership is always checked
                     // against the account's current state. The edit page is owner-only (no admin bypass).
                     AccountResponse loggedInAccount = HttpContext.GetLoggedInAccount();
-                    if (!boardPolicy.IsContentOwner(loggedInAccount, freeBoard.Writer))
+                    if (freeBoard == null || !boardPolicy.CanOpenEditPage(freeBoard, loggedInAccount))
                         return RedirectToAction(BoardKinds.FreeForum, "Forum");
 
                     (freeBoard.Content, bool isImgTagIncluded) = await boardService.PrepareHtmlForDisplayAsync(freeBoard.Content ?? "", ct);

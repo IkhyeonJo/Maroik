@@ -5,6 +5,7 @@ using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Contract.Settings;
 using Maroik.Core.Domain.Accounts;
 using Maroik.Core.Domain.Calendars;
+using Maroik.Core.Domain.Uploads;
 using Maroik.Core.Service.Mappers;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -82,8 +83,7 @@ public class CalendarService(
     public async Task<CalendarEventAttachedFileDto?> GetCalendarEventAttachedFileAsync(long calendarEventId, CancellationToken ct = default)
     {
         CalendarEventAttachedFile? file = await calendarEventAttachedFileRepository.FindByCalendarEventIdAsync(calendarEventId, ct);
-        // The record an edit emptied (see HandleAttachmentAsync) stands for "no attachment".
-        return file == null || string.IsNullOrEmpty(file.Name) ? null : CalendarEventAttachedFileMapper.ToResponse(file);
+        return file is { HasFile: true } ? CalendarEventAttachedFileMapper.ToResponse(file) : null;
     }
 
     /// <inheritdoc />
@@ -726,12 +726,7 @@ public class CalendarService(
     /// or traverse paths, and each event gets its own folder.
     /// </summary>
     private static string BuildEventFilePath(string roleIndex, long eventId, string fileName)
-    {
-        string guid = Guid.NewGuid().ToString().ToUpperInvariant();
-        string ext = Path.GetExtension(fileName);
-        // A storage key, not a local path: always "/"-separated, whatever OS this runs on.
-        return $"upload/Calendar/{roleIndex}/calendarEventAttachedFiles/{eventId}/{guid}{ext}";
-    }
+    => AttachmentStoragePaths.CalendarEventAttachment(roleIndex, eventId, Guid.NewGuid(), fileName);
 
     /// <summary>
     /// Uploads <paramref name="attachedFile"/> to file storage and creates its
@@ -843,7 +838,7 @@ public class CalendarService(
         }
 
         CalendarEventAttachedFile? attachedFile = await calendarEventAttachedFileRepository.FindByCalendarEventIdAsync(calendarEventId, ct);
-        if (attachedFile == null || string.IsNullOrEmpty(attachedFile.Path))
+        if (attachedFile is not { HasFile: true })
             return (ServiceResult.NotFound("CalendarEvent.AttachedFileNotFound", ServiceErrorKeys.AttachedFileNotFound), null);
 
         // OpenFileAsync logs its own failure (with the storage path) where it happens.
