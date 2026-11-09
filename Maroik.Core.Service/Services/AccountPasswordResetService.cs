@@ -15,13 +15,13 @@ namespace Maroik.Core.Service.Services;
 /// <summary>
 /// Implementation of <see cref="IAccountPasswordResetService"/>: the forgotten-password flow. The reset token is generated
 /// by <see cref="GuidToken"/> and protected by Data Protection (<see cref="IDataProtectionService"/>) in the mailed link.
-/// Email bodies are built via <see cref="IMailClient"/> and handed off to <see cref="IEmailPublisher"/>, which enqueues them
+/// Email bodies are built via <see cref="IMailBodyComposer"/> and handed off to <see cref="IEmailPublisher"/>, which enqueues them
 /// for asynchronous SMTP delivery by Maroik.Worker instead of sending inline.
 /// </summary>
 public class AccountPasswordResetService(
     IAccountRepository accountRepository,
     IPasswordService passwordService,
-    IMailClient mailClient,
+    IMailBodyComposer mailBodies,
     IEmailPublisher emailPublisher,
     IOptions<ServerSetting> settings,
     IDataProtectionService dataProtection,
@@ -92,7 +92,7 @@ public class AccountPasswordResetService(
             await accountRepository.UpdateResetPasswordTokenAsync(
                 account.Email.Value, account.ResetPasswordToken, account.Updated, ct);
 
-            string body = mailClient.GetMailResetPasswordBody(dataProtection.Protect(ProtectedValue.MailToken, resetPasswordToken), emailTemplate.Title, emailTemplate.Content0, emailTemplate.Content1, settings.Value.DomainName ?? "");
+            string body = mailBodies.GetMailResetPasswordBody(dataProtection.Protect(ProtectedValue.MailToken, resetPasswordToken), emailTemplate.Title, emailTemplate.Content0, emailTemplate.Content1, settings.Value.DomainName ?? "");
             bool published = await emailPublisher.TryPublishAsync(logger, account.Email.Value, emailTemplate.Subject, body, ct);
             if (published)
                 logger.LogInformation("Password reset requested for {Email}", account.Email.Value);

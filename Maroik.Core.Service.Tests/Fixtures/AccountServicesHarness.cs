@@ -13,7 +13,7 @@ namespace Maroik.Core.Service.Tests.Fixtures;
 /// </summary>
 /// <param name="accountRepository">The account repository they share.</param>
 /// <param name="passwordService">The password service they share.</param>
-/// <param name="mailClient">The mail client of the flows that send a mail.</param>
+/// <param name="mailBodies">The mail client of the flows that send a mail.</param>
 /// <param name="emailPublisher">The e-mail queue of the flows that send a mail.</param>
 /// <param name="settings">The server settings they share.</param>
 /// <param name="dataProtection">The protector of the mailed tokens.</param>
@@ -23,7 +23,7 @@ namespace Maroik.Core.Service.Tests.Fixtures;
 internal sealed class AccountServicesHarness(
     IAccountRepository accountRepository,
     IPasswordService passwordService,
-    IMailClient mailClient,
+    IMailBodyComposer mailBodies,
     IEmailPublisher emailPublisher,
     IOptions<ServerSetting> settings,
     IDataProtectionService dataProtection,
@@ -40,12 +40,12 @@ internal sealed class AccountServicesHarness(
 
     /// <summary>The registration and confirmation flows.</summary>
     private readonly AccountRegistrationService _registration = new(
-        accountRepository, passwordService, mailClient, emailPublisher, settings, dataProtection,
+        accountRepository, passwordService, mailBodies, emailPublisher, settings, dataProtection,
         new FakeLogger<AccountRegistrationService>(logs), unitOfWork, timeProvider);
 
     /// <summary>The forgotten-password flow.</summary>
     private readonly AccountPasswordResetService _passwordReset = new(
-        accountRepository, passwordService, mailClient, emailPublisher, settings, dataProtection,
+        accountRepository, passwordService, mailBodies, emailPublisher, settings, dataProtection,
         new FakeLogger<AccountPasswordResetService>(logs), unitOfWork, timeProvider);
 
     /// <inheritdoc cref="AccountService.GetAccountsByNicknamesAsync"/>

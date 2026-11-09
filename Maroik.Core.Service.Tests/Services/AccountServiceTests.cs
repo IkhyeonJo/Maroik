@@ -31,8 +31,8 @@ public class AccountServiceTests
     private readonly Mock<IAccountRepository> _accountRepo = new();
     /// <summary>Mock <c>IPasswordService</c> injected into the system under test.</summary>
     private readonly Mock<IPasswordService> _passwordService = new();
-    /// <summary>Mock <c>IMailClient</c> injected into the system under test.</summary>
-    private readonly Mock<IMailClient> _mailClient = new();
+    /// <summary>Mock <c>IMailBodyComposer</c> injected into the system under test.</summary>
+    private readonly Mock<IMailBodyComposer> _mailBodies = new();
     /// <summary>Mock <c>IEmailPublisher</c> injected into the system under test.</summary>
     private readonly Mock<IEmailPublisher> _emailPublisher = new();
     /// <summary>Mock <c>IDataProtectionService</c> injected into the system under test.</summary>
@@ -68,7 +68,7 @@ public class AccountServiceTests
     private AccountServicesHarness CreateSut() => new(
         _accountRepo.Object,
         _passwordService.Object,
-        _mailClient.Object,
+        _mailBodies.Object,
         _emailPublisher.Object,
         _settings,
         _dataProtection.Object,
@@ -113,10 +113,10 @@ public class AccountServiceTests
     /// <summary>Arranges mail bodies to render and the e-mail queue publish to succeed.</summary>
     private void SetupMailSuccess()
     {
-        _mailClient.Setup(m => m.GetMailConfirmationBody(
+        _mailBodies.Setup(m => m.GetMailConfirmationBody(
             It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
             .Returns("email-body");
-        _mailClient.Setup(m => m.GetMailResetPasswordBody(
+        _mailBodies.Setup(m => m.GetMailResetPasswordBody(
             It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
             .Returns("email-body");
         _emailPublisher.Setup(p => p.PublishAsync(It.IsAny<SendEmailMessage>(), It.IsAny<CancellationToken>()))
@@ -126,10 +126,10 @@ public class AccountServiceTests
     /// <summary>Arranges mail bodies to render but the e-mail queue publish to throw (broker unreachable).</summary>
     private void SetupMailFailure()
     {
-        _mailClient.Setup(m => m.GetMailConfirmationBody(
+        _mailBodies.Setup(m => m.GetMailConfirmationBody(
             It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
             .Returns("email-body");
-        _mailClient.Setup(m => m.GetMailResetPasswordBody(
+        _mailBodies.Setup(m => m.GetMailResetPasswordBody(
             It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
             .Returns("email-body");
         _emailPublisher.Setup(p => p.PublishAsync(It.IsAny<SendEmailMessage>(), It.IsAny<CancellationToken>()))
@@ -2266,7 +2266,7 @@ public class AccountServiceTests
 
         await CreateSut().ForgotPasswordAsync(account.Email.Value, _emailTemplate, TestContext.Current.CancellationToken);
 
-        _mailClient.Verify(m => m.GetMailResetPasswordBody("enc-token", "title", "c0", "c1", "https://example.com"), Times.Once);
+        _mailBodies.Verify(m => m.GetMailResetPasswordBody("enc-token", "title", "c0", "c1", "https://example.com"), Times.Once);
         string expected = published ? AccountMessage.ResetPasswordMail.GetDescription() : "Fail to mail sent";
         _accountRepo.Verify(r => r.UpdateMessageAsync(account.Email.Value, expected, It.IsAny<DateTime>(), It.IsAny<CancellationToken>()), Times.Once);
     }
@@ -2426,7 +2426,7 @@ public class AccountServiceTests
 
         await CreateSut().ResendConfirmationEmailAsync(account.Email.Value, _emailTemplate, TestContext.Current.CancellationToken);
 
-        _mailClient.Verify(m => m.GetMailConfirmationBody("enc-token", "title", "c0", "c1", "https://example.com"), Times.Once);
+        _mailBodies.Verify(m => m.GetMailConfirmationBody("enc-token", "title", "c0", "c1", "https://example.com"), Times.Once);
     }
 
     /// <summary>A confirmation mail body that cannot be built is logged and reported as a send failure.</summary>

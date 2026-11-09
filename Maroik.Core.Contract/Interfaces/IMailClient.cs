@@ -1,45 +1,16 @@
 using Maroik.Core.Contract.Dtos;
-using Maroik.Core.Contract.Settings;
 
 namespace Maroik.Core.Contract.Interfaces;
 
 /// <summary>
-/// Client interface for composing and sending transactional emails via SMTP.
+/// Client interface for sending a composed email via SMTP (the account is configured in the host's settings).
 /// </summary>
 public interface IMailClient
 {
-    /// <summary>
-    /// Builds the HTML body for a password-reset email containing the reset link.
-    /// </summary>
-    /// <param name="resetPasswordToken">The time-limited reset token embedded in the link.</param>
-    /// <param name="title">Email heading text.</param>
-    /// <param name="content0">First body paragraph.</param>
-    /// <param name="content1">Second body paragraph.</param>
-    /// <param name="domainName">Application domain used to construct the reset URL.</param>
-    public string GetMailResetPasswordBody(string resetPasswordToken, string title, string content0, string content1, string domainName);
-
-    /// <summary>
-    /// Builds the HTML body for a registration confirmation email containing the verification link.
-    /// </summary>
-    /// <param name="registrationToken">The time-limited registration token embedded in the link.</param>
-    /// <param name="title">Email heading text.</param>
-    /// <param name="content0">First body paragraph.</param>
-    /// <param name="content1">Second body paragraph.</param>
-    /// <param name="domainName">Application domain used to construct the confirmation URL.</param>
-    public string GetMailConfirmationBody(string registrationToken, string title, string content0, string content1, string domainName);
-
-    /// <summary>
-    /// Builds the HTML body of a calendar reminder e-mail: the event's title, time, place and calendar under Korean and English
-    /// labels (an account stores no language), and a link to the owner's calendar page. Every value is HTML-encoded.
-    /// </summary>
-    /// <param name="mail">What the mail shows.</param>
-    /// <param name="domainName">The site's public address, the base of the link.</param>
-    public string GetCalendarReminderBody(CalendarReminderMail mail, string domainName);
-
     /// <summary>
     /// Sends an HTML email via SMTP. Returns a successful <see cref="ServiceResult"/>, or a
     /// <see cref="ServiceErrorType.Failure"/> carrying a generic message (the exception itself is logged,
     /// never returned, so SMTP server details cannot reach a caller).
     /// </summary>
-    public Task<ServiceResult> SendMailAsync(string toEmail, string subject, string body, ServerSetting settings, CancellationToken ct = default);
+    public Task<ServiceResult> SendMailAsync(string toEmail, string subject, string body, CancellationToken ct = default);
 }

@@ -24,7 +24,7 @@ public sealed class CalendarReminderDispatchService(
     ICalendarRepository calendarRepository,
     IAccountRepository accountRepository,
     IEmailPublisher emailPublisher,
-    IMailClient mailClient,
+    IMailBodyComposer mailBodies,
     IUnitOfWork unitOfWork,
     IOptions<ServerSetting> settings,
     ILogger<CalendarReminderDispatchService> logger,
@@ -97,7 +97,7 @@ public sealed class CalendarReminderDispatchService(
     }
 
     /// <summary>
-    /// The reminder e-mail: to the owner, the subject the event's title and start, the body (<see cref="IMailClient.GetCalendarReminderBody"/>)
+    /// The reminder e-mail: to the owner, the subject the event's title and start, the body (<see cref="IMailBodyComposer.GetCalendarReminderBody"/>)
     /// its time, place and calendar with a link to the owner's calendar page. A timed event's time is shown in the owner's time zone;
     /// an all-day event's dates as they are.
     /// </summary>
@@ -122,7 +122,7 @@ public sealed class CalendarReminderDispatchService(
             when = $"{fromText} – {toText} ({zone})";
         }
 
-        string body = mailClient.GetCalendarReminderBody(
+        string body = mailBodies.GetCalendarReminderBody(
             new CalendarReminderMail(calendarEvent.Title, when, calendarEvent.Location, calendar.Name,
                 owner.Role.IsAdmin ? "Calendar/AdminIndex" : "Calendar/UserIndex"),
             settings.Value.DomainName ?? "");

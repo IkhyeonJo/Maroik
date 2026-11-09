@@ -28,7 +28,7 @@ public class CalendarReminderDispatchServiceTests
     private readonly Mock<ICalendarRepository> _calendars = new();
     private readonly Mock<IAccountRepository> _accounts = new();
     private readonly Mock<IEmailPublisher> _publisher = new();
-    private readonly Mock<IMailClient> _mailClient = new();
+    private readonly Mock<IMailBodyComposer> _mailBodies = new();
     private readonly Mock<IUnitOfWork> _unitOfWork = new();
     private readonly FakeLogger<CalendarReminderDispatchService> _logger = new();
     private readonly List<SendEmailMessage> _published = [];
@@ -40,7 +40,7 @@ public class CalendarReminderDispatchServiceTests
         _reminders.Setup(r => r.LockDueAsync(It.IsAny<DateTime>(), 1, It.IsAny<CancellationToken>())).ReturnsAsync([]);
         _reminders.Setup(r => r.UpdateEntityAsync(It.IsAny<CalendarEventReminder>(), It.IsAny<CancellationToken>()))
             .Callback<CalendarEventReminder, CancellationToken>((r, _) => _saved.Add(r)).Returns(Task.CompletedTask);
-        _mailClient.Setup(m => m.GetCalendarReminderBody(It.IsAny<CalendarReminderMail>(), It.IsAny<string>()))
+        _mailBodies.Setup(m => m.GetCalendarReminderBody(It.IsAny<CalendarReminderMail>(), It.IsAny<string>()))
             .Returns<CalendarReminderMail, string>((mail, domain) => $"{mail} @ {domain}");
         _publisher.Setup(p => p.PublishAsync(It.IsAny<SendEmailMessage>(), It.IsAny<CancellationToken>()))
             .Callback<SendEmailMessage, CancellationToken>((m, _) => _published.Add(m)).Returns(Task.CompletedTask);
@@ -48,7 +48,7 @@ public class CalendarReminderDispatchServiceTests
 
     /// <summary>The service under test.</summary>
     private CalendarReminderDispatchService Sut() => new(_reminders.Object, _events.Object, _calendars.Object, _accounts.Object,
-        _publisher.Object, _mailClient.Object, _unitOfWork.Object,
+        _publisher.Object, _mailBodies.Object, _unitOfWork.Object,
         Options.Create(new ServerSetting { DomainName = "https://www.maroik.com/", DemoAccountEmail = "demo@maroik.com" }),
         _logger, new FakeTimeProvider(new DateTimeOffset(_now)));
 

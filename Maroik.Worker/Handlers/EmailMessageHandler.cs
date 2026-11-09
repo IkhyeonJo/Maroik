@@ -1,9 +1,7 @@
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Contract.Messages;
-using Maroik.Core.Contract.Settings;
 using Maroik.Worker.Interfaces;
-using Microsoft.Extensions.Options;
 
 namespace Maroik.Worker.Handlers;
 
@@ -11,7 +9,6 @@ namespace Maroik.Worker.Handlers;
 public sealed class EmailMessageHandler(
     IMailClient mailClient,
     IAccountMailStatusService accountMailStatusService,
-    IOptions<ServerSetting> settings,
     ILogger<EmailMessageHandler> logger) : IEmailMessageHandler
 {
     /// <inheritdoc />
@@ -21,7 +18,6 @@ public sealed class EmailMessageHandler(
             message.ToEmail,
             message.Subject,
             message.Body,
-            settings.Value,
             ct);
 
         if (result.Success)
