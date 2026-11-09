@@ -8,4 +8,5 @@ namespace Maroik.Core.Domain.Budgets;
 /// <param name="Input">Its input in A1 form (a computed cell's formula included), or null when it has none.</param>
 /// <param name="Value">Its value.</param>
 /// <param name="Status">For a budget cell, its budget against the actuals; null otherwise.</param>
-public sealed record BudgetCellView(string Address, BudgetCellRole Role, string? Input, FormulaValue Value, BudgetCellStatus? Status);
+/// <param name="Outcome">For a budget cell, how its status reads on this sheet.</param>
+public sealed record BudgetCellView(string Address, BudgetCellRole Role, string? Input, FormulaValue Value, BudgetCellStatus? Status, BudgetCellOutcome Outcome = BudgetCellOutcome.None);

@@ -736,7 +736,7 @@ public class AccountBookController(
             var (result, edit) = await budgetService.EditAsync(account.RequireEmail(), Enum.Parse<BudgetSheetKind>(input.Kind), input.Year, account.RequireTimeZoneIanaId(),
                 [.. input.Edits.Select(e => new BudgetCellEditRequest(e.Address, e.Input))], ct);
             return result.Success
-                ? Json(new { result = true, changed = edit!.Changed.Select(c => c.ToViewModel(input.Kind)) })
+                ? Json(new { result = true, changed = edit!.Changed.Select(c => c.ToViewModel()) })
                 : Json(new { result = false, error = localizer[result.ErrorKey, result.ErrorArgs].ToPlainString() });
         }
         catch (Exception ex)
@@ -759,7 +759,7 @@ public class AccountBookController(
             var (result, edit) = await budgetService.CopyAsync(account.RequireEmail(), Enum.Parse<BudgetSheetKind>(input.Kind), input.Year, account.RequireTimeZoneIanaId(),
                 input.Source, input.Target, ct);
             return result.Success
-                ? Json(new { result = true, changed = edit!.Changed.Select(c => c.ToViewModel(input.Kind)) })
+                ? Json(new { result = true, changed = edit!.Changed.Select(c => c.ToViewModel()) })
                 : Json(new { result = false, error = localizer[result.ErrorKey, result.ErrorArgs].ToPlainString() });
         }
         catch (Exception ex)

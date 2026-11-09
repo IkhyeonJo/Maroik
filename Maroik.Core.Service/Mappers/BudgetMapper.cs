@@ -34,6 +34,7 @@ public static class BudgetMapper
         Actual = cell.Status?.Actual,
         Remaining = cell.Status?.Remaining,
         State = cell.Status?.State.ToString(),
+        Outcome = cell.Outcome.ToString(),
     };
 
     /// <summary>A value.</summary>
@@ -41,7 +42,7 @@ public static class BudgetMapper
     {
         NumberValue n => new BudgetValueResponse { Kind = "Number", Number = n.Value },
         TextValue t => new BudgetValueResponse { Kind = "Text", Text = t.Value },
-        BooleanValue b => new BudgetValueResponse { Kind = "Boolean", Text = b.Value ? "TRUE" : "FALSE" },
+        BooleanValue b => new BudgetValueResponse { Kind = "Boolean", Text = b.Text },
         ErrorValue e => new BudgetValueResponse { Kind = "Error", Text = FormulaLexer.ErrorText(e.Kind) },
         _ => new BudgetValueResponse { Kind = "Empty" },
     };

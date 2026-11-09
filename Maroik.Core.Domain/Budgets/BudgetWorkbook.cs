@@ -188,8 +188,9 @@ public sealed class BudgetWorkbook
         BudgetCellRole role = sheet.Layout.Role(key.RowKey, key.Column)!.Value;
         string? input = sheet.Inputs.GetValueOrDefault(key) ?? sheet.Layout.ComputedFormula(key.RowKey, key.Column);
         FormulaValue value = _engine.ValueOf(new CellAddress(sheet.Name, key.RowKey, key.Column));
+        BudgetCellStatus? status = role == BudgetCellRole.Budget ? Status(sheet, key, value) : null;
         return new BudgetCellView(sheet.Layout.A1(key.RowKey, key.Column), role, input is null ? null : FormulaRewriter.ToA1(input, sheet.Scope), value,
-            role == BudgetCellRole.Budget ? Status(sheet, key, value) : null);
+            status, status?.OutcomeFor(sheet.Data.Kind) ?? BudgetCellOutcome.None);
     }
 
     /// <summary>A budget cell against the actuals.</summary>

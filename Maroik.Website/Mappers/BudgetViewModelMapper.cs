@@ -71,7 +71,7 @@ public static class BudgetViewModelMapper
             Currency = r.Currency ?? "",
             Editable = r.EditableColumns,
         })],
-        Cells = [.. sheet.Cells.Select(c => c.ToViewModel(sheet.Kind))],
+        Cells = [.. sheet.Cells.Select(c => c.ToViewModel())],
         Unbudgeted = [.. sheet.Unbudgeted.Select(u => new BudgetUnbudgetedViewModel
         {
             Label = localize(u.SubClass),
@@ -82,8 +82,8 @@ public static class BudgetViewModelMapper
         })],
     };
 
-    /// <summary>A cell ready to draw; <paramref name="kind"/> decides a budget cell's color.</summary>
-    public static BudgetCellViewModel ToViewModel(this BudgetCellResponse cell, string kind) => new()
+    /// <summary>A cell ready to draw; its outcome decides a budget cell's color.</summary>
+    public static BudgetCellViewModel ToViewModel(this BudgetCellResponse cell) => new()
     {
         Address = cell.Address,
         Role = cell.Role,
@@ -92,12 +92,12 @@ public static class BudgetViewModelMapper
         ValueKind = cell.Value.Kind,
         Actual = cell.Actual is { } actual ? Amount(actual) : "",
         Remaining = cell.Remaining is { } remaining ? Amount(remaining) : "",
-        State = (kind, cell.State) switch
+        State = cell.Outcome switch
         {
-            (_, "Unbudgeted") => "unbudgeted",
-            ("Expenditure", "Under") or ("Income", "Reached" or "Over") => "good",
-            ("Expenditure", "Reached") or ("Income", "Under") => "warn",
-            ("Expenditure", "Over") => "bad",
+            "Unbudgeted" => "unbudgeted",
+            "Good" => "good",
+            "Warning" => "warn",
+            "Bad" => "bad",
             _ => "",
         },
     };
