@@ -64,7 +64,7 @@ public class FixedExpenditureService(IFixedExpenditureRepository fixedExpenditur
 
         string currency = payAsset.Balance.Currency.Value;
         var registerResult = FixedExpenditure.Register(accountEmail, request.MainClass, request.SubClass,
-            request.Content, Math.Abs(request.Amount), currency, request.PaymentMethod,
+            request.Content, FinanceAmountPolicy.ToStoredAmount(request.Amount), currency, request.PaymentMethod,
             request.MyDepositAsset, request.DepositMonth, request.DepositDay, request.MaturityDate, utcNow, request.Note);
 
         if (registerResult.IsError)
@@ -105,7 +105,7 @@ public class FixedExpenditureService(IFixedExpenditureRepository fixedExpenditur
         string currency = payAsset.Balance.Currency.Value;
         // A non-transfer schedule drops any submitted deposit asset (FixedExpenditure / ExpenditureClassPolicy.ResolveDepositAsset).
         var updateResult = fe.Update(request.MainClass, request.SubClass, request.Content,
-            Math.Abs(request.Amount), currency, request.PaymentMethod, request.MyDepositAsset,
+            FinanceAmountPolicy.ToStoredAmount(request.Amount), currency, request.PaymentMethod, request.MyDepositAsset,
             request.DepositMonth, request.DepositDay, request.MaturityDate, request.Note, utcNow);
 
         if (updateResult.IsError) return ServiceResult.FromError(updateResult.FirstError);

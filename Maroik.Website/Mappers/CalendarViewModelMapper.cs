@@ -179,9 +179,9 @@ public static class CalendarViewModelMapper
             if (vm.AllDay)
             {
                 string[] d = vm.StartDate!.Split('-');
-                req.StartDate = new DateTime(int.Parse(d[0], CultureInfo.InvariantCulture), int.Parse(d[1], CultureInfo.InvariantCulture), int.Parse(d[2], CultureInfo.InvariantCulture), 0, 0, 0, DateTimeKind.Utc);
+                req.StartDate = timeZones.ToAllDayInstant(int.Parse(d[0], CultureInfo.InvariantCulture), int.Parse(d[1], CultureInfo.InvariantCulture), int.Parse(d[2], CultureInfo.InvariantCulture));
                 d = vm.EndDate!.Split('-');
-                req.EndDate = new DateTime(int.Parse(d[0], CultureInfo.InvariantCulture), int.Parse(d[1], CultureInfo.InvariantCulture), int.Parse(d[2], CultureInfo.InvariantCulture), 0, 0, 0, DateTimeKind.Utc);
+                req.EndDate = timeZones.ToAllDayInstant(int.Parse(d[0], CultureInfo.InvariantCulture), int.Parse(d[1], CultureInfo.InvariantCulture), int.Parse(d[2], CultureInfo.InvariantCulture));
                 req.StartDateTimeZoneIanaId = null;
                 req.EndDateTimeZoneIanaId = null;
             }

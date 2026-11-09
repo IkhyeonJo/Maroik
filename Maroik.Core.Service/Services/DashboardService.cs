@@ -25,6 +25,7 @@ public class DashboardService(
     IExpenditureRepository expenditureRepository,
     IFixedIncomeRepository fixedIncomeRepository,
     IFixedExpenditureRepository fixedExpenditureRepository,
+    IServerResourceReportClient serverResourceReportClient,
     IOptions<ServerSetting> settings,
     TimeProvider timeProvider) : IDashboardService
 {
@@ -190,10 +191,10 @@ public class DashboardService(
     }
 
     /// <inheritdoc />
-    public ServerResourceDto GetServerResourceSummary(string hostResourceFilePath, string dockerResourceFilePath)
+    public ServerResourceDto GetServerResourceSummary()
     {
-        string hostText = File.Exists(hostResourceFilePath) ? File.ReadAllText(hostResourceFilePath) : "";
-        string dockerText = File.Exists(dockerResourceFilePath) ? File.ReadAllText(dockerResourceFilePath) : "";
+        string hostText = serverResourceReportClient.ReadHostReport();
+        string dockerText = serverResourceReportClient.ReadDockerReport();
 
         string hostCpuInfo = ExtractSection(hostText, "Host CPU Information:", "Host Memory Information:");
         string hostMemoryInfo = ExtractSection(hostText, "Host Memory Information:", "Host Disk Information:");

@@ -10,6 +10,9 @@ public interface IAssetService
     /// <summary>Returns every asset of the given account, soft-deleted ones included (check <c>Deleted</c> to hide them).</summary>
     Task<List<AssetResponse>> GetAssetsAsync(string accountEmail, CancellationToken ct = default);
 
+    /// <summary>Returns the assets an income or expenditure form can offer: the account's assets that are not soft-deleted, by product name.</summary>
+    Task<List<AssetResponse>> GetSelectableAssetsAsync(string accountEmail, CancellationToken ct = default);
+
     /// <summary>Returns assets for the given account whose fields contain <paramref name="search"/>, filtered in the database.</summary>
     Task<List<AssetResponse>> SearchAssetsAsync(string accountEmail, string search, CancellationToken ct = default);
 

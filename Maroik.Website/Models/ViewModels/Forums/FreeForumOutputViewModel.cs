@@ -56,6 +56,12 @@ public class FreeForumOutputViewModel
     /// <summary>Formats a UTC date for the viewer: the date, whether the viewer sees local time, and the viewer's time zone. Set by the controller from the policy service.</summary>
     public required Func<DateTime, bool, string, string> FormatViewerTime { get; init; }
 
+    /// <summary>True when the write form offers the "Noticed" option (an administrator).</summary>
+    public bool CanPostNotice { get; set; }
+
+    /// <summary>True when the detail panel offers the comment form (a signed-in viewer); a visitor sees the sign-in hint instead.</summary>
+    public bool CanWriteComment { get; set; }
+
     /// <summary>Comments on the currently open detail post, rendered in the detail panel.</summary>
     public List<BoardCommentRowViewModel> DetailBoardComments { get; set; } = [];
 

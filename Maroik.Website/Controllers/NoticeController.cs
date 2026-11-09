@@ -105,8 +105,7 @@ public class NoticeController(
         }
 
         AccountResponse loggedInAccount = HttpContext.GetLoggedInAccount();
-        var fixedIncomeAssets = (await assetService.GetAssetsAsync(loggedInAccount.RequireEmail(), ct))
-            .Where(x => !x.Deleted).OrderBy(x => x.ProductName).ToList();
+        var fixedIncomeAssets = (await assetService.GetSelectableAssetsAsync(loggedInAccount.RequireEmail(), ct)).ToList();
         ViewBag.Assets = fixedIncomeAssets;
         ViewBag.DefaultAssetProductName = fixedIncomeAssets.FirstOrDefault()?.ProductName;
         return View(financePolicy.GetFinanceFormRules());
@@ -331,8 +330,7 @@ public class NoticeController(
         }
 
         AccountResponse loggedInAccount = HttpContext.GetLoggedInAccount();
-        var fixedExpenditureAssets = (await assetService.GetAssetsAsync(loggedInAccount.RequireEmail(), ct))
-            .Where(x => !x.Deleted).OrderBy(x => x.ProductName).ToList();
+        var fixedExpenditureAssets = (await assetService.GetSelectableAssetsAsync(loggedInAccount.RequireEmail(), ct)).ToList();
         ViewBag.Assets = fixedExpenditureAssets;
         ViewBag.DefaultAssetProductName = fixedExpenditureAssets.FirstOrDefault()?.ProductName;
         return View(financePolicy.GetFinanceFormRules());

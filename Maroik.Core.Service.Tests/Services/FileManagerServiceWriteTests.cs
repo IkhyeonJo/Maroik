@@ -229,8 +229,8 @@ public class FileManagerServiceWriteTests
         Guid uploadId = _h.Node(upload).StorageId!.Value;
         List<string> order = [];
         _h.UnitOfWork.Setup(u => u.CommitAsync(It.IsAny<CancellationToken>())).Callback(() => order.Add("commit")).Returns(Task.CompletedTask);
-        _h.Files.Setup(f => f.DeleteFileManagerFileAsync(It.IsAny<string>(), H.BaseUrl, It.IsAny<CancellationToken>()))
-            .Callback((string p, string _, CancellationToken _) => order.Add(p)).ReturnsAsync(true);
+        _h.Files.Setup(f => f.DeleteFileManagerFileAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Callback((string p, CancellationToken _) => order.Add(p)).ReturnsAsync(true);
 
         ServiceResult result = await _h.Sut.DeleteAsync(H.Email, [docs, c], TestContext.Current.CancellationToken);
 
@@ -238,7 +238,7 @@ public class FileManagerServiceWriteTests
         Assert.Equal([kept], _h.Nodes.All.Select(n => n.Id));
         Assert.Equal("commit", order[0]);
         Assert.Equal(new[] { aPath, cPath }.Order(StringComparer.Ordinal), order.Skip(1).Order(StringComparer.Ordinal));
-        _h.Files.Verify(f => f.AbortFileManagerUploadAsync(uploadId, H.BaseUrl, It.IsAny<CancellationToken>()), Times.Once);
+        _h.Files.Verify(f => f.AbortFileManagerUploadAsync(uploadId, It.IsAny<CancellationToken>()), Times.Once);
         _h.AssertAccountLocked();
         Assert.Contains(_h.Logger.Collector.GetSnapshot(), r => r is { Level: LogLevel.Information, Message: $"File Manager: {H.Email} deleted 2 item(s) (4 node(s), 3 stored file(s))" });
     }
@@ -249,7 +249,7 @@ public class FileManagerServiceWriteTests
     {
         long a = _h.File("a.txt");
         string path = _h.Node(a).StoragePath!;
-        _h.Files.Setup(f => f.DeleteFileManagerFileAsync(path, H.BaseUrl, It.IsAny<CancellationToken>())).ReturnsAsync(false);
+        _h.Files.Setup(f => f.DeleteFileManagerFileAsync(path, It.IsAny<CancellationToken>())).ReturnsAsync(false);
 
         ServiceResult result = await _h.Sut.DeleteAsync(H.Email, [a], TestContext.Current.CancellationToken);
 
@@ -270,7 +270,7 @@ public class FileManagerServiceWriteTests
         Assert.Equal(ServiceErrorType.NotFound, result.ErrorType);
         Assert.Equal(2, _h.Nodes.All.Count);
         _h.AssertRolledBack();
-        _h.Files.Verify(f => f.DeleteFileManagerFileAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+        _h.Files.Verify(f => f.DeleteFileManagerFileAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     /// <summary>A database failure inside a write is rolled back, logged at Error with the exception and answered as a temporary error.</summary>
@@ -286,6 +286,6 @@ public class FileManagerServiceWriteTests
         Assert.Equal(ServiceResult.TemporaryErrorKey, result.ErrorKey);
         _h.UnitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
         Assert.Contains(_h.Logger.Collector.GetSnapshot(), r => r is { Level: LogLevel.Error, Exception.Message: "db down" });
-        _h.Files.Verify(f => f.DeleteFileManagerFileAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+        _h.Files.Verify(f => f.DeleteFileManagerFileAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 }

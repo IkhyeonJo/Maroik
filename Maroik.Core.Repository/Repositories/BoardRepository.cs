@@ -1,6 +1,5 @@
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
-using Maroik.Core.Domain.Accounts;
 using Maroik.Core.Domain.Boards;
 using Maroik.Core.PostgreSQL.Contexts;
 using Microsoft.EntityFrameworkCore;
@@ -68,7 +67,7 @@ public class BoardRepository(ApplicationDbContext context)
     private const string LikeEscape = "\\";
 
     /// <inheritdoc />
-    public async Task<(List<Board> Items, int TotalCount)> QueryPageAsync(BoardPageQuery query, CancellationToken ct = default)
+    public async Task<(List<Board> Items, int TotalCount)> QueryPageAsync(BoardPageQuery query, BoardSearchVisibility visibility, CancellationToken ct = default)
     {
         IQueryable<OrmBoard> baseQuery = Set.Where(x => x.Type == query.Type && !x.Deleted && !x.Noticed);
         if (query.OwnerNickname != null)
@@ -85,23 +84,20 @@ public class BoardRepository(ApplicationDbContext context)
 
         IQueryable<OrmBoard> filtered;
 
-        // Applies the "private (locked) posts are never searchable" rule to a set of search
-        // matches and orders the result: an Admin sees every match; a regular User sees the
-        // non-locked matches plus their own locked matches (their own ordered after, preserving
-        // the group order via SQL UNION ALL rather than a single ID sort); an anonymous / other
-        // viewer sees only non-locked matches. Shared by the Title AND Writer search branches so
-        // both enforce the locked-visibility split identically — a Writer search must not be a
-        // back door to enumerating another account's locked posts.
+        // Translates the scope Board.SearchVisibilityFor decided into a query over a set of search matches and
+        // orders the result; the viewer's own locked matches come after the others, preserving the group order via
+        // SQL UNION ALL rather than a single ID sort. Shared by the Title AND Writer search branches so both
+        // apply the scope identically — a Writer search must not be a back door to enumerating another account's
+        // locked posts.
         IQueryable<OrmBoard> ApplyLockedVisibility(IQueryable<OrmBoard> matches)
         {
-            if (!query.IsLoggedIn)
-                return matches.Where(x => !x.Locked).OrderByDescending(x => x.Id);
-
-            switch (query.ViewerRole)
+            switch (visibility)
             {
-                case Role.Admin:
+                case BoardSearchVisibility.PublicOnly:
+                    return matches.Where(x => !x.Locked).OrderByDescending(x => x.Id);
+                case BoardSearchVisibility.AllMatches:
                     return matches.OrderByDescending(x => x.Id);
-                case Role.User:
+                case BoardSearchVisibility.PublicAndOwn:
                 {
                     IQueryable<OrmBoard> noLocked = matches.Where(x => !x.Locked);
                     IQueryable<OrmBoard> ownLocked = matches.Where(x => x.Locked && x.Writer == query.ViewerNickname);
@@ -112,9 +108,7 @@ public class BoardRepository(ApplicationDbContext context)
                         .Select(x => x.Board);
                 }
                 default:
-                    // Logged in but neither Admin nor User (Role only ever has these two values for an
-                    // active session — unreachable in practice). No case fires,
-                    // so the list is left as the unfiltered, unsearched base query.
+                    // BoardSearchVisibility.Unsearched: the list is left as the unfiltered, unsearched base query.
                     return baseQuery.OrderByDescending(x => x.Id);
             }
         }

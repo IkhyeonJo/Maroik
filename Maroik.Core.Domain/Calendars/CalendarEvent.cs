@@ -27,6 +27,12 @@ public sealed class CalendarEvent : AggregateRoot<long>
     public static bool IsWithinYears(DateTime date) => date.Year is >= MinYear and <= MaxYear;
 
     /// <summary>
+    /// The instant an all-day event's date is stored as: that date's midnight, marked UTC. An all-day event has no time zone of its
+    /// own, so the day stays the same for every viewer.
+    /// </summary>
+    public static DateTime AllDayInstant(int year, int month, int day) => new(year, month, day, 0, 0, 0, DateTimeKind.Utc);
+
+    /// <summary>
     /// Refuses an event description longer than <see cref="TitledContentPolicy.MaxRawBodyLength"/> as submitted, before it is sanitized, with
     /// the same error as an over-long sanitized one.
     /// </summary>

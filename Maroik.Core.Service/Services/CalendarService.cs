@@ -749,7 +749,7 @@ public class CalendarService(
             return ServiceResult.FromError(fileResult.FirstError);
 
         // Validated first, uploaded second: a record the domain rejects must not leave an orphaned file.
-        bool uploaded = await fileClient.UploadAsync(attachedFile.Bytes, attachedFile.ContentType, filePath, settings.Value.FileStorageBaseUrl ?? "", ct);
+        bool uploaded = await fileClient.UploadAsync(attachedFile.Bytes, attachedFile.ContentType, filePath, ct);
         if (!uploaded)
             return ServiceResult.Failure("CalendarEvent.AttachmentUploadFailed", ServiceResult.TemporaryErrorKey);
 
@@ -777,20 +777,15 @@ public class CalendarService(
             if (fileResult.IsError) return ServiceResult.FromError(fileResult.FirstError);
 
             // Validated first, uploaded second: a rejected record must not leave an orphaned file.
-            bool uploaded = await fileClient.UploadAsync(newFile.Bytes, newFile.ContentType, filePath, settings.Value.FileStorageBaseUrl ?? "", ct);
+            bool uploaded = await fileClient.UploadAsync(newFile.Bytes, newFile.ContentType, filePath, ct);
             if (!uploaded) return ServiceResult.Failure("CalendarEvent.AttachmentUploadFailed", ServiceResult.TemporaryErrorKey);
 
-            await calendarEventAttachedFileRepository.UpdateEntityAsync(
-                CalendarEventAttachedFile.Reconstitute(previous.Id, fileResult.Value.CalendarEventId, fileResult.Value.Size,
-                    fileResult.Value.Name, fileResult.Value.Extension, fileResult.Value.Path), ct);
+            await calendarEventAttachedFileRepository.UpdateEntityAsync(previous.ReplacedBy(fileResult.Value), ct);
         }
         else if (previous != null)
         {
-            // Clear: zero-out the attachment record without uploading anything. Name/Path are intentionally
-            // empty here as an empty-attachment sentinel, not user-submitted data, so Reconstitute (not Create,
-            // which would reject an empty name/path) is correct.
-            await calendarEventAttachedFileRepository.UpdateEntityAsync(
-                CalendarEventAttachedFile.Reconstitute(previous.Id, previous.CalendarEventId, 0, "", "", ""), ct);
+            // Clear: zero-out the attachment record without uploading anything.
+            await calendarEventAttachedFileRepository.UpdateEntityAsync(previous.Cleared(), ct);
         }
         else if (newFile != null)
         {

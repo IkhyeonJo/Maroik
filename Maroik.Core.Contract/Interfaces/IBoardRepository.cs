@@ -20,8 +20,9 @@ public interface IBoardRepository : IGenericRepository<Board>
     /// Returns one page of non-deleted, non-noticed posts matching <paramref name="query"/>,
     /// executed as a single SQL query (filter, search, visibility rules, ordering, and paging all
     /// pushed down — the whole board-type bucket is never materialized into memory).
+    /// <paramref name="visibility"/> (<see cref="Board.SearchVisibilityFor"/>) says which locked posts a search may return.
     /// </summary>
-    Task<(List<Board> Items, int TotalCount)> QueryPageAsync(BoardPageQuery query, CancellationToken ct = default);
+    Task<(List<Board> Items, int TotalCount)> QueryPageAsync(BoardPageQuery query, BoardSearchVisibility visibility, CancellationToken ct = default);
 
     /// <summary>Returns the non-deleted post with the given ID, or null if not found.</summary>
     Task<Board?> FindActiveByIdAsync(long id, CancellationToken ct = default);

@@ -51,6 +51,16 @@ public sealed class CalendarEventAttachedFile : AggregateRoot<long>
         long id, long calendarEventId, long size, string? name, string? extension, string? path)
         => new(id, calendarEventId, size, name ?? "", extension, path ?? "");
 
+    /// <summary>
+    /// This record with no file: size 0 and empty name, extension and path, the empty-attachment values an event's record holds once
+    /// its file was removed. They are not user input, so <see cref="Create"/> (which refuses an empty name or path) does not apply.
+    /// </summary>
+    public CalendarEventAttachedFile Cleared() => new(Id, CalendarEventId, 0, "", "", "");
+
+    /// <summary>This record, under its own id, holding the file of the already validated <paramref name="replacement"/>.</summary>
+    public CalendarEventAttachedFile ReplacedBy(CalendarEventAttachedFile replacement) =>
+        new(Id, replacement.CalendarEventId, replacement.Size, replacement.Name, replacement.Extension, replacement.Path);
+
     /// <summary>Creates a new attached-file entity after validating required fields.</summary>
     public static ErrorOr<CalendarEventAttachedFile> Create(
         long calendarEventId,

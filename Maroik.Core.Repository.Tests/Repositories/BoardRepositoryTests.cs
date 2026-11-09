@@ -260,13 +260,12 @@ public sealed class BoardRepositoryTests(DatabaseFixture database) : RepositoryT
 
     /// <summary>Anonymous free-forum "Writer" search for <paramref name="writer"/> at the given page and page size.</summary>
     private Task<(List<Board> Items, int TotalCount)> PageOf(string writer, int page, int pageSize) =>
-        Sut.QueryPageAsync(
+        QueryPage(
             new BoardPageQuery(
                 Type: BoardTypes.FreeForum, OwnerNickname: null,
                 SearchType: "Writer", SearchText: writer,
                 IsLoggedIn: false, ViewerRole: null, ViewerNickname: null,
-                Page: page, PageSize: pageSize),
-            TestContext.Current.CancellationToken);
+                Page: page, PageSize: pageSize));
 
     /// <summary>
     /// Regression: <c>(Page - 1) * PageSize</c> used to be int arithmetic, so a large <c>?page=</c>
@@ -317,6 +316,10 @@ public sealed class BoardRepositoryTests(DatabaseFixture database) : RepositoryT
         Assert.Equal(2, totalCount);
     }
 
+    /// <summary>Runs <paramref name="query"/> with the visibility the domain decides for its viewer, as <c>BoardService</c> does.</summary>
+    private Task<(List<Board> Items, int TotalCount)> QueryPage(BoardPageQuery query) =>
+        Sut.QueryPageAsync(query, Board.SearchVisibilityFor(query.IsLoggedIn, query.ViewerRole), TestContext.Current.CancellationToken);
+
     // -- QueryPageAsync (locked-post visibility) --------------------------------
 
     /// <summary>Sets the locked flag of <paramref name="board"/> and returns it, for inline use in seeding.</summary>
@@ -329,13 +332,12 @@ public sealed class BoardRepositoryTests(DatabaseFixture database) : RepositoryT
     /// <summary>First page (50 rows) of a free-forum "Writer" search for <paramref name="writer"/>, as seen by the given viewer.</summary>
     private Task<(List<Board> Items, int TotalCount)> WriterSearch(
         string writer, bool isLoggedIn, string? viewerRole, string? viewerNickname) =>
-        Sut.QueryPageAsync(
+        QueryPage(
             new BoardPageQuery(
                 Type: BoardTypes.FreeForum, OwnerNickname: null,
                 SearchType: "Writer", SearchText: writer,
                 IsLoggedIn: isLoggedIn, ViewerRole: viewerRole, ViewerNickname: viewerNickname,
-                Page: 1, PageSize: 50),
-            TestContext.Current.CancellationToken);
+                Page: 1, PageSize: 50));
 
     /// <summary>
     /// Regression: a "Writer" search must apply the same locked-post visibility split the "Title"
@@ -389,10 +391,9 @@ public sealed class BoardRepositoryTests(DatabaseFixture database) : RepositoryT
             MakeBoard($"1000-{Token}", writerLookalike));
 
         var (items, _) = await WriterSearch(writerWithUnderscore, isLoggedIn: false, viewerRole: null, viewerNickname: null);
-        var (boards, _) = await Sut.QueryPageAsync(
+        var (boards, _) = await QueryPage(
             new BoardPageQuery(BoardTypes.FreeForum, OwnerNickname: null, SearchType: "Title", SearchText: $"0%-{Token}",
-                IsLoggedIn: false, ViewerRole: null, ViewerNickname: null, Page: 1, PageSize: 50),
-            TestContext.Current.CancellationToken);
+                IsLoggedIn: false, ViewerRole: null, ViewerNickname: null, Page: 1, PageSize: 50));
 
         Assert.Equal([writerWithUnderscore], items.Select(b => b.Writer));
         Assert.Equal([$"100%-{Token}"], boards.Select(b => b.Title));
@@ -405,10 +406,9 @@ public sealed class BoardRepositoryTests(DatabaseFixture database) : RepositoryT
         string owner = Unique("note_owner");
         await SeedAsync(MakeBoard($"50%_off-{Token}", owner), MakeBoard($"50xxoff-{Token}", owner));
 
-        var (items, _) = await Sut.QueryPageAsync(
+        var (items, _) = await QueryPage(
             new BoardPageQuery(BoardTypes.FreeForum, OwnerNickname: owner, SearchType: "Title", SearchText: $"50%_off-{Token}",
-                IsLoggedIn: true, ViewerRole: Role.User, ViewerNickname: owner, Page: 1, PageSize: 50),
-            TestContext.Current.CancellationToken);
+                IsLoggedIn: true, ViewerRole: Role.User, ViewerNickname: owner, Page: 1, PageSize: 50));
 
         Assert.Equal([$"50%_off-{Token}"], items.Select(b => b.Title));
     }
@@ -422,10 +422,9 @@ public sealed class BoardRepositoryTests(DatabaseFixture database) : RepositoryT
         string owner = Unique("note_owner");
         await SeedAsync(MakeBoard($"Mine-{Token}", owner), MakeBoard($"Theirs-{Token}", Unique("someone_else")));
 
-        var (items, _) = await Sut.QueryPageAsync(
+        var (items, _) = await QueryPage(
             new BoardPageQuery(BoardTypes.FreeForum, OwnerNickname: owner, SearchType: "Writer", SearchText: owner,
-                IsLoggedIn: true, ViewerRole: Role.User, ViewerNickname: owner, Page: 1, PageSize: 50),
-            TestContext.Current.CancellationToken);
+                IsLoggedIn: true, ViewerRole: Role.User, ViewerNickname: owner, Page: 1, PageSize: 50));
 
         Assert.Equal([$"Mine-{Token}"], items.Select(b => b.Title));
     }
@@ -442,10 +441,9 @@ public sealed class BoardRepositoryTests(DatabaseFixture database) : RepositoryT
         locked.Locked = true;
         await SeedAsync(open, locked);
 
-        var (items, _) = await Sut.QueryPageAsync(
+        var (items, _) = await QueryPage(
             new BoardPageQuery(BoardTypes.FreeForum, OwnerNickname: null, SearchType: "Title", SearchText: $"Open-{Token}",
-                IsLoggedIn: true, ViewerRole: "Ghost", ViewerNickname: Unique("ghost"), Page: 1, PageSize: 500),
-            TestContext.Current.CancellationToken);
+                IsLoggedIn: true, ViewerRole: "Ghost", ViewerNickname: Unique("ghost"), Page: 1, PageSize: 500));
 
         Assert.Contains(items, b => b.Title == $"Open-{Token}");
         Assert.Contains(items, b => b.Title == $"Locked-{Token}"); // neither searched nor lock-filtered

@@ -51,6 +51,16 @@ public sealed class BoardAttachedFile : AggregateRoot<long>
         long id, long boardId, long size, string? name, string? extension, string? path)
         => new(id, boardId, size, name ?? "", extension, path ?? "");
 
+    /// <summary>
+    /// This record with no file: size 0 and empty name, extension and path, the empty-attachment values a post's record holds once
+    /// its file was removed. They are not user input, so <see cref="Create"/> (which refuses an empty name or path) does not apply.
+    /// </summary>
+    public BoardAttachedFile Cleared() => new(Id, BoardId, 0, "", "", "");
+
+    /// <summary>This record, under its own id, holding the file of the already validated <paramref name="replacement"/>.</summary>
+    public BoardAttachedFile ReplacedBy(BoardAttachedFile replacement) =>
+        new(Id, replacement.BoardId, replacement.Size, replacement.Name, replacement.Extension, replacement.Path);
+
     /// <summary>Creates a new attached-file entity after validating required fields.</summary>
     public static ErrorOr<BoardAttachedFile> Create(
         long boardId,

@@ -145,7 +145,7 @@ public class DashboardControllerTests
         var response = await _client.SendAsync(request, TestContext.Current.CancellationToken);
 
         // Reads real host/docker resource files that don't exist in this sandbox
-        // (DashboardService.GetServerResourceSummary gracefully treats missing files as empty),
+        // (ServerResourceReportClient gracefully treats missing files as empty),
         // so this proves the whole page renders even with no resource data available.
         Assert.Equal(System.Net.HttpStatusCode.OK, response.StatusCode);
     }

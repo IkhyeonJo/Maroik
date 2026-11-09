@@ -1,14 +1,12 @@
 using System.Data;
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
-using Maroik.Core.Contract.Settings;
 using Maroik.Core.Domain.Accounts;
 using Maroik.Core.Domain.Boards;
 using Maroik.Core.Domain.Primitives;
 using Maroik.Core.Service.Services;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Testing;
-using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Time.Testing;
 using Moq;
 
@@ -36,10 +34,6 @@ public class BoardServiceTests
     private readonly Mock<IAttachmentContentService> _attachmentContent = new();
     /// <summary>Captures the log entries the system under test writes.</summary>
     private readonly FakeLogger<BoardService> _logger = new();
-    /// <summary>Settings with a fake file-storage URL.</summary>
-    private readonly IOptions<ServerSetting> _settings =
-        Options.Create(new ServerSetting { FileStorageBaseUrl = "https://files.example.com" });
-
     /// <summary>Initializes the test fixture, setting up all required test doubles and the system under test.</summary>
     public BoardServiceTests()
     {
@@ -64,7 +58,6 @@ public class BoardServiceTests
         _fileClient.Object,
         _unitOfWork.Object,
         _attachmentContent.Object,
-        _settings,
         _logger,
         _time);
 
@@ -118,6 +111,21 @@ public class BoardServiceTests
         BoardTypes.FreeForum, OwnerNickname: null, SearchType: null, SearchText: null,
         IsLoggedIn: false, ViewerRole: null, ViewerNickname: null, Page: 1, PageSize: 10);
 
+    /// <summary>The repository is told the search scope the domain decides for the viewer; it does not judge the viewer itself.</summary>
+    [Theory]
+    [InlineData(false, null, BoardSearchVisibility.PublicOnly)]
+    [InlineData(true, Role.User, BoardSearchVisibility.PublicAndOwn)]
+    [InlineData(true, Role.Admin, BoardSearchVisibility.AllMatches)]
+    public async Task GetBoardPageAsync_AsksForTheVisibilityTheDomainDecides(bool isLoggedIn, string? role, BoardSearchVisibility expected)
+    {
+        _boardRepo.Setup(r => r.QueryPageAsync(It.IsAny<BoardPageQuery>(), It.IsAny<BoardSearchVisibility>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((new List<Board>(), 0));
+
+        await CreateSut().GetBoardPageAsync(MakeQuery() with { IsLoggedIn = isLoggedIn, ViewerRole = role }, TestContext.Current.CancellationToken);
+
+        _boardRepo.Verify(r => r.QueryPageAsync(It.IsAny<BoardPageQuery>(), expected, It.IsAny<CancellationToken>()), Times.Once);
+    }
+
     /// <summary>
     /// The count/page read this delegates to is only snapshot-consistent inside a REPEATABLE READ
     /// transaction — asserts the Service (not the repository) opens exactly that isolation level,
@@ -126,7 +134,7 @@ public class BoardServiceTests
     [Fact]
     public async Task GetBoardPageAsync_WrapsRepositoryCallInRepeatableReadTransaction()
     {
-        _boardRepo.Setup(r => r.QueryPageAsync(It.IsAny<BoardPageQuery>(), It.IsAny<CancellationToken>()))
+        _boardRepo.Setup(r => r.QueryPageAsync(It.IsAny<BoardPageQuery>(), It.IsAny<BoardSearchVisibility>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(([MakeBoard()], 1));
         var sut = CreateSut();
 
@@ -143,7 +151,7 @@ public class BoardServiceTests
     [Fact]
     public async Task GetBoardPageAsync_RollsBackAndRethrows_WhenRepositoryThrows()
     {
-        _boardRepo.Setup(r => r.QueryPageAsync(It.IsAny<BoardPageQuery>(), It.IsAny<CancellationToken>()))
+        _boardRepo.Setup(r => r.QueryPageAsync(It.IsAny<BoardPageQuery>(), It.IsAny<BoardSearchVisibility>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new InvalidOperationException("boom"));
         var sut = CreateSut();
 
@@ -281,7 +289,7 @@ public class BoardServiceTests
     public async Task WriteBoardAsync_ReturnsSuccess_WithAttachment()
     {
         _boardRepo.Setup(r => r.WriteBoardAsync(It.IsAny<Board>(), It.IsAny<CancellationToken>())).ReturnsAsync(1L);
-        _fileClient.Setup(f => f.UploadAsync(It.IsAny<byte[]>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+        _fileClient.Setup(f => f.UploadAsync(It.IsAny<byte[]>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
         _attachedFileRepo.Setup(r => r.CreateAsync(It.IsAny<BoardAttachedFile>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
         var sut = CreateSut();
@@ -300,7 +308,7 @@ public class BoardServiceTests
     public async Task WriteBoardAsync_RollsBackAndFails_WhenUploadFails()
     {
         _boardRepo.Setup(r => r.WriteBoardAsync(It.IsAny<Board>(), It.IsAny<CancellationToken>())).ReturnsAsync(1L);
-        _fileClient.Setup(f => f.UploadAsync(It.IsAny<byte[]>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+        _fileClient.Setup(f => f.UploadAsync(It.IsAny<byte[]>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(false);
         var sut = CreateSut();
 
@@ -330,7 +338,7 @@ public class BoardServiceTests
 
         Assert.False(result.Success);
         Assert.Equal("BoardAttachedFile.NameTooLong", result.ErrorCode);
-        _fileClient.Verify(f => f.UploadAsync(It.IsAny<byte[]>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+        _fileClient.Verify(f => f.UploadAsync(It.IsAny<byte[]>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
         _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -345,7 +353,7 @@ public class BoardServiceTests
     public async Task WriteBoardAsync_RollsBackAndFails_WhenAttachmentNameIsEmpty()
     {
         _boardRepo.Setup(r => r.WriteBoardAsync(It.IsAny<Board>(), It.IsAny<CancellationToken>())).ReturnsAsync(1L);
-        _fileClient.Setup(f => f.UploadAsync(It.IsAny<byte[]>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+        _fileClient.Setup(f => f.UploadAsync(It.IsAny<byte[]>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
         var sut = CreateSut();
 
@@ -477,7 +485,7 @@ public class BoardServiceTests
         _boardRepo.Setup(r => r.FindActiveByIdForUpdateAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ReturnsAsync(MakeBoard(writer: "Alice"));
         _boardRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<Board>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
         _attachedFileRepo.Setup(r => r.FindByBoardIdAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ReturnsAsync((BoardAttachedFile?)null);
-        _fileClient.Setup(f => f.UploadAsync(It.IsAny<byte[]>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+        _fileClient.Setup(f => f.UploadAsync(It.IsAny<byte[]>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(false);
         var sut = CreateSut();
 
@@ -992,7 +1000,7 @@ public class BoardServiceTests
         _boardRepo.Setup(r => r.FindActiveByIdForUpdateAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ReturnsAsync(MakeBoard(writer: "Alice"));
         _boardRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<Board>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
         _attachedFileRepo.Setup(r => r.FindByBoardIdAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ReturnsAsync(previous);
-        _fileClient.Setup(f => f.UploadAsync(It.IsAny<byte[]>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+        _fileClient.Setup(f => f.UploadAsync(It.IsAny<byte[]>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
     }
 
@@ -1009,7 +1017,7 @@ public class BoardServiceTests
         ServiceResult result = await CreateSut().EditBoardAsync(EditRequest(), "Alice", false, Zip(), TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
-        _fileClient.Verify(f => f.UploadAsync(It.IsAny<byte[]>(), "application/zip", It.Is<string>(p => p.StartsWith("upload/Forum/FreeForum/boardAttachedFiles/1/") && p.EndsWith(".zip")), "https://files.example.com", It.IsAny<CancellationToken>()), Times.Once);
+        _fileClient.Verify(f => f.UploadAsync(It.IsAny<byte[]>(), "application/zip", It.Is<string>(p => p.StartsWith("upload/Forum/FreeForum/boardAttachedFiles/1/") && p.EndsWith(".zip")), It.IsAny<CancellationToken>()), Times.Once);
         _attachedFileRepo.Verify(r => r.UpdateEntityAsync(
             It.Is<BoardAttachedFile>(f => f.Id == 77 && f.BoardId == 1 && f.Name == "new" && f.Extension == ".zip" && f.Size == 2
                 && f.Path.StartsWith("upload/Forum/FreeForum/boardAttachedFiles/1/") && f.Path.EndsWith(".zip")),
@@ -1029,7 +1037,7 @@ public class BoardServiceTests
         _attachedFileRepo.Verify(r => r.UpdateEntityAsync(
             It.Is<BoardAttachedFile>(f => f.Id == 77 && f.BoardId == 1 && f.Size == 0 && f.Name == "" && f.Path == ""),
             It.IsAny<CancellationToken>()), Times.Once);
-        _fileClient.Verify(f => f.UploadAsync(It.IsAny<byte[]>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+        _fileClient.Verify(f => f.UploadAsync(It.IsAny<byte[]>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     /// <summary>Add: a post that had no attachment gets a new record for the uploaded file.</summary>
@@ -1063,7 +1071,7 @@ public class BoardServiceTests
     public async Task EditBoardAsync_RollsBackWithoutTouchingTheRecord_WhenReplacingAndTheUploadFails()
     {
         SetupEditableBoardWithAttachment(BoardAttachedFile.Reconstitute(77, 1, 10, "old", ".txt", "/upload/old.txt"));
-        _fileClient.Setup(f => f.UploadAsync(It.IsAny<byte[]>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+        _fileClient.Setup(f => f.UploadAsync(It.IsAny<byte[]>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(false);
 
         ServiceResult result = await CreateSut().EditBoardAsync(EditRequest(), "Alice", false, Zip(), TestContext.Current.CancellationToken);
@@ -1088,7 +1096,7 @@ public class BoardServiceTests
 
         Assert.False(result.Success);
         Assert.Equal("BoardAttachedFile.NameTooLong", result.ErrorCode);
-        _fileClient.Verify(f => f.UploadAsync(It.IsAny<byte[]>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+        _fileClient.Verify(f => f.UploadAsync(It.IsAny<byte[]>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
         _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -1419,12 +1427,12 @@ public class BoardServiceTests
     public async Task WriteBoardAsync_UploadsTheAttachmentUnderItsBoardsArea_ToTheConfiguredStorage(string type, string expectedPrefix)
     {
         _boardRepo.Setup(r => r.WriteBoardAsync(It.IsAny<Board>(), It.IsAny<CancellationToken>())).ReturnsAsync(1L);
-        _fileClient.Setup(f => f.UploadAsync(It.IsAny<byte[]>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(true);
+        _fileClient.Setup(f => f.UploadAsync(It.IsAny<byte[]>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(true);
 
         await CreateSut().WriteBoardAsync(new BoardRequest { Type = type, Title = "T", Writer = "Alice" }, false, Zip(), TestContext.Current.CancellationToken);
 
         _fileClient.Verify(f => f.UploadAsync(It.IsAny<byte[]>(), "application/zip",
-            It.Is<string>(p => p.StartsWith(expectedPrefix) && p.EndsWith(".zip")), "https://files.example.com", It.IsAny<CancellationToken>()), Times.Once);
+            It.Is<string>(p => p.StartsWith(expectedPrefix) && p.EndsWith(".zip")), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     /// <summary>A refused attachment upload is the "failed to upload" Failure.</summary>
@@ -1432,7 +1440,7 @@ public class BoardServiceTests
     public async Task WriteBoardAsync_ReturnsAttachmentUploadFailed_WhenTheUploadIsRefused()
     {
         _boardRepo.Setup(r => r.WriteBoardAsync(It.IsAny<Board>(), It.IsAny<CancellationToken>())).ReturnsAsync(1L);
-        _fileClient.Setup(f => f.UploadAsync(It.IsAny<byte[]>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(false);
+        _fileClient.Setup(f => f.UploadAsync(It.IsAny<byte[]>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(false);
 
         ServiceResult result = await CreateSut().WriteBoardAsync(new BoardRequest { Type = BoardTypes.FreeForum, Title = "T", Writer = "Alice" }, false, Zip(), TestContext.Current.CancellationToken);
 
@@ -1510,13 +1518,13 @@ public class BoardServiceTests
     public async Task EditBoardAsync_ReturnsAttachmentUploadFailed_WhenTheReplacementUploadIsRefused()
     {
         SetupEditableBoardWithAttachment(BoardAttachedFile.Reconstitute(5, 1, 4, "old", ".zip", "upload/old.zip"));
-        _fileClient.Setup(f => f.UploadAsync(It.IsAny<byte[]>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(false);
+        _fileClient.Setup(f => f.UploadAsync(It.IsAny<byte[]>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(false);
 
         ServiceResult result = await CreateSut().EditBoardAsync(EditRequest(), "Alice", false, Zip(), TestContext.Current.CancellationToken);
 
         Assert.Equal("Board.AttachmentUploadFailed", result.ErrorCode);
         Assert.Equal("Failed to upload the attached file.", result.ErrorKey);
-        _fileClient.Verify(f => f.UploadAsync(It.IsAny<byte[]>(), It.IsAny<string>(), It.IsAny<string>(), "https://files.example.com", It.IsAny<CancellationToken>()), Times.Once);
+        _fileClient.Verify(f => f.UploadAsync(It.IsAny<byte[]>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     /// <summary>Adding a first attachment uploads to the configured storage; a refused upload is the "failed to upload" Failure.</summary>
@@ -1524,14 +1532,14 @@ public class BoardServiceTests
     public async Task EditBoardAsync_ReturnsAttachmentUploadFailed_WhenTheFirstAttachmentUploadIsRefused()
     {
         SetupEditableBoardWithAttachment(null);
-        _fileClient.Setup(f => f.UploadAsync(It.IsAny<byte[]>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(false);
+        _fileClient.Setup(f => f.UploadAsync(It.IsAny<byte[]>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(false);
 
         ServiceResult result = await CreateSut().EditBoardAsync(EditRequest(), "Alice", false, Zip(), TestContext.Current.CancellationToken);
 
         Assert.Equal(ServiceErrorType.Failure, result.ErrorType);
         Assert.Equal("Board.AttachmentUploadFailed", result.ErrorCode);
         Assert.Equal("Failed to upload the attached file.", result.ErrorKey);
-        _fileClient.Verify(f => f.UploadAsync(It.IsAny<byte[]>(), It.IsAny<string>(), It.IsAny<string>(), "https://files.example.com", It.IsAny<CancellationToken>()), Times.Once);
+        _fileClient.Verify(f => f.UploadAsync(It.IsAny<byte[]>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     /// <summary>A successful delete runs in a committed transaction.</summary>

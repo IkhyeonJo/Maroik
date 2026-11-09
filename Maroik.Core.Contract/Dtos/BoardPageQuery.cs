@@ -13,15 +13,11 @@ namespace Maroik.Core.Contract.Dtos;
 /// </param>
 /// <param name="SearchType">"Title", "Writer", or null/empty for no search.</param>
 /// <param name="SearchText">Search text; the search is skipped if this is null or empty.</param>
-/// <param name="IsLoggedIn">Whether the viewer has an active session. Ignored when <see cref="OwnerNickname"/> is set.</param>
-/// <param name="ViewerRole">
-/// The viewer's role (<see cref="Domain.Accounts.Role"/>); ignored when not logged in or when
-/// <see cref="OwnerNickname"/> is set.
-/// </param>
+/// <param name="IsLoggedIn">Whether the viewer has an active session; the service turns it into a search scope with <see cref="Domain.Boards.Board.SearchVisibilityFor"/>.</param>
+/// <param name="ViewerRole">The viewer's role (<see cref="Domain.Accounts.Role"/>), the rule's other input; ignored when not logged in.</param>
 /// <param name="ViewerNickname">
-/// The viewer's nickname — used for the Title-search "own locked posts" exception (Admin sees all
-/// matches including locked; a regular User sees non-locked matches plus their own locked matches;
-/// an anonymous/other viewer sees only non-locked matches). Ignored when <see cref="OwnerNickname"/> is set.
+/// The viewer's nickname — whose locked posts count as "own" in a <see cref="Domain.Boards.BoardSearchVisibility.PublicAndOwn"/>
+/// search. Ignored when <see cref="OwnerNickname"/> is set.
 /// </param>
 /// <param name="Page">1-based page number.</param>
 /// <param name="PageSize">Rows per page.</param>

@@ -1,4 +1,5 @@
 using ErrorOr;
+using Maroik.Core.Domain.Accounts;
 using Maroik.Core.Domain.Errors;
 using Maroik.Core.Domain.Primitives;
 
@@ -294,6 +295,24 @@ public sealed class Board : AggregateRoot<long>
         return string.Equals(type, BoardTypes.PrivateNote, StringComparison.Ordinal)
             ? isOwner
             : !locked || isOwner || viewerIsAdmin;
+    }
+
+    /// <summary>
+    /// Which locked posts a board search may return, the rule "private (locked) posts are never searchable" applied to a viewer: an
+    /// admin finds every match, a user also finds their own locked posts, and a visitor finds only the non-locked ones. A signed-in role
+    /// other than those two cannot come from a real session; such a viewer is left with the plain list (<see cref="BoardSearchVisibility.Unsearched"/>).
+    /// </summary>
+    public static BoardSearchVisibility SearchVisibilityFor(bool isLoggedIn, string? viewerRole)
+    {
+        if (!isLoggedIn)
+            return BoardSearchVisibility.PublicOnly;
+
+        return viewerRole switch
+        {
+            Role.Admin => BoardSearchVisibility.AllMatches,
+            Role.User => BoardSearchVisibility.PublicAndOwn,
+            _ => BoardSearchVisibility.Unsearched
+        };
     }
 
     /// <summary>Returns true when <paramref name="nickname"/> may edit this post (owner only, no admin bypass).</summary>

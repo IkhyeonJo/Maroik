@@ -2,14 +2,12 @@ using System.Diagnostics;
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Enums;
 using Maroik.Core.Contract.Interfaces;
-using Maroik.Core.Contract.Settings;
 using Maroik.Core.Domain.Accounts;
 using Maroik.Core.Domain.Finances;
 using Maroik.Core.Domain.Uploads;
 using Maroik.Core.Domain.ValueObjects;
 using Maroik.Core.Service.Mappers;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 
 namespace Maroik.Core.Service.Services;
 
@@ -26,7 +24,6 @@ public class ProfileService(
     IPasswordService passwordService,
     IFileClient fileClient,
     IImageValidatorService imageValidator,
-    IOptions<ServerSetting> settings,
     IUnitOfWork unitOfWork,
     ILogger<ProfileService> logger,
     TimeProvider timeProvider) : IProfileService
@@ -191,7 +188,7 @@ public class ProfileService(
             // this replica's local wwwroot, so a multi-replica deployment stays consistent.
             FileUploadResult uploaded = await fileClient.UploadWithResultAsync(
                 stored.Bytes, stored.ContentType,
-                $"{AvatarStorageDirectory}/{avatarFile}", settings.Value.FileStorageBaseUrl ?? "", ct);
+                $"{AvatarStorageDirectory}/{avatarFile}", ct);
 
             // Tell the caller WHY the file was refused, so the user is not told "invalid input" for a
             // virus detection or for a scanner outage.
@@ -229,7 +226,7 @@ public class ProfileService(
         try
         {
             byte[] bytes = await fileClient.DownloadAsync(
-                $"{AvatarStorageDirectory}/{fileName}", settings.Value.FileStorageBaseUrl ?? "", ct);
+                $"{AvatarStorageDirectory}/{fileName}", ct);
             return bytes.Length > 0 ? bytes : null;
         }
         catch (Exception e)

@@ -1,12 +1,10 @@
 using System.Data;
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
-using Maroik.Core.Contract.Settings;
 using Maroik.Core.Domain.Boards;
 using Maroik.Core.Service.Services;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Testing;
-using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Time.Testing;
 using Moq;
 
@@ -50,8 +48,7 @@ public class BoardServiceAuditLoggingTests
 
     /// <summary>The service under test over the mocked dependencies and the capturing logger.</summary>
     private BoardService CreateSut() => new(_boardRepo.Object, _attachedFileRepo.Object, _commentRepo.Object,
-        Mock.Of<IFileClient>(), _unitOfWork.Object, _attachmentContent.Object,
-        Options.Create(new ServerSetting { FileStorageBaseUrl = "https://files.example.com" }), _logger, _time);
+        Mock.Of<IFileClient>(), _unitOfWork.Object, _attachmentContent.Object, _logger, _time);
 
     /// <summary>A free-forum post whose title and content are secrets that must never be logged.</summary>
     private static Board MakeBoard(string writer = "Alice", bool locked = false) =>

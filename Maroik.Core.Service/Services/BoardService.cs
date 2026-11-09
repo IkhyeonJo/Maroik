@@ -1,12 +1,10 @@
 using System.Data;
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
-using Maroik.Core.Contract.Settings;
 using Maroik.Core.Domain.Accounts;
 using Maroik.Core.Domain.Boards;
 using Maroik.Core.Service.Mappers;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 
 namespace Maroik.Core.Service.Services;
 
@@ -26,7 +24,6 @@ public class BoardService(
     IFileClient fileClient,
     IUnitOfWork unitOfWork,
     IAttachmentContentService attachmentContent,
-    IOptions<ServerSetting> settings,
     ILogger<BoardService> logger,
     TimeProvider timeProvider) : IBoardService
 {
@@ -49,7 +46,7 @@ public class BoardService(
         await unitOfWork.BeginAsync(IsolationLevel.RepeatableRead, ct);
         try
         {
-            (var items, int totalCount) = await boardRepository.QueryPageAsync(query, ct);
+            (var items, int totalCount) = await boardRepository.QueryPageAsync(query, Board.SearchVisibilityFor(query.IsLoggedIn, query.ViewerRole), ct);
             await unitOfWork.CommitAsync(ct);
             return (items.Select(BoardMapper.ToResponse), totalCount);
         }
@@ -149,7 +146,7 @@ public class BoardService(
                     return ServiceResult.FromError(fileResult.FirstError);
                 }
 
-                bool uploaded = await fileClient.UploadAsync(attachedFile.Bytes, attachedFile.ContentType, filePath, settings.Value.FileStorageBaseUrl ?? "", ct);
+                bool uploaded = await fileClient.UploadAsync(attachedFile.Bytes, attachedFile.ContentType, filePath, ct);
                 if (!uploaded)
                 {
                     await unitOfWork.RollbackAsync(ct);
@@ -441,20 +438,15 @@ public class BoardService(
             if (fileResult.IsError) return ServiceResult.FromError(fileResult.FirstError);
 
             // Validated first, uploaded second: a rejected record must not leave an orphaned file.
-            bool uploaded = await fileClient.UploadAsync(newFile.Bytes, newFile.ContentType, filePath, settings.Value.FileStorageBaseUrl ?? "", ct);
+            bool uploaded = await fileClient.UploadAsync(newFile.Bytes, newFile.ContentType, filePath, ct);
             if (!uploaded) return ServiceResult.Failure("Board.AttachmentUploadFailed", ServiceErrorKeys.AttachmentUploadFailed);
 
-            await boardAttachedFileRepository.UpdateEntityAsync(
-                BoardAttachedFile.Reconstitute(previous.Id, fileResult.Value.BoardId, fileResult.Value.Size,
-                    fileResult.Value.Name, fileResult.Value.Extension, fileResult.Value.Path), ct);
+            await boardAttachedFileRepository.UpdateEntityAsync(previous.ReplacedBy(fileResult.Value), ct);
         }
         else if (previous != null && newFile == null)
         {
-            // Clear: zero-out the attachment record without uploading anything. Name/Path are
-            // intentionally empty here as an empty-attachment sentinel, not user-submitted data,
-            // so Reconstitute (not Create, which would reject an empty name/path) is correct.
-            await boardAttachedFileRepository.UpdateEntityAsync(
-                BoardAttachedFile.Reconstitute(previous.Id, previous.BoardId, 0, "", "", ""), ct);
+            // Clear: zero-out the attachment record without uploading anything.
+            await boardAttachedFileRepository.UpdateEntityAsync(previous.Cleared(), ct);
         }
         else if (previous == null && newFile != null)
         {
@@ -467,7 +459,7 @@ public class BoardService(
             if (fileResult.IsError) return ServiceResult.FromError(fileResult.FirstError);
 
             // Validated first, uploaded second: a rejected record must not leave an orphaned file.
-            bool uploaded = await fileClient.UploadAsync(newFile.Bytes, newFile.ContentType, filePath, settings.Value.FileStorageBaseUrl ?? "", ct);
+            bool uploaded = await fileClient.UploadAsync(newFile.Bytes, newFile.ContentType, filePath, ct);
             if (!uploaded) return ServiceResult.Failure("Board.AttachmentUploadFailed", ServiceErrorKeys.AttachmentUploadFailed);
 
             await boardAttachedFileRepository.CreateAsync(fileResult.Value, ct);

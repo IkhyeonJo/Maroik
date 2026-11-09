@@ -80,7 +80,7 @@ public class ExpenditureService(
 
             string currency = paymentAsset.Balance.Currency.Value;
             var expenditureResult = Expenditure.Record(accountEmail, request.MainClass, request.SubClass,
-                request.Content, Math.Abs(request.Amount), currency, request.PaymentMethod, depositCheck.Value, utcNow, request.Note, request.Created);
+                request.Content, FinanceAmountPolicy.ToStoredAmount(request.Amount), currency, request.PaymentMethod, depositCheck.Value, utcNow, request.Note, request.Created);
             if (expenditureResult.IsError)
             {
                 await unitOfWork.RollbackAsync(ct);
@@ -159,7 +159,7 @@ public class ExpenditureService(
             IReadOnlyList<BalanceMovement> before = previous.BalanceMovements();
 
             var updateResult = previous.Update(request.MainClass, request.SubClass, request.Content,
-                Math.Abs(request.Amount), newCurrency, request.PaymentMethod, depositCheck.Value, request.Note, utcNow, request.Created);
+                FinanceAmountPolicy.ToStoredAmount(request.Amount), newCurrency, request.PaymentMethod, depositCheck.Value, request.Note, utcNow, request.Created);
             if (updateResult.IsError)
             {
                 await unitOfWork.RollbackAsync(ct);

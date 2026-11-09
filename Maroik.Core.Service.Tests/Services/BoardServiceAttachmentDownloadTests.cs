@@ -1,12 +1,10 @@
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
-using Maroik.Core.Contract.Settings;
 using Maroik.Core.Domain.Accounts;
 using Maroik.Core.Domain.Boards;
 using Maroik.Core.Service.Services;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Testing;
-using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Time.Testing;
 using Moq;
 
@@ -30,8 +28,7 @@ public class BoardServiceAttachmentDownloadTests
 
     /// <summary>The service under test over the mocked dependencies.</summary>
     private BoardService CreateSut() => new(_boardRepo.Object, _attachedFileRepo.Object, Mock.Of<IBoardCommentRepository>(),
-        Mock.Of<IFileClient>(), Mock.Of<IUnitOfWork>(), _attachmentContent.Object,
-        Options.Create(new ServerSetting()), _logger, new FakeTimeProvider());
+        Mock.Of<IFileClient>(), Mock.Of<IUnitOfWork>(), _attachmentContent.Object, _logger, new FakeTimeProvider());
 
     /// <summary>Arranges post 7 of <paramref name="type"/> by Alice (optionally locked) with a stored attachment "report.zip".</summary>
     private void GivenAPostWithAnAttachment(string type = BoardTypes.FreeForum, bool locked = false)

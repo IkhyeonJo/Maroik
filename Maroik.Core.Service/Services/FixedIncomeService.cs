@@ -53,7 +53,7 @@ public class FixedIncomeService(IFixedIncomeRepository fixedIncomeRepository, IA
 
         string currency = asset.Balance.Currency.Value;
         var registerResult = FixedIncome.Register(accountEmail, request.MainClass, request.SubClass,
-            request.Content, Math.Abs(request.Amount), currency,
+            request.Content, FinanceAmountPolicy.ToStoredAmount(request.Amount), currency,
             request.DepositMyAssetProductName, request.DepositMonth, request.DepositDay,
             request.MaturityDate, utcNow, request.Note);
 
@@ -83,7 +83,7 @@ public class FixedIncomeService(IFixedIncomeRepository fixedIncomeRepository, IA
         string currency = asset.Balance.Currency.Value;
 
         var updateResult = fi.Update(request.MainClass, request.SubClass, request.Content,
-            Math.Abs(request.Amount), currency, request.DepositMyAssetProductName,
+            FinanceAmountPolicy.ToStoredAmount(request.Amount), currency, request.DepositMyAssetProductName,
             request.DepositMonth, request.DepositDay, request.MaturityDate, request.Note, utcNow);
 
         if (updateResult.IsError) return ServiceResult.FromError(updateResult.FirstError);

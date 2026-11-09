@@ -1258,10 +1258,9 @@ public class ManagementController(
     {
         try
         {
-            string? nickname = HttpContext.GetLoggedInAccount().Nickname;
             BoardResponse? board = await boardService.GetBoardByIdAsync(id, BoardKinds.PrivateNote, HttpContext.RequestAborted);
 
-            return board == null || board.Deleted || board.Writer != nickname
+            return board == null || !boardService.CanView(board, HttpContext.GetLoggedInAccount())
                 ? Json(new { result = false, error = localizer["Input is invalid"].Value })
                 : Json(new { result = true, PrivateNoteBoard = new { id = board.Id } });
         }

@@ -45,7 +45,7 @@
                             <textarea name="writeBoardContent" id="writeBoardContent" maxlength="@PolicyLimits.BodyMaxLength"></textarea>
                         </div>
 
-                        @if (loggedInAccount.Role == AccountRoles.Admin)
+                        @if (Model.CanPostNotice)
                         {
                             <div class="form-group">
                                 <div class="custom-control custom-checkbox">
@@ -192,7 +192,7 @@
                     </div>
 
                     <div class="card-footer">
-                        @if (loggedInAccount.Role == AccountRoles.Anonymous)
+                        @if (!Model.CanWriteComment)
                         {
                             <form id="formWriteFreeComment">
                                 @* ReSharper disable Html.PathError *@

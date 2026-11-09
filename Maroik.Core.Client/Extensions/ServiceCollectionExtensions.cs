@@ -15,7 +15,7 @@ public static class ServiceCollectionExtensions
     extension(IServiceCollection services)
     {
         /// <summary>
-        /// Registers the mail, file-storage, ClamAV, and RabbitMQ email-publisher client implementations.
+        /// Registers the mail, file-storage, ClamAV, server-resource report and RabbitMQ email-publisher client implementations.
         /// </summary>
         /// <param name="rabbitMqConnectionString">
         /// AMQP connection string (e.g. "amqp://user:pass@host:5672/") used by <see cref="IEmailPublisher"/>.
@@ -30,6 +30,10 @@ public static class ServiceCollectionExtensions
 
             // Register the ClamAV antivirus scanning client
             services.AddScoped<IClamavClient, ClamavClient>();
+
+            // Register the reader of the host's server-resource reports
+            services.AddSingleton<IServerResourceReportClient>(_ =>
+                new ServerResourceReportClient(ServerResourceReportClient.HostReportPath, ServerResourceReportClient.DockerReportPath));
 
             // Register the RabbitMQ email publisher. Singleton: owns one long-lived AMQP connection,
             // opened lazily on first publish so a RabbitMQ outage doesn't block app startup.

@@ -30,8 +30,8 @@ public class AttachmentContentServiceLoggingTests
     /// <summary>The service under test, over a file client whose every download and open fails.</summary>
     private AttachmentContentService CreateSut()
     {
-        _fileClient.Setup(f => f.DownloadAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>())).ThrowsAsync(_failure);
-        _fileClient.Setup(f => f.OpenReadAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>())).ThrowsAsync(_failure);
+        _fileClient.Setup(f => f.DownloadAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ThrowsAsync(_failure);
+        _fileClient.Setup(f => f.OpenReadAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ThrowsAsync(_failure);
         return new AttachmentContentService(_fileClient.Object, Mock.Of<IDataProtectionService>(), Mock.Of<IImageValidatorService>(),
             Mock.Of<IHtmlContentSanitizerService>(), _htmlParser.Object,
             Options.Create(new ServerSetting { FileStorageBaseUrl = "http://filestorage.local" }), _logger);
@@ -97,7 +97,7 @@ public class AttachmentContentServiceLoggingTests
         Assert.Contains("uploader@test.com", record.Message, StringComparison.Ordinal);
         Assert.Contains("Forum/FreeForum", record.Message, StringComparison.Ordinal);
         _fileClient.Verify(f => f.UploadAsync(
-            It.IsAny<byte[]>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+            It.IsAny<byte[]>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     /// <summary>An image refused for its extension or declared content type is logged with both.</summary>
