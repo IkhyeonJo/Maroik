@@ -54,7 +54,7 @@ public class ClockTests
         Assert.Equal((_now, _later), (board.Created, board.Updated));
         board.Unlock(_later.AddMinutes(1));
         Assert.Equal(_later.AddMinutes(1), board.Updated);
-        board.Pin(_later.AddMinutes(2));
+        board.PinBy(requesterIsAdmin: true, _later.AddMinutes(2));
         Assert.Equal(_later.AddMinutes(2), board.Updated);
         Assert.False(board.Update("t2", "c2", _later.AddMinutes(4)).IsError);
         Assert.Equal(_later.AddMinutes(4), board.Updated);

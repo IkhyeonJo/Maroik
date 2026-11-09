@@ -18,6 +18,10 @@ public static class ImageUploadPolicy
     public static bool IsAllowedExtension(string? extension)
         => extension is not null && AllowedExtensions.Contains(extension.ToLowerInvariant());
 
+    /// <summary>Whether <paramref name="sizeBytes"/> is a non-empty image within <paramref name="maxBytes"/> (<c>ServerSetting.MaxAttachedFileSizeBytes</c>).</summary>
+    public static bool IsValidSize(long sizeBytes, long maxBytes)
+        => sizeBytes > 0 && sizeBytes <= maxBytes;
+
     /// <summary>Whether <paramref name="contentType"/> (case-insensitive) is an accepted image content type.</summary>
     public static bool IsAllowedContentType(string? contentType)
         => contentType is not null && AllowedContentTypes.Contains(contentType.ToLowerInvariant());

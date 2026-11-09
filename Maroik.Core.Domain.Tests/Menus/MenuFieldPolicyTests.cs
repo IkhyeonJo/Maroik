@@ -1,3 +1,4 @@
+using Maroik.Core.Domain.Accounts;
 using Maroik.Core.Domain.Menus;
 namespace Maroik.Core.Domain.Tests.Menus;
 
@@ -126,8 +127,11 @@ public class MenuFieldPolicyTests
         Assert.Equal(2, sub.Order);
     }
 
-    /// <summary>A missing role is still accepted (the repository stores it as the restrictive Admin).</summary>
+    /// <summary>A missing role is still accepted and means the most restrictive one, so an item is never exposed by accident.</summary>
     [Fact]
-    public void Category_AcceptsMissingRole()
-        => Assert.False(Category.Create("n", "d", "i", "c", "a", null, 1).IsError);
+    public void AMissingRole_IsAdmin()
+    {
+        Assert.Equal(Role.Admin, Category.Create("n", "d", "i", "c", "a", null, 1).Value.Role);
+        Assert.Equal(Role.Admin, SubCategory.Create(1, "n", "d", "i", "a", null, 1).Value.Role);
+    }
 }

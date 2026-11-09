@@ -273,15 +273,37 @@ public class BoardTests
 
     // -- Pin -------------------------------------------------------------------
 
-    /// <summary>Pin sets noticed true.</summary>
+    /// <summary>An administrator's request pins the post.</summary>
     [Fact]
-    public void Pin_SetsNoticedTrue()
+    public void PinBy_AnAdministrator_SetsNoticedTrue()
     {
         var board = ValidBoard();
 
-        board.Pin(_now);
+        board.PinBy(requesterIsAdmin: true, _now);
 
         Assert.True(board.Noticed);
+    }
+
+    /// <summary>Anyone else's request leaves the post as it was, its updated time included.</summary>
+    [Fact]
+    public void PinBy_ANonAdministrator_ChangesNothing()
+    {
+        var board = ValidBoard();
+        DateTime updated = board.Updated;
+
+        board.PinBy(requesterIsAdmin: false, _now.AddMinutes(1));
+
+        Assert.False(board.Noticed);
+        Assert.Equal(updated, board.Updated);
+    }
+
+    /// <summary>Only an administrator may pin.</summary>
+    [Theory]
+    [InlineData(true, true)]
+    [InlineData(false, false)]
+    public void CanBePinnedBy_IsTheAdministrator(bool isAdmin, bool expected)
+    {
+        Assert.Equal(expected, Board.CanBePinnedBy(isAdmin));
     }
 
     // -- SoftDelete ------------------------------------------------------------

@@ -171,7 +171,7 @@ public class ForumController(
                     Method = method,
                     LoggedInAccount = loggedInAccount,
                     LoggedInAccountTimeZoneIanaId = loggedInAccount.RequireTimeZoneIanaId(),
-                    CanPostNotice = loggedInAccount.Role == AccountRoles.Admin
+                    CanPostNotice = boardPolicy.CanPostNotice(loggedInAccount)
                 };
 
                 bool isAccountSessionExist = loggedInAccount.Role != AccountRoles.Anonymous;
@@ -211,7 +211,7 @@ public class ForumController(
                     (freeBoard.Content, bool isImgTagIncluded) = await boardService.PrepareHtmlForDisplayAsync(freeBoard.Content ?? "", ct);
 
                     freeForumOutputViewModel.LoggedInAccount = loggedInAccount;
-                    freeForumOutputViewModel.CanWriteComment = loggedInAccount.Role != AccountRoles.Anonymous;
+                    freeForumOutputViewModel.CanWriteComment = boardPolicy.CanWriteComment(loggedInAccount);
                     freeForumOutputViewModel.LoggedInAccountTimeZoneIanaId = freeForumOutputViewModel.LoggedInAccount.TimeZoneIanaId ?? "";
                     freeForumOutputViewModel.ViewerSeesLocalTime = accountPolicy.SeesLocalTime(loggedInAccount);
 

@@ -23,7 +23,7 @@ public sealed class Category : AggregateRoot<long>
     public string? Action { get; private set; }
 
     /// <summary>The one role whose sidebar shows this menu item ("Admin", "User" or "Anonymous"; matched exactly, not as a hierarchy).</summary>
-    public string? Role { get; private set; }
+    public string Role { get; private set; }
 
     /// <summary>Sidebar display order (ascending).</summary>
     public long Order { get; private set; }
@@ -44,7 +44,7 @@ public sealed class Category : AggregateRoot<long>
         IconPath = iconPath;
         Controller = controller;
         Action = action;
-        Role = role;
+        Role = MenuFieldPolicy.RoleOrDefault(role);
         Order = order;
     }
 
@@ -87,7 +87,7 @@ public sealed class Category : AggregateRoot<long>
         IconPath = iconPath;
         Controller = controller;
         Action = action;
-        Role = role;
+        Role = MenuFieldPolicy.RoleOrDefault(role);
         Order = order;
         return Result.Success;
     }

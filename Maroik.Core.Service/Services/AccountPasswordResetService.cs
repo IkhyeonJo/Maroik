@@ -172,8 +172,6 @@ public class AccountPasswordResetService(
                 return (ServiceResult.Fail(ServiceErrorKeys.Signals.ResetPasswordInvalid), null);
             }
 
-            // Unlock the account so the user can log in immediately after resetting their password.
-            account.Unlock(utcNow);
             account.SetMessage(AccountMessage.SuccessToResetPassword.GetDescription(), utcNow);
 
             await accountRepository.UpdateEntityAsync(account, ct);
@@ -185,7 +183,7 @@ public class AccountPasswordResetService(
             // path needs the single-use token). The account handed back carries the NEW security stamp. Not
             // deleted and email-confirmed are already guaranteed above; the remaining LoginAsync refusal
             // (service terms not accepted) still applies, so a reset is no way around it.
-            return (ServiceResult.Ok(), account.AgreedServiceTerms ? AccountMapper.ToResponse(account) : null);
+            return (ServiceResult.Ok(), account.CheckSignInOnceAuthenticated() is null ? AccountMapper.ToResponse(account) : null);
         }
         catch (Exception e)
         {

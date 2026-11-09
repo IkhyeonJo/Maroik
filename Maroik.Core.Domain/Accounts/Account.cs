@@ -317,6 +317,10 @@ public sealed class Account : AggregateRoot<string>
         : !AgreedServiceTerms ? SignInRefusal.ServiceTermsNotAgreed
         : null;
 
+    /// <summary>The self-registration rule: nobody registers without accepting the service terms. An administrator's create is not held to it.</summary>
+    public static ErrorOr<Success> RequireServiceTermsForRegistration(bool agreedServiceTerms) =>
+        agreedServiceTerms ? Result.Success : DomainError.Validation("Account.ServiceTermsRequired", "Please check the consent form");
+
     /// <summary>
     /// Whether a password-reset mail is sent for this account: only for one that is confirmed and not deleted. A
     /// locked account qualifies — resetting the password is how a user recovers from a lockout.
@@ -342,6 +346,9 @@ public sealed class Account : AggregateRoot<string>
         if (!EmailConfirmed)
             return DomainError.Failure("Account.NotConfirmed", "Email must be confirmed before resetting the password.");
 
+        if (Deleted)
+            return DomainError.Failure("Account.Deleted", "A deleted account cannot reset its password.");
+
         ResetPasswordToken = GuidToken.Hash(resetToken);
         Updated = utcNow;
         return Result.Success;
@@ -356,12 +363,15 @@ public sealed class Account : AggregateRoot<string>
     /// </summary>
     public ErrorOr<Success> ResetPassword(string token, string newHashedPassword, DateTime utcNow)
     {
-        if (!TokensMatch(ResetPasswordToken, token) || !GuidToken.IsTokenAlive(token, utcNow))
+        // A deleted account's link is simply invalid, as in ConfirmEmail.
+        if (Deleted || !TokensMatch(ResetPasswordToken, token) || !GuidToken.IsTokenAlive(token, utcNow))
             return DomainError.Validation("Account.InvalidToken", "Invalid or expired password-reset token.");
 
         if (string.IsNullOrWhiteSpace(newHashedPassword))
             return DomainError.Validation("Account.PasswordEmpty", "New hashed password cannot be empty.");
 
+        // Always unlocks, an administrator's lock included: the mailed single-use token is the way back from a lockout.
+        Unlock(utcNow);
         HashedPassword = newHashedPassword;
         ResetPasswordToken = null;
         SecurityStamp = GenerateSecurityStamp();

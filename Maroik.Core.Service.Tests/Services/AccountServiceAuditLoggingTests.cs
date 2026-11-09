@@ -189,7 +189,7 @@ public class AccountServiceAuditLoggingTests
         _emailPublisher.Setup(p => p.PublishAsync(It.IsAny<SendEmailMessage>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
 
         await CreateSut().RegisterAsync(
-            new RegisterAccountRequest { Email = Email, PlainPassword = "PlainPass1!", Nickname = "TestUser" },
+            new RegisterAccountRequest { Email = Email, PlainPassword = "PlainPass1!", Nickname = "TestUser", AgreedServiceTerms = true },
             _emailTemplate, TestContext.Current.CancellationToken);
 
         Only(LogLevel.Information, "Account registered");

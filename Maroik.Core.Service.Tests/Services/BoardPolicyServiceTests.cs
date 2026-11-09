@@ -14,6 +14,44 @@ public class BoardPolicyServiceTests
     /// <summary>The service under test.</summary>
     private readonly BoardPolicyService _sut = new();
 
+    // -- CanPostNotice -------------------------------------------------------------
+
+    /// <summary>Only an administrator is offered the notice option.</summary>
+    [Theory]
+    [InlineData(Role.Admin, true)]
+    [InlineData(Role.User, false)]
+    [InlineData(Role.Anonymous, false)]
+    public void CanPostNotice_IsForAnAdministrator(string role, bool expected)
+    {
+        Assert.Equal(expected, _sut.CanPostNotice(new AccountResponse { Role = role }));
+    }
+
+    // -- CanOpenEditPage -----------------------------------------------------------
+
+    /// <summary>Its author opens the edit page of a post that exists; a deleted post and anyone else, an administrator included, do not.</summary>
+    [Theory]
+    [InlineData("Alice", Role.User, false, true)]
+    [InlineData("Alice", Role.User, true, false)]
+    [InlineData("Bob", Role.Admin, false, false)]
+    public void CanOpenEditPage_IsForTheAuthor_OfAPostThatExists(string viewer, string role, bool deleted, bool expected)
+    {
+        var board = new BoardResponse { Writer = "Alice", Deleted = deleted };
+
+        Assert.Equal(expected, _sut.CanOpenEditPage(board, new AccountResponse { Nickname = viewer, Role = role }));
+    }
+
+    // -- CanWriteComment -----------------------------------------------------------
+
+    /// <summary>Anyone signed in is offered the comment form; a visitor is not.</summary>
+    [Theory]
+    [InlineData(Role.Admin, true)]
+    [InlineData(Role.User, true)]
+    [InlineData(Role.Anonymous, false)]
+    public void CanWriteComment_IsForAnyoneSignedIn(string role, bool expected)
+    {
+        Assert.Equal(expected, _sut.CanWriteComment(new AccountResponse { Role = role }));
+    }
+
     // -- IsTitleVisibleToOwnerOrAdmin ---------------------------------------------
 
     /// <summary>Is title visible to owner or admin not locked any viewer true.</summary>

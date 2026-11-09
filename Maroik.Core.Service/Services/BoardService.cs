@@ -124,9 +124,7 @@ public class BoardService(
 
             var board = boardResult.Value;
             if (request.Locked) board.Lock(utcNow);
-            // Pinning a post site-wide is an admin-only action — enforced here, not just by the
-            // caller, so a future write path can't accidentally honor a non-admin's Noticed=true.
-            if (request.Noticed && isAdmin) board.Pin(utcNow);
+            if (request.Noticed) board.PinBy(isAdmin, utcNow);
 
             long boardId = await boardRepository.WriteBoardAsync(board, ct);
 
@@ -373,25 +371,21 @@ public class BoardService(
                 return ServiceResult.NotFound("BoardComment.NotFound", ServiceErrorKeys.InputInvalid);
             }
 
-            bool isPrivateNoteComment = false;
+            Board? parent = null;
             if (requiredType != null)
             {
                 // The comment's parent post must belong to the caller's board type — otherwise a
                 // caller scoped to one board type could delete a comment on a post of a different
                 // type just by supplying its comment ID.
-                Board? parent = await boardRepository.FindActiveByIdAsync(comment.BoardId, ct);
+                parent = await boardRepository.FindActiveByIdAsync(comment.BoardId, ct);
                 if (parent == null || parent.Type != requiredType)
                 {
                     await unitOfWork.RollbackAsync(ct);
                     return ServiceResult.NotFound("BoardComment.NotFound", ServiceErrorKeys.InputInvalid);
                 }
-                isPrivateNoteComment = parent.IsPrivateNote;
             }
 
-            // Admins may delete any comment, except on a private note (owner-only, no admin
-            // bypass — matches Board.CanBeDeletedBy's PrivateNote rule).
-            bool effectiveIsAdmin = isAdmin && !isPrivateNoteComment;
-            if (!comment.CanBeDeletedBy(requesterNickname, effectiveIsAdmin))
+            if (!(parent?.CanCommentBeDeletedBy(comment, requesterNickname, isAdmin) ?? comment.CanBeDeletedBy(requesterNickname, isAdmin)))
             {
                 await unitOfWork.RollbackAsync(ct);
                 logger.LogWarning("Comment delete refused: {Requester} may not delete comment {CommentId}", requesterNickname, commentId);

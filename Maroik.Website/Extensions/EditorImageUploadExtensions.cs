@@ -65,7 +65,7 @@ public static class EditorImageUploadExtensions
             }
 
             if (!uploadResult.Success)
-                return controller.Ok(new { result = false, errorMessage = localizer[uploadResult.ErrorKey ?? "Input is invalid"].Value });
+                return controller.Ok(new { result = false, errorMessage = localizer[uploadResult.ErrorKey ?? "Input is invalid", uploadResult.ErrorArgs].ToPlainString() });
 
             // The Summernote editor only needs the raw bytes (base64) + content type to build an object
             // URL for the inserted <img>; return those explicitly rather than serializing a whole

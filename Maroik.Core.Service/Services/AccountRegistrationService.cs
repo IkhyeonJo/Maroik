@@ -48,6 +48,9 @@ public class AccountRegistrationService(
     /// <summary>A registration for an address no account has: creates the account and mails its confirmation link.</summary>
     private async Task<RegisterResult> RegisterNewAccountAsync(RegisterAccountRequest newAccount, EmailTemplate emailTemplate, DateTime utcNow, CancellationToken ct)
     {
+        if (Account.RequireServiceTermsForRegistration(newAccount.AgreedServiceTerms) is { IsError: true } noConsent)
+            return RegisterResult.FromError(noConsent.FirstError);
+
         // Validate + normalize the nickname first (cheap, and before the deliberately slow
         // BCrypt hash below). The reserved-name rule applies here: self-registration may not
         // claim a staff / system name. Uniqueness is checked ignoring case, since the database
@@ -119,6 +122,9 @@ public class AccountRegistrationService(
     /// <summary>A registration for an address nobody has confirmed yet: replaces the earlier registrant's credentials and mails a new link.</summary>
     private async Task<RegisterResult> ReplaceUnconfirmedRegistrationAsync(Account existing, RegisterAccountRequest newAccount, EmailTemplate emailTemplate, DateTime utcNow, CancellationToken ct)
     {
+        if (Account.RequireServiceTermsForRegistration(newAccount.AgreedServiceTerms) is { IsError: true } noConsent)
+            return RegisterResult.FromError(noConsent.FirstError);
+
         // Pre-hijacking guard: nobody has proven they own this address yet, so this submission
         // REPLACES the earlier registrant's password / nickname / time zone instead of just
         // re-mailing a link for credentials someone else chose. Together with ConfirmEmailAsync

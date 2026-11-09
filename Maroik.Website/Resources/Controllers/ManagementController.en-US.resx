@@ -543,4 +543,7 @@
   <data name="FileManagerScanDisabled" xml:space="preserve">
     <value>Virus scan turned off</value>
   </data>
+  <data name="Only its author can comment on a private note." xml:space="preserve">
+    <value>Only its author can comment on a private note.</value>
+  </data>
 </root>

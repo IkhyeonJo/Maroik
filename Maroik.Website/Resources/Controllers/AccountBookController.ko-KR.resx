@@ -606,4 +606,7 @@
   <data name="December" xml:space="preserve">
     <value>12월</value>
   </data>
+  <data name="A deleted asset's balance cannot change." xml:space="preserve">
+    <value>삭제된 자산의 잔액은 변경할 수 없습니다.</value>
+  </data>
 </root>

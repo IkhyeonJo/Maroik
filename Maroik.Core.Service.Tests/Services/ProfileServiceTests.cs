@@ -1,12 +1,14 @@
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Enums;
 using Maroik.Core.Contract.Interfaces;
+using Maroik.Core.Contract.Settings;
 using Maroik.Core.Domain.Accounts;
 using Maroik.Core.Domain.Finances;
 using Maroik.Core.Service.Services;
 using Maroik.Core.Service.Tests.Fixtures;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Testing;
+using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Time.Testing;
 using Moq;
 
@@ -46,9 +48,30 @@ public class ProfileServiceTests
         _passwordService.Object,
         _fileClient.Object,
         _imageValidator.Object,
+        Options.Create(new ServerSetting { MaxAttachedFileSizeBytes = MaxImageBytes }),
         _unitOfWork.Object,
         _logger,
         _time);
+
+    /// <summary>The image size limit of these tests.</summary>
+    private const long MaxImageBytes = 2 * 1024 * 1024;
+
+    /// <summary>An empty avatar, or one past the limit, is refused with the size message and its limit before anything else looks at it.</summary>
+    [Theory]
+    [InlineData(0)]
+    [InlineData((int)MaxImageBytes + 1)]
+    public async Task UploadAndUpdateAvatarAsync_RefusesASizeOutsideTheLimit(int size)
+    {
+        ServiceResult result = await CreateSut().UploadAndUpdateAvatarAsync("user@example.com", new byte[size], ".png", TestContext.Current.CancellationToken);
+
+        Assert.False(result.Success);
+        Assert.Equal("Profile.ImageSizeInvalid", result.ErrorCode);
+        Assert.Equal(ServiceErrorKeys.FileTooLarge, result.ErrorKey);
+        Assert.Equal([2L], result.ErrorArgs);
+        Assert.Contains(_logger.Collector.GetSnapshot(), r => r.Level == LogLevel.Warning && r.Message.Contains("user@example.com", StringComparison.Ordinal));
+        _imageValidator.Verify(v => v.IsValidImage(It.IsAny<byte[]>()), Times.Never);
+        _fileClient.Verify(c => c.UploadWithResultAsync(It.IsAny<byte[]>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
 
     // -- Helpers --------------------------------------------------------------
 
