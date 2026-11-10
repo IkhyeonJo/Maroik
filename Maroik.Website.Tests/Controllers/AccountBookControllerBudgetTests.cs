@@ -261,4 +261,27 @@ public class AccountBookControllerBudgetTests(MaroikWebApplicationFactory factor
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
+
+    /// <summary>An account keeping 60 sheets gets no 61st: the first edit of another year is refused in the visitor's language and stores no sheet.</summary>
+    [Fact]
+    public async Task SetBudgetCells_RefusesANewSheet_ForAnAccountKeepingSixtySheets()
+    {
+        var (session, email) = await LoginAsync();
+        using (var scope = factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+            db.BudgetSheets.AddRange(Enumerable.Range(1900, 60).Select(year => new Maroik.Core.PostgreSQL.Models.BudgetSheet
+            {
+                AccountEmail = email, Kind = "Income", Year = year, Created = DateTime.UtcNow, Updated = DateTime.UtcNow,
+            }));
+            await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+        }
+
+        JsonElement reply = await PostAsync(session, "/AccountBook/SetBudgetCells", new { Kind = "Income", Year = 2026, Edits = new[] { new { Address = "B2", Input = "1" } } });
+
+        Assert.False(reply.GetProperty("result").GetBoolean());
+        Assert.Equal("한 계정은 예산 시트를 최대 60개까지 보관할 수 있습니다.", reply.GetProperty("error").GetString());
+        using var check = factory.Services.CreateScope();
+        Assert.Equal(60, check.ServiceProvider.GetRequiredService<ApplicationDbContext>().BudgetSheets.Count(s => s.AccountEmail == email));
+    }
 }

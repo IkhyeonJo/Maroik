@@ -609,4 +609,7 @@
   <data name="A deleted asset's balance cannot change." xml:space="preserve">
     <value>삭제된 자산의 잔액은 변경할 수 없습니다.</value>
   </data>
+  <data name="An account can keep at most {0} budget sheets." xml:space="preserve">
+    <value>한 계정은 예산 시트를 최대 {0}개까지 보관할 수 있습니다.</value>
+  </data>
 </root>

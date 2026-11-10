@@ -177,10 +177,17 @@ public class BudgetService(
         try
         {
             await accountRepository.FindByEmailForUpdateAsync(accountEmail, ct);
-            if (await IsStoredAsync(accountEmail, kind, year, ct))
+            List<BudgetSheet> stored = await sheetRepository.GetByAccountEmailAsync(accountEmail, ct);
+            if (stored.Any(s => s.Kind == kind && s.Year == year))
             {
                 await unitOfWork.RollbackAsync(ct);
                 return null;
+            }
+            // Counted under the account lock, so two first edits cannot both take the last place.
+            if (BudgetSheet.CanAddTo(stored.Count) is { IsError: true } full)
+            {
+                await unitOfWork.RollbackAsync(ct);
+                return ServiceResult.FromError(full.FirstError);
             }
 
             BudgetSheet sheet = BudgetSheet.Create(accountEmail, kind, year, UtcNow).Value;

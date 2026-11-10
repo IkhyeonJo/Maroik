@@ -17,6 +17,19 @@ public sealed class BudgetSheet : AggregateRoot<long>
     /// <summary>The latest year a sheet can have.</summary>
     public const int MaxYear = 9999;
 
+    /// <summary>
+    /// The most sheets one account keeps. Every budget request loads the cells of all of the account's sheets (a formula may
+    /// name any of them), and a sheet holds megabytes of inputs: without a bound, sheets for years nobody budgets (1..9999,
+    /// each created by its first edit) made every request of the account read all of them.
+    /// </summary>
+    public const int MaxPerAccount = 60;
+
+    /// <summary>Whether an account keeping <paramref name="storedCount"/> sheets may take one more (<see cref="MaxPerAccount"/>).</summary>
+    public static ErrorOr<Success> CanAddTo(int storedCount) =>
+        storedCount >= MaxPerAccount
+            ? DomainError.Validation("Budget.TooManySheets", "An account can keep at most {0} budget sheets.", MaxPerAccount)
+            : Result.Success;
+
     /// <summary>Email of the owning account.</summary>
     public Email AccountEmail { get; }
 

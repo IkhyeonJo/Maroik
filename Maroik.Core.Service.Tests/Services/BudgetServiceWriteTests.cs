@@ -326,4 +326,43 @@ public class BudgetServiceWriteTests
         Assert.Equal("Budget.YearInvalid", (await _h.Sut.CarryOverAsync(H.Email, BudgetSheetKind.Income, 0, "UTC", TestContext.Current.CancellationToken)).Result.ErrorCode);
         _h.AssertTransactions(0, 0);
     }
+
+    /// <summary>Stores <see cref="BudgetSheet.MaxPerAccount"/> sheets for the account: income sheets of the years from 1900 on.</summary>
+    private void FillTheAccountWithSheets()
+    {
+        for (int i = 0; i < BudgetSheet.MaxPerAccount; i++)
+            _h.Sheet(BudgetKind.Income, 1900 + i);
+    }
+
+    /// <summary>
+    /// An account already keeping <see cref="BudgetSheet.MaxPerAccount"/> sheets gets no new one: the first edit of another
+    /// year is refused under the account lock, and nothing is stored.
+    /// </summary>
+    [Fact]
+    public async Task EditAsync_RefusesANewSheet_BeyondTheMaximumPerAccount()
+    {
+        FillTheAccountWithSheets();
+
+        var (result, edit) = await _h.Sut.EditAsync(H.Email, BudgetSheetKind.Income, 2026, "UTC", [new BudgetCellEditRequest("B2", "1")], TestContext.Current.CancellationToken);
+
+        Assert.Equal(("Budget.TooManySheets", "An account can keep at most {0} budget sheets.", ServiceErrorType.Validation), (result.ErrorCode, result.ErrorKey, result.ErrorType));
+        Assert.Equal([BudgetSheet.MaxPerAccount], result.ErrorArgs);
+        Assert.Null(edit);
+        Assert.Equal(BudgetSheet.MaxPerAccount, _h.Sheets.All.Count);
+        Assert.Empty(_h.Cells.All);
+        _h.Accounts.Verify(a => a.FindByEmailForUpdateAsync(H.Email, It.IsAny<CancellationToken>()), Times.Once);
+        _h.AssertTransactions(1, 0);
+    }
+
+    /// <summary>A sheet the account already keeps is still edited at the maximum.</summary>
+    [Fact]
+    public async Task EditAsync_StillEditsAStoredSheet_AtTheMaximumPerAccount()
+    {
+        FillTheAccountWithSheets();
+
+        var (result, _) = await _h.Sut.EditAsync(H.Email, BudgetSheetKind.Income, 1900, "UTC", [new BudgetCellEditRequest("O2", "note")], TestContext.Current.CancellationToken);
+
+        Assert.True(result.Success);
+        Assert.Single(_h.Cells.All);
+    }
 }

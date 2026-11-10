@@ -40,7 +40,9 @@ that specific change. Check every candidate review finding in this area against 
 - Bounds (since 2026-11-02): a sheet holds at most `BudgetSheetLayout.MaxLines` (100) lines, and the stored formulas of a sheet
   read at most `BudgetWorkbook.MaxReferencesPerSheet` (10,000) cells in total (each formula's distinct cells, summed). An edit
   (paste and carry-over included) past it is refused, and so is a new line that lengthens the sheet's ranges past it. Without them
-  300 lines and 600 whole-sheet sums cost 3.2 s and 2.7 GB on every request.
+  300 lines and 600 whole-sheet sums cost 3.2 s and 2.7 GB on every request. An account keeps at most `BudgetSheet.MaxPerAccount` (60)
+  sheets (since 2026-11-10): every request loads the cells of all of them, and sheets could be made for any year 1..9999, so the
+  first edit of a 61st sheet is refused under the account lock.
 - A sheet is stored on its first write (account row locked, default lines in the default monetary unit); every later write locks
   the sheet row (FOR UPDATE). The Excel download writes calculated values, not formulas (`ACTUAL` and the sheet names have no Excel
   equivalent). Undo / redo lasts for the page session only.

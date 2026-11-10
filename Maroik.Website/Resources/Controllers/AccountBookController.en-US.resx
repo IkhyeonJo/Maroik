@@ -609,4 +609,7 @@
   <data name="A deleted asset's balance cannot change." xml:space="preserve">
     <value>A deleted asset's balance cannot change.</value>
   </data>
+  <data name="An account can keep at most {0} budget sheets." xml:space="preserve">
+    <value>An account can keep at most {0} budget sheets.</value>
+  </data>
 </root>

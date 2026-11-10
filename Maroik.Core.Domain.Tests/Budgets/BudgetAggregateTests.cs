@@ -64,4 +64,19 @@ public class BudgetAggregateTests
         Assert.Equal((3L, "F.1", "B", "2", _now.AddHours(1)), (cell.SheetId, cell.RowKey, cell.Column, cell.Input, cell.Updated));
         Assert.Equal("x", BudgetSheetCell.Reconstitute(1, 3, "F.2", "C", "x", _now).Input);
     }
+
+    /// <summary>
+    /// An account keeps at most <see cref="BudgetSheet.MaxPerAccount"/> sheets: every budget request loads the cells of all of
+    /// them, so their number bounds what one request reads.
+    /// </summary>
+    [Fact]
+    public void AnAccount_TakesNoSheet_BeyondTheMaximum()
+    {
+        Assert.Equal(60, BudgetSheet.MaxPerAccount);
+
+        Assert.False(BudgetSheet.CanAddTo(0).IsError);
+        Assert.False(BudgetSheet.CanAddTo(BudgetSheet.MaxPerAccount - 1).IsError);
+        ErrorAssert.Validation(BudgetSheet.CanAddTo(BudgetSheet.MaxPerAccount),
+            "Budget.TooManySheets", "An account can keep at most {0} budget sheets.", BudgetSheet.MaxPerAccount);
+    }
 }
