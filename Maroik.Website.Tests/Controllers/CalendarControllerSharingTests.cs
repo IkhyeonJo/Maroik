@@ -166,4 +166,34 @@ public class CalendarControllerSharingTests(MaroikWebApplicationFactory factory)
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         Assert.False(db.OtherCalendars.Any(o => o.AccountEmail == subscriberEmail && o.CalendarId == calendarId));
     }
+
+    /// <summary>
+    /// Saving the subscriptions again with one that is already stored keeps it: the replace-all (delete, then insert the same
+    /// key in one unit of work) neither fails nor doubles the row.
+    /// </summary>
+    [Fact]
+    public async Task UpdateOtherCalendar_SavedAgainWithTheSameCalendar_KeepsTheSubscription()
+    {
+        var admin = await LoginAsAdminAsync();
+        long calendarId = await CreateCalendarAndBackfillSharedAsync(admin, UniqueName());
+        using var shareRequest = admin.BuildJsonPostRequest("/Calendar/UpdateCalendarShared",
+            new[] { new { CalendarId = calendarId, User = true, Anonymous = false } });
+        await _client.SendAsync(shareRequest, TestContext.Current.CancellationToken);
+        const string subscriberEmail = "calendar-sharing-resave@test.com";
+        var subscriberClient = factory.CreateTestClient(followRedirects: false);
+        var subscriber = await AuthenticatedSessionHelper.LoginAsync(factory, subscriberClient, subscriberEmail, "UserPassword1!", Role.User, TestContext.Current.CancellationToken);
+
+        string json = "";
+        for (int save = 0; save < 2; save++)
+        {
+            using var request = subscriber.BuildJsonPostRequest("/Calendar/UpdateOtherCalendar",
+                new[] { new { AccountEmail = subscriberEmail, CalendarId = calendarId } });
+            json = await (await subscriberClient.SendAsync(request, TestContext.Current.CancellationToken)).Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        }
+
+        Assert.Contains("\"result\":true", json, StringComparison.Ordinal);
+        using var scope = factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        Assert.Single(db.OtherCalendars, o => o.AccountEmail == subscriberEmail && o.CalendarId == calendarId);
+    }
 }
