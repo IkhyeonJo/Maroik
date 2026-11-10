@@ -41,6 +41,23 @@ public class WorkerHostTests(WorkerBrokerFixture broker) : IClassFixture<WorkerB
         "--FileStorage:BaseUrl=http://files.maroik.test",
     ];
 
+    /// <summary>
+    /// The host waits longer for its services to stop than the e-mail consumer may need (its drain, then the window in which
+    /// a canceled send settles its message): at the default 30 seconds, exactly their sum, a send that outlived the drain was
+    /// cut off before its ack / nack, and the mail was delivered again.
+    /// </summary>
+    [Fact]
+    public void Build_GivesTheEmailConsumer_TimeToSettleItsMessagesOnShutdown()
+    {
+        using IHost host = WorkerHost.Build(Args("amqp://guest:guest@127.0.0.1:5672/"));
+
+        TimeSpan shutdownTimeout = host.Services.GetRequiredService<IOptions<HostOptions>>().Value.ShutdownTimeout;
+        EmailConsumerWorker consumer = host.Services.GetServices<IHostedService>().OfType<EmailConsumerWorker>().Single();
+
+        Assert.True(shutdownTimeout >= consumer.DrainTimeout + consumer.CancelUnwindTimeout + TimeSpan.FromSeconds(5),
+            $"ShutdownTimeout {shutdownTimeout} leaves no margin after the consumer's drain and unwind windows");
+    }
+
     /// <summary>The SMTP settings are read from <c>ServerSetting:SmtpOptions</c> with their types converted (port → int, ssl → bool).</summary>
     [Fact]
     public void Build_BindsTheSmtpSettings()

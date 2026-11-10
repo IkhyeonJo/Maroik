@@ -87,6 +87,10 @@ internal static class WorkerHost
                 ClientProvidedName = "maroik-worker-email-consumer"
             });
         builder.Services.AddHostedService<EmailConsumerWorker>();
+        // EmailConsumerWorker.StopAsync may take its drain (25 s) and then its unwind window (5 s): at the host's default of 30 s,
+        // exactly their sum, the host gave up as the consumer was settling a canceled send, and the unacked mail was delivered
+        // again. docker-compose.prod.yml's stop_grace_period is longer still, so the SIGKILL comes after this.
+        builder.Services.Configure<HostOptions>(options => options.ShutdownTimeout = TimeSpan.FromSeconds(35));
 
         // Calendar reminders: once a minute the scheduler sends the due ones, queued as e-mails on the same broker (consumed by
         // EmailConsumerWorker above, so they share its retry and dead-letter path). The publisher keeps its own connection.

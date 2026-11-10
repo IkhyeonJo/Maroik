@@ -195,9 +195,10 @@ services:
         container_name: Maroik.Worker
         logging: *default-logging
         restart: unless-stopped
-        # Must exceed EmailConsumerWorker's 25s in-flight drain budget so Docker's SIGKILL
-        # doesn't cut off an in-progress send before it can ack/nack.
-        stop_grace_period: 30s
+        # Must exceed the worker host's 35s shutdown timeout (WorkerHost), which covers EmailConsumerWorker's 25s
+        # in-flight drain plus the 5s in which a canceled send settles, so Docker's SIGKILL doesn't cut off a
+        # send before it can ack/nack (the mail would be delivered again).
+        stop_grace_period: 40s
         networks :
           - backend
         env_file:
