@@ -362,7 +362,10 @@ if [ "$MODE" = "github" ]; then
     || { echo "[ERROR] Could not pull the $MAROIK_TAG images. Did the CI publish job push them, and are the packages public?"; exit 1; }
   # shellcheck disable=SC2086  # stale_edges is a space-separated list on purpose
   sudo docker rm -f $stale_edges > /dev/null 2>&1
-  sudo env MAROIK_TAG="$MAROIK_TAG" "${COMPOSE_ENV[@]}" $COMPOSE "${COMPOSE_FILES[@]}" up -d
+  # A stack that did not come up is not recorded as deployed below: AutoDeploy.sh takes .deployed-sha as the running
+  # commit and would wait for the next commit instead of this one.
+  sudo env MAROIK_TAG="$MAROIK_TAG" "${COMPOSE_ENV[@]}" $COMPOSE "${COMPOSE_FILES[@]}" up -d \
+    || { echo "[ERROR] docker compose up failed; $DEPLOY_SHA is not recorded as deployed."; exit 1; }
 
   # AutoDeploy.sh deploys only commits after this one. Through sudo: AutoDeploy.sh runs as root (cron) and may
   # have written these files last.
