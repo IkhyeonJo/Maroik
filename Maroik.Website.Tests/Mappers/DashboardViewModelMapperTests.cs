@@ -1,4 +1,5 @@
 using Maroik.Core.Contract.Dtos;
+using Maroik.Core.Contract.Enums;
 using Maroik.Website.Mappers;
 using Maroik.Website.Models.ViewModels.Dashboards;
 
@@ -23,7 +24,7 @@ public class DashboardViewModelMapperTests
     };
 
     /// <summary>A chart of the given main class and period.</summary>
-    private static DashboardChartDto Chart(string mainClass, string period, params (string SubClass, decimal Amount, double Percentage)[] slices) => new()
+    private static DashboardChartDto Chart(string mainClass, DashboardPeriod period, params (string SubClass, decimal Amount, double Percentage)[] slices) => new()
     {
         MainClass = mainClass,
         Period = period,
@@ -48,9 +49,9 @@ public class DashboardViewModelMapperTests
 
     /// <summary>A chart is drawn on the canvas of its main class and period, with its slices in the order the service gave.</summary>
     [Theory]
-    [InlineData("RegularIncome", "Year", "regularIncomeYear")]
-    [InlineData("ConsumerSpending", "YearMonth", "consumerSpendingYearMonth")]
-    public void ToViewModel_CarriesEachChart_ToItsCanvas(string mainClass, string period, string canvasId)
+    [InlineData("RegularIncome", DashboardPeriod.Year, "regularIncomeYear")]
+    [InlineData("ConsumerSpending", DashboardPeriod.YearMonth, "consumerSpendingYearMonth")]
+    public void ToViewModel_CarriesEachChart_ToItsCanvas(string mainClass, DashboardPeriod period, string canvasId)
     {
         DashboardDto dto = BaseDto();
         dto.Charts = [Chart(mainClass, period, ("B", 2.5m, 25.0), ("A", 7.5m, 75.0))];
@@ -68,7 +69,7 @@ public class DashboardViewModelMapperTests
     public void ToViewModel_ListsEachSubClassOnce()
     {
         DashboardDto dto = BaseDto();
-        dto.Charts = [Chart("RegularIncome", "Year", ("LaborIncome", 1m, 100.0)), Chart("IrregularIncome", "Year", ("LaborIncome", 1m, 50.0), ("OtherIncome", 1m, 50.0))];
+        dto.Charts = [Chart("RegularIncome", DashboardPeriod.Year, ("LaborIncome", 1m, 100.0)), Chart("IrregularIncome", DashboardPeriod.Year, ("LaborIncome", 1m, 50.0), ("OtherIncome", 1m, 50.0))];
 
         Assert.Equal(["LaborIncome", "OtherIncome"], dto.ToViewModel().ChartSubClasses);
     }

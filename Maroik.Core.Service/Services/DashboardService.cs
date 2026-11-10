@@ -1,5 +1,6 @@
 using System.Globalization;
 using Maroik.Core.Contract.Dtos;
+using Maroik.Core.Contract.Enums;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Contract.Settings;
 using Maroik.Core.Domain.Accounts;
@@ -86,10 +87,10 @@ public class DashboardService(
 
         summary.Charts =
         [
-            .. ChartsOf("Year", IncomeClassPolicy.MainClasses, IncomeClassPolicy.SubClassesByMainClass, summary.YearIncomeBreakdown),
-            .. ChartsOf("Year", ExpenditureClassPolicy.MainClasses, ExpenditureClassPolicy.SubClassesByMainClass, summary.YearExpenditureBreakdown),
-            .. ChartsOf("YearMonth", IncomeClassPolicy.MainClasses, IncomeClassPolicy.SubClassesByMainClass, summary.YearMonthIncomeBreakdown),
-            .. ChartsOf("YearMonth", ExpenditureClassPolicy.MainClasses, ExpenditureClassPolicy.SubClassesByMainClass, summary.YearMonthExpenditureBreakdown)
+            .. ChartsOf(DashboardPeriod.Year, IncomeClassPolicy.MainClasses, IncomeClassPolicy.SubClassesByMainClass, summary.YearIncomeBreakdown),
+            .. ChartsOf(DashboardPeriod.Year, ExpenditureClassPolicy.MainClasses, ExpenditureClassPolicy.SubClassesByMainClass, summary.YearExpenditureBreakdown),
+            .. ChartsOf(DashboardPeriod.YearMonth, IncomeClassPolicy.MainClasses, IncomeClassPolicy.SubClassesByMainClass, summary.YearMonthIncomeBreakdown),
+            .. ChartsOf(DashboardPeriod.YearMonth, ExpenditureClassPolicy.MainClasses, ExpenditureClassPolicy.SubClassesByMainClass, summary.YearMonthExpenditureBreakdown)
         ];
 
         summary.StartYear = await GetStartYearAsync(accountEmail, utcNow, timeZoneId, ct);
@@ -98,7 +99,7 @@ public class DashboardService(
     }
 
     /// <summary>One chart per main class of a period: every sub-class of the taxonomy in its display order, a sub-class with no records as zero.</summary>
-    private static IEnumerable<DashboardChartDto> ChartsOf(string period, IReadOnlyList<string> mainClasses,
+    private static IEnumerable<DashboardChartDto> ChartsOf(DashboardPeriod period, IReadOnlyList<string> mainClasses,
         IReadOnlyDictionary<string, IReadOnlyList<string>> subClasses, Dictionary<string, FinanceBreakdownDto> breakdowns) =>
         mainClasses.Select(mainClass =>
         {

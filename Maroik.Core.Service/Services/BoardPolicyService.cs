@@ -1,7 +1,7 @@
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
-using Maroik.Core.Domain.Accounts;
 using Maroik.Core.Domain.Boards;
+using Maroik.Core.Domain.Primitives;
 
 namespace Maroik.Core.Service.Services;
 
@@ -20,9 +20,6 @@ public sealed class BoardPolicyService : IBoardPolicyService
 
     /// <inheritdoc />
     public bool CanWriteComment(AccountResponse viewer) => Board.AcceptsCommentsFrom(viewer.Role);
-
-    /// <inheritdoc />
-    public int NormalizeListPage(int requestedPage) => Board.ListPageOf(requestedPage);
 
     /// <inheritdoc />
     public bool CanOpenEditPage(BoardResponse board, AccountResponse viewer) => Board.EditPageOpensFor(board.Deleted, board.Writer, viewer.Nickname);

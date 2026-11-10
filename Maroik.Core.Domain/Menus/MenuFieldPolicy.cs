@@ -19,13 +19,13 @@ namespace Maroik.Core.Domain.Menus;
 public static class MenuFieldPolicy
 {
     /// <summary>The role of a menu item: a missing one is Admin, the most restrictive, so an item with no role is never exposed by accident.</summary>
-    public static string RoleOrDefault(string? role) => role ?? Accounts.Role.Admin;
+    public static string RoleOrDefault(string? role) => role ?? Role.Admin;
 
     /// <summary>Role a menu item is restricted to (the values <c>Role</c> may hold in the database).</summary>
     public static class Roles
     {
-        /// <summary>Membership set backing <see cref="All"/> / <see cref="IsKnown"/>: the three <see cref="Accounts.Role"/> values.</summary>
-        private static readonly StringTaxonomy _taxonomy = new(Accounts.Role.Admin, Accounts.Role.User, Accounts.Role.Anonymous);
+        /// <summary>Membership set backing <see cref="All"/> / <see cref="IsKnown"/>: the three <see cref="Role"/> values.</summary>
+        private static readonly StringTaxonomy _taxonomy = new(Role.Admin, Role.User, Role.Anonymous);
 
         /// <summary>Every role a menu item may carry.</summary>
         public static IReadOnlySet<string> All => _taxonomy.All;

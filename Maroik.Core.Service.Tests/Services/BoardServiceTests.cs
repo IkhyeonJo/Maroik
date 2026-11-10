@@ -1,7 +1,6 @@
 using System.Data;
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
-using Maroik.Core.Domain.Accounts;
 using Maroik.Core.Domain.Boards;
 using Maroik.Core.Domain.Primitives;
 using Maroik.Core.Service.Services;

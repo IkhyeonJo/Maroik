@@ -1,4 +1,4 @@
-using Maroik.Core.Domain.Accounts;
+using Maroik.Core.Domain.Primitives;
 
 namespace Maroik.Core.Service.Constants;
 

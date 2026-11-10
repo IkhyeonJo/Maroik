@@ -1,4 +1,5 @@
 using Maroik.Core.Domain.Accounts;
+using Maroik.Core.Domain.Primitives;
 using Maroik.Core.Domain.ValueObjects;
 namespace Maroik.Core.Domain.Tests.Accounts;
 

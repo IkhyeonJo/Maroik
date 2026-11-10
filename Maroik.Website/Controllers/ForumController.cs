@@ -3,6 +3,7 @@ using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Contract.Settings;
 using Maroik.Website.Attributes;
+using Maroik.Website.Constants;
 using Maroik.Website.Extensions;
 using Maroik.Website.Mappers;
 using Maroik.Website.Models;
@@ -300,8 +301,8 @@ public class ForumController(
             // List
             default:
             {
-                const int pageSize = PolicyLimits.BoardListPageSize;
-                page = boardPolicy.NormalizeListPage(page);
+                const int pageSize = BoardListPaging.PageSize;
+                page = BoardListPaging.PageOf(page);
 
                 // The account from HttpContext.GetLoggedInAccount() is re-fetched from the database by ViewBagPopulatorFilter
                 // on every request (not the session-cached snapshot), so a mid-session Role change

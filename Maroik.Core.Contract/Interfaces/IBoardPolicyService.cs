@@ -17,9 +17,6 @@ public interface IBoardPolicyService
     /// <summary>Whether the detail panel offers the viewer the comment form.</summary>
     bool CanWriteComment(AccountResponse viewer);
 
-    /// <summary>The list page to show for a requested one.</summary>
-    int NormalizeListPage(int requestedPage);
-
     /// <summary>Whether the edit page opens for the viewer.</summary>
     bool CanOpenEditPage(BoardResponse board, AccountResponse viewer);
 

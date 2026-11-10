@@ -68,12 +68,12 @@ public class BudgetViewModelMapperTests
 
     /// <summary>A budget cell carries its actual and remaining amounts and the color of its outcome.</summary>
     [Theory]
-    [InlineData("Good", "good")]
-    [InlineData("Warning", "warn")]
-    [InlineData("Bad", "bad")]
-    [InlineData("Unbudgeted", "unbudgeted")]
-    [InlineData("None", "")]
-    public void BudgetCells_AreColoredByTheirOutcome(string outcome, string color)
+    [InlineData(BudgetOutcome.Good, "good")]
+    [InlineData(BudgetOutcome.Warning, "warn")]
+    [InlineData(BudgetOutcome.Bad, "bad")]
+    [InlineData(BudgetOutcome.Unbudgeted, "unbudgeted")]
+    [InlineData(BudgetOutcome.None, "")]
+    public void BudgetCells_AreColoredByTheirOutcome(BudgetOutcome outcome, string color)
     {
         var sheet = new BudgetSheetResponse
         {

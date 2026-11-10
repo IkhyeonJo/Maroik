@@ -1,3 +1,5 @@
+using Maroik.Core.Contract.Enums;
+
 namespace Maroik.Core.Contract.Dtos;
 
 /// <summary>A cell of a budget sheet as shown.</summary>
@@ -27,6 +29,6 @@ public sealed class BudgetCellResponse
     /// <summary>For a budget cell: None, Unbudgeted, Under, Reached or Over; null for other cells.</summary>
     public string? State { get; init; }
 
-    /// <summary>How that state reads on this sheet: None, Unbudgeted, Good, Warning or Bad.</summary>
-    public string Outcome { get; init; } = "";
+    /// <summary>How that state reads on this sheet.</summary>
+    public BudgetOutcome Outcome { get; init; }
 }

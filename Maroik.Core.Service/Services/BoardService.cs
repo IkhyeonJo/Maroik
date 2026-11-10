@@ -1,9 +1,8 @@
 using System.Data;
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
-using Maroik.Core.Domain.Accounts;
 using Maroik.Core.Domain.Boards;
-using Maroik.Core.Domain.Uploads;
+using Maroik.Core.Domain.Primitives;
 using Maroik.Core.Service.Mappers;
 using Microsoft.Extensions.Logging;
 
@@ -513,7 +512,7 @@ public class BoardService(
     /// traverse paths; the original name is kept on the attachment record instead.
     /// </summary>
     private static string BuildAttachedFilePath(string boardType, long boardId, string fileName)
-    => AttachmentStoragePaths.BoardAttachment(boardType, boardId, Guid.NewGuid(), fileName);
+    => BoardAttachedFile.StoragePathFor(boardType, boardId, Guid.NewGuid(), fileName);
 
     /// <inheritdoc />
     public Task<(string Html, bool HasImages)> PrepareHtmlForDisplayAsync(string html, CancellationToken ct = default)

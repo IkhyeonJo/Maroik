@@ -34,7 +34,7 @@ public static class BudgetMapper
         Actual = cell.Status?.Actual,
         Remaining = cell.Status?.Remaining,
         State = cell.Status?.State.ToString(),
-        Outcome = cell.Outcome.ToString(),
+        Outcome = Enum.Parse<BudgetOutcome>(cell.Outcome.ToString()),
     };
 
     /// <summary>A value.</summary>

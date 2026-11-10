@@ -1,5 +1,5 @@
-using Maroik.Core.Domain.Accounts;
 using Maroik.Core.Domain.Boards;
+using Maroik.Core.Domain.Primitives;
 
 namespace Maroik.Core.Domain.Tests.Boards;
 

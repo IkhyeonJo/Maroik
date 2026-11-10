@@ -5,7 +5,7 @@ using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Contract.Settings;
 using Maroik.Core.Domain.Accounts;
 using Maroik.Core.Domain.Calendars;
-using Maroik.Core.Domain.Uploads;
+using Maroik.Core.Domain.Primitives;
 using Maroik.Core.Service.Mappers;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -726,7 +726,7 @@ public class CalendarService(
     /// or traverse paths, and each event gets its own folder.
     /// </summary>
     private static string BuildEventFilePath(string roleIndex, long eventId, string fileName)
-    => AttachmentStoragePaths.CalendarEventAttachment(roleIndex, eventId, Guid.NewGuid(), fileName);
+    => CalendarEventAttachedFile.StoragePathFor(roleIndex, eventId, Guid.NewGuid(), fileName);
 
     /// <summary>
     /// Uploads <paramref name="attachedFile"/> to file storage and creates its

@@ -1,7 +1,7 @@
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Service.Services;
-using Maroik.Core.Domain.Accounts;
 using Maroik.Core.Domain.Boards;
+using Maroik.Core.Domain.Primitives;
 
 namespace Maroik.Core.Service.Tests.Services;
 
@@ -24,19 +24,6 @@ public class BoardPolicyServiceTests
     public void CanPostNotice_IsForAnAdministrator(string role, bool expected)
     {
         Assert.Equal(expected, _sut.CanPostNotice(new AccountResponse { Role = role }));
-    }
-
-    // -- NormalizeListPage ---------------------------------------------------------
-
-    /// <summary>There is no page before the first; any other page stands.</summary>
-    [Theory]
-    [InlineData(-3, 1)]
-    [InlineData(0, 1)]
-    [InlineData(1, 1)]
-    [InlineData(7, 7)]
-    public void NormalizeListPage_HasNoPageBeforeTheFirst(int requested, int expected)
-    {
-        Assert.Equal(expected, _sut.NormalizeListPage(requested));
     }
 
     // -- CanOpenEditPage -----------------------------------------------------------

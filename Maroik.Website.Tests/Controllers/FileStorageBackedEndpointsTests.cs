@@ -3,7 +3,7 @@ using System.Text.Json;
 using ImageMagick;
 using Maroik.Core.Contract.Enums;
 using Maroik.Core.Contract.Interfaces;
-using Maroik.Core.Domain.Accounts;
+using Maroik.Core.Domain.Primitives;
 using Maroik.Core.PostgreSQL.Contexts;
 using Maroik.Core.PostgreSQL.Models;
 using Maroik.Website.Extensions;

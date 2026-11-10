@@ -1,4 +1,4 @@
-using Maroik.Core.Domain.Accounts;
+using Maroik.Core.Domain.Primitives;
 using Maroik.Core.PostgreSQL.Contexts;
 using Maroik.Website.Constants;
 using Maroik.Website.Tests.Fixtures;

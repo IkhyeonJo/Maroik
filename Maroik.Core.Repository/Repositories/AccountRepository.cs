@@ -1,5 +1,6 @@
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Domain.Accounts;
+using Maroik.Core.Domain.Primitives;
 using Maroik.Core.Domain.ValueObjects;
 using Maroik.Core.PostgreSQL.Contexts;
 using Maroik.Core.Repository.Translators;

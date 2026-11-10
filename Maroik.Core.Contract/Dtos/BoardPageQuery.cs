@@ -14,7 +14,7 @@ namespace Maroik.Core.Contract.Dtos;
 /// <param name="SearchType">"Title", "Writer", or null/empty for no search.</param>
 /// <param name="SearchText">Search text; the search is skipped if this is null or empty.</param>
 /// <param name="IsLoggedIn">Whether the viewer has an active session; the service turns it into a search scope with <see cref="Domain.Boards.Board.SearchVisibilityFor"/>.</param>
-/// <param name="ViewerRole">The viewer's role (<see cref="Domain.Accounts.Role"/>), the rule's other input; ignored when not logged in.</param>
+/// <param name="ViewerRole">The viewer's role (<see cref="Domain.Primitives.Role"/>), the rule's other input; ignored when not logged in.</param>
 /// <param name="ViewerNickname">
 /// The viewer's nickname — whose locked posts count as "own" in a <see cref="Domain.Boards.BoardSearchVisibility.PublicAndOwn"/>
 /// search. Ignored when <see cref="OwnerNickname"/> is set.

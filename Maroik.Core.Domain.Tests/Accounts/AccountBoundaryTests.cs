@@ -1,5 +1,6 @@
 using System.Text.RegularExpressions;
 using Maroik.Core.Domain.Accounts;
+using Maroik.Core.Domain.Primitives;
 using DomainAccount = Maroik.Core.Domain.Accounts.Account;
 
 namespace Maroik.Core.Domain.Tests.Accounts;

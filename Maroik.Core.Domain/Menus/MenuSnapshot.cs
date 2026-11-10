@@ -1,3 +1,4 @@
+using Maroik.Core.Domain.Primitives;
 
 namespace Maroik.Core.Domain.Menus;
 
@@ -28,11 +29,11 @@ public sealed class MenuSnapshot(IReadOnlyList<Category> categories, IReadOnlyLi
     /// </summary>
     public bool AdminCanReachMenuManagement { get; } =
         categories.Any(category =>
-            category is { Role: Accounts.Role.Admin, Controller: MenuSafeguardPolicy.MenuManagementController }
+            category is { Role: Role.Admin, Controller: MenuSafeguardPolicy.MenuManagementController }
             && (string.IsNullOrEmpty(category.Action)
                 ? subCategories.Any(sub =>
                     sub.CategoryId == category.Id
-                    && sub is { Role: Accounts.Role.Admin, Action: MenuSafeguardPolicy.MenuManagementAction })
+                    && sub is { Role: Role.Admin, Action: MenuSafeguardPolicy.MenuManagementAction })
                 : category.Action == MenuSafeguardPolicy.MenuManagementAction));
 
     /// <summary>This menu with <paramref name="updated"/> in place of the category that has its id.</summary>

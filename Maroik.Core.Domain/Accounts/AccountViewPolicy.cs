@@ -1,3 +1,5 @@
+using Maroik.Core.Domain.Primitives;
+
 namespace Maroik.Core.Domain.Accounts;
 
 /// <summary>

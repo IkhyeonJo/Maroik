@@ -1,5 +1,4 @@
 using Maroik.Core.Domain.Accounts;
-using Maroik.Core.Domain.Boards;
 using Maroik.Core.Domain.Budgets;
 using Maroik.Core.Domain.Calendars;
 using Maroik.Core.Domain.FileManagers;
@@ -18,9 +17,6 @@ namespace Maroik.Core.Service.Constants;
 /// </summary>
 public static class PolicyLimits
 {
-    /// <summary><see cref="Board.ListPageSize"/>.</summary>
-    public const int BoardListPageSize = Board.ListPageSize;
-
     /// <summary><see cref="AttachmentUploadPolicy.AcceptedExtension"/>, as a file input's <c>accept</c>.</summary>
     public const string AttachmentAccept = AttachmentUploadPolicy.AcceptedExtension;
 
