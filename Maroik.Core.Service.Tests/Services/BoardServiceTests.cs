@@ -1816,4 +1816,39 @@ public class BoardServiceTests
         _attachmentContent.Verify(s => s.SanitizeContent(It.IsAny<string>()), Times.Never);
         _unitOfWork.Verify(u => u.BeginAsync(It.IsAny<IsolationLevel?>(), It.IsAny<CancellationToken>()), Times.Never);
     }
+
+    // -- Inline image bound --------------------------------------------------
+
+    /// <summary>The refusal <c>IAttachmentContentService.CheckInlineImages</c> answers for a body with too many images.</summary>
+    private static ServiceResult TooManyImages() => ServiceResult.Validation("Content.TooManyImages", "You can insert at most {0} images.", 20);
+
+    /// <summary>A post whose sanitized body holds too many images is refused before any transaction starts or file is uploaded.</summary>
+    [Fact]
+    public async Task WriteBoardAsync_RefusesABodyWithTooManyImages_BeforeTheTransaction()
+    {
+        _attachmentContent.Setup(s => s.SanitizeAndDecryptContent("raw")).Returns("sanitized");
+        _attachmentContent.Setup(s => s.CheckInlineImages("sanitized")).Returns(TooManyImages());
+
+        ServiceResult result = await CreateSut().WriteBoardAsync(
+            new BoardRequest { Type = BoardTypes.FreeForum, Title = "t", Content = "raw", Writer = "Alice" }, isAdmin: false, null,
+            TestContext.Current.CancellationToken);
+
+        Assert.Equal(("Content.TooManyImages", ServiceErrorType.Validation), (result.ErrorCode, result.ErrorType));
+        _unitOfWork.Verify(u => u.BeginAsync(It.IsAny<IsolationLevel?>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    /// <summary>The edit path refuses a body with too many images the same way.</summary>
+    [Fact]
+    public async Task EditBoardAsync_RefusesABodyWithTooManyImages_BeforeTheTransaction()
+    {
+        _attachmentContent.Setup(s => s.SanitizeAndDecryptContent("raw")).Returns("sanitized");
+        _attachmentContent.Setup(s => s.CheckInlineImages("sanitized")).Returns(TooManyImages());
+
+        ServiceResult result = await CreateSut().EditBoardAsync(
+            new BoardRequest { Id = 1, Type = BoardTypes.FreeForum, Title = "t", Content = "raw" }, "Alice", isAdmin: false, null,
+            TestContext.Current.CancellationToken);
+
+        Assert.Equal(("Content.TooManyImages", ServiceErrorType.Validation), (result.ErrorCode, result.ErrorType));
+        _unitOfWork.Verify(u => u.BeginAsync(It.IsAny<IsolationLevel?>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
 }

@@ -82,6 +82,13 @@ public class HtmlParserService : IHtmlParserService
         return body.InnerHtml;
     }
 
+    /// <inheritdoc />
+    public int CountImages(string html)
+    {
+        using IDocument document = ParseIntoBody(html, out IElement body);
+        return body.QuerySelectorAll("img").Length;
+    }
+
     /// <summary>
     /// Parses <paramref name="html"/> as the content of a &lt;body&gt; (the HTML5 fragment algorithm) and returns the owning
     /// document (the caller disposes it), with <paramref name="body"/> holding the parsed nodes.

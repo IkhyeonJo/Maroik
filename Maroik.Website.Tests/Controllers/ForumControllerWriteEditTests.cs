@@ -204,4 +204,29 @@ public class ForumControllerWriteEditTests(MaroikWebApplicationFactory factory)
 
         Assert.Contains("\"result\":false", json, StringComparison.Ordinal);
     }
+
+    // -- Inline image bound (TitledContentPolicy.MaxInlineImages) -----------------------
+
+    /// <summary>A post holds at most 20 inline images: 20 are stored, 21 are refused in the visitor's language and nothing is stored.</summary>
+    [Fact]
+    public async Task WriteFreeBoard_StoresTwentyInlineImages_AndRefusesTwentyOne()
+    {
+        var session = await LoginAsUserAsync();
+        string allowed = UniqueTitle(), refused = UniqueTitle();
+
+        using var atLimit = session.BuildFormPostRequest("/Forum/WriteFreeBoard", BoardForm(allowed, InlineImageBodies.Of(factory, 20)));
+        string stored = await (await _client.SendAsync(atLimit, TestContext.Current.CancellationToken)).Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        using var overLimit = session.BuildFormPostRequest("/Forum/WriteFreeBoard", BoardForm(refused, InlineImageBodies.Of(factory, 21)));
+        overLimit.Headers.AcceptLanguage.ParseAdd("ko-KR");
+        string json = await (await _client.SendAsync(overLimit, TestContext.Current.CancellationToken)).Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        Assert.Contains("\"result\":true", stored, StringComparison.Ordinal);
+        using var doc = System.Text.Json.JsonDocument.Parse(json);
+        Assert.False(doc.RootElement.GetProperty("result").GetBoolean());
+        Assert.Equal("이미지는 최대 20개까지 넣을 수 있습니다.", doc.RootElement.GetProperty("error").GetString());
+        using var scope = factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        Assert.Single(db.Boards, b => b.Title == allowed);
+        Assert.DoesNotContain(db.Boards, b => b.Title == refused);
+    }
 }

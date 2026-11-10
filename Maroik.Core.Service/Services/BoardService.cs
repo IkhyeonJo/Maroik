@@ -122,6 +122,8 @@ public class BoardService(
         // Bounded before the sanitizer runs: its time grows faster than the length for nested HTML.
         if (Board.ValidateRawContent(request.Content) is { IsError: true } tooLong) return ServiceResult.FromError(tooLong.FirstError);
         string content = attachmentContent.SanitizeAndDecryptContent(request.Content ?? "");
+        // Counted on the sanitized body, before the transaction: every view fetches and embeds each image.
+        if (attachmentContent.CheckInlineImages(content) is { } tooManyImages) return tooManyImages;
 
         await unitOfWork.BeginAsync(ct: ct);
         try
@@ -186,6 +188,8 @@ public class BoardService(
         // Bounded before the sanitizer runs: its time grows faster than the length for nested HTML.
         if (Board.ValidateRawContent(request.Content) is { IsError: true } tooLong) return ServiceResult.FromError(tooLong.FirstError);
         string content = attachmentContent.SanitizeAndDecryptContent(request.Content ?? "");
+        // Counted on the sanitized body, before the transaction: every view fetches and embeds each image.
+        if (attachmentContent.CheckInlineImages(content) is { } tooManyImages) return tooManyImages;
 
         await unitOfWork.BeginAsync(ct: ct);
         try

@@ -246,4 +246,21 @@ public class CalendarControllerEventTests(MaroikWebApplicationFactory factory)
 
         Assert.Contains("\"result\":false", json, StringComparison.Ordinal);
     }
+
+    /// <summary>An event description with more inline images than a body may hold is refused in the visitor's language.</summary>
+    [Fact]
+    public async Task CreateCalendarEvent_RefusesTwentyOneInlineImages()
+    {
+        var session = await LoginAsUserAsync();
+        MultipartFormDataContent form = EventForm(1, UniqueTitle());
+        MultipartForm.AddText(form, "Description", InlineImageBodies.Of(factory, 21));
+        using var request = session.BuildFormPostRequest("/Calendar/CreateCalendarEvent", form);
+        request.Headers.AcceptLanguage.ParseAdd("ko-KR");
+
+        var response = await _client.SendAsync(request, TestContext.Current.CancellationToken);
+        using var doc = System.Text.Json.JsonDocument.Parse(await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken));
+
+        Assert.False(doc.RootElement.GetProperty("result").GetBoolean());
+        Assert.Equal("이미지는 최대 20개까지 넣을 수 있습니다.", doc.RootElement.GetProperty("error").GetString());
+    }
 }

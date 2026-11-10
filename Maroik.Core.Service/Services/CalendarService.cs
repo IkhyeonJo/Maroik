@@ -523,6 +523,8 @@ public class CalendarService(
         // Bounded before the sanitizer runs: its time grows faster than the length for nested HTML.
         if (CalendarEvent.ValidateRawDescription(request.Description) is { IsError: true } tooLong) return ServiceResult.FromError(tooLong.FirstError);
         string description = attachmentContent.SanitizeAndDecryptContent(request.Description ?? "");
+        // Counted on the sanitized body, before the transaction: every view fetches and embeds each image.
+        if (attachmentContent.CheckInlineImages(description) is { } tooManyImages) return tooManyImages;
 
         await unitOfWork.BeginAsync(ct: ct);
         try
@@ -592,6 +594,8 @@ public class CalendarService(
         // Bounded before the sanitizer runs: its time grows faster than the length for nested HTML.
         if (CalendarEvent.ValidateRawDescription(request.Description) is { IsError: true } tooLong) return ServiceResult.FromError(tooLong.FirstError);
         string description = attachmentContent.SanitizeAndDecryptContent(request.Description ?? "");
+        // Counted on the sanitized body, before the transaction: every view fetches and embeds each image.
+        if (attachmentContent.CheckInlineImages(description) is { } tooManyImages) return tooManyImages;
 
         await unitOfWork.BeginAsync(ct: ct);
         try

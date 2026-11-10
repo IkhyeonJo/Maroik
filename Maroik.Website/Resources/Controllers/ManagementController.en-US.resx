@@ -546,4 +546,7 @@
   <data name="Only its author can comment on a private note." xml:space="preserve">
     <value>Only its author can comment on a private note.</value>
   </data>
+  <data name="You can insert at most {0} images." xml:space="preserve">
+    <value>You can insert at most {0} images.</value>
+  </data>
 </root>

@@ -20,4 +20,7 @@ public interface IHtmlParserService
 
     /// <summary>Synchronous overload of <see cref="TransformImageAttributesAsync"/>.</summary>
     string TransformImageAttributes(string html, Func<string, HtmlImgPatch?> patchFactory);
+
+    /// <summary>The number of <c>&lt;img&gt;</c> tags in <paramref name="html"/>, a repeated image counted each time.</summary>
+    int CountImages(string html);
 }

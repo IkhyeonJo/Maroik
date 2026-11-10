@@ -350,4 +350,19 @@ public class ManagementControllerPrivateNoteTests(MaroikWebApplicationFactory fa
 
         Assert.Equal(System.Net.HttpStatusCode.Redirect, response.StatusCode);
     }
+
+    /// <summary>A private note with more inline images than a body may hold is refused in the visitor's language.</summary>
+    [Fact]
+    public async Task WritePrivateNoteBoard_RefusesTwentyOneInlineImages()
+    {
+        var session = await LoginAsUserAsync();
+        using var request = session.BuildFormPostRequest("/Management/WritePrivateNoteBoard", BoardForm(UniqueTitle(), content: InlineImageBodies.Of(factory, 21)));
+        request.Headers.AcceptLanguage.ParseAdd("ko-KR");
+
+        var response = await _client.SendAsync(request, TestContext.Current.CancellationToken);
+        using var doc = System.Text.Json.JsonDocument.Parse(await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken));
+
+        Assert.False(doc.RootElement.GetProperty("result").GetBoolean());
+        Assert.Equal("이미지는 최대 20개까지 넣을 수 있습니다.", doc.RootElement.GetProperty("error").GetString());
+    }
 }

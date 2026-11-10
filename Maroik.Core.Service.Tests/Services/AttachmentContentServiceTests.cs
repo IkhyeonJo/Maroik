@@ -609,4 +609,70 @@ public class AttachmentContentServiceTests
         Assert.Same(thrown, record.Exception);
         Assert.Equal("Ignoring an image alt that is not a decryptable storage token", record.Message);
     }
+
+    /// <summary>
+    /// The same image referenced several times is downloaded once: every repeat gets the first download's patch, so a body
+    /// that repeats one large image costs one fetch (and one base64 string), not one per tag.
+    /// </summary>
+    [Fact]
+    public async Task PrepareHtmlForDisplayAsync_PatchFactory_DownloadsARepeatedImageOnce()
+    {
+        Func<string, CancellationToken, Task<HtmlImgPatch?>>? capturedFactory = null;
+        _htmlParser.Setup(p => p.TransformImageAttributesAsync(
+                It.IsAny<string>(), It.IsAny<Func<string, CancellationToken, Task<HtmlImgPatch?>>>(), It.IsAny<CancellationToken>()))
+            .Callback<string, Func<string, CancellationToken, Task<HtmlImgPatch?>>, CancellationToken>(
+                (_, factory, _) => capturedFactory = factory)
+            .ReturnsAsync(("<html/>", true));
+        _fileClient.Setup(f => f.DownloadAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([1, 2, 3]);
+        _dataProtection.Setup(r => r.Protect(ProtectedValue.StoredFilePath, It.IsAny<string>())).Returns((ProtectedValue _, string path) => $"protected:{path}");
+
+        await CreateSut().PrepareHtmlForDisplayAsync("<html/>", TestContext.Current.CancellationToken);
+        HtmlImgPatch? first = await capturedFactory!("upload/a.png", TestContext.Current.CancellationToken);
+        HtmlImgPatch? repeat = await capturedFactory("upload/a.png", TestContext.Current.CancellationToken);
+        HtmlImgPatch? other = await capturedFactory("upload/b.png", TestContext.Current.CancellationToken);
+
+        Assert.Same(first, repeat);
+        Assert.Equal("protected:upload/b.png", other!.NewAlt);
+        _fileClient.Verify(f => f.DownloadAsync("upload/a.png", It.IsAny<CancellationToken>()), Times.Once);
+        _fileClient.Verify(f => f.DownloadAsync("upload/b.png", It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    /// <summary>A repeat is not carried over to the next call: each display prepares from what file storage holds then.</summary>
+    [Fact]
+    public async Task PrepareHtmlForDisplayAsync_DownloadsAgain_OnTheNextCall()
+    {
+        var factories = new List<Func<string, CancellationToken, Task<HtmlImgPatch?>>>();
+        _htmlParser.Setup(p => p.TransformImageAttributesAsync(
+                It.IsAny<string>(), It.IsAny<Func<string, CancellationToken, Task<HtmlImgPatch?>>>(), It.IsAny<CancellationToken>()))
+            .Callback<string, Func<string, CancellationToken, Task<HtmlImgPatch?>>, CancellationToken>(
+                (_, factory, _) => factories.Add(factory))
+            .ReturnsAsync(("<html/>", true));
+        _fileClient.Setup(f => f.DownloadAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([1]);
+        AttachmentContentService sut = CreateSut();
+
+        await sut.PrepareHtmlForDisplayAsync("<html/>", TestContext.Current.CancellationToken);
+        await sut.PrepareHtmlForDisplayAsync("<html/>", TestContext.Current.CancellationToken);
+        await factories[0]("upload/a.png", TestContext.Current.CancellationToken);
+        await factories[1]("upload/a.png", TestContext.Current.CancellationToken);
+
+        _fileClient.Verify(f => f.DownloadAsync("upload/a.png", It.IsAny<CancellationToken>()), Times.Exactly(2));
+    }
+
+    // -- CheckInlineImages ------------------------------------------------------------
+
+    /// <summary>A body with as many images as the domain allows passes; one more is refused with the domain's error.</summary>
+    [Fact]
+    public void CheckInlineImages_AllowsTheLimit_AndRefusesOneMore()
+    {
+        _htmlParser.Setup(p => p.CountImages("at-limit")).Returns(Maroik.Core.Domain.Primitives.TitledContentPolicy.MaxInlineImages);
+        _htmlParser.Setup(p => p.CountImages("over-limit")).Returns(Maroik.Core.Domain.Primitives.TitledContentPolicy.MaxInlineImages + 1);
+
+        Assert.Null(CreateSut().CheckInlineImages("at-limit"));
+        ServiceResult? refused = CreateSut().CheckInlineImages("over-limit");
+
+        Assert.NotNull(refused);
+        Assert.Equal(("Content.TooManyImages", ServiceErrorType.Validation), (refused.ErrorCode, refused.ErrorType));
+        Assert.Equal("You can insert at most {0} images.", refused.ErrorKey);
+        Assert.Equal([Maroik.Core.Domain.Primitives.TitledContentPolicy.MaxInlineImages], refused.ErrorArgs);
+    }
 }

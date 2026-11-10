@@ -285,4 +285,7 @@
   <data name="Event dates must be between the years {0} and {1}." xml:space="preserve">
     <value>Event dates must be between the years {0} and {1}.</value>
   </data>
+  <data name="You can insert at most {0} images." xml:space="preserve">
+    <value>You can insert at most {0} images.</value>
+  </data>
 </root>

@@ -42,6 +42,12 @@ public interface IAttachmentContentService
     /// </summary>
     string SanitizeAndDecryptContent(string html);
 
+    /// <summary>
+    /// Holds a sanitized body to the domain's bound on inline images (every view fetches and embeds each of them).
+    /// Returns <see langword="null"/> when the body passes.
+    /// </summary>
+    ServiceResult? CheckInlineImages(string html);
+
     /// <summary>Sanitizes HTML with no inline-image handling (for content with no embedded images, e.g. comments).</summary>
     string SanitizeContent(string html);
 }

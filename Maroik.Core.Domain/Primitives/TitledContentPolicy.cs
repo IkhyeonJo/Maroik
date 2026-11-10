@@ -1,3 +1,6 @@
+using ErrorOr;
+using Maroik.Core.Domain.Errors;
+
 namespace Maroik.Core.Domain.Primitives;
 
 /// <summary>
@@ -22,4 +25,19 @@ public static class TitledContentPolicy
     /// the largest storable post (~110 images) comes back at ~36,000.
     /// </summary>
     public const int MaxRawBodyLength = 4 * MaxBodyLength;
+
+    /// <summary>
+    /// Maximum number of inline images (<c>&lt;img&gt;</c> tags, a repeated image counted each time) in a body. Every view
+    /// fetches each image whole from file storage and embeds it as base64, and an image may be as large as the attachment
+    /// limit (10 MB): without a bound, a body of repeated image tags (~180 fit in <see cref="MaxBodyLength"/>) made one
+    /// view build gigabytes in the web process's memory.
+    /// </summary>
+    public const int MaxInlineImages = 20;
+
+    /// <summary>Refuses a body holding more than <see cref="MaxInlineImages"/> images.</summary>
+    /// <param name="count">The number of <c>&lt;img&gt;</c> tags in the sanitized body.</param>
+    public static ErrorOr<Success> CheckInlineImageCount(int count) =>
+        count > MaxInlineImages
+            ? DomainError.Validation("Content.TooManyImages", "You can insert at most {0} images.", MaxInlineImages)
+            : Result.Success;
 }

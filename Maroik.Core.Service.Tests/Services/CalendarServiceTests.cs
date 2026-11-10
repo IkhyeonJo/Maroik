@@ -2315,4 +2315,39 @@ public class CalendarServiceTests
         _attachmentContent.Verify(a => a.SanitizeAndDecryptContent(It.IsAny<string>()), Times.Never);
         _unitOfWork.Verify(u => u.BeginAsync(It.IsAny<System.Data.IsolationLevel?>(), It.IsAny<CancellationToken>()), Times.Never);
     }
+
+    // -- Inline image bound --------------------------------------------------
+
+    /// <summary>The refusal <c>IAttachmentContentService.CheckInlineImages</c> answers for a description with too many images.</summary>
+    private static ServiceResult TooManyImages() => ServiceResult.Validation("Content.TooManyImages", "You can insert at most {0} images.", 20);
+
+    /// <summary>An event whose sanitized description holds too many images is refused before any transaction starts.</summary>
+    [Fact]
+    public async Task CreateCalendarEventAsync_RefusesADescriptionWithTooManyImages_BeforeTheTransaction()
+    {
+        _attachmentContent.Setup(a => a.SanitizeAndDecryptContent("raw")).Returns("sanitized");
+        _attachmentContent.Setup(a => a.CheckInlineImages("sanitized")).Returns(TooManyImages());
+
+        ServiceResult result = await CreateSut().CreateCalendarEventAsync(
+            new CalendarEventRequest { StartDate = _now, EndDate = _now, CalendarId = 1, Description = "raw" }, "user@example.com", "1", [], null,
+            TestContext.Current.CancellationToken);
+
+        Assert.Equal(("Content.TooManyImages", ServiceErrorType.Validation), (result.ErrorCode, result.ErrorType));
+        _unitOfWork.Verify(u => u.BeginAsync(It.IsAny<System.Data.IsolationLevel?>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    /// <summary>The update path refuses a description with too many images the same way.</summary>
+    [Fact]
+    public async Task UpdateCalendarEventAsync_RefusesADescriptionWithTooManyImages_BeforeTheTransaction()
+    {
+        _attachmentContent.Setup(a => a.SanitizeAndDecryptContent("raw")).Returns("sanitized");
+        _attachmentContent.Setup(a => a.CheckInlineImages("sanitized")).Returns(TooManyImages());
+
+        ServiceResult result = await CreateSut().UpdateCalendarEventAsync(
+            new CalendarEventRequest { StartDate = _now, EndDate = _now, Id = 1, CalendarId = 1, Description = "raw" }, "user@example.com", "1", [], null,
+            TestContext.Current.CancellationToken);
+
+        Assert.Equal(("Content.TooManyImages", ServiceErrorType.Validation), (result.ErrorCode, result.ErrorType));
+        _unitOfWork.Verify(u => u.BeginAsync(It.IsAny<System.Data.IsolationLevel?>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
 }

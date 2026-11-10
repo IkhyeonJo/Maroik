@@ -1,8 +1,10 @@
+using System.Collections.Concurrent;
 using System.Diagnostics;
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Enums;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Contract.Settings;
+using Maroik.Core.Domain.Primitives;
 using Maroik.Core.Domain.Uploads;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -112,27 +114,38 @@ public class AttachmentContentService(
     /// <inheritdoc />
     public async Task<(string Html, bool HasImages)> PrepareHtmlForDisplayAsync(string html, CancellationToken ct = default)
     {
-        return await htmlParser.TransformImageAttributesAsync(html, async (alt, token) =>
+        // One download per stored path for this call: a body may show the same image several times, and each repeat would
+        // otherwise fetch the whole file again and hold another base64 copy of it. Lazy, because the parser runs several
+        // fetches at once and two of them may ask for the same path together.
+        var patches = new ConcurrentDictionary<string, Lazy<Task<HtmlImgPatch?>>>(StringComparer.Ordinal);
+        return await htmlParser.TransformImageAttributesAsync(html,
+            (alt, token) => patches.GetOrAdd(alt, path => new Lazy<Task<HtmlImgPatch?>>(() => FetchImagePatchAsync(path, token))).Value, ct);
+    }
+
+    /// <summary>
+    /// The display patch of the image stored at <paramref name="alt"/>: its bytes as base64, its content type, and the
+    /// path in its protected form.
+    /// </summary>
+    private async Task<HtmlImgPatch?> FetchImagePatchAsync(string alt, CancellationToken token)
+    {
+        try
         {
-            try
-            {
-                byte[] fileData = await fileClient.DownloadAsync(alt, token);
-                return new HtmlImgPatch(
-                    NewAlt: dataProtection.Protect(ProtectedValue.StoredFilePath, alt),
-                    DataFile: Convert.ToBase64String(fileData),
-                    DataContentType: GetImageContentType(alt));
-            }
-            catch (Exception ex)
-            {
-                // A missing/unreachable image must not fail the whole post/event render — drop just
-                // this <img> tag rather than leave its patch untouched: a null patch here would leave
-                // the plaintext storage path sitting in `alt` (it's only ever re-encrypted by the
-                // NewAlt patch above), exposing internal storage layout to the client. Remove: true
-                // is the same graceful-degradation contract as OpenFileAsync, minus the leak.
-                logger.LogError(ex, "Failed to download image {FilePath} while preparing HTML for display. CorrelationId={CorrelationId}", alt, Activity.Current?.Id);
-                return new HtmlImgPatch(Remove: true);
-            }
-        }, ct);
+            byte[] fileData = await fileClient.DownloadAsync(alt, token);
+            return new HtmlImgPatch(
+                NewAlt: dataProtection.Protect(ProtectedValue.StoredFilePath, alt),
+                DataFile: Convert.ToBase64String(fileData),
+                DataContentType: GetImageContentType(alt));
+        }
+        catch (Exception ex)
+        {
+            // A missing/unreachable image must not fail the whole post/event render — drop just
+            // this <img> tag rather than leave its patch untouched: a null patch here would leave
+            // the plaintext storage path sitting in `alt` (it's only ever re-encrypted by the
+            // NewAlt patch above), exposing internal storage layout to the client. Remove: true
+            // is the same graceful-degradation contract as OpenFileAsync, minus the leak.
+            logger.LogError(ex, "Failed to download image {FilePath} while preparing HTML for display. CorrelationId={CorrelationId}", alt, Activity.Current?.Id);
+            return new HtmlImgPatch(Remove: true);
+        }
     }
 
     /// <inheritdoc />
@@ -181,6 +194,12 @@ public class AttachmentContentService(
             return null;
         }
     }
+
+    /// <inheritdoc />
+    public ServiceResult? CheckInlineImages(string html) =>
+        TitledContentPolicy.CheckInlineImageCount(htmlParser.CountImages(html)) is { IsError: true } tooMany
+            ? ServiceResult.FromError(tooMany.FirstError)
+            : null;
 
     /// <inheritdoc />
     public string SanitizeContent(string html) => htmlSanitizer.Sanitize(html);

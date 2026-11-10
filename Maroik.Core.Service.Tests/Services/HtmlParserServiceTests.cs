@@ -268,4 +268,18 @@ public class HtmlParserServiceTests
         for (int i = 0; i < 9; i++)
             Assert.Contains($"alt=\"done-{i}\"", result, StringComparison.Ordinal);
     }
+
+    /// <summary>
+    /// Every &lt;img&gt; of the tree the browser builds is counted, a repeated one each time; image markup the browser reads as
+    /// text (inside a textarea) is not an image.
+    /// </summary>
+    [Theory]
+    [InlineData("", 0)]
+    [InlineData("<p>no image</p>", 0)]
+    [InlineData("<img alt=\"a\"><p><img alt=\"a\"></p><img>", 3)]
+    [InlineData("<textarea><img alt=\"a\"></textarea><img alt=\"b\">", 1)]
+    public void CountImages_CountsEveryImgElement(string html, int expected)
+    {
+        Assert.Equal(expected, _sut.CountImages(html));
+    }
 }

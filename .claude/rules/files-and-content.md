@@ -39,7 +39,10 @@ that specific change. Check every candidate review finding in this area against 
   a request without a file removes the writer's attachment (pinned by
   `EditBoardAsync_AdminNonOwner_ClearingALockWithoutAFile_ClearsTheWritersAttachmentRecord`).
 - Inline images in post / event bodies are fetched and embedded as base64 on every view
-  (`PrepareHtmlForDisplayAsync`). Keep that rendering path.
+  (`PrepareHtmlForDisplayAsync`). Keep that rendering path. It is bounded (since 2026-11-10): a body holds at most
+  `TitledContentPolicy.MaxInlineImages` (20) `<img>` tags, a repeated image counted each time, checked on the sanitized body
+  when a post, private note or event is written (`IAttachmentContentService.CheckInlineImages`), and one view downloads a
+  repeated image once. Without it ~180 tags of one 10 MB image fit in a body and one view built gigabytes in the web process.
 - Replacing or clearing an attachment (post, private note, calendar event) only rewrites its database
   record; the old file stays in Maroik.FileStorage, as does a file uploaded by a write whose transaction
   later rolls back. There is no delete API for them on purpose — do not add one or a cleanup job. (The File Manager's
