@@ -667,6 +667,31 @@ public class AuthorizationFilterTests
         _menuService.Verify(m => m.GetAllCategoriesAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
+    /// <summary>
+    /// The rebuilt menu is cached for a fixed 10 minutes, not for 10 minutes after its last read. Every request reads it, so a
+    /// sliding entry never expired on a visited site: a menu cached from a read made just before an administrator's change (and
+    /// written just after that change cleared the cache) kept deciding access until the next menu edit.
+    /// </summary>
+    [Fact]
+    public async Task OnAuthorizationAsync_CachesTheMenu_ForAFixedTenMinutes()
+    {
+        var written = new List<DistributedCacheEntryOptions>();
+        _cache.Setup(c => c.SetAsync(It.IsAny<string>(), It.IsAny<byte[]>(), It.IsAny<DistributedCacheEntryOptions>(), It.IsAny<CancellationToken>()))
+            .Callback<string, byte[], DistributedCacheEntryOptions, CancellationToken>((_, _, options, _) => written.Add(options))
+            .Returns(Task.CompletedTask);
+        _sessionService.Setup(s => s.GetAccountAsync(It.IsAny<CancellationToken>())).ReturnsAsync((AccountResponse?)null);
+        SetupMenu([], []);
+
+        await CreateSut().OnAuthorizationAsync(BuildContext("Account", "Login"));
+
+        Assert.Equal(6, written.Count);
+        Assert.All(written, options =>
+        {
+            Assert.Equal(TimeSpan.FromMinutes(10), options.AbsoluteExpirationRelativeToNow);
+            Assert.Null(options.SlidingExpiration);
+        });
+    }
+
     // -- Logging ------------------------------------------------------------------
 
     /// <summary>Asserts exactly one Warning contains <paramref name="containing"/>, and returns it.</summary>

@@ -23,7 +23,7 @@ namespace Maroik.Website.Filters;
 /// filter) means a denied request never reaches form / file model binding.
 /// <para>
 /// It also loads the category / sub-category menu for all three roles (Admin, User, Anonymous) —
-/// cached in the distributed cache with a 10-minute sliding expiration — because that data is the
+/// cached in the distributed cache for a fixed 10 minutes — because that data is the
 /// input to the decision. The loaded menu is stashed on <c>HttpContext.Items</c> as
 /// <see cref="NavigationMenus"/>; <see cref="ViewBagPopulatorFilter"/> publishes it to the ViewBag
 /// (there is no controller instance yet at this stage, so it cannot be done here).
@@ -272,8 +272,11 @@ public class AuthorizationFilter(IMenuService menuService, IDistributedCache cac
         var categories = (await menuService.GetAllCategoriesAsync()).ToList();
         var subCategories = (await menuService.GetAllSubCategoriesAsync()).ToList();
 
+        // Absolute, not sliding: every request reads these entries, so a sliding one never expired on a visited site. A menu
+        // read just before an administrator's change and cached just after that change cleared the entries would otherwise
+        // keep deciding access until the next menu edit; this way it is gone within 10 minutes.
         var entryOptions = new DistributedCacheEntryOptions()
-            .SetSlidingExpiration(TimeSpan.FromMinutes(10));
+            .SetAbsoluteExpiration(TimeSpan.FromMinutes(10));
 
         var menus = new NavigationMenus(
             [.. categories.Where(c => c.Role == AccountRoles.Admin)],
