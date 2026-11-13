@@ -35,6 +35,11 @@ public class CalendarLayoutFlowTests(E2ESharedFixture fixture) : E2ETestBase(fix
     {
         await page.Locator(".fc-day-sat:not(.fc-day-other)").Last.ClickAsync();
         await page.WaitForSelectorAsync("#createCalendarEventTaskDialogModal.show");
+        // The "show" class is set when the fade-in starts, and Bootstrap 4 ignores modal("hide") until it has ended. A person
+        // cannot fill and send the form that fast, but the browser can: when the reply came back during the fade, the dialog
+        // stayed open and covered the event (seen in CI). So wait for the fade to end before sending the form.
+        await page.WaitForFunctionAsync(
+            "() => { const modal = $('#createCalendarEventTaskDialogModal').data('bs.modal'); return modal._isShown && !modal._isTransitioning; }");
         await page.Locator("#createCalendarEventName").FillAsync("Layout check");
         await page.Locator("#createCalendarEventLocation").FillAsync("Seoul");
         await page.Locator("#createCalendarEventTaskDialogModal [type=submit]").ClickAsync();
