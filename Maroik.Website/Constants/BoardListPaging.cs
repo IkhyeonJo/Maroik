@@ -2,7 +2,7 @@ namespace Maroik.Website.Constants;
 
 /// <summary>
 /// How the board lists (FreeForum, PrivateNote) are paged. A presentation setting, not a business rule, so it lives here and not in
-/// <c>Maroik.Core.Domain</c> (like <see cref="CulturePolicy"/>).
+/// the domain (like <see cref="CulturePolicy"/>).
 /// </summary>
 public static class BoardListPaging
 {
