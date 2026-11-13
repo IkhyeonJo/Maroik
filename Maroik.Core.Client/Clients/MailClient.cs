@@ -1,4 +1,5 @@
 using System.Net.Security;
+using MailKit;
 using MailKit.Net.Smtp;
 using MailKit.Security;
 using Maroik.Core.Contract.Dtos;
@@ -108,7 +109,7 @@ public class MailClient(ILogger<MailClient> logger, IOptions<ServerSetting> serv
             }
             await smtp.ConnectAsync(settings.SmtpHost ?? "", settings.SmtpPort, socketOptions, ct);
             await smtp.AuthenticateAsync(settings.SmtpUserName ?? "", settings.SmtpPassword ?? "", ct);
-            await smtp.SendAsync(message, ct);
+            await smtp.SendAsync(new SendRequest(message), ct);
 
             // The server has accepted the message at this point, so a failure while closing the
             // connection (20 s timeout, socket reset, a canceled token at worker shutdown) must not
