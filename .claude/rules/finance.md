@@ -17,8 +17,6 @@ paths:
   - "**/Classifiers/**"
   - "**/*ClassSuggestion*"
   - "**/*Outlier*"
-  - "**/*Forecast*"
-  - "**/*Insight*"
 ---
 
 # Intended design: Finance
@@ -41,7 +39,7 @@ that specific change. Check every candidate review finding in this area against 
   or JPY, two for USD or EUR ("12.50"), three for KWD — and with every decimal place the `numeric(20,4)` columns store (trailing
   zeros dropped, `#,0.####`) when it is not, since the label is free text ("$", "원"). Owner's decision, 2026-11-14 (before, every
   currency showed every stored place). `AmountDisplay.Text` decides it for the finance grids (`AmountText`, sorted and filtered
-  on the numeric `Amount`), the dashboard sentences, and the dashboard tooltips (`#amountMinDecimalPlaces` /
+  on the numeric `Amount`) and the dashboard tooltips (`#amountMinDecimalPlaces` /
   `#amountMaxDecimalPlaces`). Display only: what is stored, validated and calculated is unchanged; a rounded figure is rounded
   half away from zero. Not covered: the Excel exports (cell values stay exact) and the budget sheets (spreadsheet cells).
 - The edit forms receive amounts as JSON numbers, so an amount beyond ~15 significant digits (≥ ~9×10¹⁵) can
@@ -66,16 +64,5 @@ expenditures and 581 incomes against simpler alternatives). They only read the l
 - **Unusually large expenditures** (the grid's "Amount check" column): the box-plot fence Q3 + 1.5 × IQR on ln(1 + amount), per
   sub-class and currency label, groups of at least 8. The logarithm (a ratio, not a difference) flags 1.9 % of the owner's records
   instead of 4.8 % on raw amounts. It is computed in `double`: it only decides a flag and produces no amount.
-- **Month-end projection** (dashboard, current month only): spent so far + the average of what the last 3 months with a record
-  spent after today's day. On 59 months of all expenditures it beat a 12-month average, a same-month-last-year and a Holt-Winters
-  model (MASE 0.44–0.54 against a naive "same as last month"; on consumer spending alone a 12-month average was slightly better,
-  0.42–0.53), so no time-series model is used. It is shown with its date and, from 3 earlier months on,
-  the mean absolute error of the same projection for those months. No prediction interval is shown: empirical 80 % intervals from
-  past errors covered only 55–79 % of later months.
-- **Spending facts** (dashboard): weekend against weekday daily average, the largest sub-class and its share, the change from the
-  month before (the same days for the current month) — descriptive statistics only, no significance tests.
-- The projection and the facts read the expenditures of the selected month's `ExpenditureForecastPolicy.HistoryMonths` (12) months
-  before as well (owner's decision, 2026-11-14), so January is compared with December and the projection and its typical error
-  work the same all year. It is still one expenditure query per dashboard (`GetSummaryAsync_DerivesYearMonthTotals_FromSingleYearRangeQueryPerRepository`),
-  now from the history start to the year's end, and the year's totals are cut from it (`GetSummaryAsync_TheMonthsBeforeTheYear_AreNotInTheYearsTotals`).
-  Measured on 8,645 records over 5½ years: the widest range (January, two years) took about 1.2 ms, one year 0.35 ms.
+- The dashboard has no month-end projection or spending-facts card: added on 2026-11-14 and removed the same day at the owner's
+  request.

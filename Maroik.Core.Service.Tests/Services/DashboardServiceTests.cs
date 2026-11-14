@@ -41,8 +41,8 @@ public class DashboardServiceTests
     /// <summary>The clock the service under test reads, stopped at <see cref="_now"/>.</summary>
     private readonly FakeTimeProvider _time = new(new DateTimeOffset(_now));
 
-    /// <summary>The service under test over the mocked dependencies, with <paramref name="settings"/> or defaults, reading <paramref name="time"/> or <see cref="_time"/>.</summary>
-    private DashboardService CreateSut(ServerSetting? settings = null, TimeProvider? time = null) => new(
+    /// <summary>The service under test over the mocked dependencies, with <paramref name="settings"/> or defaults.</summary>
+    private DashboardService CreateSut(ServerSetting? settings = null) => new(
         _accountRepo.Object,
         _assetRepo.Object,
         _incomeRepo.Object,
@@ -51,7 +51,7 @@ public class DashboardServiceTests
         _fixedExpenditureRepo.Object,
         _serverResourceReports.Object,
         Options.Create(settings ?? new ServerSetting()),
-        time ?? _time);
+        _time);
 
     /// <summary>The service under test, given the two report texts by the (mocked) client that reads them.</summary>
     private DashboardService SutReading(string host = "", string docker = "")
@@ -110,125 +110,6 @@ public class DashboardServiceTests
             .ReturnsAsync((Income?)null);
         _expenditureRepo.Setup(r => r.GetFirstByAccountEmailOrderedByCreatedAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((Expenditure?)null);
-    }
-
-    // -- GetSummaryAsync: forecast and facts -------------------------------------
-
-    /// <summary>
-    /// The current month's projection and facts are computed from the default-unit expenditures in the account's own time zone:
-    /// "now" is 1 July 21:00 in Seoul. A record at 30 June 16:00 UTC is 1 July in Seoul, so it is this month's; the USD record
-    /// is left out; June (the only recent month with a record) spent 300 after the 1st, so 150 so far projects to 450.
-    /// </summary>
-    [Fact]
-    public async Task GetSummaryAsync_CurrentMonth_ProjectsAndStatesFacts_InTheDefaultUnit_InTheAccountsTimeZone()
-    {
-        const string email = "user@example.com";
-        _accountRepo.Setup(r => r.FindByEmailAsync(email, It.IsAny<CancellationToken>())).ReturnsAsync(MakeAccount(email, "KRW"));
-        _assetRepo.Setup(r => r.GetByAccountEmailAsync(email, It.IsAny<CancellationToken>())).ReturnsAsync([MakeAsset("card"), MakeAsset("usd-card", "USD")]);
-        SetupEmptyFinancials();
-        List<Expenditure> records =
-        [
-            Expenditure.Reconstitute(1, email, "ConsumerSpending", "MealOrEatOutExpenses", "a", 100m, "KRW", "card", null, null, new DateTime(2026, 7, 1, 1, 0, 0), _now),
-            Expenditure.Reconstitute(2, email, "ConsumerSpending", "MealOrEatOutExpenses", "b", 50m, "KRW", "card", null, null, new DateTime(2026, 6, 30, 16, 0, 0), _now),
-            Expenditure.Reconstitute(3, email, "ConsumerSpending", "MealOrEatOutExpenses", "c", 300m, "KRW", "card", null, null, new DateTime(2026, 6, 20, 0, 0, 0), _now),
-            Expenditure.Reconstitute(4, email, "ConsumerSpending", "LeisureOrCulture", "d", 9000m, "USD", "usd-card", null, null, new DateTime(2026, 6, 25, 0, 0, 0), _now),
-        ];
-        _expenditureRepo.Setup(r => r.GetByAccountEmailAndDateRangeAsync(email, It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((string _, DateTime from, DateTime to, CancellationToken _) => [.. records.Where(e => e.Created >= from && e.Created < to)]);
-
-        DashboardDto result = await CreateSut().GetSummaryAsync(email, "2026", "7", "Asia/Seoul", TestContext.Current.CancellationToken);
-
-        Assert.NotNull(result.Forecast);
-        Assert.Equal((150m, 450m, 1), (result.Forecast.SpentSoFar, result.Forecast.Projected, result.Forecast.BasisMonths));
-        // The estimate carries what it was computed from: the account's date, and the earlier months its error was measured on (none here).
-        Assert.Equal((new DateOnly(2026, 7, 1), (decimal?)null, 0), (result.Forecast.AsOf, result.Forecast.TypicalError, result.Forecast.ErrorMonths));
-        Assert.NotNull(result.TopSubClass);
-        Assert.Equal(("MealOrEatOutExpenses", 150m, 100), (result.TopSubClass.SubClass, result.TopSubClass.Amount, result.TopSubClass.Percentage));
-        Assert.Null(result.WeekendWeekday); // 1 July 2026 is a Wednesday: no weekend day yet
-        Assert.Null(result.MonthOverMonth); // nothing on 1 June
-    }
-
-    /// <summary>A complete month gets its facts (here the weekend comparison and the change from the month before) but no projection.</summary>
-    [Fact]
-    public async Task GetSummaryAsync_APastMonth_StatesFacts_ButProjectsNothing()
-    {
-        const string email = "user@example.com";
-        _accountRepo.Setup(r => r.FindByEmailAsync(email, It.IsAny<CancellationToken>())).ReturnsAsync(MakeAccount(email, "KRW"));
-        _assetRepo.Setup(r => r.GetByAccountEmailAsync(email, It.IsAny<CancellationToken>())).ReturnsAsync([MakeAsset("card")]);
-        SetupEmptyFinancials();
-        List<Expenditure> records =
-        [
-            // June 2026: 6 June is a Saturday, 1 June a Monday (8 weekend days, 22 weekdays).
-            Expenditure.Reconstitute(1, email, "ConsumerSpending", "MealOrEatOutExpenses", "a", 800m, "KRW", "card", null, null, new DateTime(2026, 6, 6, 3, 0, 0), _now),
-            Expenditure.Reconstitute(2, email, "ConsumerSpending", "MealOrEatOutExpenses", "b", 1100m, "KRW", "card", null, null, new DateTime(2026, 6, 1, 3, 0, 0), _now),
-            Expenditure.Reconstitute(3, email, "ConsumerSpending", "MealOrEatOutExpenses", "c", 950m, "KRW", "card", null, null, new DateTime(2026, 5, 10, 3, 0, 0), _now),
-        ];
-        _expenditureRepo.Setup(r => r.GetByAccountEmailAndDateRangeAsync(email, It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((string _, DateTime from, DateTime to, CancellationToken _) => [.. records.Where(e => e.Created >= from && e.Created < to)]);
-
-        DashboardDto result = await CreateSut().GetSummaryAsync(email, "2026", "6", "UTC", TestContext.Current.CancellationToken);
-
-        Assert.Null(result.Forecast);
-        Assert.NotNull(result.WeekendWeekday);
-        Assert.Equal((100m, 50m, 100), (result.WeekendWeekday.WeekendDailyAverage, result.WeekendWeekday.WeekdayDailyAverage, result.WeekendWeekday.PercentDifference));
-        Assert.NotNull(result.MonthOverMonth);
-        Assert.Equal((950m, 1900m, 100, false), (result.MonthOverMonth.PreviousTotal, result.MonthOverMonth.CurrentTotal, result.MonthOverMonth.PercentChange, result.MonthOverMonth.SamePeriodOfMonth));
-    }
-
-    /// <summary>
-    /// January is compared with December: the expenditures of the months before the year are read for the facts (December
-    /// spent 1,000, January 500: down 50 %).
-    /// </summary>
-    [Fact]
-    public async Task GetSummaryAsync_January_IsComparedWithDecember()
-    {
-        const string email = "user@example.com";
-        _accountRepo.Setup(r => r.FindByEmailAsync(email, It.IsAny<CancellationToken>())).ReturnsAsync(MakeAccount(email, "KRW"));
-        _assetRepo.Setup(r => r.GetByAccountEmailAsync(email, It.IsAny<CancellationToken>())).ReturnsAsync([MakeAsset("card")]);
-        SetupEmptyFinancials();
-        List<Expenditure> records =
-        [
-            Expenditure.Reconstitute(1, email, "ConsumerSpending", "MealOrEatOutExpenses", "a", 1000m, "KRW", "card", null, null, new DateTime(2025, 12, 10, 3, 0, 0), _now),
-            Expenditure.Reconstitute(2, email, "ConsumerSpending", "MealOrEatOutExpenses", "b", 500m, "KRW", "card", null, null, new DateTime(2026, 1, 10, 3, 0, 0), _now),
-        ];
-        _expenditureRepo.Setup(r => r.GetByAccountEmailAndDateRangeAsync(email, It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((string _, DateTime from, DateTime to, CancellationToken _) => [.. records.Where(e => e.Created >= from && e.Created < to)]);
-
-        DashboardDto result = await CreateSut().GetSummaryAsync(email, "2026", "1", "UTC", TestContext.Current.CancellationToken);
-
-        Assert.NotNull(result.MonthOverMonth);
-        Assert.Equal((1000m, 500m, -50), (result.MonthOverMonth.PreviousTotal, result.MonthOverMonth.CurrentTotal, result.MonthOverMonth.PercentChange));
-        Assert.Equal(500m, result.YearExpenditureBreakdown["ConsumerSpending"].Total);
-    }
-
-    /// <summary>
-    /// Early in the year the projection reads last year's months too: on 10 February, with 100 on every 5th and 200 after every
-    /// 10th since October, it projects from December, January and November (100 + 200 = 300) and states the error of the same
-    /// projection for January, December and November (all exact: 0).
-    /// </summary>
-    [Fact]
-    public async Task GetSummaryAsync_February_ProjectsFromLastYearsMonths_WithTheirTypicalError()
-    {
-        const string email = "user@example.com";
-        _accountRepo.Setup(r => r.FindByEmailAsync(email, It.IsAny<CancellationToken>())).ReturnsAsync(MakeAccount(email, "KRW"));
-        _assetRepo.Setup(r => r.GetByAccountEmailAsync(email, It.IsAny<CancellationToken>())).ReturnsAsync([MakeAsset("card")]);
-        SetupEmptyFinancials();
-        List<Expenditure> records = [];
-        foreach (DateTime month in new[] { new DateTime(2025, 10, 1), new DateTime(2025, 11, 1), new DateTime(2025, 12, 1), new DateTime(2026, 1, 1) })
-        {
-            records.Add(Expenditure.Reconstitute(records.Count + 1, email, "ConsumerSpending", "MealOrEatOutExpenses", "a", 100m, "KRW", "card", null, null, month.AddDays(4), _now));
-            records.Add(Expenditure.Reconstitute(records.Count + 1, email, "ConsumerSpending", "MealOrEatOutExpenses", "b", 200m, "KRW", "card", null, null, month.AddDays(19), _now));
-        }
-        records.Add(Expenditure.Reconstitute(99, email, "ConsumerSpending", "MealOrEatOutExpenses", "c", 100m, "KRW", "card", null, null, new DateTime(2026, 2, 5), _now));
-        _expenditureRepo.Setup(r => r.GetByAccountEmailAndDateRangeAsync(email, It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((string _, DateTime from, DateTime to, CancellationToken _) => [.. records.Where(e => e.Created >= from && e.Created < to)]);
-
-        DashboardDto result = await CreateSut(time: new FakeTimeProvider(new DateTimeOffset(2026, 2, 10, 12, 0, 0, TimeSpan.Zero)))
-            .GetSummaryAsync(email, "2026", "2", "UTC", TestContext.Current.CancellationToken);
-
-        Assert.NotNull(result.Forecast);
-        Assert.Equal((100m, 300m, 3, (decimal?)0m, 3),
-            (result.Forecast.SpentSoFar, result.Forecast.Projected, result.Forecast.BasisMonths, result.Forecast.TypicalError, result.Forecast.ErrorMonths));
     }
 
     // -- GetSummaryAsync ------------------------------------------------------
@@ -576,9 +457,9 @@ public class DashboardServiceTests
 
         List<Expenditure> yearExpenditures =
         [
-            Expenditure.Reconstitute(1, email, "ConsumerSpending", "MealOrEatOutExpenses", null, 300m, "KRW", "Card", null, null, new DateTime(2025, 1, 15, 0, 0, 0, DateTimeKind.Utc), DateTime.UtcNow),
-            Expenditure.Reconstitute(2, email, "ConsumerSpending", "HousingOrSuppliesCost", null, 700m, "KRW", "Card", null, null, new DateTime(2025, 1, 15, 0, 0, 0, DateTimeKind.Utc), DateTime.UtcNow),
-            Expenditure.Reconstitute(3, email, "RegularSavings", "Deposit", null, 500m, "KRW", "Card", null, null, new DateTime(2025, 1, 15, 0, 0, 0, DateTimeKind.Utc), DateTime.UtcNow),
+            Expenditure.Reconstitute(1, email, "ConsumerSpending", "MealOrEatOutExpenses", null, 300m, "KRW", "Card", null, null, DateTime.UtcNow, DateTime.UtcNow),
+            Expenditure.Reconstitute(2, email, "ConsumerSpending", "HousingOrSuppliesCost", null, 700m, "KRW", "Card", null, null, DateTime.UtcNow, DateTime.UtcNow),
+            Expenditure.Reconstitute(3, email, "RegularSavings", "Deposit", null, 500m, "KRW", "Card", null, null, DateTime.UtcNow, DateTime.UtcNow),
         ];
         _expenditureRepo.Setup(r => r.GetByAccountEmailAndDateRangeAsync(email, It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(yearExpenditures);
@@ -1030,13 +911,9 @@ public class DashboardServiceTests
         _accountRepo.Verify(r => r.UpdateDefaultMonetaryUnitAsync(It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
-    /// <summary>
-    /// Incomes are read for exactly the selected calendar year, [1 Jan, next 1 Jan); expenditures from the selected month's
-    /// <see cref="ExpenditureForecastPolicy.HistoryMonths"/> months before (the projection and the facts read them) to the year's end —
-    /// still one query each.
-    /// </summary>
+    /// <summary>The year totals are read for exactly the selected calendar year, [1 Jan, next 1 Jan).</summary>
     [Fact]
-    public async Task GetSummaryAsync_QueriesTheYear_AndTheExpendituresOfTheMonthsBefore()
+    public async Task GetSummaryAsync_QueriesTheSelectedCalendarYear()
     {
         GivenSummaryInputs([MakeAsset("Wallet")], [], []);
 
@@ -1045,22 +922,7 @@ public class DashboardServiceTests
         var start = new DateTime(2025, 1, 1, 0, 0, 0, DateTimeKind.Utc);
         var end = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc);
         _incomeRepo.Verify(r => r.GetByAccountEmailAndDateRangeAsync("user@example.com", start, end, It.IsAny<CancellationToken>()), Times.Once);
-        Assert.Equal(12, ExpenditureForecastPolicy.HistoryMonths);
-        _expenditureRepo.Verify(r => r.GetByAccountEmailAndDateRangeAsync("user@example.com", new DateTime(2024, 3, 1, 0, 0, 0, DateTimeKind.Utc), end, It.IsAny<CancellationToken>()), Times.Once);
-    }
-
-    /// <summary>The expenditures read before the year for the projection and the facts are not in the year's totals.</summary>
-    [Fact]
-    public async Task GetSummaryAsync_TheMonthsBeforeTheYear_AreNotInTheYearsTotals()
-    {
-        List<Expenditure> records = [ExpenditureAt(1, "Wallet", 1000m, new DateTime(2024, 12, 10, 0, 0, 0, DateTimeKind.Utc)), ExpenditureAt(2, "Wallet", 20m, new DateTime(2025, 3, 10, 0, 0, 0, DateTimeKind.Utc))];
-        GivenSummaryInputs([MakeAsset("Wallet")], [], records);
-        _expenditureRepo.Setup(r => r.GetByAccountEmailAndDateRangeAsync(It.IsAny<string>(), It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((string _, DateTime from, DateTime to, CancellationToken _) => [.. records.Where(e => e.Created >= from && e.Created < to)]);
-
-        DashboardDto summary = await CreateSut().GetSummaryAsync("user@example.com", "2025", "3", "UTC", TestContext.Current.CancellationToken);
-
-        Assert.Equal(20m, summary.YearExpenditureBreakdown["ConsumerSpending"].Total);
+        _expenditureRepo.Verify(r => r.GetByAccountEmailAndDateRangeAsync("user@example.com", start, end, It.IsAny<CancellationToken>()), Times.Once);
     }
 
     /// <summary>

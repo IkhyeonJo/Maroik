@@ -24,18 +24,6 @@ public class DashboardDto
     /// <summary>The page's charts: one per main class and period, each slice in the taxonomy's display order. Zeros when there is no default unit.</summary>
     public List<DashboardChartDto> Charts { get; set; } = [];
 
-    /// <summary>The selected month's projected month-end spending in the default unit; null unless it is the current month and there is a basis.</summary>
-    public DashboardForecastDto? Forecast { get; set; }
-
-    /// <summary>The selected month's weekend against weekday spending in the default unit; null when it cannot be said.</summary>
-    public DashboardWeekendWeekdayDto? WeekendWeekday { get; set; }
-
-    /// <summary>The selected month's largest expenditure sub-class in the default unit; null for a month without spending.</summary>
-    public DashboardTopSubClassDto? TopSubClass { get; set; }
-
-    /// <summary>The selected month's spending against the month before in the default unit; null when that month spent nothing.</summary>
-    public DashboardMonthOverMonthDto? MonthOverMonth { get; set; }
-
     /// <summary>All active assets owned by the user.</summary>
     public List<AssetResponse> Assets { get; set; } = [];
 

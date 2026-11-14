@@ -83,9 +83,7 @@ public class DashboardService(
         };
 
         if (summary.DefaultMonetaryUnit != null)
-        {
-            await FillBreakdownsAsync(summary, summary.DefaultMonetaryUnit, accountEmail, yearInt, monthInt, timeZoneId, allAssets, DateOnly.FromDateTime(accountToday), ct);
-        }
+            await FillBreakdownsAsync(summary, summary.DefaultMonetaryUnit, accountEmail, yearInt, monthInt, timeZoneId, allAssets, ct);
 
         summary.Charts =
         [
@@ -140,20 +138,15 @@ public class DashboardService(
 
     /// <summary>Fills the year and year-month income / expenditure breakdowns of <paramref name="summary"/>, in the default unit.</summary>
     private async Task FillBreakdownsAsync(DashboardDto summary, string defaultMonetaryUnit, string accountEmail, int yearInt, int monthInt,
-        string timeZoneId, List<Asset> allAssets, DateOnly accountToday, CancellationToken ct)
+        string timeZoneId, List<Asset> allAssets, CancellationToken ct)
     {
         DateTime yearStart = new DateTime(yearInt, 1, 1).ConvertToUtcByTimeZoneIanaId(timeZoneId);
         DateTime yearEnd = new DateTime(yearInt + 1, 1, 1).ConvertToUtcByTimeZoneIanaId(timeZoneId);
         DateTime ymStart = new DateTime(yearInt, monthInt, 1).ConvertToUtcByTimeZoneIanaId(timeZoneId);
         DateTime ymEnd = new DateTime(yearInt, monthInt, 1).AddMonths(1).ConvertToUtcByTimeZoneIanaId(timeZoneId);
 
-        // The projection and the spending facts read the HistoryMonths before the selected month as well, which always reach into
-        // the previous year: one expenditure query covers both (still one round trip per repository), and the year is cut from it
-        // here. Measured on 8,645 records over 5½ years, the widest range (January: two years) took about 1.2 ms against 0.35 ms for one year.
-        DateTime historyStart = new DateTime(yearInt, monthInt, 1).AddMonths(-ExpenditureForecastPolicy.HistoryMonths).ConvertToUtcByTimeZoneIanaId(timeZoneId);
         List<Income> yearIncomes = await incomeRepository.GetByAccountEmailAndDateRangeAsync(accountEmail, yearStart, yearEnd, ct);
-        List<Expenditure> fetchedExpenditures = await expenditureRepository.GetByAccountEmailAndDateRangeAsync(accountEmail, historyStart, yearEnd, ct);
-        List<Expenditure> yearExpenditures = [.. fetchedExpenditures.Where(x => x.Created >= yearStart && x.Created < yearEnd)];
+        List<Expenditure> yearExpenditures = await expenditureRepository.GetByAccountEmailAndDateRangeAsync(accountEmail, yearStart, yearEnd, ct);
 
         // ymStart/ymEnd always fall within [yearStart, yearEnd), so the year-month totals can
         // be derived from the year totals already fetched above instead of two more DB round
@@ -178,47 +171,6 @@ public class DashboardService(
             yearExpenditures.Where(scope.Includes).Select(e => (e.MainClass, e.SubClass, e.Amount.Amount)), ExpenditureClassPolicy.SubClassesByMainClass.Keys);
         summary.YearMonthExpenditureBreakdown = BuildBreakdown(
             ymExpenditures.Where(scope.Includes).Select(e => (e.MainClass, e.SubClass, e.Amount.Amount)), ExpenditureClassPolicy.SubClassesByMainClass.Keys);
-
-        FillSpendingFacts(summary, [.. fetchedExpenditures.Where(x => x.Created < ymEnd).Where(scope.Includes)], yearInt, monthInt, timeZoneId, accountToday);
-    }
-
-    /// <summary>
-    /// Fills the selected month's projection (<see cref="ExpenditureForecastPolicy"/>, current month only) and spending facts
-    /// (<see cref="ExpenditureInsightPolicy"/>) of <paramref name="summary"/>, from <paramref name="expenditures"/> — the default-unit
-    /// expenditures of the selected month and the <see cref="ExpenditureForecastPolicy.HistoryMonths"/> before it — dated in the
-    /// account's time zone.
-    /// </summary>
-    private static void FillSpendingFacts(DashboardDto summary, List<Expenditure> expenditures, int yearInt, int monthInt,
-        string timeZoneId, DateOnly accountToday)
-    {
-        List<LocalExpenditure> records =
-            [.. expenditures.Select(e => new LocalExpenditure(e.Created.ConvertTimeByTimeZoneIanaId(timeZoneId), e.SubClass, e.Amount.Amount))];
-
-        ExpenditureForecast? forecast = ExpenditureForecastPolicy.Forecast(records, yearInt, monthInt, accountToday);
-        summary.Forecast = forecast == null ? null : new DashboardForecastDto
-        {
-            SpentSoFar = forecast.SpentSoFar, Projected = forecast.Projected, BasisMonths = forecast.BasisMonths,
-            TypicalError = forecast.TypicalError, ErrorMonths = forecast.ErrorMonths, AsOf = accountToday
-        };
-
-        ExpenditureInsights insights = ExpenditureInsightPolicy.Insights(records, yearInt, monthInt, accountToday);
-        summary.WeekendWeekday = insights.WeekendWeekday == null ? null : new DashboardWeekendWeekdayDto
-        {
-            WeekendDailyAverage = insights.WeekendWeekday.WeekendDailyAverage,
-            WeekdayDailyAverage = insights.WeekendWeekday.WeekdayDailyAverage,
-            PercentDifference = insights.WeekendWeekday.PercentDifference
-        };
-        summary.TopSubClass = insights.TopSubClass == null ? null : new DashboardTopSubClassDto
-        {
-            SubClass = insights.TopSubClass.SubClass, Amount = insights.TopSubClass.Amount, Percentage = insights.TopSubClass.Percentage
-        };
-        summary.MonthOverMonth = insights.MonthOverMonth == null ? null : new DashboardMonthOverMonthDto
-        {
-            PreviousTotal = insights.MonthOverMonth.PreviousTotal,
-            CurrentTotal = insights.MonthOverMonth.CurrentTotal,
-            PercentChange = insights.MonthOverMonth.PercentChange,
-            SamePeriodOfMonth = insights.MonthOverMonth.SamePeriodOfMonth
-        };
     }
 
     /// <summary>The year, in the account's time zone, of the account's first income or expenditure.</summary>

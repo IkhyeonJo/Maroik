@@ -225,7 +225,4 @@
   <data name="MonthExpenditure" xml:space="preserve">
     <value>월 지출</value>
   </data>
-  <data name="Spending facts" xml:space="preserve">
-    <value>선택한 달의 지출 요약</value>
-  </data>
 </root>

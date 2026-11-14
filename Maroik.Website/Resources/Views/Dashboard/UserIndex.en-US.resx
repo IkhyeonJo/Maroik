@@ -225,7 +225,4 @@
   <data name="MonthExpenditure" xml:space="preserve">
     <value>Month Expenditure</value>
   </data>
-  <data name="Spending facts" xml:space="preserve">
-    <value>Spending facts for the selected month</value>
-  </data>
 </root>

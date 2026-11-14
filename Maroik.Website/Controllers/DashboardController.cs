@@ -9,7 +9,6 @@ using Maroik.Website.Models.ViewModels.Accounts;
 using Maroik.Website.Models.ViewModels.Dashboards;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Localization;
 
 namespace Maroik.Website.Controllers;
 
@@ -18,7 +17,6 @@ namespace Maroik.Website.Controllers;
 /// language-culture changes and the user's default monetary-unit preference.
 /// </summary>
 public class DashboardController(
-    IHtmlLocalizer<DashboardController> localizer,
     IDashboardService dashboardService,
     IProfileService profileService,
     ILogger<DashboardController> logger,
@@ -81,7 +79,7 @@ public class DashboardController(
         string? timeZoneId = loggedInAccount.TimeZoneIanaId;
 
         var summary = await dashboardService.GetSummaryAsync(email!, year, month, timeZoneId!, ct);
-        return View(summary.ToViewModel(key => localizer[key].Value));
+        return View(summary.ToViewModel());
     }
     #endregion
 

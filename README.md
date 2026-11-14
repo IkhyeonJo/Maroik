@@ -229,13 +229,6 @@ simpler method on five years of the author's own records (8,649 expenditures, 58
   "same content as before" rule in front of the model added nothing, so it was dropped.
 - **Unusual amounts (statistics).** The expenditure list marks an amount far above the usual for its sub-class and
   currency (the box-plot rule on log amounts, groups of at least 8): 1.9 % of the records, against 4.8 % on raw amounts.
-- **Month-end forecast (statistics).** The dashboard estimates this month's spending: spent so far plus what the last
-  three months spent after today's date on average, shown with the date and the usual error of the same estimate in
-  earlier months. Replayed on 59 past months it was about twice as accurate as "same as last month" and beat a 12-month
-  average and a Holt-Winters time-series model, so no time-series model is used. Prediction intervals were tried and left
-  out: they covered 55–79 % of the outcomes instead of the promised 80 %.
-- **Spending facts (statistics).** Where most of the money went, weekend against weekday spending per day, and the change
-  from last month (the same days of it for the current month), in short plain sentences.
 - **Amounts in each currency's own decimals.** KRW and JPY without decimals, USD and EUR with two; a currency label that
   is not a known code keeps every stored decimal.
 
@@ -257,9 +250,8 @@ simpler method on five years of the author's own records (8,649 expenditures, 58
   (direct clock reads, sync-over-async) analyzers are build errors; one .NET SDK is pinned for `global.json`, every
   Dockerfile and CI.
 - **Evidence before technique.** Every analytics feature was compared offline with simpler baselines on real data —
-  time-ordered train / test splits and monthly retraining for the classifier, replays of past months for the forecast
-  (mean absolute error, root mean squared error and the error relative to a naive forecast), an exact significance test
-  between close candidates — and only what won was built. The measurements, the alternatives not taken and the known
+  time-ordered train / test splits and monthly retraining for the classifier, an exact significance test between close
+  candidates — and only what won was built. The measurements, the alternatives not taken and the known
   limits are written down next to the code (`.claude/rules/finance.md`).
 - **Production runs what CI tested.** CI builds the three images once, versions them from the commit messages and publishes them to GHCR; the server only pulls them. A release that changes the database schema is never deployed automatically.
 
@@ -301,7 +293,7 @@ Maroik has been built by one developer since May 2021. It was developed in a pri
 | 2026-09 | Client scripts migrated to TypeScript; repository and E2E tests on real PostgreSQL (Testcontainers); a series of whole-solution reviews fixing race conditions and security gaps; strict TDD and logging rules; mutation testing (Domain 78 % → 92 %) |
 | 2026-09-28 | Moved from the private repository to this public repository, where all development continues |
 | 2026-10 | Service mutation score 70 % → 96 %; TLS ended at Cloudflare through a Cloudflare Tunnel; RSA replaced with ASP.NET Core Data Protection; memory-safety, logging-template, security and banned-API analyzers as build errors; admin and menu safeguards against locking administrators out; GitHub Actions CI (coverage gate, isolated E2E run), release-only minified client scripts, semver from Conventional Commits, images published to GHCR and pulled by the server; calendar reminders delivered by e-mail (scheduled by the domain, sent once a minute by the worker through the mail queue); one pinned .NET SDK with a weekly bump pull request; personal Kanban board; personal File Manager (chunked uploads, quotas, background virus scan, download progress); Income and Expenditure Budget sheets with an Excel-compatible formula engine; `Deploy.sh` hosting modes (Cloudflare Tunnel, port forwarding behind Caddy, no domain) |
-| 2026-11 | Income and expenditure class suggestion with ML.NET (logistic regression on character n-grams, chosen over naive Bayes on the author's own records); unusual-amount marks in the expenditure list; month-end forecast with its usual error and spending facts on the dashboard; amounts shown in each currency's own decimals |
+| 2026-11 | Income and expenditure class suggestion with ML.NET (logistic regression on character n-grams, chosen over naive Bayes on the author's own records); unusual-amount marks in the expenditure list; amounts shown in each currency's own decimals |
 
 ## Architecture
 

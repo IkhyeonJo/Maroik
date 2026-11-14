@@ -79,28 +79,6 @@
                 </div>
             </div>
         }
-        @if (Model.SpendingFacts.Count != 0)
-        {
-            <div class="row">
-                <div class="col-md-12">
-                    <div class="card" id="spendingFacts">
-                        <div class="card-header">
-                            <h3 class="card-title">
-                                <i class="fas fa-lightbulb"></i> @Localizer["Spending facts"].Value
-                            </h3>
-                        </div>
-                        <div class="card-body">
-                            <ul class="mb-0">
-                                @foreach (string fact in Model.SpendingFacts)
-                                {
-                                    <li>@fact</li>
-                                }
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        }
         <div class="row">
             <div class="col-md-6">
                 <div class="card">
