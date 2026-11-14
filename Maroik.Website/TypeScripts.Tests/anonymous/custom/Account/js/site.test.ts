@@ -6,7 +6,7 @@ function fixture(): string {
     return (
         antiForgery +
         hidden("returnUri", "/back") +
-        `<a id="aChangeCultureEnUS"></a><a id="aChangeCultureKoKR"></a>
+        `<a id="aLoginCultureEnUS"></a><a id="aLoginCultureKoKR"></a>
      <div id="loading" style="display:none"></div>
      <form id="loginForm"></form><form id="registerForm"></form>
      <form id="forgotPasswordForm"></form><form id="resetPasswordForm"></form>
@@ -19,7 +19,7 @@ function fixture(): string {
 describe("anonymous/Account", () => {
     it("switches culture via /Dashboard/CultureManagement", () => {
         const h = loadSite("anonymous", "Account", "", fixture());
-        h.$("#aChangeCultureEnUS").trigger("click");
+        h.$("#aLoginCultureEnUS").trigger("click");
         expect(h.lastAjax().url).toBe("/Dashboard/CultureManagement");
         expect(JSON.parse(String(h.lastAjax().data))).toEqual({ Culture: "en-US" });
     });
@@ -36,7 +36,7 @@ describe("anonymous/Account", () => {
 
     it("posts the ko-KR culture with the anti-forgery header, then returns to the page it came from", () => {
         const h = loadSite("anonymous", "Account", "", fixture());
-        h.$("#aChangeCultureKoKR").trigger("click");
+        h.$("#aLoginCultureKoKR").trigger("click");
         const call = h.lastAjax();
         expect(call.headers).toEqual({ RequestVerificationToken: "tok" });
         expect(JSON.parse(String(call.data))).toEqual({ Culture: "ko-KR" });
@@ -46,7 +46,7 @@ describe("anonymous/Account", () => {
 
     it("refuses to navigate when the page lacks the field it returns to (the view and the script disagree)", () => {
         const h = loadSite("anonymous", "Account", "", fixture().replace(hidden("returnUri", "/back"), ""));
-        h.$("#aChangeCultureEnUS").trigger("click");
+        h.$("#aLoginCultureEnUS").trigger("click");
         expect(() => successOf(h.lastAjax())({})).toThrow("A required field is missing from the page");
         expect(h.navigations).toEqual([]);
     });
