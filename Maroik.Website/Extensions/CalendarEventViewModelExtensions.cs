@@ -86,7 +86,7 @@ public static class CalendarEventViewModelExtensions
             calendarEvent.CalendarEventAttachedFile = (await calendarService.GetCalendarEventAttachedFileAsync(tempCalendarEvent.Id, ct))?.ToDisplayViewModel();
 
             calendarEvent.Calendars =
-                [.. calendarList.Select(x => new CalendarResponse { Id = x.Id, Name = x.Name }).OrderBy(x => x.Name)];
+                [.. calendarList.Select(x => new CalendarResponse { Id = x.Id, Name = x.Name }).OrderBy(x => x.Name, StringComparer.CurrentCulture)];
             // A reminder is an e-mail to the calendar's owner: only the owner's detail carries them.
             calendarEvent.SerializedCalendarReminders = includeReminders
                 ? (await calendarService.GetCalendarEventRemindersAsync(tempCalendarEvent.Id, ct)).ToSerializedReminders()

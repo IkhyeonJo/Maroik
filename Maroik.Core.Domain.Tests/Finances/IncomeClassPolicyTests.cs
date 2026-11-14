@@ -106,8 +106,8 @@ public class IncomeClassPolicyTests
     public void SubClassesByMainClass_HasTheKnownMainClasses()
     {
         Assert.Equal(
-            _knownMainClasses.OrderBy(x => x),
-            IncomeClassPolicy.SubClassesByMainClass.Keys.OrderBy(x => x));
+            _knownMainClasses.OrderBy(x => x, StringComparer.Ordinal),
+            IncomeClassPolicy.SubClassesByMainClass.Keys.OrderBy(x => x, StringComparer.Ordinal));
     }
 
     /// <summary>Every published (main, sub) pair validates, and nothing outside it does.</summary>

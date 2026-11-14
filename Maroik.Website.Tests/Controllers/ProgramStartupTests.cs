@@ -71,8 +71,8 @@ public class ProgramStartupTests(MaroikWebApplicationFactory factory)
         RequestLocalizationOptions options = factory.Services.GetRequiredService<IOptions<RequestLocalizationOptions>>().Value;
 
         Assert.Equal(CulturePolicy.DefaultCulture, options.DefaultRequestCulture.Culture.Name);
-        Assert.Equal(CulturePolicy.SupportedCultures.OrderBy(c => c), options.SupportedCultures!.Select(c => c.Name).OrderBy(c => c));
-        Assert.Equal(CulturePolicy.SupportedCultures.OrderBy(c => c), options.SupportedUICultures!.Select(c => c.Name).OrderBy(c => c));
+        Assert.Equal(CulturePolicy.SupportedCultures.OrderBy(c => c, StringComparer.Ordinal), options.SupportedCultures!.Select(c => c.Name).OrderBy(c => c, StringComparer.Ordinal));
+        Assert.Equal(CulturePolicy.SupportedCultures.OrderBy(c => c, StringComparer.Ordinal), options.SupportedUICultures!.Select(c => c.Name).OrderBy(c => c, StringComparer.Ordinal));
     }
 
     /// <summary>

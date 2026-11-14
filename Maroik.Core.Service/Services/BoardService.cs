@@ -353,7 +353,7 @@ public class BoardService(
         }
     }
 
-    /// <inheritdoc />
+    /// <summary>Increments the view counter of a board post by 1 (called when a post is opened for viewing).</summary>
     public async Task<ServiceResult> IncrementBoardViewAsync(long boardId, CancellationToken ct = default)
     {
         try

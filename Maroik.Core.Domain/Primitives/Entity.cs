@@ -22,6 +22,7 @@ public abstract class Entity<TId>(TId id) : IEquatable<Entity<TId>>
     public override bool Equals(object? obj) => obj is Entity<TId> entity && Equals(entity);
 
     /// <inheritdoc/>
+    // ReSharper disable once NonReadonlyMemberInGetHashCode -- Id is the identity; only a renamed Asset moves it (see Id).
     public override int GetHashCode() => HashCode.Combine(GetType(), Id);
 
     /// <summary>Returns true when both entities are equal (same type and same ID).</summary>

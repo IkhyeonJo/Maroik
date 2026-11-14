@@ -88,7 +88,7 @@ public class MailClient(ILogger<MailClient> logger, IOptions<ServerSetting> serv
             message.Subject = subject;
             message.Body = new BodyBuilder { HtmlBody = body }.ToMessageBody();
 
-            using SmtpClient smtp = SmtpClientFactory();
+            await using SmtpClient smtp = SmtpClientFactory();
             // Bounded well under the worker's shutdown drain budget so a hung connection
             // can't outlive it and get killed mid-send (which would cause a duplicate
             // send on redelivery). MailKit's default is ~100s.

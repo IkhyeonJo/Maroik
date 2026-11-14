@@ -69,7 +69,8 @@ public class RecalculationEngineTests
         RecalculationEngine engine = Engine(null, ("A1", "=B1"), ("B1", "=A1+1"), ("C1", "=A1*2"), ("D1", "=C1&\"\""), ("E1", "3"), ("F1", "=F1"));
 
         var cycle = new ErrorValue(FormulaErrorKind.Cycle);
-        Assert.Equal([cycle, cycle, cycle, cycle, cycle], new[] { "A1", "B1", "C1", "D1", "F1" }.Select(c => engine.ValueOf(At(c))));
+        string[] cycleCells = ["A1", "B1", "C1", "D1", "F1"];
+        Assert.Equal([cycle, cycle, cycle, cycle, cycle], cycleCells.Select(c => engine.ValueOf(At(c))));
         Assert.Equal(new NumberValue(3), engine.ValueOf(At("E1")));
     }
 

@@ -152,8 +152,8 @@ public class ExpenditureClassPolicyTests
     {
         string[] expected = ["RegularSavings", "NonConsumerSpending", "ConsumerSpending"];
         Assert.Equal(
-            expected.OrderBy(x => x),
-            ExpenditureClassPolicy.SubClassesByMainClass.Keys.OrderBy(x => x));
+            expected.OrderBy(x => x, StringComparer.Ordinal),
+            ExpenditureClassPolicy.SubClassesByMainClass.Keys.OrderBy(x => x, StringComparer.Ordinal));
     }
 
     /// <summary>

@@ -303,7 +303,7 @@ public class ManagementController(
             : await managementAccountService.SearchAccountsAsync(wholeSearch, HttpContext.RequestAborted);
         var viewModels = accounts
             .ToDisplayViewModels(timeZones, tz)
-            .OrderBy(m => m.Email) // the e-mail address is the account's unique key, so no tie-breaker is needed
+            .OrderBy(m => m.Email, StringComparer.CurrentCulture) // the e-mail address is the account's unique key, so no tie-breaker is needed
             .AsQueryable();
         return PartialView("_AccountGrid", viewModels);
 

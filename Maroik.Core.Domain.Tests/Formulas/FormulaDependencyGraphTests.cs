@@ -24,7 +24,7 @@ public class FormulaDependencyGraphTests
     {
         FormulaDependencyGraph graph = Graph("B1<-A1", "C1<-A1");
 
-        Assert.Equal([At("B1"), At("C1")], graph.DependentsOf(At("A1")).OrderBy(a => a.Column));
+        Assert.Equal([At("B1"), At("C1")], graph.DependentsOf(At("A1")).OrderBy(a => a.Column, StringComparer.Ordinal));
         Assert.Equal([At("A1")], graph.PrecedentsOf(At("B1")));
     }
 

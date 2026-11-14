@@ -14,19 +14,19 @@ namespace Maroik.Core.Domain.Boards;
 public sealed class BoardAttachedFile : AggregateRoot<long>
 {
     /// <summary>ID of the parent board post.</summary>
-    public long BoardId { get; private set; }
+    public long BoardId { get; }
 
     /// <summary>File size in bytes.</summary>
-    public long Size { get; private set; }
+    public long Size { get; }
 
     /// <summary>Original file name (e.g. "report.zip").</summary>
-    public string Name { get; private set; }
+    public string Name { get; }
 
     /// <summary>File extension including the dot (e.g. ".zip"). Null when there is no extension.</summary>
-    public string? Extension { get; private set; }
+    public string? Extension { get; }
 
     /// <summary>Server-side storage path where the file is saved.</summary>
-    public string Path { get; private set; }
+    public string Path { get; }
 
     /// <summary>Sets every field; reached only through <see cref="Reconstitute"/> / <see cref="Create"/>.</summary>
     private BoardAttachedFile(

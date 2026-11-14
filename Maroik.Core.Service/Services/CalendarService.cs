@@ -57,7 +57,7 @@ public class CalendarService(
     public async Task<List<CalendarResponse>> GetCalendarsAsync(string email, CancellationToken ct = default)
         =>
         [
-            .. (await calendarRepository.GetByAccountEmailAsync(email, ct)).OrderBy(c => c.Name)
+            .. (await calendarRepository.GetByAccountEmailAsync(email, ct)).OrderBy(c => c.Name, StringComparer.CurrentCulture)
             .Select(CalendarMapper.ToResponse)
         ];
 
@@ -116,7 +116,7 @@ public class CalendarService(
         return
         [
             .. calendars.Select(c => new CalendarResponse { Id = c.Id, Name = c.Name, HtmlColorCode = c.ColorCode.Value })
-                .OrderBy(x => x.Name)
+                .OrderBy(x => x.Name, StringComparer.CurrentCulture)
         ];
     }
 
@@ -191,7 +191,7 @@ public class CalendarService(
                     User = sharedCalendar.User,
                     Guest = sharedCalendar.Anonymous
                 })
-            .OrderBy(x => x.Name)
+            .OrderBy(x => x.Name, StringComparer.CurrentCulture)
         ];
     }
 
@@ -212,7 +212,7 @@ public class CalendarService(
                     Name = calendar.Name,
                     Checked = subscription != null
                 })
-            .OrderBy(x => x.Name)
+            .OrderBy(x => x.Name, StringComparer.CurrentCulture)
         ];
     }
 

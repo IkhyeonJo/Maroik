@@ -104,11 +104,11 @@ public class ViewBagPopulatorFilter(
     /// <summary>Publishes the menu item of the current page in the role's menu, for the sidebar highlight and the breadcrumbs.</summary>
     private static void PublishActiveMenuItem(ActionExecutingContext context, Controller controller, AccountResponse loggedInAccount)
     {
-        (IEnumerable<CategoryResponse>? roleCategories, IEnumerable<SubCategoryResponse>? roleSubCategories) = loggedInAccount.Role switch
+        (IReadOnlyCollection<CategoryResponse>? roleCategories, IReadOnlyCollection<SubCategoryResponse>? roleSubCategories) = loggedInAccount.Role switch
         {
-            AccountRoles.Admin => ((IEnumerable<CategoryResponse>?)controller.ViewBag.AdminCategories, (IEnumerable<SubCategoryResponse>?)controller.ViewBag.AdminSubCategories),
-            AccountRoles.User => ((IEnumerable<CategoryResponse>?)controller.ViewBag.UserCategories, (IEnumerable<SubCategoryResponse>?)controller.ViewBag.UserSubCategories),
-            _ => ((IEnumerable<CategoryResponse>?)controller.ViewBag.AnonymousCategories, (IEnumerable<SubCategoryResponse>?)controller.ViewBag.AnonymousSubCategories)
+            AccountRoles.Admin => ((IReadOnlyCollection<CategoryResponse>?)controller.ViewBag.AdminCategories, (IReadOnlyCollection<SubCategoryResponse>?)controller.ViewBag.AdminSubCategories),
+            AccountRoles.User => ((IReadOnlyCollection<CategoryResponse>?)controller.ViewBag.UserCategories, (IReadOnlyCollection<SubCategoryResponse>?)controller.ViewBag.UserSubCategories),
+            _ => ((IReadOnlyCollection<CategoryResponse>?)controller.ViewBag.AnonymousCategories, (IReadOnlyCollection<SubCategoryResponse>?)controller.ViewBag.AnonymousSubCategories)
         };
 
         if (roleCategories != null && roleSubCategories != null)

@@ -87,7 +87,7 @@ public class MenuFieldPolicyTests
     /// <summary>The role taxonomy holds exactly the three values the database allows.</summary>
     [Fact]
     public void Roles_AreTheThreeDatabaseValues()
-        => Assert.Equal(_databaseRoles, MenuFieldPolicy.Roles.All.OrderBy(r => r).ToArray());
+        => Assert.Equal(_databaseRoles, MenuFieldPolicy.Roles.All.OrderBy(r => r, StringComparer.Ordinal).ToArray());
 
     // -- Category / SubCategory apply it -----------------------------------------
 

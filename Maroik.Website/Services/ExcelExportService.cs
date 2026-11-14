@@ -29,7 +29,7 @@ public class ExcelExportService(TimeProvider timeProvider, IFinancePolicyService
         Func<string, string> localize,
         string timeZoneIanaId)
     {
-        var ordered = items.OrderBy(x => x.ProductName).ToList();
+        var ordered = items.OrderBy(x => x.ProductName, StringComparer.CurrentCulture).ToList();
 
         var headers = new[]
         {
@@ -260,7 +260,7 @@ public class ExcelExportService(TimeProvider timeProvider, IFinancePolicyService
     {
         var ordered = items
             .ToDisplayViewModels(timeZones, timeZoneIanaId)
-            .OrderBy(m => m.Email).ThenBy(m => m.Nickname)
+            .OrderBy(m => m.Email, StringComparer.CurrentCulture).ThenBy(m => m.Nickname, StringComparer.CurrentCulture)
             .ThenByDescending(m => m.Created).ThenByDescending(m => m.Updated)
             .ToList();
 
@@ -347,10 +347,11 @@ public class ExcelExportService(TimeProvider timeProvider, IFinancePolicyService
     {
         // Columns A..Z of the sheet: A is the label (split here into label and currency), B..M the months, N the year total, O..Z free.
         string[] columns = [.. Enumerable.Range(0, BudgetLayout.ColumnCount).Select(i => ((char)('A' + i)).ToString())];
-        var headers = new List<string> { localize("Item"), localize("Currency") };
-        headers.AddRange(_budgetMonthKeys.Select(localize));
-        headers.Add(localize("Year total"));
-        headers.AddRange(columns.Skip(BudgetLayout.FirstFreeColumnIndex));
+        List<string> headers =
+        [
+            localize("Item"), localize("Currency"), .. _budgetMonthKeys.Select(localize), localize("Year total"),
+            .. columns.Skip(BudgetLayout.FirstFreeColumnIndex),
+        ];
 
         Dictionary<string, BudgetValueResponse> values = sheet.Cells.ToDictionary(c => c.Address, c => c.Value, StringComparer.Ordinal);
         BudgetSheetViewModel labeled = sheet.ToViewModel(localize);

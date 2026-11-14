@@ -1294,8 +1294,8 @@ public class CalendarServiceTests
     // -- EnsureCalendarSharedAsync: races and failures ---------------------------
 
     /// <summary>An exception whose message looks like a PostgreSQL unique violation on the <c>CalendarShared</c> primary key.</summary>
-    private static Exception SharedPkViolation() =>
-        new DuplicateKeyException(DuplicateKey.CalendarShared);
+    private static DuplicateKeyException SharedPkViolation() =>
+        new(DuplicateKey.CalendarShared);
 
     /// <summary>The first attempt loses the CalendarShared PK race; the retry (in a fresh transaction) succeeds.</summary>
     [Fact]

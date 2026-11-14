@@ -28,7 +28,7 @@ public class AssetService(
 
     /// <inheritdoc />
     public async Task<List<AssetResponse>> GetSelectableAssetsAsync(string accountEmail, CancellationToken ct = default)
-        => [.. (await GetAssetsAsync(accountEmail, ct)).Where(asset => !asset.Deleted).OrderBy(asset => asset.ProductName)];
+        => [.. (await GetAssetsAsync(accountEmail, ct)).Where(asset => !asset.Deleted).OrderBy(asset => asset.ProductName, StringComparer.CurrentCulture)];
 
     /// <inheritdoc />
     public async Task<List<AssetResponse>> SearchAssetsAsync(string accountEmail, string search, CancellationToken ct = default)

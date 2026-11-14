@@ -247,7 +247,7 @@ public static class CalendarViewModelMapper
         if (string.IsNullOrEmpty(value))
             return null;
 
-        return TimeOnly.TryParse(value, out TimeOnly result) ? result : null;
+        return TimeOnly.TryParse(value, CultureInfo.InvariantCulture, out TimeOnly result) ? result : null;
     }
 
     /// <summary>

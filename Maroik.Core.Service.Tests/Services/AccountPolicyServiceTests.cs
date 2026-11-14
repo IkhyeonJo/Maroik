@@ -94,7 +94,7 @@ public class AccountPolicyServiceTests
     [Fact]
     public void GetAdminNicknames_EmptyCollection_ReturnsEmptySet()
     {
-        var result = _sut.GetAdminNicknames(Array.Empty<AccountResponse>());
+        var result = _sut.GetAdminNicknames([]);
 
         Assert.Empty(result);
     }

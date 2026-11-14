@@ -180,7 +180,6 @@ public class CalendarServiceAttachmentDownloadTests
             .ReturnsAsync(clearedRecord ? CalendarEventAttachedFile.Reconstitute(1, 7, 0, "", "", "") : null);
 
         var result = await CreateSut().OpenCalendarEventAttachedFileAsync(7, Viewer(), TestContext.Current.CancellationToken);
-        var file = result.Value;
 
         Assert.Equal("CalendarEvent.AttachedFileNotFound", result.ErrorCode);
         Assert.Equal("The attached file could not be found.", result.ErrorKey);

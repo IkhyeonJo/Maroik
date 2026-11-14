@@ -242,7 +242,7 @@ public class FileManagerService(
         {
             await accountRepository.FindByEmailForUpdateAsync(accountEmail, ct);
             FileManagerTree tree = await LoadTreeAsync(accountEmail, ct);
-            List<FileManagerNode?> found = [.. ids.Distinct().Select(id => tree.FindFinished(id))];
+            List<FileManagerNode?> found = [.. ids.Distinct().Select(tree.FindFinished)];
             if (!tree.IsFolderOrRoot(targetFolderId) || found.Any(n => n == null))
             {
                 await unitOfWork.RollbackAsync(ct);

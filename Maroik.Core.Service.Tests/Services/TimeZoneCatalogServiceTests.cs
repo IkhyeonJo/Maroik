@@ -1,3 +1,4 @@
+using System.Collections.ObjectModel;
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Service.Services;
 
@@ -29,7 +30,7 @@ public class TimeZoneCatalogServiceTests
     public void GetTimeZoneOptions_ListsTheSystemZones_UnderTheirIanaIds()
     {
         IReadOnlyList<TimeZoneOptionDto> options = CreateSut().GetTimeZoneOptions();
-        IReadOnlyCollection<TimeZoneInfo> systemZones = TimeZoneInfo.GetSystemTimeZones();
+        ReadOnlyCollection<TimeZoneInfo> systemZones = TimeZoneInfo.GetSystemTimeZones();
         List<string> ianaSystemIds = [.. systemZones.Where(z => z.HasIanaId).Select(z => z.Id)];
 
         Assert.Equal(ianaSystemIds, options.Select(o => o.IanaId).Where(ianaSystemIds.Contains));

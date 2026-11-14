@@ -74,7 +74,7 @@ public static class ServiceErrorKeys
     /// <summary>An inline (Summernote) image is not a valid image.</summary>
     public const string InvalidImageFile = "Invalid image file.";
     /// <summary>An inline (Summernote) image's extension is not one of the allowed image extensions.</summary>
-    public const string ImageExtensionNotAllowed = "Only .jpg or jpeg or .png file allowed.";
+    public const string ImageFileExtensionNotAllowed = "Only .jpg or jpeg or .png file allowed.";
 
     // --- Calendar
     /// <summary>A calendar of the same name already exists.</summary>

@@ -249,7 +249,7 @@ public class ForumControllerTests(MaroikWebApplicationFactory factory)
     private const string AntiForgeryCookieName = "__Secure-.AspNetCore.Antiforgery.";
 
     /// <summary>An unsaved, confirmed User account row.</summary>
-    private static Maroik.Core.PostgreSQL.Models.Account NewAccount(string email, string nickname, string hashedPassword) => new()
+    private static Account NewAccount(string email, string nickname, string hashedPassword) => new()
     {
         Email = email,
         HashedPassword = hashedPassword,

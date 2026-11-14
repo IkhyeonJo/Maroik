@@ -22,7 +22,7 @@ public sealed class Asset : AggregateRoot<(string ProductName, string AccountEma
     public string ProductName { get; private set; }
 
     /// <summary>Email of the owning account.</summary>
-    public Email AccountEmail { get; private set; }
+    public Email AccountEmail { get; }
 
     /// <summary>Asset category — an <see cref="AssetItemType"/> member name (e.g. "FreeDepositAndWithdrawal", "CashAsset").</summary>
     public AssetItem Item { get; private set; }

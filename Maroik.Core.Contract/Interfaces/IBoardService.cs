@@ -103,9 +103,6 @@ public interface IBoardService
     /// </summary>
     Task<ServiceResult> DeleteCommentAsync(long commentId, string requesterNickname, bool isAdmin, string? requiredType = null, CancellationToken ct = default);
 
-    /// <summary>Increments the view counter of a board post by 1.</summary>
-    Task<ServiceResult> IncrementBoardViewAsync(long boardId, CancellationToken ct = default);
-
     /// <summary>
     /// Validates and stores an image uploaded from the Summernote editor.
     /// Returns the stored file data so the editor can render an inline preview. <paramref name="actorEmail"/> is the

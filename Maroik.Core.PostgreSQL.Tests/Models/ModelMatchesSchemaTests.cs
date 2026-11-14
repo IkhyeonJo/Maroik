@@ -474,8 +474,8 @@ public abstract class ModelMatchesSchemaTests(SchemaDatabaseFixture database)
         using ApplicationDbContext db = CreateContext();
         Type[] withDbSet = [.. typeof(ApplicationDbContext).GetProperties()
             .Where(p => p.PropertyType.IsGenericType && p.PropertyType.GetGenericTypeDefinition() == typeof(DbSet<>))
-            .Select(p => p.PropertyType.GetGenericArguments()[0]).OrderBy(t => t.Name)];
-        Type[] entities = [.. db.Model.GetEntityTypes().Select(e => e.ClrType).OrderBy(t => t.Name)];
+            .Select(p => p.PropertyType.GetGenericArguments()[0]).OrderBy(t => t.Name, StringComparer.Ordinal)];
+        Type[] entities = [.. db.Model.GetEntityTypes().Select(e => e.ClrType).OrderBy(t => t.Name, StringComparer.Ordinal)];
 
         Assert.Equal(entities, withDbSet);
     }

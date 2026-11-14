@@ -273,7 +273,7 @@ public sealed class Board : AggregateRoot<long>
     }
 
     /// <summary>True when this post is a private note (visible to its author only).</summary>
-    public bool IsPrivateNote => string.Equals(Type, BoardTypes.PrivateNote, StringComparison.Ordinal);
+    private bool IsPrivateNote => string.Equals(Type, BoardTypes.PrivateNote, StringComparison.Ordinal);
 
     /// <summary>Returns true when <paramref name="nickname"/> is this post's author.</summary>
     public bool IsOwnedBy(string nickname) => IsOwnedBy(Writer, nickname);

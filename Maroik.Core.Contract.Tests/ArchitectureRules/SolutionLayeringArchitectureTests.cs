@@ -340,7 +340,7 @@ public class SolutionLayeringArchitectureTests
         }
 
         /// <summary>Names of all projects registered in the solution.</summary>
-        public IReadOnlySet<string> ProjectNames =>
+        public HashSet<string> ProjectNames =>
             _projectPathByName.Keys.ToHashSet(StringComparer.Ordinal);
 
         /// <summary>Parses the XML-based <c>.slnx</c> at <paramref name="path"/>.</summary>

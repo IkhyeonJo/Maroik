@@ -20,7 +20,7 @@
     ];
 }
 
-<div id="@Model.Id" class="mvc-grid mvc-grid-@(Model.FilterMode.ToString().ToLower())-mode" data-name="@Model.Name" data-filter-mode="@Model.FilterMode" data-url="@Model.Url">
+    <div id="@Model.Id" class="mvc-grid mvc-grid-@(Model.FilterMode.ToString().ToLowerInvariant())-mode" data-name="@Model.Name" data-filter-mode="@Model.FilterMode" data-url="@Model.Url">
     <div class="mvc-grid-table">
         <!table@(Model.Attributes)>
             <thead>

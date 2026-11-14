@@ -30,7 +30,7 @@ public class KanbanControllerTests(MaroikWebApplicationFactory factory)
         AuthenticatedSessionHelper.LoginAsync(factory, _client, email, "UserPassword1!", Role.User, TestContext.Current.CancellationToken);
 
     /// <summary>Makes sure the second account exists (signing in creates it), so its cards can be seeded.</summary>
-    private Task EnsureOtherAccountAsync() => LoginAsync(OtherEmail);
+    private Task<AuthenticatedSession> EnsureOtherAccountAsync() => LoginAsync(OtherEmail);
 
     /// <summary>A title unique to the calling test, so assertions on the shared account cannot collide.</summary>
     private static string UniqueTitle([System.Runtime.CompilerServices.CallerMemberName] string testName = "") =>

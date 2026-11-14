@@ -14,19 +14,19 @@ namespace Maroik.Core.Domain.Calendars;
 public sealed class CalendarEventAttachedFile : AggregateRoot<long>
 {
     /// <summary>ID of the parent calendar event.</summary>
-    public long CalendarEventId { get; private set; }
+    public long CalendarEventId { get; }
 
     /// <summary>File size in bytes.</summary>
-    public long Size { get; private set; }
+    public long Size { get; }
 
     /// <summary>Original file name (e.g. "agenda.zip").</summary>
-    public string Name { get; private set; }
+    public string Name { get; }
 
     /// <summary>File extension including the dot (e.g. ".zip"). Null when there is no extension.</summary>
-    public string? Extension { get; private set; }
+    public string? Extension { get; }
 
     /// <summary>Server-side storage path of the file.</summary>
-    public string Path { get; private set; }
+    public string Path { get; }
 
     /// <summary>Sets every field; reached only through <see cref="Reconstitute"/> / <see cref="Create"/>.</summary>
     private CalendarEventAttachedFile(

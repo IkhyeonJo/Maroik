@@ -33,8 +33,8 @@ public class NavigationCacheExtensionsTests
                 NavigationCacheKeys.UserSubCategories,
                 NavigationCacheKeys.AnonymousCategories,
                 NavigationCacheKeys.AnonymousSubCategories,
-            }.OrderBy(x => x),
-            removedKeys.OrderBy(x => x));
+            }.OrderBy(x => x, StringComparer.Ordinal),
+            removedKeys.OrderBy(x => x, StringComparer.Ordinal));
     }
 
     /// <summary>A failure removing one key still surfaces (via the awaited Task.WhenAll) rather than being silently swallowed.</summary>

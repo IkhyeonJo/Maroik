@@ -2,6 +2,7 @@ using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Enums;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Contract.Settings;
+using Maroik.Core.Domain.Primitives;
 using Maroik.Core.Service.Services;
 using Maroik.Core.Service.Tests.Fixtures;
 using Microsoft.Extensions.Logging;
@@ -212,9 +213,9 @@ public class AttachmentContentServiceTests
     /// with the message naming the allowed ones, a wrong content type under an allowed extension as an invalid image.
     /// </summary>
     [Theory]
-    [InlineData("photo.gif", "image/gif", ServiceErrorKeys.ImageExtensionNotAllowed)]
-    [InlineData("photo.svg", "image/svg+xml", ServiceErrorKeys.ImageExtensionNotAllowed)]
-    [InlineData("photo.bmp", "image/png", ServiceErrorKeys.ImageExtensionNotAllowed)]
+    [InlineData("photo.gif", "image/gif", ServiceErrorKeys.ImageFileExtensionNotAllowed)]
+    [InlineData("photo.svg", "image/svg+xml", ServiceErrorKeys.ImageFileExtensionNotAllowed)]
+    [InlineData("photo.bmp", "image/png", ServiceErrorKeys.ImageFileExtensionNotAllowed)]
     [InlineData("photo.png", "text/html", ServiceErrorKeys.InvalidImageFile)]
     public async Task UploadSummernoteImageAsync_ReturnsFail_WhenExtensionOrContentTypeNotAllowed(string fileName, string contentType, string expectedKey)
     {
@@ -685,8 +686,8 @@ public class AttachmentContentServiceTests
     [Fact]
     public void CheckInlineImages_AllowsTheLimit_AndRefusesOneMore()
     {
-        _htmlParser.Setup(p => p.CountImages("at-limit")).Returns(Maroik.Core.Domain.Primitives.TitledContentPolicy.MaxInlineImages);
-        _htmlParser.Setup(p => p.CountImages("over-limit")).Returns(Maroik.Core.Domain.Primitives.TitledContentPolicy.MaxInlineImages + 1);
+        _htmlParser.Setup(p => p.CountImages("at-limit")).Returns(TitledContentPolicy.MaxInlineImages);
+        _htmlParser.Setup(p => p.CountImages("over-limit")).Returns(TitledContentPolicy.MaxInlineImages + 1);
 
         Assert.Null(CreateSut().CheckInlineImages("at-limit"));
         ServiceResult? refused = CreateSut().CheckInlineImages("over-limit");
@@ -694,6 +695,6 @@ public class AttachmentContentServiceTests
         Assert.NotNull(refused);
         Assert.Equal(("Content.TooManyImages", ServiceErrorType.Validation), (refused.ErrorCode, refused.ErrorType));
         Assert.Equal("You can insert at most {0} images.", refused.ErrorKey);
-        Assert.Equal([Maroik.Core.Domain.Primitives.TitledContentPolicy.MaxInlineImages], refused.ErrorArgs);
+        Assert.Equal([TitledContentPolicy.MaxInlineImages], refused.ErrorArgs);
     }
 }

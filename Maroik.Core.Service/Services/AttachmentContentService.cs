@@ -67,7 +67,7 @@ public class AttachmentContentService(
         {
             logger.LogWarning("Editor image upload refused: extension or content type not allowed ({Extension}, {ContentType}) in {Area}/{SubArea} for {Email}",
                 ext, file.ContentType, area, subArea, actorEmail);
-            return SummernoteUploadResult.Fail(extensionAllowed ? ServiceErrorKeys.InvalidImageFile : ServiceErrorKeys.ImageExtensionNotAllowed);
+            return SummernoteUploadResult.Fail(extensionAllowed ? ServiceErrorKeys.InvalidImageFile : ServiceErrorKeys.ImageFileExtensionNotAllowed);
         }
 
         if (imageValidator.IsSvg(file.Bytes))

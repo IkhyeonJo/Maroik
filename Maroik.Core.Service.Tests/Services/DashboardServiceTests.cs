@@ -394,7 +394,7 @@ public class DashboardServiceTests
             ["RegularIncome/Year", "IrregularIncome/Year", "RegularSavings/Year", "NonConsumerSpending/Year", "ConsumerSpending/Year",
              "RegularIncome/YearMonth", "IrregularIncome/YearMonth", "RegularSavings/YearMonth", "NonConsumerSpending/YearMonth", "ConsumerSpending/YearMonth"],
             summary.Charts.Select(c => $"{c.MainClass}/{c.Period}"));
-        DashboardChartDto month = summary.Charts.Single(c => c.MainClass == "RegularIncome" && c.Period == DashboardPeriod.YearMonth);
+        DashboardChartDto month = summary.Charts.Single(c => c is { MainClass: "RegularIncome", Period: DashboardPeriod.YearMonth });
         Assert.Equal(["LaborIncome", "BusinessIncome", "PensionIncome", "FinancialIncome", "RentalIncome", "OtherIncome"], month.Slices.Select(s => s.SubClass));
         Assert.Equal((100m, 100.0), (month.Slices[0].Amount, month.Slices[0].Percentage));
         Assert.Equal((0m, 0.0), (month.Slices[1].Amount, month.Slices[1].Percentage));
@@ -551,8 +551,6 @@ public class DashboardServiceTests
         const string email = "user@example.com";
         _fixedIncomeRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([]);
         _fixedExpenditureRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([]);
-        var sut = CreateSut();
-
         NotificationDto counts = await CreateSut(new ServerSetting { NoticeMaturityDateDay = 7 }).GetNoticeCountsAsync(email, "UTC", TestContext.Current.CancellationToken);
 
         Assert.Equal(0, counts.FixedIncomesNoticed);
@@ -607,8 +605,6 @@ public class DashboardServiceTests
                 created: DateTime.UtcNow,
                 updated: DateTime.UtcNow)
         ]);
-        var sut = CreateSut();
-
         NotificationDto counts = await CreateSut(new ServerSetting { NoticeMaturityDateDay = 7 }).GetNoticeCountsAsync(email, "UTC", TestContext.Current.CancellationToken);
 
         Assert.Equal(1, counts.FixedIncomesExpired);
@@ -642,8 +638,6 @@ public class DashboardServiceTests
                 updated: DateTime.UtcNow)
         ]);
         _fixedExpenditureRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([]);
-        var sut = CreateSut();
-
         NotificationDto counts = await CreateSut(new ServerSetting { NoticeMaturityDateDay = 7 }).GetNoticeCountsAsync(email, "UTC", TestContext.Current.CancellationToken);
 
         Assert.Equal(1, counts.FixedIncomesNoticed);

@@ -95,7 +95,7 @@ public class AccountBookController(
                 : await assetService.SearchAssetsAsync(account.RequireEmail(), wholeSearch, ct);
             var viewModels = assets
                 .ToDisplayViewModels(timeZones, key => localizer[key].Value, account.RequireTimeZoneIanaId())
-                .OrderBy(m => m.ProductName)
+                .OrderBy(m => m.ProductName, StringComparer.CurrentCulture)
                 .AsQueryable();
             return PartialView("_AssetGrid", viewModels);
         }

@@ -29,7 +29,7 @@
                             @if (!string.IsNullOrEmpty(hostCpuInfo))
                             {
                                 <text>
-                                    @(hostCpuNumeric.ToString("0.0"))
+                                    @(hostCpuNumeric.ToString("0.0", System.Globalization.CultureInfo.CurrentCulture))
                                     <small>%</small>
                                 </text>
                             }

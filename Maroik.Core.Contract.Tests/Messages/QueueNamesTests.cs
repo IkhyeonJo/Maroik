@@ -35,7 +35,7 @@ public class QueueNamesTests
     {
         var args = QueueNames.CreateEmailQueueArguments();
 
-        Assert.Equal(["x-dead-letter-exchange", "x-dead-letter-routing-key"], args.Keys.OrderBy(k => k));
+        Assert.Equal(["x-dead-letter-exchange", "x-dead-letter-routing-key"], args.Keys.OrderBy(k => k, StringComparer.Ordinal));
     }
 
     /// <summary>The main and dead-letter queue names are distinct, non-blank, well-known constants.</summary>
