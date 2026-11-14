@@ -520,7 +520,7 @@ dotnet test --project Maroik.Core.Service.Tests            # any single project
 - The .NET 10 SDK version pinned in `global.json` (`rollForward: disable`, so exactly that version)
 - Node 22 (`npm ci` in `Maroik.Website/`) for the client scripts and their tests when building on the host
 - Docker and Docker Compose
-- Visual Studio (Windows) or JetBrains Rider (Linux/Mac)
+- JetBrains Rider (Windows/Linux/Mac)
 
 ### Running the Project
 
