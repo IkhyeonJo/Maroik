@@ -1,6 +1,7 @@
 using Maroik.Core.Contract.Interfaces;
 using System.Globalization;
 using Maroik.Core.Contract.Dtos;
+using Maroik.Website.Constants;
 using Maroik.Website.Models.ViewModels.AccountBooks;
 
 namespace Maroik.Website.Mappers;
@@ -60,6 +61,7 @@ public static class AccountBookViewModelMapper
             Item = localize(item.Item ?? ""),
             Amount = item.Amount,
             MonetaryUnit = item.MonetaryUnit,
+            AmountText = AmountDisplay.Text(item.Amount, item.MonetaryUnit),
             Created = timeZones.ToTimeZone(item.Created, timeZoneIanaId),
             Updated = timeZones.ToTimeZone(item.Updated, timeZoneIanaId),
             Note = item.Note,
@@ -95,6 +97,7 @@ public static class AccountBookViewModelMapper
                 Content = item.Content,
                 Amount = item.Amount,
                 MonetaryUnit = currencyByProduct.GetValueOrDefault(item.DepositMyAssetProductName ?? ""),
+                AmountText = AmountDisplay.Text(item.Amount, currencyByProduct.GetValueOrDefault(item.DepositMyAssetProductName ?? "")),
                 DepositMyAssetProductName = item.DepositMyAssetProductName,
                 Created = timeZones.ToTimeZone(item.Created, timeZoneIanaId),
                 Updated = timeZones.ToTimeZone(item.Updated, timeZoneIanaId),
@@ -137,6 +140,7 @@ public static class AccountBookViewModelMapper
                 Content = item.Content,
                 Amount = item.Amount,
                 MonetaryUnit = currencyByProduct.GetValueOrDefault(item.PaymentMethod ?? ""),
+                AmountText = AmountDisplay.Text(item.Amount, currencyByProduct.GetValueOrDefault(item.PaymentMethod ?? "")),
                 PaymentMethod = item.PaymentMethod,
                 Note = item.Note,
                 MyDepositAsset = item.MyDepositAsset,

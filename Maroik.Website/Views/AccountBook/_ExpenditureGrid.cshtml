@@ -17,7 +17,7 @@
         columns.Add(model => model.SubClass).Titled(Localizer[nameof(Maroik.Website.Models.ViewModels.AccountBooks.ExpenditureOutputViewModel.SubClass)]);
         columns.Add(model => model.Content).Titled(Localizer[nameof(Maroik.Website.Models.ViewModels.AccountBooks.ExpenditureOutputViewModel.Content)]);
         columns.Add(model => model.MonetaryUnit).Titled(Localizer[nameof(Maroik.Website.Models.ViewModels.AccountBooks.ExpenditureOutputViewModel.MonetaryUnit)]);
-        columns.Add(model => model.Amount).Titled(Localizer[nameof(Maroik.Website.Models.ViewModels.AccountBooks.ExpenditureOutputViewModel.Amount)]).Formatted(Maroik.Website.Constants.AmountDisplay.GridFormat);
+        columns.Add(model => model.Amount).Titled(Localizer[nameof(Maroik.Website.Models.ViewModels.AccountBooks.ExpenditureOutputViewModel.Amount)]).RenderedAs(model => model.AmountText);
         columns.Add(model => model.AmountFlag).Titled(Localizer[nameof(Maroik.Website.Models.ViewModels.AccountBooks.ExpenditureOutputViewModel.AmountFlag)]).Css("text-warning");
         columns.Add(model => model.PaymentMethod).Titled(Localizer[nameof(Maroik.Website.Models.ViewModels.AccountBooks.ExpenditureOutputViewModel.PaymentMethod)]);
         columns.Add(model => model.Note).Titled(Localizer[nameof(Maroik.Website.Models.ViewModels.AccountBooks.ExpenditureOutputViewModel.Note)]);

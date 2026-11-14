@@ -23,6 +23,12 @@ public class AssetOutputViewModel
     [Display(Name = "Amount")]
     public decimal Amount { get; set; }
 
+    /// <summary>
+    /// <see cref="Amount"/> as the grid shows it: in its currency's decimal places when the currency is a known code
+    /// (<c>AmountDisplay.Text</c>). The grid sorts and filters on <see cref="Amount"/>.
+    /// </summary>
+    public string AmountText { get; set; } = "";
+
     /// <summary>Currency code for the amount (e.g. "KRW", "USD").</summary>
     [Required(ErrorMessage = "Please enter MonetaryUnit")]
     [Display(Name = "MonetaryUnit")]
