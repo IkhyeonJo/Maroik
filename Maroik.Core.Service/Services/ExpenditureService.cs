@@ -19,7 +19,7 @@ public class ExpenditureService(
     IUnitOfWork unitOfWork,
     ILogger<ExpenditureService> logger,
     TimeProvider timeProvider,
-    ContentClassifierCache classifiers) : IExpenditureService
+    ClassModelSource classModels) : IExpenditureService
 {
     /// <inheritdoc />
     public async Task<List<ExpenditureResponse>> GetExpendituresAsync(string accountEmail, CancellationToken ct = default)
@@ -49,7 +49,11 @@ public class ExpenditureService(
         if (samples.Count == 0)
             return null;
 
-        ClassSuggestion suggestion = classifiers.GetOrTrain("Expenditure", accountEmail, samples).Predict(content);
+        // The worker trains the model; until it has one of these records, the older model answers, or nothing does.
+        if (await classModels.GetAsync(ClassModel.ExpenditureBook, accountEmail, samples, ct) is not { } classifier)
+            return null;
+
+        ClassSuggestion suggestion = classifier.Predict(content);
         return new ClassSuggestionResponse { MainClass = suggestion.MainClass, SubClass = suggestion.SubClass };
     }
 

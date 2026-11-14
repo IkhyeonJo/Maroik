@@ -223,8 +223,9 @@ Built on what the author learned in the Alpaco AI developer boot camp (2022), an
 simpler method on five years of the author's own records (8,649 expenditures, 581 incomes).
 - **Class suggestion (machine learning).** Typing the content of a new income or expenditure ("Starbucks Seoul") shows a
   suggested class under the field; it is applied only when the user clicks it. A per-account text model — character
-  n-grams weighted by TF-IDF and a logistic regression over all classes (ML.NET) — learns from the user's own records, runs
-  inside the web server (no data leaves it) and retrains when the records change. Measured with monthly retraining on the
+  n-grams weighted by TF-IDF and a logistic regression over all classes (ML.NET) — learns from the user's own records (no data
+  leaves the server). The worker trains it when the records change (asked through RabbitMQ) and stores it in the file storage;
+  the web server only reads it, keeping a bounded number of models in memory. Measured with monthly retraining on the
   newest records it was right 98.5 % (expenditures) and 98.4 % (incomes) of the time; naive Bayes reached 91 %, and a
   "same content as before" rule in front of the model added nothing, so it was dropped.
 - **Unusual amounts (statistics).** The expenditure list marks an amount far above the usual for its sub-class and
@@ -293,7 +294,7 @@ Maroik has been built by one developer since May 2021. It was developed in a pri
 | 2026-09 | Client scripts migrated to TypeScript; repository and E2E tests on real PostgreSQL (Testcontainers); a series of whole-solution reviews fixing race conditions and security gaps; strict TDD and logging rules; mutation testing (Domain 78 % → 92 %) |
 | 2026-09-28 | Moved from the private repository to this public repository, where all development continues |
 | 2026-10 | Service mutation score 70 % → 96 %; TLS ended at Cloudflare through a Cloudflare Tunnel; RSA replaced with ASP.NET Core Data Protection; memory-safety, logging-template, security and banned-API analyzers as build errors; admin and menu safeguards against locking administrators out; GitHub Actions CI (coverage gate, isolated E2E run), release-only minified client scripts, semver from Conventional Commits, images published to GHCR and pulled by the server; calendar reminders delivered by e-mail (scheduled by the domain, sent once a minute by the worker through the mail queue); one pinned .NET SDK with a weekly bump pull request; personal Kanban board; personal File Manager (chunked uploads, quotas, background virus scan, download progress); Income and Expenditure Budget sheets with an Excel-compatible formula engine; `Deploy.sh` hosting modes (Cloudflare Tunnel, port forwarding behind Caddy, no domain) |
-| 2026-11 | Income and expenditure class suggestion with ML.NET (logistic regression on character n-grams, chosen over naive Bayes on the author's own records); unusual-amount marks in the expenditure list; amounts shown in each currency's own decimals |
+| 2026-11 | Income and expenditure class suggestion with ML.NET (logistic regression on character n-grams, chosen over naive Bayes on the author's own records; trained by the worker, stored in the file storage); unusual-amount marks in the expenditure list; amounts shown in each currency's own decimals |
 
 ## Architecture
 

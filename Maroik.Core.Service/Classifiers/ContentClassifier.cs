@@ -1,3 +1,5 @@
+using System.IO.Compression;
+using System.Text;
 using Maroik.Core.Domain.Finances;
 using Microsoft.ML;
 using Microsoft.ML.Data;
@@ -20,25 +22,49 @@ namespace Maroik.Core.Service.Classifiers;
 /// <para>
 /// Training is deterministic (a fixed seed and one thread), so the same records always give the same answers. It is an in-process
 /// library like Magick.NET — no external call — which is why it lives in the Service, the layer that holds such libraries (Domain
-/// and Contract take no package but <c>ErrorOr</c>). <see cref="ContentClassifierCache"/> keeps one model per account.
+/// and Contract take no package but <c>ErrorOr</c>). The worker trains a model and stores it (<see cref="ToBytes"/>); the website reads
+/// it back (<see cref="FromBytes"/>, <see cref="ClassModelSource"/>) and never trains.
 /// </para>
 /// </summary>
 public sealed class ContentClassifier
 {
     /// <summary>
-    /// The model's version, logged with every training (<see cref="ContentClassifierCache"/>): features and trainer. Change it when
-    /// either changes, so a logged suggestion can be traced to the model that made it.
+    /// The model's version, stored with every model record and logged with every training: features, trainer and file format. Change
+    /// it when any of them changes: a stored model of another version is not read, and is trained again.
     /// </summary>
     public const string ModelVersion = "char-ngram-1-3+logistic-regression/1";
 
     /// <summary>The output column of the predicted class label.</summary>
     private const string PredictedLabel = "PredictedLabel";
 
-    /// <summary>Answers the class for normalized content.</summary>
-    private readonly Func<string, ClassSuggestion> _predict;
+    /// <summary>The entry of a stored model that holds the ML.NET model.</summary>
+    private const string ModelEntry = "model.zip";
 
-    /// <summary>A classifier that answers through <paramref name="predict"/>.</summary>
-    private ContentClassifier(Func<string, ClassSuggestion> predict) => _predict = predict;
+    /// <summary>The entry of a stored single-class model that holds its one class label.</summary>
+    private const string SingleClassEntry = "class.txt";
+
+    /// <summary>The ML.NET context the model runs in; null for a single-class model.</summary>
+    private readonly MLContext? _ml;
+
+    /// <summary>The trained pipeline; null for a single-class model.</summary>
+    private readonly ITransformer? _model;
+
+    /// <summary>The schema of a training row, stored with the model; null for a single-class model.</summary>
+    private readonly DataViewSchema? _inputSchema;
+
+    /// <summary>The one class a single-class model answers; null otherwise.</summary>
+    private readonly ClassSuggestion? _only;
+
+    /// <summary>A model answering through <paramref name="model"/>.</summary>
+    private ContentClassifier(MLContext ml, ITransformer model, DataViewSchema inputSchema)
+    {
+        _ml = ml;
+        _model = model;
+        _inputSchema = inputSchema;
+    }
+
+    /// <summary>A model answering <paramref name="only"/> for every content.</summary>
+    private ContentClassifier(ClassSuggestion only) => _only = only;
 
     /// <summary>
     /// Trains on <paramref name="samples"/> (at least one; see <see cref="ExpenditureClassSuggestionPolicy.Learnable"/>). A history
@@ -46,15 +72,9 @@ public sealed class ContentClassifier
     /// </summary>
     public static ContentClassifier Train(IReadOnlyList<ClassSample> samples)
     {
-        Dictionary<string, ClassSuggestion> classes = samples
-            .Select(s => s.Class)
-            .Distinct()
-            .ToDictionary(LabelOf, c => c, StringComparer.Ordinal);
+        List<ClassSuggestion> classes = [.. samples.Select(s => s.Class).Distinct()];
         if (classes.Count == 1)
-        {
-            ClassSuggestion only = classes.Values.Single();
-            return new ContentClassifier(_ => only);
-        }
+            return new ContentClassifier(classes[0]);
 
         var ml = new MLContext(seed: 0);
         IDataView data = ml.Data.LoadFromEnumerable(samples.Select(s => new Input { Text = s.Text, Label = LabelOf(s.Class) }));
@@ -74,21 +94,74 @@ public sealed class ContentClassifier
             }, nameof(Input.Text)))
             .Append(ml.MulticlassClassification.Trainers.SdcaMaximumEntropy(new SdcaMaximumEntropyMulticlassTrainer.Options { NumberOfThreads = 1 }))
             .Append(ml.Transforms.Conversion.MapKeyToValue(PredictedLabel));
-        var model = pipeline.Fit(data);
+        return new ContentClassifier(ml, pipeline.Fit(data), data.Schema);
+    }
 
-        // Each prediction transforms a one-row view: unlike a prediction engine, a transformer is safe to share between threads.
-        return new ContentClassifier(text =>
+    /// <summary>
+    /// The model as the file the worker stores: a zip holding the ML.NET model (<c>model.zip</c>), or the one class of a single-class
+    /// model (<c>class.txt</c>).
+    /// </summary>
+    public byte[] ToBytes()
+    {
+        using var file = new MemoryStream();
+        using (var zip = new ZipArchive(file, ZipArchiveMode.Create, leaveOpen: true))
         {
-            IDataView predicted = model.Transform(ml.Data.LoadFromEnumerable([new Input { Text = text }]));
-            return classes[predicted.GetColumn<string>(PredictedLabel).Single()];
-        });
+            if (_only != null)
+            {
+                using var writer = new StreamWriter(zip.CreateEntry(SingleClassEntry).Open(), Encoding.UTF8);
+                writer.Write(LabelOf(_only));
+            }
+            else
+            {
+                using Stream entry = zip.CreateEntry(ModelEntry).Open();
+                _ml!.Model.Save(_model!, _inputSchema!, entry);
+            }
+        }
+
+        return file.ToArray();
+    }
+
+    /// <summary>The model stored as <paramref name="bytes"/> (<see cref="ToBytes"/>).</summary>
+    public static ContentClassifier FromBytes(byte[] bytes)
+    {
+        using var file = new MemoryStream(bytes, writable: false);
+        using var zip = new ZipArchive(file, ZipArchiveMode.Read);
+        if (zip.GetEntry(SingleClassEntry) is { } single)
+        {
+            using var reader = new StreamReader(single.Open(), Encoding.UTF8);
+            return new ContentClassifier(ClassOf(reader.ReadToEnd()));
+        }
+
+        // ML.NET reads a model from a seekable stream; a zip entry is not one.
+        using var model = new MemoryStream();
+        using (Stream entry = (zip.GetEntry(ModelEntry) ?? throw new InvalidDataException("The stored class model holds no model.")).Open())
+            entry.CopyTo(model);
+        model.Position = 0;
+        var ml = new MLContext(seed: 0);
+        ITransformer transformer = ml.Model.Load(model, out DataViewSchema inputSchema);
+        return new ContentClassifier(ml, transformer, inputSchema);
     }
 
     /// <summary>The class this model gives <paramref name="content"/> (normalized as <see cref="ClassSuggestionPolicy.Normalize"/> does).</summary>
-    public ClassSuggestion Predict(string? content) => _predict(ClassSuggestionPolicy.Normalize(content));
+    public ClassSuggestion Predict(string? content)
+    {
+        if (_only != null)
+            return _only;
+
+        // Each prediction transforms a one-row view: unlike a prediction engine, a transformer is safe to share between threads.
+        IDataView predicted = _model!.Transform(_ml!.Data.LoadFromEnumerable([new Input { Text = ClassSuggestionPolicy.Normalize(content) }]));
+        return ClassOf(predicted.GetColumn<string>(PredictedLabel).Single());
+    }
 
     /// <summary>The model's label of a class: main class and sub-class, which never contain a '/'.</summary>
     private static string LabelOf(ClassSuggestion c) => $"{c.MainClass}/{c.SubClass}";
+
+    /// <summary>The class of a label (<see cref="LabelOf"/>).</summary>
+    private static ClassSuggestion ClassOf(string label)
+    {
+        int slash = label.IndexOf('/', StringComparison.Ordinal);
+        return new ClassSuggestion(label[..slash], label[(slash + 1)..]);
+    }
 
     /// <summary>A training or prediction row (ML.NET reads its public properties).</summary>
     private sealed class Input

@@ -45,4 +45,40 @@ public class ContentClassifierTests
 
         Assert.Equal(new ClassSuggestion("ConsumerSpending", "TransportationCost"), classifier.Predict("월세"));
     }
+
+    /// <summary>
+    /// A model written to bytes (the file the worker stores) and read back answers exactly as the trained one: the website reads the
+    /// worker's model, it does not train its own.
+    /// </summary>
+    [Theory]
+    [InlineData("스타벅스 판교")]
+    [InlineData("지하철 2호선")]
+    [InlineData("주택청약 적금")]
+    [InlineData("월세")]
+    public void FromBytes_OfToBytes_AnswersAsTheTrainedModel(string content)
+    {
+        ContentClassifier trained = ContentClassifier.Train(History());
+
+        ContentClassifier read = ContentClassifier.FromBytes(trained.ToBytes());
+
+        Assert.Equal(trained.Predict(content), read.Predict(content));
+    }
+
+    /// <summary>A single-class model is stored and read back too, and still answers its one class.</summary>
+    [Fact]
+    public void FromBytes_OfASingleClassModel_AlwaysAnswersIt()
+    {
+        byte[] bytes = ContentClassifier.Train([Sample("지하철", "TransportationCost")]).ToBytes();
+
+        Assert.Equal(new ClassSuggestion("ConsumerSpending", "TransportationCost"), ContentClassifier.FromBytes(bytes).Predict("월세"));
+    }
+
+    /// <summary>The stored model is a zip (what the file storage's model path names).</summary>
+    [Fact]
+    public void ToBytes_IsAZip()
+    {
+        byte[] bytes = ContentClassifier.Train(History()).ToBytes();
+
+        Assert.Equal([0x50, 0x4B, 0x03, 0x04], bytes[..4]);
+    }
 }

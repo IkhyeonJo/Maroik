@@ -36,4 +36,10 @@ public static class FileStorageRefusals
 
     /// <summary>A delete of a File Manager file that does not exist.</summary>
     public const string FileNotFound = "File not found";
+
+    /// <summary>The class-model API saves and deletes only a model file (<c>upload/ClassModels/{guid}.zip</c>).</summary>
+    public const string NotAClassModelFile = "Only a class model file can be saved or deleted here.";
+
+    /// <summary>A file is already stored at the target path; the storage never overwrites one.</summary>
+    public const string FileExists = "A file already exists at the target path.";
 }

@@ -72,6 +72,7 @@ public static class ServiceCollectionExtensions
             services.AddScoped<IBudgetSheetLineRepository, BudgetSheetLineRepository>();
             services.AddScoped<IBudgetSheetCellRepository, BudgetSheetCellRepository>();
             services.AddScoped<IFileManagerNodeRepository, FileManagerNodeRepository>();
+            services.AddScoped<IClassModelRepository, ClassModelRepository>();
         }
     }
 }

@@ -15,7 +15,7 @@ public static class ServiceCollectionExtensions
     extension(IServiceCollection services)
     {
         /// <summary>
-        /// Registers the mail, file-storage, ClamAV, server-resource report and RabbitMQ email-publisher client implementations.
+        /// Registers the mail, file-storage, ClamAV, server-resource report and RabbitMQ email / class-model training publisher client implementations.
         /// </summary>
         /// <param name="rabbitMqConnectionString">
         /// AMQP connection string (e.g. "amqp://user:pass@host:5672/") used by <see cref="IEmailPublisher"/>.
@@ -48,6 +48,18 @@ public static class ServiceCollectionExtensions
                     ClientProvidedName = "maroik-website-email-publisher"
                 },
                 sp.GetRequiredService<ILogger<RabbitMqEmailPublisher>>()));
+
+            // Register the RabbitMQ class-model training publisher: the website asks the worker to train a class-suggestion model.
+            // Its own connection, opened lazily like the email publisher's.
+            services.AddSingleton<IClassModelTrainingPublisher>(sp => new RabbitMqClassModelTrainingPublisher(
+                new ConnectionFactory
+                {
+                    Uri = new Uri(rabbitMqConnectionString),
+                    AutomaticRecoveryEnabled = true,
+                    TopologyRecoveryEnabled = true,
+                    ClientProvidedName = "maroik-website-class-model-training-publisher"
+                },
+                sp.GetRequiredService<ILogger<RabbitMqClassModelTrainingPublisher>>()));
         }
     }
 }

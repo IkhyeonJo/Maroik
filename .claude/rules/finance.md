@@ -17,6 +17,7 @@ paths:
   - "**/Classifiers/**"
   - "**/*ClassSuggestion*"
   - "**/*Outlier*"
+  - "**/*ClassModel*"
 ---
 
 # Intended design: Finance
@@ -58,9 +59,25 @@ expenditures and 581 incomes against simpler alternatives). They only read the l
   model was wrong; removed 2026-11-14), "the most recent class for that content" (98.00 %, worse at p = 0.004), character 1–4-grams or
   added word features (no gain), a character-bigram naive Bayes (91.3 % on a static split).
   ML.NET lives in `Maroik.Core.Service` (an in-process library like Magick.NET — not `Core.Client`, which is for external systems;
-  Domain and Contract take no package but `ErrorOr`). `ContentClassifierCache` keeps one model per (book, account) in memory,
-  retrains when the learnable records' content or classes change (a fingerprint), and logs every training with
-  `ContentClassifier.ModelVersion`; nothing is persisted, so a restart retrains on first use.
+  Domain and Contract take no package but `ErrorOr`).
+- **Where the model is trained and kept** (since 2026-11-14, owner's request): the worker trains, the website only reads.
+  - A suggestion (`ClassModelSource`) reads the account's `ClassModel` record (one per account and book: file path, the
+    fingerprint of the records it learned, `ContentClassifier.ModelVersion`, time) and the model file it names, and keeps the model
+    in `ClassModelCache` while it is used (owner's decision, 2026-11-14): one unused for the session time
+    (`ServerSetting.SessionExpireMinutes`, the session's idle timeout) is dropped by the sweep that runs every minute — the session's
+    end itself cannot be watched (a closed browser tells the server nothing; the sessions live in Valkey). Whatever the number of
+    users, at most `DefaultCapacity` = 50 accounts' books are kept (least recently used out; a model of 8,649 records is a 655 KB
+    file and ~6.5 MB in memory). A model of older records still answers; none of another version is read.
+  - No model, an older one or an unreadable one: it publishes `TrainClassModelMessage` on `maroik.class-model-training`, once per
+    fingerprint within `ClassModelCache.TrainingRequestRetryAfter` (10 minutes). So an account's very first question (and the first
+    after a redeploy that recreated the database) answers nothing until the worker is done (about a second). A restart only reads the
+    stored file again.
+  - The worker (`ClassModelTrainingWorker`, prefetch 1, one training at a time) runs `ClassModelTrainingService`: it saves the model
+    as a new file `upload/ClassModels/{guid}.zip` (`api/ClassModel/save`: no virus scan and no size limit — the worker wrote it, no
+    user did; the storage never overwrites), points the record at it, and only then deletes the replaced file
+    (`api/ClassModel/delete`, which accepts only such a path). A record write that fails deletes the new file again; a failed delete
+    of an old file leaves an orphan, logged. A failed training is logged and acked: no retry or dead-letter queue, the next suggestion
+    asks again.
 - **Unusually large expenditures** (the grid's "Amount check" column): the box-plot fence Q3 + 1.5 × IQR on ln(1 + amount), per
   sub-class and currency label, groups of at least 8. The logarithm (a ratio, not a difference) flags 1.9 % of the owner's records
   instead of 4.8 % on raw amounts. It is computed in `double`: it only decides a flag and produces no amount.

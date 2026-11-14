@@ -14,7 +14,7 @@ namespace Maroik.Core.Service.Services;
 /// All write operations are wrapped in a database transaction via <see cref="IUnitOfWork"/>.
 /// </summary>
 public class IncomeService(IIncomeRepository incomeRepository, IAssetBalanceStore assetBalance, 
-    IUnitOfWork unitOfWork, ILogger<IncomeService> logger, TimeProvider timeProvider, ContentClassifierCache classifiers) : IIncomeService
+    IUnitOfWork unitOfWork, ILogger<IncomeService> logger, TimeProvider timeProvider, ClassModelSource classModels) : IIncomeService
 {
     /// <inheritdoc />
     public async Task<List<IncomeResponse>> GetIncomesAsync(string accountEmail, CancellationToken ct = default)
@@ -39,7 +39,11 @@ public class IncomeService(IIncomeRepository incomeRepository, IAssetBalanceStor
         if (samples.Count == 0)
             return null;
 
-        ClassSuggestion suggestion = classifiers.GetOrTrain("Income", accountEmail, samples).Predict(content);
+        // The worker trains the model; until it has one of these records, the older model answers, or nothing does.
+        if (await classModels.GetAsync(ClassModel.IncomeBook, accountEmail, samples, ct) is not { } classifier)
+            return null;
+
+        ClassSuggestion suggestion = classifier.Predict(content);
         return new ClassSuggestionResponse { MainClass = suggestion.MainClass, SubClass = suggestion.SubClass };
     }
 

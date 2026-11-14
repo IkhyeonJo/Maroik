@@ -32,8 +32,9 @@ public static class ServiceCollectionExtensions
             services.AddScoped<IAssetBalanceStore, AssetBalanceStore>();
             services.AddScoped<IIncomeService, IncomeService>();
             services.AddScoped<IExpenditureService, ExpenditureService>();
-            // One text model per account, kept across requests (ContentClassifierCache): training takes about a second.
-            services.AddSingleton<ContentClassifierCache>();
+            // The class-suggestion models the worker trained, read from the file storage and kept in memory (bounded, ClassModelCache).
+            services.AddSingleton<ClassModelCache>();
+            services.AddScoped<ClassModelSource>();
             services.AddScoped<IFixedIncomeService, FixedIncomeService>();
             services.AddScoped<IFixedExpenditureService, FixedExpenditureService>();
             services.AddScoped<IDashboardService, DashboardService>();

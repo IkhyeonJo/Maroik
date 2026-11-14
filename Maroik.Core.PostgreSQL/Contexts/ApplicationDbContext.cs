@@ -63,6 +63,9 @@ public partial class ApplicationDbContext : DbContext
     /// <summary>"Category" table.</summary>
     public virtual DbSet<Category> Categories { get; set; }
 
+    /// <summary>"ClassModel" table.</summary>
+    public virtual DbSet<ClassModel> ClassModels { get; set; }
+
     /// <summary>"Expenditure" table.</summary>
     public virtual DbSet<Expenditure> Expenditures { get; set; }
 
@@ -607,6 +610,40 @@ public partial class ApplicationDbContext : DbContext
                 .HasMaxLength(255)
                 .HasDefaultValueSql("'Admin'::character varying")
                 .HasComment("Role");
+        });
+
+        modelBuilder.Entity<ClassModel>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("ClassModel_pk");
+
+            entity.ToTable("ClassModel", tb => tb.HasComment("ClassModel (trained class-suggestion model file of an account's book)"));
+
+            entity.HasIndex(e => new { e.AccountEmail, e.Book }, "ClassModel_unique").IsUnique();
+
+            entity.Property(e => e.Id).HasComment("PK");
+            entity.Property(e => e.AccountEmail)
+                .HasMaxLength(255)
+                .HasComment("Account Email (ID)");
+            entity.Property(e => e.Book)
+                .HasMaxLength(255)
+                .HasComment("Income or Expenditure");
+            entity.Property(e => e.FilePath)
+                .HasMaxLength(255)
+                .HasComment("Model file path in the file storage (upload/ClassModels/{guid}.zip)");
+            entity.Property(e => e.Fingerprint)
+                .HasMaxLength(255)
+                .HasComment("SHA-256 of the records the model was trained on");
+            entity.Property(e => e.ModelVersion)
+                .HasMaxLength(255)
+                .HasComment("Model code version that wrote the file");
+            entity.Property(e => e.Trained)
+                .HasComment("Trained (UTC)")
+                .HasColumnType("timestamp without time zone");
+
+            entity.HasOne(d => d.AccountEmailNavigation).WithMany(p => p.ClassModels)
+                .HasForeignKey(d => d.AccountEmail)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("ClassModel_fk_0");
         });
 
         modelBuilder.Entity<Expenditure>(entity =>

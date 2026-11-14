@@ -455,9 +455,18 @@ public class AccountBookControllerIncomeExpenditureTests(MaroikWebApplicationFac
 
     // -- SuggestExpenditureClass -------------------------------------------------------
 
+    /// <summary>Asks <paramref name="path"/> for a suggestion for <paramref name="content"/>; returns the JSON reply.</summary>
+    private async Task<string> SuggestAsync(AuthenticatedSession session, string path, string content)
+    {
+        using var request = session.BuildJsonPostRequest($"{path}?content={Uri.EscapeDataString(content)}");
+        using HttpResponseMessage response = await _client.SendAsync(request, TestContext.Current.CancellationToken);
+        return await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+    }
+
     /// <summary>
-    /// The suggestion is the signed-in user's own model, trained on their expenditures in the real database: new content about the
-    /// subway is answered with transport. A dedicated account keeps the other tests' records out of the model.
+    /// The suggestion is the signed-in user's own model, trained by the worker's training on their expenditures in the real database:
+    /// the first question asks for the model, and then new content about the subway is answered with transport. A dedicated account
+    /// keeps the other tests' records out of the model.
     /// </summary>
     [Fact]
     public async Task SuggestExpenditureClass_NewContent_IsAnsweredFromTheUsersOwnRecords()
@@ -481,10 +490,12 @@ public class AccountBookControllerIncomeExpenditureTests(MaroikWebApplicationFac
             await db.SaveChangesAsync(TestContext.Current.CancellationToken);
         }
 
-        using var request = session.BuildJsonPostRequest($"/AccountBook/SuggestExpenditureClass?content={Uri.EscapeDataString("지하철 2호선")}");
-        string json = await (await _client.SendAsync(request, TestContext.Current.CancellationToken)).Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        // The first question finds no model and asks the worker for one (here trained at once); the next one is answered by it.
+        string first = await SuggestAsync(session, "/AccountBook/SuggestExpenditureClass", "지하철 2호선");
+        string second = await SuggestAsync(session, "/AccountBook/SuggestExpenditureClass", "지하철 2호선");
 
-        Assert.Equal("""{"result":true,"suggestion":{"mainClass":"ConsumerSpending","subClass":"TransportationCost"}}""", json);
+        Assert.Equal("""{"result":true,"suggestion":null}""", first);
+        Assert.Equal("""{"result":true,"suggestion":{"mainClass":"ConsumerSpending","subClass":"TransportationCost"}}""", second);
     }
 
     /// <summary>Content that matches none of the user's rows succeeds with no suggestion (null), so the form shows nothing.</summary>
@@ -572,8 +583,9 @@ public class AccountBookControllerIncomeExpenditureTests(MaroikWebApplicationFac
     }
 
     /// <summary>
-    /// The income suggestion is the signed-in user's own income model, trained on their incomes in the real database: new content
-    /// about a salary is answered with labor income. A dedicated account keeps the other tests' records out of the model.
+    /// The income suggestion is the signed-in user's own income model, trained by the worker's training on their incomes in the real
+    /// database: the first question asks for the model, and then new content about a salary is answered with labor income. A dedicated
+    /// account keeps the other tests' records out of the model.
     /// </summary>
     [Fact]
     public async Task SuggestIncomeClass_NewContent_IsAnsweredFromTheUsersOwnRecords()
@@ -597,10 +609,12 @@ public class AccountBookControllerIncomeExpenditureTests(MaroikWebApplicationFac
             await db.SaveChangesAsync(TestContext.Current.CancellationToken);
         }
 
-        using var request = session.BuildJsonPostRequest($"/AccountBook/SuggestIncomeClass?content={Uri.EscapeDataString("12월 급여")}");
-        string json = await (await _client.SendAsync(request, TestContext.Current.CancellationToken)).Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        // The first question finds no model and asks the worker for one (here trained at once); the next one is answered by it.
+        string first = await SuggestAsync(session, "/AccountBook/SuggestIncomeClass", "12월 급여");
+        string second = await SuggestAsync(session, "/AccountBook/SuggestIncomeClass", "12월 급여");
 
-        Assert.Equal("""{"result":true,"suggestion":{"mainClass":"RegularIncome","subClass":"LaborIncome"}}""", json);
+        Assert.Equal("""{"result":true,"suggestion":null}""", first);
+        Assert.Equal("""{"result":true,"suggestion":{"mainClass":"RegularIncome","subClass":"LaborIncome"}}""", second);
     }
 
     /// <summary>Income content without a letter or a digit succeeds with no suggestion (null), so the form shows nothing.</summary>

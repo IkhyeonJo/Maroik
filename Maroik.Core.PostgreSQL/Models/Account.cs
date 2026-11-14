@@ -128,6 +128,9 @@ public partial class Account
     /// <summary>File Manager folders and files owned by this account (FileManagerNode.AccountEmail).</summary>
     public virtual ICollection<FileManagerNode> FileManagerNodes { get; set; } = new List<FileManagerNode>();
 
+    /// <summary>Class-suggestion models of this account (ClassModel.AccountEmail).</summary>
+    public virtual ICollection<ClassModel> ClassModels { get; set; } = new List<ClassModel>();
+
     /// <summary>Budget sheets owned by this account (BudgetSheet.AccountEmail).</summary>
     public virtual ICollection<BudgetSheet> BudgetSheets { get; set; } = new List<BudgetSheet>();
 

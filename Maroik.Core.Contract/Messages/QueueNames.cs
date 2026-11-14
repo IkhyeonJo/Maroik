@@ -16,6 +16,12 @@ public static class QueueNames
     public const string EmailDeadLetter = "maroik.email.dead";
 
     /// <summary>
+    /// Durable work queue carrying <see cref="TrainClassModelMessage"/> items (no dead-letter queue: a failed training is dropped, logged,
+    /// and asked for again by the next suggestion that finds the model out of date).
+    /// </summary>
+    public const string ClassModelTraining = "maroik.class-model-training";
+
+    /// <summary>
     /// Declaration arguments for the <see cref="Email"/> queue: reject-without-requeue messages are
     /// dead-lettered to <see cref="EmailDeadLetter"/> via the default exchange.
     /// <para>

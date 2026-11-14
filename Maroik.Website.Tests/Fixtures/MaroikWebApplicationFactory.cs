@@ -1,7 +1,9 @@
+using Maroik.Core.Client.Clients;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Domain.Primitives;
 using Maroik.Core.PostgreSQL.Contexts;
 using Maroik.Core.PostgreSQL.Models;
+using Maroik.Core.Service.Services;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -139,6 +141,15 @@ public class MaroikWebApplicationFactory : WebApplicationFactory<Program>, IAsyn
             if (emailPublisherDescriptor != null) services.Remove(emailPublisherDescriptor);
             services.AddSingleton<FakeEmailPublisher>();
             services.AddSingleton<IEmailPublisher>(sp => sp.GetRequiredService<FakeEmailPublisher>());
+
+            // The class-suggestion models: a training request runs the worker's real training at once (there is no worker here),
+            // and the model files are kept in memory (there is no file storage service either); every other file call is unchanged.
+            foreach (var d in services.Where(d => d.ServiceType == typeof(IClassModelTrainingPublisher)).ToList()) services.Remove(d);
+            services.AddSingleton<InlineClassModelTrainingPublisher>();
+            services.AddSingleton<IClassModelTrainingPublisher>(sp => sp.GetRequiredService<InlineClassModelTrainingPublisher>());
+            services.AddScoped<IClassModelTrainingService, ClassModelTrainingService>();
+            foreach (var d in services.Where(d => d.ServiceType == typeof(IFileClient)).ToList()) services.Remove(d);
+            services.AddSingleton<IFileClient>(sp => new ClassModelFileClient(ActivatorUtilities.CreateInstance<FileClient>(sp)));
 
             // Replace Valkey distributed cache with in-memory so tests run without a Valkey instance.
             var distributedCacheDescriptors = services

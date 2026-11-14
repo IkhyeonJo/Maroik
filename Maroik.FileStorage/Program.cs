@@ -57,6 +57,7 @@ try
     builder.Services.AddScoped<IClamavClient, ClamavClient>();
     builder.Services.AddScoped<IFileValidationService, FileValidationService>();
     builder.Services.AddScoped<IFileManagerStorageService, FileManagerStorageService>();
+    builder.Services.AddScoped<IClassModelStorageService, ClassModelStorageService>();
 
     // The File Manager's scans run in the background (a large file takes longer than a request may wait): complete queues one,
     // FileManagerScanWorker runs it.

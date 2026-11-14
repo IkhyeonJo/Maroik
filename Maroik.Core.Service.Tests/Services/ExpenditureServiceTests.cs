@@ -1,10 +1,13 @@
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
+using Maroik.Core.Contract.Messages;
+using Maroik.Core.Contract.Settings;
 using Maroik.Core.Domain.Finances;
 using Maroik.Core.Service.Classifiers;
 using Maroik.Core.Service.Services;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Testing;
+using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Time.Testing;
 using Moq;
 
@@ -16,7 +19,7 @@ namespace Maroik.Core.Service.Tests.Services;
 /// Covers expenditure CRUD, asset-balance adjustments on create/update/delete,
 /// and category-class validation.
 /// </summary>
-public class ExpenditureServiceTests
+public sealed class ExpenditureServiceTests : IDisposable
 {
     /// <summary>Mock <c>IExpenditureRepository</c> injected into the system under test.</summary>
     private readonly Mock<IExpenditureRepository> _expenditureRepo = new();
@@ -32,6 +35,32 @@ public class ExpenditureServiceTests
     /// <summary>The clock the service under test reads, stopped at <see cref="_now"/>.</summary>
     private readonly FakeTimeProvider _time = new(new DateTimeOffset(_now));
 
+    /// <summary>Mock <c>IClassModelRepository</c>: the account's stored class-suggestion model record.</summary>
+    private readonly Mock<IClassModelRepository> _classModels = new();
+    /// <summary>Mock <c>IFileClient</c>: the stored model file.</summary>
+    private readonly Mock<IFileClient> _modelFiles = new();
+    /// <summary>The memory cache of the models (its sweep is stopped by <see cref="Dispose"/>).</summary>
+    private readonly ClassModelCache _modelCache;
+
+    /// <summary>Stops the model cache's sweep.</summary>
+    public void Dispose() => _modelCache.Dispose();
+
+    /// <summary>Mock <c>IClassModelTrainingPublisher</c>: the training requests sent to the worker.</summary>
+    private readonly Mock<IClassModelTrainingPublisher> _trainingPublisher = new();
+
+    /// <summary>
+    /// The worker has trained and stored the model of <paramref name="records"/> for <paramref name="email"/> (what the suggestion reads:
+    /// the record of the account's expenditure model and its file).
+    /// </summary>
+    private void ModelTrainedOn(string email, IEnumerable<Expenditure> records)
+    {
+        const string path = "upload/ClassModels/0f8fad5b-d9cb-469f-a165-70867728950e.zip";
+        IReadOnlyList<ClassSample> samples = ExpenditureClassSuggestionPolicy.Learnable(records);
+        _classModels.Setup(r => r.FindAsync(email, ClassModel.ExpenditureBook, It.IsAny<CancellationToken>())).ReturnsAsync(
+            ClassModel.Reconstitute(1, email, ClassModel.ExpenditureBook, path, ClassSampleFingerprint.Of(samples), ContentClassifier.ModelVersion, _now));
+        _modelFiles.Setup(f => f.DownloadAsync(path, It.IsAny<CancellationToken>())).ReturnsAsync(ContentClassifier.Train(samples).ToBytes());
+    }
+
     /// <summary>The service under test over the mocked dependencies.</summary>
     private ExpenditureService CreateSut() => new(
         _expenditureRepo.Object,
@@ -39,11 +68,12 @@ public class ExpenditureServiceTests
         _unitOfWork.Object,
         _logger,
         _time,
-        new ContentClassifierCache(new FakeLogger<ContentClassifierCache>(), _time));
+        new ClassModelSource(_classModels.Object, _modelFiles.Object, _trainingPublisher.Object, _modelCache, new FakeLogger<ClassModelSource>()));
 
     /// <summary>Initializes the test fixture, setting up all required test doubles and the system under test.</summary>
     public ExpenditureServiceTests()
     {
+        _modelCache = new ClassModelCache(_time, Options.Create(new ServerSetting { SessionExpireMinutes = 10 }));
         _unitOfWork.Setup(u => u.BeginAsync(null, It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
         _unitOfWork.Setup(u => u.CommitAsync(It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
         _unitOfWork.Setup(u => u.RollbackAsync(It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
@@ -517,12 +547,13 @@ public class ExpenditureServiceTests
     public async Task SuggestClassAsync_LearnsFromTheCallersRecords_AndReturnsTheClass()
     {
         const string email = "user@example.com";
-        _expenditureRepo.Setup(r => r.GetByAccountEmailAsync(email, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(
-            [
-                Expenditure.Reconstitute(1, email, "ConsumerSpending", "MealOrEatOutExpenses", "스타벅스 역삼점", 100m, "KRW", "Wallet", null, null, DateTime.UtcNow, DateTime.UtcNow),
-                Expenditure.Reconstitute(2, email, "ConsumerSpending", "TransportationCost", "지하철", 100m, "KRW", "Wallet", null, null, DateTime.UtcNow, DateTime.UtcNow),
-            ]);
+        List<Expenditure> records =
+        [
+            Expenditure.Reconstitute(1, email, "ConsumerSpending", "MealOrEatOutExpenses", "스타벅스 역삼점", 100m, "KRW", "Wallet", null, null, DateTime.UtcNow, DateTime.UtcNow),
+            Expenditure.Reconstitute(2, email, "ConsumerSpending", "TransportationCost", "지하철", 100m, "KRW", "Wallet", null, null, DateTime.UtcNow, DateTime.UtcNow),
+        ];
+        _expenditureRepo.Setup(r => r.GetByAccountEmailAsync(email, It.IsAny<CancellationToken>())).ReturnsAsync(records);
+        ModelTrainedOn(email, records);
 
         ClassSuggestionResponse? result = await CreateSut().SuggestClassAsync(email, "스타벅스 강남점", TestContext.Current.CancellationToken);
 
@@ -542,19 +573,38 @@ public class ExpenditureServiceTests
     {
         const string email = "user@example.com";
         DateTime older = new(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc), newer = older.AddDays(1);
-        _expenditureRepo.Setup(r => r.GetByAccountEmailAsync(email, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(
-            [
-                Expenditure.Reconstitute(1, email, "ConsumerSpending", "MealOrEatOutExpenses", "쿠팡", 100m, "KRW", "Wallet", null, null, older, older),
-                Expenditure.Reconstitute(2, email, "ConsumerSpending", "HousingOrSuppliesCost", "쿠팡", 100m, "KRW", "Wallet", null, null, newer, newer),
-                Expenditure.Reconstitute(3, email, "ConsumerSpending", "MealOrEatOutExpenses", "치킨", 100m, "KRW", "Wallet", null, null, older, older),
-                Expenditure.Reconstitute(4, email, "ConsumerSpending", "MealOrEatOutExpenses", "피자", 100m, "KRW", "Wallet", null, null, older, older),
-                Expenditure.Reconstitute(5, email, "ConsumerSpending", "MealOrEatOutExpenses", "김밥", 100m, "KRW", "Wallet", null, null, older, older),
-            ]);
+        List<Expenditure> records =
+        [
+            Expenditure.Reconstitute(1, email, "ConsumerSpending", "MealOrEatOutExpenses", "쿠팡", 100m, "KRW", "Wallet", null, null, older, older),
+            Expenditure.Reconstitute(2, email, "ConsumerSpending", "HousingOrSuppliesCost", "쿠팡", 100m, "KRW", "Wallet", null, null, newer, newer),
+            Expenditure.Reconstitute(3, email, "ConsumerSpending", "MealOrEatOutExpenses", "치킨", 100m, "KRW", "Wallet", null, null, older, older),
+            Expenditure.Reconstitute(4, email, "ConsumerSpending", "MealOrEatOutExpenses", "피자", 100m, "KRW", "Wallet", null, null, older, older),
+            Expenditure.Reconstitute(5, email, "ConsumerSpending", "MealOrEatOutExpenses", "김밥", 100m, "KRW", "Wallet", null, null, older, older),
+        ];
+        _expenditureRepo.Setup(r => r.GetByAccountEmailAsync(email, It.IsAny<CancellationToken>())).ReturnsAsync(records);
+        ModelTrainedOn(email, records);
 
         ClassSuggestionResponse? result = await CreateSut().SuggestClassAsync(email, "쿠팡", TestContext.Current.CancellationToken);
 
         Assert.Equal("MealOrEatOutExpenses", result?.SubClass);
+    }
+
+    /// <summary>
+    /// Before the worker has trained the account's model there is no proposal yet; the training is asked for (the next pause in typing
+    /// gets the answer once the worker is done).
+    /// </summary>
+    [Fact]
+    public async Task SuggestClassAsync_BeforeTheModelIsTrained_ReturnsNull_AndAsksForTheTraining()
+    {
+        const string email = "user@example.com";
+        _expenditureRepo.Setup(r => r.GetByAccountEmailAsync(email, It.IsAny<CancellationToken>())).ReturnsAsync(
+        [
+            Expenditure.Reconstitute(1, email, "ConsumerSpending", "TransportationCost", "지하철", 100m, "KRW", "Wallet", null, null, _now, _now),
+        ]);
+
+        Assert.Null(await CreateSut().SuggestClassAsync(email, "지하철 2호선", TestContext.Current.CancellationToken));
+
+        _trainingPublisher.Verify(p => p.PublishAsync(new TrainClassModelMessage(ClassModel.ExpenditureBook, email), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     /// <summary>With no record to learn from (here only one whose stored class is not in the taxonomy) there is no proposal.</summary>

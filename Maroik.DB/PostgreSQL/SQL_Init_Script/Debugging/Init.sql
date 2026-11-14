@@ -1642,6 +1642,101 @@ ALTER SEQUENCE public."Category_Id_seq" OWNED BY public."Category"."Id";
 
 
 --
+-- Name: ClassModel; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public."ClassModel" (
+    "Id" bigint NOT NULL,
+    "AccountEmail" character varying(255) NOT NULL,
+    "Book" character varying(255) NOT NULL,
+    "FilePath" character varying(255) NOT NULL,
+    "Fingerprint" character varying(255) NOT NULL,
+    "ModelVersion" character varying(255) NOT NULL,
+    "Trained" timestamp without time zone NOT NULL,
+    CONSTRAINT "ClassModel_Book_check" CHECK (((("Book")::text = ANY (ARRAY[('Income'::character varying)::text, ('Expenditure'::character varying)::text]))))
+);
+
+
+ALTER TABLE public."ClassModel" OWNER TO postgres;
+
+--
+-- Name: TABLE "ClassModel"; Type: COMMENT; Schema: public; Owner: postgres
+--
+
+COMMENT ON TABLE public."ClassModel" IS 'ClassModel (trained class-suggestion model file of an account''s book)';
+
+
+--
+-- Name: COLUMN "ClassModel"."Id"; Type: COMMENT; Schema: public; Owner: postgres
+--
+
+COMMENT ON COLUMN public."ClassModel"."Id" IS 'PK';
+
+
+--
+-- Name: COLUMN "ClassModel"."AccountEmail"; Type: COMMENT; Schema: public; Owner: postgres
+--
+
+COMMENT ON COLUMN public."ClassModel"."AccountEmail" IS 'Account Email (ID)';
+
+
+--
+-- Name: COLUMN "ClassModel"."Book"; Type: COMMENT; Schema: public; Owner: postgres
+--
+
+COMMENT ON COLUMN public."ClassModel"."Book" IS 'Income or Expenditure';
+
+
+--
+-- Name: COLUMN "ClassModel"."FilePath"; Type: COMMENT; Schema: public; Owner: postgres
+--
+
+COMMENT ON COLUMN public."ClassModel"."FilePath" IS 'Model file path in the file storage (upload/ClassModels/{guid}.zip)';
+
+
+--
+-- Name: COLUMN "ClassModel"."Fingerprint"; Type: COMMENT; Schema: public; Owner: postgres
+--
+
+COMMENT ON COLUMN public."ClassModel"."Fingerprint" IS 'SHA-256 of the records the model was trained on';
+
+
+--
+-- Name: COLUMN "ClassModel"."ModelVersion"; Type: COMMENT; Schema: public; Owner: postgres
+--
+
+COMMENT ON COLUMN public."ClassModel"."ModelVersion" IS 'Model code version that wrote the file';
+
+
+--
+-- Name: COLUMN "ClassModel"."Trained"; Type: COMMENT; Schema: public; Owner: postgres
+--
+
+COMMENT ON COLUMN public."ClassModel"."Trained" IS 'Trained (UTC)';
+
+
+--
+-- Name: ClassModel_Id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public."ClassModel_Id_seq"
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public."ClassModel_Id_seq" OWNER TO postgres;
+
+--
+-- Name: ClassModel_Id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public."ClassModel_Id_seq" OWNED BY public."ClassModel"."Id";
+
+
+--
 -- Name: Expenditure; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -2673,6 +2768,13 @@ ALTER TABLE ONLY public."Category" ALTER COLUMN "Id" SET DEFAULT nextval('public
 
 
 --
+-- Name: ClassModel Id; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public."ClassModel" ALTER COLUMN "Id" SET DEFAULT nextval('public."ClassModel_Id_seq"'::regclass);
+
+
+--
 -- Name: Expenditure Id; Type: DEFAULT; Schema: public; Owner: postgres
 --
 
@@ -2879,6 +2981,14 @@ COPY public."Category" ("Id", "Name", "DisplayName", "IconPath", "Controller", "
 
 
 --
+-- Data for Name: ClassModel; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public."ClassModel" ("Id", "AccountEmail", "Book", "FilePath", "Fingerprint", "ModelVersion", "Trained") FROM stdin;
+\.
+
+
+--
 -- Data for Name: Expenditure; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
@@ -3056,6 +3166,13 @@ SELECT pg_catalog.setval('public."Calendar_Id_seq"', 6, true);
 --
 
 SELECT pg_catalog.setval('public."Category_Id_seq"', 26, true);
+
+
+--
+-- Name: ClassModel_Id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public."ClassModel_Id_seq"', 1, false);
 
 
 --
@@ -3272,6 +3389,22 @@ ALTER TABLE ONLY public."Calendar"
 
 ALTER TABLE ONLY public."Category"
     ADD CONSTRAINT "Category_pk" PRIMARY KEY ("Id");
+
+
+--
+-- Name: ClassModel ClassModel_pk; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public."ClassModel"
+    ADD CONSTRAINT "ClassModel_pk" PRIMARY KEY ("Id");
+
+
+--
+-- Name: ClassModel ClassModel_unique; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public."ClassModel"
+    ADD CONSTRAINT "ClassModel_unique" UNIQUE ("AccountEmail", "Book");
 
 
 --
@@ -3636,6 +3769,14 @@ ALTER TABLE ONLY public."CalendarShared"
 
 ALTER TABLE ONLY public."Calendar"
     ADD CONSTRAINT "Calendar_fk_0" FOREIGN KEY ("AccountEmail") REFERENCES public."Account"("Email") ON UPDATE CASCADE;
+
+
+--
+-- Name: ClassModel ClassModel_fk_0; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public."ClassModel"
+    ADD CONSTRAINT "ClassModel_fk_0" FOREIGN KEY ("AccountEmail") REFERENCES public."Account"("Email") ON UPDATE CASCADE;
 
 
 --

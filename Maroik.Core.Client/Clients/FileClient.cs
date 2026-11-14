@@ -330,4 +330,60 @@ public class FileClient(IHttpClientFactory httpClientFactory, IOptions<ServerSet
             return false;
         }
     }
+
+    /// <summary>POSTs <paramref name="content"/> (plus the correlation id) to the storage service's <c>api/ClassModel/{action}</c>.</summary>
+    private async Task<HttpResponseMessage> PostClassModelAsync(string action, MultipartFormDataContent content, CancellationToken ct)
+    {
+        AddText(content, "correlationId", Activity.Current?.Id ?? "");
+        // Disposed, as in SendDownloadRequestAsync; the factory's pooled handler is not disposed with it.
+        using HttpClient httpClient = httpClientFactory.CreateClient();
+        return await httpClient.PostAsync($"{BaseUrl}/api/ClassModel/{action}", content, ct);
+    }
+
+    /// <inheritdoc />
+    public async Task<bool> SaveClassModelAsync(string storagePath, byte[] model, CancellationToken ct = default)
+    {
+        try
+        {
+            using MultipartFormDataContent content = [];
+            AddText(content, "filePath", storagePath);
+            using ByteArrayContent file = new(model);
+            file.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/zip");
+            content.Add(file, "file", Path.GetFileName(storagePath));
+
+            using HttpResponseMessage response = await PostClassModelAsync("save", content, ct);
+            if (response.IsSuccessStatusCode)
+                return true;
+
+            logger.LogWarning("Class model save of {FilePath} returned {StatusCode}: {Reason}", storagePath, (int)response.StatusCode, await ReadReasonAsync(response, ct));
+            return false;
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Class model save request failed for {FilePath}", storagePath);
+            return false;
+        }
+    }
+
+    /// <inheritdoc />
+    public async Task<bool> DeleteClassModelAsync(string storagePath, CancellationToken ct = default)
+    {
+        try
+        {
+            using MultipartFormDataContent content = [];
+            AddText(content, "filePath", storagePath);
+
+            using HttpResponseMessage response = await PostClassModelAsync("delete", content, ct);
+            if (response.IsSuccessStatusCode)
+                return true;
+
+            logger.LogWarning("Class model delete of {FilePath} returned {StatusCode}: {Reason}", storagePath, (int)response.StatusCode, await ReadReasonAsync(response, ct));
+            return false;
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Class model delete request failed for {FilePath}", storagePath);
+            return false;
+        }
+    }
 }

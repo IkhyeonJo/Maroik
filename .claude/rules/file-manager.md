@@ -27,8 +27,9 @@ that specific change. Check every candidate review finding in this area against 
   (`FindByEmailForUpdateAsync`) inside its transaction, so concurrent writes of one user cannot overrun the quota or create twin
   names. FileStorage calls (abort, delete of the replaced or deleted files) run after the commit; a failed delete leaves an orphan
   file, which is logged, not retried.
-- `Maroik.FileStorage`'s `api/FileManager/delete` is the one delete API of the file storage, and it refuses any path that is not
-  `upload/FileManager/{guid}`. Board / note / calendar attachments still have none (see Files and content).
+- `Maroik.FileStorage`'s `api/FileManager/delete` refuses any path that is not `upload/FileManager/{guid}`. The only other delete API is
+  `api/ClassModel/delete` (class-suggestion model files, `upload/ClassModels/{guid}.zip` only; see Finance). Board / note / calendar
+  attachments still have none (see Files and content).
 - Uploads go in 16 MB chunks to a staging file and are scanned by ClamAV on completion. There is no file size limit (since
   2026-10-25, owner's request; only the quota bounds it), but ClamAV scans at most 2,147,483,645 bytes (clamd clamps its stream limit
   to that; both compose files set `CLAMD_CONF_*` to 2048M and `MaxScanTime` to 10 minutes) — `FileManagerUploadPolicy.MaxScannableBytes`
