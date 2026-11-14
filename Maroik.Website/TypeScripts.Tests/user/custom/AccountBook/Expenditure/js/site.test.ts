@@ -205,6 +205,19 @@ describe("AccountBook/Expenditure — class suggestion for the typed content", (
         }
     });
 
+    it("asks in the background: the request leaves the page's submit buttons enabled", () => {
+        // The layout disables every submit button while a POST is in flight (ajaxSend / ajaxComplete);
+        // a hint must not lock the form, so the request opts out of those global events.
+        const h = load();
+        try {
+            type(h, "스타벅스 & co");
+
+            expect(lastOf(suggestCalls(h)).settings.global).toBe(false);
+        } finally {
+            vi.useRealTimers();
+        }
+    });
+
     it("shows the suggestion with the options' own labels, and leaves the class fields as they are", () => {
         const h = load();
         try {

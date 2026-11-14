@@ -655,6 +655,9 @@
         void $.ajax({
             url: "/AccountBook/SuggestIncomeClass" + "?content=" + encodeURIComponent(content),
             type: "POST",
+            // A background hint: kept out of jQuery's global ajax events, so the layout's in-flight
+            // guard (ajaxSend / ajaxComplete) does not disable the submit buttons while it runs.
+            global: false,
             headers: { "RequestVerificationToken": fieldValue($__RequestVerificationToken) },
             dataType: "json",
             contentType: "application/json; charset=utf-8",
