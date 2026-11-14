@@ -565,9 +565,11 @@ public class AttachmentContentServiceTests
         Assert.Equal("Attachment.TooLarge", result?.ErrorCode);
     }
 
-    /// <summary>Every refused editor image (wrong type, SVG, undecodable) answers "Invalid image file."</summary>
+    /// <summary>
+    /// A refused editor image under an allowed extension (SVG content, undecodable) answers "Invalid image file."; a refused
+    /// extension has its own message (<see cref="UploadSummernoteImageAsync_ReturnsFail_WhenExtensionOrContentTypeNotAllowed"/>).
+    /// </summary>
     [Theory]
-    [InlineData("photo.gif", "image/gif", false, true)]
     [InlineData("photo.png", "image/png", true, true)]
     [InlineData("photo.png", "image/png", false, false)]
     public async Task UploadSummernoteImageAsync_AnswersInvalidImageFile_ForEveryRefusal(string fileName, string contentType, bool svg, bool valid)
