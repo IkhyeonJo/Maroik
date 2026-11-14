@@ -1,5 +1,8 @@
 using Maroik.Core.Domain.Primitives;
+using Maroik.Core.PostgreSQL.Contexts;
+using Maroik.Core.PostgreSQL.Models;
 using Maroik.Website.Tests.Fixtures;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Maroik.Website.Tests.Controllers;
 
@@ -179,6 +182,49 @@ public class DashboardControllerTests
         string html = await (await _client.SendAsync(request, TestContext.Current.CancellationToken)).Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
         Assert.Contains("<input id=\"amountMaxDecimalPlaces\" name=\"amountMaxDecimalPlaces\" type=\"hidden\" value=\"4\" />", html, StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// The user dashboard states the selected month's spending facts in Korean, in a card of their own: here a complete month two
+    /// months back with one meal, so its largest class is meals at 100 %. (A past month avoids a month boundary of the real clock.)
+    /// </summary>
+    [Fact]
+    public async Task UserIndex_StatesTheMonthsSpendingFacts_InKorean()
+    {
+        const string email = "dashboard-facts-user@test.com";
+        var session = await LoginAsUserAsync(email);
+        DateTime month = DateTime.UtcNow.AddMonths(-2);
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+            if (!db.Assets.Any(a => a.AccountEmail == email))
+            {
+                db.Assets.Add(new Asset
+                {
+                    ProductName = "facts-wallet", AccountEmail = email, Item = "CashAsset", Amount = 0, MonetaryUnit = "KRW",
+                    Deleted = false, Created = DateTime.UtcNow, Updated = DateTime.UtcNow
+                });
+            }
+            db.Expenditures.RemoveRange(db.Expenditures.Where(e => e.AccountEmail == email));
+            db.Expenditures.Add(new Expenditure
+            {
+                AccountEmail = email, MainClass = "ConsumerSpending", SubClass = "MealOrEatOutExpenses", Content = "lunch", Amount = 1234,
+                PaymentMethod = "facts-wallet", Created = new DateTime(month.Year, month.Month, 15, 12, 0, 0), Updated = DateTime.UtcNow
+            });
+            await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+        }
+
+        using var request = new HttpRequestMessage(HttpMethod.Get, $"/Dashboard/UserIndex?year={month.Year}&month={month.Month}");
+        request.Headers.Add("Cookie", session.CookieHeader);
+        request.Headers.AcceptLanguage.ParseAdd("ko-KR");
+        string html = await (await _client.SendAsync(request, TestContext.Current.CancellationToken)).Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        using var page = await new AngleSharp.Html.Parser.HtmlParser().ParseDocumentAsync(html, TestContext.Current.CancellationToken);
+
+        var card = page.GetElementById("spendingFacts");
+        Assert.NotNull(card);
+        Assert.Contains("지출 요약", card.TextContent, StringComparison.Ordinal);
+        // Whether the 15th is a weekday (a weekend sentence follows) depends on the month, so only the class sentence is pinned.
+        Assert.Contains("가장 많이 쓴 곳: 식비/외식비 (100%, 1,234 KRW)", card.QuerySelectorAll("li").Select(li => li.TextContent.Trim()));
     }
 
     // -- UserUpdateDefaultMonetary --------------------------------------------------

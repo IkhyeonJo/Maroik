@@ -31,4 +31,16 @@ public class UserIndexOutputViewModel
 
     /// <summary>Every sub-class the charts show once, so the view can render each one's localized label.</summary>
     public List<string> ChartSubClasses { get; set; } = [];
+
+    /// <summary>
+    /// The selected month's spending facts as localized sentences (projection, largest class, weekend against weekday, change
+    /// from the month before), each present only when the service could state it. Empty: the view shows no card.
+    /// </summary>
+    public List<string> SpendingFacts { get; set; } = [];
+
+    /// <summary>The fewest decimal places the chart tooltips show: the default currency's own (KRW 0, USD 2), or 0 when it is unknown.</summary>
+    public int AmountMinDecimalPlaces { get; set; }
+
+    /// <summary>The most decimal places the chart tooltips show: the default currency's own, or every stored place when it is unknown.</summary>
+    public int AmountMaxDecimalPlaces { get; set; }
 }
