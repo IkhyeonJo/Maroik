@@ -524,13 +524,7 @@ dotnet test --project Maroik.Core.Service.Tests            # any single project
 
 ### Running the Project
 
-#### Windows
-1. Install Visual Studio
-2. Open Maroik.slnx
-3. Set docker-compose as startup project
-4. Press F5 to run in debug mode
-
-#### Linux/Mac
+#### Windows/Linux/Mac
 1. Install JetBrains Rider
 2. Open Maroik.slnx and build the solution; restart Rider when it asks (see [Rider settings](#rider-settings))
 3. Start debug mode with docker-compose.debug.yml
