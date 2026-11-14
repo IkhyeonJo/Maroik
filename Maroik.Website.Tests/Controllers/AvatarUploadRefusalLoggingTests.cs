@@ -1,6 +1,6 @@
 using Maroik.Core.Contract.Settings;
 using Maroik.Core.Domain.Primitives;
-using Maroik.Website.Controllers;
+using Maroik.Core.Service.Services;
 using Maroik.Website.Tests.Fixtures;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
@@ -12,20 +12,20 @@ using Microsoft.Extensions.Options;
 namespace Maroik.Website.Tests.Controllers;
 
 /// <summary>
-/// A refused avatar upload is a security event like a refused editor image: the controller's own size and extension checks each
-/// log one Warning naming the reason and the signed-in uploader. The logger is replaced by a <see cref="FakeLogger{T}"/> in one
-/// derived host; the session is real.
+/// A refused avatar upload is a security event like a refused editor image: <see cref="ProfileService"/>'s size and extension
+/// checks each log one Warning naming the reason and the signed-in uploader, and nothing else logs the refusal. The service's logger
+/// is replaced by a <see cref="FakeLogger{T}"/> in one derived host; the session is real.
 /// </summary>
 [Collection("Website Integration")]
 public class AvatarUploadRefusalLoggingTests(MaroikWebApplicationFactory factory)
 {
-    /// <summary>Captures what <see cref="ManagementController"/> logs.</summary>
-    private readonly FakeLogger<ManagementController> _logger = new();
+    /// <summary>Captures what <see cref="ProfileService"/> logs.</summary>
+    private readonly FakeLogger<ProfileService> _logger = new();
 
-    /// <summary>A host whose controller logger is the fake above.</summary>
+    /// <summary>A host whose profile-service logger is the fake above.</summary>
     private WebApplicationFactory<Program> CreateHost() =>
         factory.WithWebHostBuilder(b => b.ConfigureTestServices(services =>
-            services.AddSingleton<ILogger<ManagementController>>(_logger)));
+            services.AddSingleton<ILogger<ProfileService>>(_logger)));
 
     /// <summary>
     /// Signs in as a fresh user on <paramref name="host"/>, posts <paramref name="bytes"/> as the avatar
@@ -62,7 +62,7 @@ public class AvatarUploadRefusalLoggingTests(MaroikWebApplicationFactory factory
         Assert.Contains(email, record.Message, StringComparison.Ordinal);
     }
 
-    /// <summary>A file with an extension outside jpg / jpeg / png is refused by the controller, and logged.</summary>
+    /// <summary>A file with an extension outside jpg / jpeg / png is refused by the service, and logged.</summary>
     [Fact]
     public async Task UpdateProfileAvatar_LogsARefusedExtension()
     {
@@ -73,7 +73,7 @@ public class AvatarUploadRefusalLoggingTests(MaroikWebApplicationFactory factory
         AssertRefusalLoggedOnce(".txt", email);
     }
 
-    /// <summary>A file over the configured size limit is refused by the controller, and logged with its size.</summary>
+    /// <summary>A file over the configured size limit is refused by the service by its size (its body is never read), and logged with it.</summary>
     [Fact]
     public async Task UpdateProfileAvatar_LogsARefusedOversizedFile()
     {

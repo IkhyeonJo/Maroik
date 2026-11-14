@@ -177,6 +177,23 @@ public class AttachmentContentServiceTests
             It.IsAny<byte[]>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
+    /// <summary>
+    /// A file the Website did not read into memory because it is over the limit arrives with no bytes and its real size: it is
+    /// refused by that size, before its name or type is looked at, and the log names the size.
+    /// </summary>
+    [Fact]
+    public async Task UploadSummernoteImageAsync_RefusesByTheDeclaredSize_AFileThatWasNotRead()
+    {
+        var settings = Options.Create(new ServerSetting { MaxAttachedFileSizeBytes = 1024 });
+        var sut = new AttachmentContentService(_fileClient.Object, _dataProtection.Object, _imageValidator.Object, _htmlSanitizer.Object, _htmlParser.Object, settings, _logger);
+        var unread = new AttachedFileDto { Bytes = [], ContentType = "", FileName = "big.gif", Size = 1025 };
+
+        var result = await sut.UploadSummernoteImageAsync(unread, "board", "post", "uploader@test.com", TestContext.Current.CancellationToken);
+
+        Assert.Equal(ServiceErrorKeys.FileTooLarge, result.ErrorKey);
+        Assert.Contains(_logger.Collector.GetSnapshot(), r => r.Level == LogLevel.Warning && r.Message.Contains("1025 bytes", StringComparison.Ordinal));
+    }
+
     /// <summary>An image exactly at the limit passes the size check.</summary>
     [Fact]
     public async Task UploadSummernoteImageAsync_AcceptsAnImageAtTheLimit()
@@ -190,13 +207,16 @@ public class AttachmentContentServiceTests
         Assert.True(result.Success);
     }
 
-    /// <summary>A file whose extension / content type is outside the jpg-png allow-list is rejected before the decode check.</summary>
+    /// <summary>
+    /// A file whose extension / content type is outside the jpg-png allow-list is rejected before the decode check: a wrong extension
+    /// with the message naming the allowed ones, a wrong content type under an allowed extension as an invalid image.
+    /// </summary>
     [Theory]
-    [InlineData("photo.gif", "image/gif")]
-    [InlineData("photo.svg", "image/svg+xml")]
-    [InlineData("photo.png", "text/html")]
-    [InlineData("photo.bmp", "image/bmp")]
-    public async Task UploadSummernoteImageAsync_ReturnsFail_WhenExtensionOrContentTypeNotAllowed(string fileName, string contentType)
+    [InlineData("photo.gif", "image/gif", ServiceErrorKeys.ImageExtensionNotAllowed)]
+    [InlineData("photo.svg", "image/svg+xml", ServiceErrorKeys.ImageExtensionNotAllowed)]
+    [InlineData("photo.bmp", "image/png", ServiceErrorKeys.ImageExtensionNotAllowed)]
+    [InlineData("photo.png", "text/html", ServiceErrorKeys.InvalidImageFile)]
+    public async Task UploadSummernoteImageAsync_ReturnsFail_WhenExtensionOrContentTypeNotAllowed(string fileName, string contentType, string expectedKey)
     {
         _imageValidator.Setup(v => v.IsValidImage(It.IsAny<byte[]>())).Returns(true);
         var file = new AttachedFileDto { Bytes = [1, 2, 3], ContentType = contentType, FileName = fileName };
@@ -204,6 +224,7 @@ public class AttachmentContentServiceTests
         var result = await CreateSut().UploadSummernoteImageAsync(file, "board", "post", "uploader@test.com", TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
+        Assert.Equal(expectedKey, result.ErrorKey);
         _fileClient.Verify(f => f.UploadAsync(
             It.IsAny<byte[]>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
     }

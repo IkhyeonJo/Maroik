@@ -154,26 +154,30 @@ public class ProfileService(
     }
 
     /// <inheritdoc />
-    public async Task<ServiceResult> UploadAndUpdateAvatarAsync(string email, byte[] imageBytes, string extension, CancellationToken ct = default)
+    public async Task<ServiceResult> UploadAndUpdateAvatarAsync(string email, AttachedFileDto file, CancellationToken ct = default)
     {
         try
         {
-            // Re-assert the allow-list here (not just in the controller): ImageUploadPolicy is the
-            // single source of truth, and a stored avatar must never end up under an arbitrary
-            // caller-chosen extension even if a future caller skips the controller-side check.
+            // The size first: the Website does not read a body over the limit into memory, so such a file arrives with no bytes
+            // and only its real size (whichever of the two is larger is what was sent).
+            long maxBytes = settings.Value.MaxAttachedFileSizeBytes;
+            long size = Math.Max(file.Size, file.Bytes.LongLength);
+            if (!ImageUploadPolicy.IsValidSize(size, maxBytes))
+            {
+                logger.LogWarning("Avatar upload refused: size {Size} bytes is outside the {MaxBytes}-byte limit for {Email}", size, maxBytes, email);
+                return ServiceResult.Validation("Profile.ImageSizeInvalid", ServiceErrorKeys.FileTooLarge, maxBytes / (1024 * 1024));
+            }
+
+            // ImageUploadPolicy is the single source of truth for the allow-list: a stored avatar must never end up under an
+            // arbitrary caller-chosen extension.
+            string extension = Path.GetExtension(file.FileName).ToLowerInvariant();
             if (!ImageUploadPolicy.IsAllowedExtension(extension))
             {
                 logger.LogWarning("Avatar upload refused: extension not allowed ({Extension}) for {Email}", extension, email);
-                return ServiceResult.Validation("Profile.InvalidImage", ServiceErrorKeys.Signals.InvalidImage);
+                return ServiceResult.Validation("Profile.ExtensionNotAllowed", ServiceErrorKeys.Signals.ImageExtensionNotAllowed);
             }
 
-            // Re-asserted here, like the allow-list above: the controller checks first so a large body is never read into memory.
-            long maxBytes = settings.Value.MaxAttachedFileSizeBytes;
-            if (!ImageUploadPolicy.IsValidSize(imageBytes.Length, maxBytes))
-            {
-                logger.LogWarning("Avatar upload refused: size {Size} bytes is outside the {MaxBytes}-byte limit for {Email}", imageBytes.Length, maxBytes, email);
-                return ServiceResult.Validation("Profile.ImageSizeInvalid", ServiceErrorKeys.FileTooLarge, maxBytes / (1024 * 1024));
-            }
+            byte[] imageBytes = file.Bytes;
 
             // SVG first: IsValidImage only accepts JPEG/PNG, so an SVG would otherwise be reported as a
             // generic "invalid image" instead of the specific "SVG is not allowed".

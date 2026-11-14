@@ -11,10 +11,11 @@ public interface IProfileService
     Task<AccountResponse?> GetProfileAsync(string email, CancellationToken ct = default);
 
     /// <summary>
-    /// Validates the uploaded image, stores it through the file-storage service (shared across
-    /// replicas), and updates the account's avatar path.
+    /// Validates the uploaded image (its size first, then its extension, then its content), stores it through the
+    /// file-storage service (shared across replicas), and updates the account's avatar path. A file over the size limit may
+    /// arrive without its bytes (see <see cref="AttachedFileDto.Size"/>): it is refused by its size.
     /// </summary>
-    Task<ServiceResult> UploadAndUpdateAvatarAsync(string email, byte[] imageBytes, string extension, CancellationToken ct = default);
+    Task<ServiceResult> UploadAndUpdateAvatarAsync(string email, AttachedFileDto file, CancellationToken ct = default);
 
     /// <summary>
     /// Fetches a stored avatar's bytes from the file-storage service by file name, or

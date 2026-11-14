@@ -109,35 +109,15 @@ public class ManagementController(
             return Ok(new { result = false, errorMessage = localizer["Please attach a file"].Value });
         }
 
-        IFormFile file = profileInputViewModel.ProfileAvatarFiles[0];
         string? email = HttpContext.GetLoggedInAccount().Email;
-
-        if (file.Length <= 0 || file.Length > serverSettings.Value.MaxAttachedFileSizeBytes)
-        {
-            // A refused upload is a security event: record who sent what.
-            logger.LogWarning("Avatar upload refused: size {Size} bytes is outside the {MaxBytes}-byte limit for {Email}",
-                file.Length, serverSettings.Value.MaxAttachedFileSizeBytes, email);
-            return Ok(new { result = false, errorMessage = localizer["File Size must be smaller than {0}MB.", serverSettings.Value.MaxAttachedFileSizeBytes / (1024 * 1024)].ToPlainString() });
-        }
-
-        var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
-        if (!uploadPolicy.IsAllowedImageExtension(extension))
-        {
-            logger.LogWarning("Avatar upload refused: extension not allowed ({Extension}) for {Email}", extension, email);
-            return Ok(new { result = false, errorMessage = localizer["Only .jpg or jpeg or .png file allowed"].Value });
-        }
-
-        byte[] imageBytes;
-        using (var ms = new MemoryStream())
-        {
-            await file.CopyToAsync(ms);
-            imageBytes = ms.ToArray();
-        }
 
         ServiceResult avatarResult;
         try
         {
-            avatarResult = await profileService.UploadAndUpdateAvatarAsync(email!, imageBytes, extension, HttpContext.RequestAborted);
+            // The service checks the size, the extension and the content, and logs a refusal. A body over the size limit is not
+            // read into memory: it reaches the service with its size only.
+            AttachedFileDto file = (await profileInputViewModel.ProfileAvatarFiles[0].ToAttachedFileInfoAsync(serverSettings.Value.MaxAttachedFileSizeBytes, HttpContext.RequestAborted))!;
+            avatarResult = await profileService.UploadAndUpdateAvatarAsync(email!, file, HttpContext.RequestAborted);
         }
         catch (Exception ex)
         {
@@ -153,8 +133,8 @@ public class ManagementController(
                 ServiceErrorKeys.Signals.ScanUnavailable => Ok(new { result = false, errorMessage = localizer["The file could not be scanned for viruses. Please try again later."].Value }),
                 ServiceErrorKeys.Signals.SvgNotAllowed => Ok(new { result = false, errorMessage = localizer["SVG format is not allowed"].Value }),
                 ServiceErrorKeys.Signals.InvalidImage => Ok(new { result = false, errorMessage = localizer["Invalid image file"].Value }),
-                ServiceResult.TemporaryErrorKey => Ok(new { result = false, errorMessage = localizer[ServiceResult.TemporaryErrorKey].Value }),
-                _ => Ok(new { result = false, errorMessage = localizer["Input is invalid"].Value })
+                ServiceErrorKeys.Signals.ImageExtensionNotAllowed => Ok(new { result = false, errorMessage = localizer["Only .jpg or jpeg or .png file allowed"].Value }),
+                _ => Ok(new { result = false, errorMessage = localizer[avatarResult.ErrorKey, avatarResult.ErrorArgs].ToPlainString() })
             };
         }
 

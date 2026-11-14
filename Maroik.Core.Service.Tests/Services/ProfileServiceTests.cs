@@ -62,7 +62,7 @@ public class ProfileServiceTests
     [InlineData((int)MaxImageBytes + 1)]
     public async Task UploadAndUpdateAvatarAsync_RefusesASizeOutsideTheLimit(int size)
     {
-        ServiceResult result = await CreateSut().UploadAndUpdateAvatarAsync("user@example.com", new byte[size], ".png", TestContext.Current.CancellationToken);
+        ServiceResult result = await CreateSut().UploadAndUpdateAvatarAsync("user@example.com", Avatar(new byte[size], ".png"), TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
         Assert.Equal("Profile.ImageSizeInvalid", result.ErrorCode);
@@ -71,6 +71,31 @@ public class ProfileServiceTests
         Assert.Contains(_logger.Collector.GetSnapshot(), r => r.Level == LogLevel.Warning && r.Message.Contains("user@example.com", StringComparison.Ordinal));
         _imageValidator.Verify(v => v.IsValidImage(It.IsAny<byte[]>()), Times.Never);
         _fileClient.Verify(c => c.UploadWithResultAsync(It.IsAny<byte[]>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    /// <summary>
+    /// A file the Website did not read into memory because it is over the limit arrives with no bytes and its real size: it is
+    /// refused by that size, and the log names it.
+    /// </summary>
+    [Fact]
+    public async Task UploadAndUpdateAvatarAsync_RefusesByTheDeclaredSize_AFileThatWasNotRead()
+    {
+        var unread = new AttachedFileDto { Bytes = [], ContentType = "image/png", FileName = "big.png", Size = MaxImageBytes + 1 };
+
+        ServiceResult result = await CreateSut().UploadAndUpdateAvatarAsync("user@example.com", unread, TestContext.Current.CancellationToken);
+
+        Assert.Equal("Profile.ImageSizeInvalid", result.ErrorCode);
+        Assert.Equal(ServiceErrorKeys.FileTooLarge, result.ErrorKey);
+        Assert.Contains(_logger.Collector.GetSnapshot(), r => r.Level == LogLevel.Warning && r.Message.Contains($"{MaxImageBytes + 1} bytes", StringComparison.Ordinal));
+    }
+
+    /// <summary>The size is checked before the extension, so an empty or oversized file is told its size whatever its name.</summary>
+    [Fact]
+    public async Task UploadAndUpdateAvatarAsync_ChecksTheSize_BeforeTheExtension()
+    {
+        ServiceResult result = await CreateSut().UploadAndUpdateAvatarAsync("user@example.com", Avatar([], ".gif"), TestContext.Current.CancellationToken);
+
+        Assert.Equal(ServiceErrorKeys.FileTooLarge, result.ErrorKey);
     }
 
     // -- Helpers --------------------------------------------------------------
@@ -166,7 +191,7 @@ public class ProfileServiceTests
         _imageValidator.Setup(v => v.IsValidImage(It.IsAny<byte[]>())).Returns(false);
         var sut = CreateSut();
 
-        ServiceResult result = await sut.UploadAndUpdateAvatarAsync("user@example.com", [1, 2, 3], ".png", TestContext.Current.CancellationToken);
+        ServiceResult result = await sut.UploadAndUpdateAvatarAsync("user@example.com", Avatar([1, 2, 3], ".png"), TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
         Assert.Equal("invalid-image", result.ErrorKey);
@@ -181,7 +206,7 @@ public class ProfileServiceTests
         _imageValidator.Setup(v => v.IsSvg(It.IsAny<byte[]>())).Returns(true);
         var sut = CreateSut();
 
-        ServiceResult result = await sut.UploadAndUpdateAvatarAsync("user@example.com", [1, 2, 3], ".png", TestContext.Current.CancellationToken);
+        ServiceResult result = await sut.UploadAndUpdateAvatarAsync("user@example.com", Avatar([1, 2, 3], ".png"), TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
         Assert.Equal("svg-not-allowed", result.ErrorKey);
@@ -201,7 +226,7 @@ public class ProfileServiceTests
         _accountRepo.Setup(r => r.UpdateAvatarPathAsync(It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>())).ReturnsAsync(1);
         var sut = CreateSut();
 
-        ServiceResult result = await sut.UploadAndUpdateAvatarAsync(account.Email.Value, [0xFF, 0xD8, 0xFF], ".JPG", TestContext.Current.CancellationToken);
+        ServiceResult result = await sut.UploadAndUpdateAvatarAsync(account.Email.Value, Avatar([0xFF, 0xD8, 0xFF], ".JPG"), TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
         _fileClient.Verify(c => c.UploadWithResultAsync(
@@ -232,7 +257,7 @@ public class ProfileServiceTests
         _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(account);
         _accountRepo.Setup(r => r.UpdateAvatarPathAsync(It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>())).ReturnsAsync(1);
 
-        ServiceResult result = await CreateSut().UploadAndUpdateAvatarAsync(account.Email.Value, uploadedBytes, ".jpg", TestContext.Current.CancellationToken);
+        ServiceResult result = await CreateSut().UploadAndUpdateAvatarAsync(account.Email.Value, Avatar(uploadedBytes, ".jpg"), TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
         Assert.Equal(strippedBytes, stored);
@@ -244,7 +269,7 @@ public class ProfileServiceTests
     {
         _imageValidator.Setup(v => v.IsValidImage(It.IsAny<byte[]>())).Returns(false);
 
-        await CreateSut().UploadAndUpdateAvatarAsync("user@example.com", [1, 2, 3], ".png", TestContext.Current.CancellationToken);
+        await CreateSut().UploadAndUpdateAvatarAsync("user@example.com", Avatar([1, 2, 3], ".png"), TestContext.Current.CancellationToken);
 
         _imageValidator.Verify(v => v.StripMetadata(It.IsAny<byte[]>()), Times.Never);
     }
@@ -259,7 +284,7 @@ public class ProfileServiceTests
             .ReturnsAsync(FileUploadResult.Failed);
         var sut = CreateSut();
 
-        ServiceResult result = await sut.UploadAndUpdateAvatarAsync("user@example.com", [0xFF, 0xD8, 0xFF], ".png", TestContext.Current.CancellationToken);
+        ServiceResult result = await sut.UploadAndUpdateAvatarAsync("user@example.com", Avatar([0xFF, 0xD8, 0xFF], ".png"), TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
         Assert.Equal("Profile.UploadAvatarFailed", result.ErrorCode);
@@ -279,7 +304,7 @@ public class ProfileServiceTests
             .ReturnsAsync(FileUploadResult.Infected);
         var sut = CreateSut();
 
-        ServiceResult result = await sut.UploadAndUpdateAvatarAsync("user@example.com", [0xFF, 0xD8, 0xFF], ".png", TestContext.Current.CancellationToken);
+        ServiceResult result = await sut.UploadAndUpdateAvatarAsync("user@example.com", Avatar([0xFF, 0xD8, 0xFF], ".png"), TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
         Assert.Equal("virus-detected", result.ErrorKey);
@@ -296,7 +321,7 @@ public class ProfileServiceTests
             .ReturnsAsync(FileUploadResult.ScanUnavailable);
         var sut = CreateSut();
 
-        ServiceResult result = await sut.UploadAndUpdateAvatarAsync("user@example.com", [0xFF, 0xD8, 0xFF], ".png", TestContext.Current.CancellationToken);
+        ServiceResult result = await sut.UploadAndUpdateAvatarAsync("user@example.com", Avatar([0xFF, 0xD8, 0xFF], ".png"), TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
         Assert.Equal("scan-unavailable", result.ErrorKey);
@@ -633,9 +658,9 @@ public class ProfileServiceTests
     [InlineData(".png.exe")]
     public async Task UploadAndUpdateAvatarAsync_RefusesADisallowedExtension_BeforeDecodingOrStoring(string extension)
     {
-        ServiceResult result = await CreateSut().UploadAndUpdateAvatarAsync("user@example.com", [1, 2, 3], extension, TestContext.Current.CancellationToken);
+        ServiceResult result = await CreateSut().UploadAndUpdateAvatarAsync("user@example.com", Avatar([1, 2, 3], extension), TestContext.Current.CancellationToken);
 
-        Assert.Equal("invalid-image", result.ErrorKey);
+        Assert.Equal(ServiceErrorKeys.Signals.ImageExtensionNotAllowed, result.ErrorKey);
         _imageValidator.Verify(v => v.IsValidImage(It.IsAny<byte[]>()), Times.Never);
         _fileClient.Verify(c => c.UploadWithResultAsync(It.IsAny<byte[]>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
     }
@@ -661,7 +686,7 @@ public class ProfileServiceTests
         _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(ActiveAccount());
         _accountRepo.Setup(r => r.UpdateAvatarPathAsync(It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>())).ReturnsAsync(1);
 
-        await CreateSut().UploadAndUpdateAvatarAsync("user@example.com", bytes, uploadedExtension, TestContext.Current.CancellationToken);
+        await CreateSut().UploadAndUpdateAvatarAsync("user@example.com", Avatar(bytes, uploadedExtension), TestContext.Current.CancellationToken);
 
         _fileClient.Verify(c => c.UploadWithResultAsync(
             It.IsAny<byte[]>(), storedContentType, It.Is<string>(p => p.EndsWith(storedExtension)), It.IsAny<CancellationToken>()), Times.Once);
@@ -675,7 +700,7 @@ public class ProfileServiceTests
     {
         _imageValidator.Setup(v => v.IsSvg(It.IsAny<byte[]>())).Throws(new InvalidOperationException("secret detail"));
 
-        ServiceResult result = await CreateSut().UploadAndUpdateAvatarAsync("user@example.com", [1, 2, 3], ".png", TestContext.Current.CancellationToken);
+        ServiceResult result = await CreateSut().UploadAndUpdateAvatarAsync("user@example.com", Avatar([1, 2, 3], ".png"), TestContext.Current.CancellationToken);
 
         Assert.Equal("Profile.UploadAvatarFailed", result.ErrorCode);
         Assert.Equal(ServiceResult.TemporaryErrorKey, result.ErrorKey);
@@ -796,14 +821,14 @@ public class ProfileServiceTests
         AssertLoggedError($"Failed to update password for {Email}", thrown);
     }
 
-    /// <summary>A disallowed extension is the "invalid-image" Validation error.</summary>
+    /// <summary>A disallowed extension is its own Validation error, so the page can name the allowed ones.</summary>
     [Fact]
-    public async Task UploadAndUpdateAvatarAsync_ReturnsInvalidImageValidation_ForADisallowedExtension()
+    public async Task UploadAndUpdateAvatarAsync_ReturnsExtensionNotAllowedValidation_ForADisallowedExtension()
     {
-        ServiceResult result = await CreateSut().UploadAndUpdateAvatarAsync(Email, [1, 2, 3], ".gif", TestContext.Current.CancellationToken);
+        ServiceResult result = await CreateSut().UploadAndUpdateAvatarAsync(Email, Avatar([1, 2, 3], ".gif"), TestContext.Current.CancellationToken);
 
         Assert.Equal(ServiceErrorType.Validation, result.ErrorType);
-        Assert.Equal("Profile.InvalidImage", result.ErrorCode);
+        Assert.Equal("Profile.ExtensionNotAllowed", result.ErrorCode);
     }
 
     /// <summary>An SVG is the "svg-not-allowed" Validation error.</summary>
@@ -812,7 +837,7 @@ public class ProfileServiceTests
     {
         _imageValidator.Setup(v => v.IsSvg(It.IsAny<byte[]>())).Returns(true);
 
-        ServiceResult result = await CreateSut().UploadAndUpdateAvatarAsync(Email, [1, 2, 3], ".png", TestContext.Current.CancellationToken);
+        ServiceResult result = await CreateSut().UploadAndUpdateAvatarAsync(Email, Avatar([1, 2, 3], ".png"), TestContext.Current.CancellationToken);
 
         Assert.Equal(ServiceErrorType.Validation, result.ErrorType);
         Assert.Equal("Profile.SvgNotAllowed", result.ErrorCode);
@@ -824,7 +849,7 @@ public class ProfileServiceTests
     {
         _imageValidator.Setup(v => v.IsValidImage(It.IsAny<byte[]>())).Returns(false);
 
-        ServiceResult result = await CreateSut().UploadAndUpdateAvatarAsync(Email, [1, 2, 3], ".png", TestContext.Current.CancellationToken);
+        ServiceResult result = await CreateSut().UploadAndUpdateAvatarAsync(Email, Avatar([1, 2, 3], ".png"), TestContext.Current.CancellationToken);
 
         Assert.Equal(ServiceErrorType.Validation, result.ErrorType);
         Assert.Equal("Profile.InvalidImage", result.ErrorCode);
@@ -839,7 +864,7 @@ public class ProfileServiceTests
         GivenAValidImage();
         GivenTheStorageAnswers(outcome);
 
-        ServiceResult result = await CreateSut().UploadAndUpdateAvatarAsync(Email, [0xFF, 0xD8, 0xFF], ".png", TestContext.Current.CancellationToken);
+        ServiceResult result = await CreateSut().UploadAndUpdateAvatarAsync(Email, Avatar([0xFF, 0xD8, 0xFF], ".png"), TestContext.Current.CancellationToken);
 
         Assert.Equal(expectedType, result.ErrorType);
         Assert.Equal(expectedCode, result.ErrorCode);
@@ -852,7 +877,7 @@ public class ProfileServiceTests
         GivenAValidImage();
         GivenTheStorageAnswers(FileUploadResult.Failed);
 
-        await CreateSut().UploadAndUpdateAvatarAsync(Email, [0xFF, 0xD8, 0xFF], ".png", TestContext.Current.CancellationToken);
+        await CreateSut().UploadAndUpdateAvatarAsync(Email, Avatar([0xFF, 0xD8, 0xFF], ".png"), TestContext.Current.CancellationToken);
 
         _fileClient.Verify(c => c.UploadWithResultAsync(It.IsAny<byte[]>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
     }
@@ -864,7 +889,7 @@ public class ProfileServiceTests
         var thrown = new InvalidOperationException("boom");
         _imageValidator.Setup(v => v.IsSvg(It.IsAny<byte[]>())).Throws(thrown);
 
-        await CreateSut().UploadAndUpdateAvatarAsync(Email, [1, 2, 3], ".png", TestContext.Current.CancellationToken);
+        await CreateSut().UploadAndUpdateAvatarAsync(Email, Avatar([1, 2, 3], ".png"), TestContext.Current.CancellationToken);
 
         AssertLoggedError($"Failed to upload and update avatar for {Email}", thrown);
     }
@@ -878,4 +903,8 @@ public class ProfileServiceTests
 
         Assert.Equal([1, 2, 3], await CreateSut().DownloadAvatarAsync("abc.png", TestContext.Current.CancellationToken));
     }
+
+    /// <summary>The avatar as the Website hands it over: <paramref name="bytes"/> read from a file named with <paramref name="extension"/>.</summary>
+    private static AttachedFileDto Avatar(byte[] bytes, string extension) =>
+        new() { Bytes = bytes, ContentType = "image/png", FileName = $"avatar{extension}", Size = bytes.Length };
 }

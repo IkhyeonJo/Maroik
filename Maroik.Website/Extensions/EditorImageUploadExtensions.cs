@@ -15,9 +15,9 @@ public static class EditorImageUploadExtensions
 {
     extension(Controller controller)
     {
-        /// <summary>Checks <paramref name="imageFile"/>, stores it through <paramref name="upload"/> and answers the editor.</summary>
+        /// <summary>Hands <paramref name="imageFile"/> to <paramref name="upload"/>, which checks and stores it, and answers the editor.</summary>
         /// <param name="imageFile">The posted file, null when the request carried none.</param>
-        /// <param name="maxBytes">The largest file accepted.</param>
+        /// <param name="maxBytes">The largest body read into memory (the service refuses anything larger).</param>
         /// <param name="localizer">The calling controller's localizer.</param>
         /// <param name="logger">The calling controller's logger.</param>
         /// <param name="dataProtection">Encrypts the storage path returned to the editor.</param>
@@ -35,27 +35,13 @@ public static class EditorImageUploadExtensions
             if (imageFile == null)
                 return controller.Ok(new { result = false, errorMessage = localizer["Please attach a file."].Value });
 
-            // A refused upload is a security event: record who sent what (the attachment service logs its own refusals).
+            // The attachment service checks the size, the extension, the content type and the content, and logs a refusal with
+            // the uploader. A body over the size limit is not read into memory: it reaches the service with its size only.
             string uploaderEmail = controller.HttpContext.GetLoggedInEmail();
-            if (imageFile.Length <= 0 || imageFile.Length > maxBytes)
-            {
-                logger.LogWarning("Editor image upload refused: size {Size} bytes is outside the {MaxBytes}-byte limit for {Email}",
-                    imageFile.Length, maxBytes, uploaderEmail);
-                return controller.Ok(new { result = false, errorMessage = localizer["File Size must be smaller than {0}MB.", maxBytes / (1024 * 1024)].ToPlainString() });
-            }
-
-            var ext = Path.GetExtension(imageFile.FileName).ToLowerInvariant();
-            if (!controller.HttpContext.RequestServices.GetRequiredService<IUploadPolicyService>().IsAllowedImageExtension(ext))
-            {
-                logger.LogWarning("Editor image upload refused: extension not allowed ({Extension}) for {Email}", ext, uploaderEmail);
-                return controller.Ok(new { result = false, errorMessage = localizer["Only .jpg or jpeg or .png file allowed."].Value });
-            }
-
-            AttachedFileDto file = (await imageFile.ToAttachedFileInfoAsync(maxBytes, ct))!;
-
             SummernoteUploadResult uploadResult;
             try
             {
+                AttachedFileDto file = (await imageFile.ToAttachedFileInfoAsync(maxBytes, ct))!;
                 uploadResult = await upload(file, uploaderEmail, ct);
             }
             catch (Exception ex)

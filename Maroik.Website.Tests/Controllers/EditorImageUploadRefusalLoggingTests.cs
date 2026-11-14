@@ -14,9 +14,9 @@ namespace Maroik.Website.Tests.Controllers;
 
 /// <summary>
 /// A refused editor (Summernote) image upload is a security event: each of the three editor endpoints logs
-/// one Warning naming the reason and the signed-in uploader, whether the controller refuses the file (size,
-/// extension) or the attachment service does (content type, SVG, undecodable bytes). The loggers are
-/// replaced by <see cref="FakeLogger{T}"/>s in one derived host; the session is real.
+/// one Warning naming the reason and the signed-in uploader. The attachment service makes every refusal (size,
+/// extension, content type, SVG, undecodable bytes); the controller loggers are captured too, to show they add
+/// nothing. The loggers are replaced by <see cref="FakeLogger{T}"/>s in one derived host; the session is real.
 /// </summary>
 [Collection("Website Integration")]
 public class EditorImageUploadRefusalLoggingTests(MaroikWebApplicationFactory factory)
@@ -84,7 +84,7 @@ public class EditorImageUploadRefusalLoggingTests(MaroikWebApplicationFactory fa
         Assert.Contains(email, record.Message, StringComparison.Ordinal);
     }
 
-    /// <summary>A file with an extension outside jpg / jpeg / png is refused by the controller, and logged.</summary>
+    /// <summary>A file with an extension outside jpg / jpeg / png is refused by the service, and logged once.</summary>
     [Theory]
     [InlineData("/Forum/UploadImageFile")]
     [InlineData("/Management/UploadImageFile")]
@@ -98,7 +98,7 @@ public class EditorImageUploadRefusalLoggingTests(MaroikWebApplicationFactory fa
         AssertRefusalLoggedOnce(".txt", email);
     }
 
-    /// <summary>A file over the configured size limit is refused by the controller, and logged with its size.</summary>
+    /// <summary>A file over the configured size limit is refused by the service by its size (its body is never read), and logged with it.</summary>
     [Theory]
     [InlineData("/Forum/UploadImageFile")]
     [InlineData("/Management/UploadImageFile")]
@@ -114,7 +114,7 @@ public class EditorImageUploadRefusalLoggingTests(MaroikWebApplicationFactory fa
     }
 
     /// <summary>
-    /// A .png that is not an image passes the controller's checks and is refused by the attachment service,
+    /// A .png that is not an image passes the size and extension checks and is refused by the attachment service,
     /// which logs it with the uploader the controller handed over.
     /// </summary>
     [Theory]

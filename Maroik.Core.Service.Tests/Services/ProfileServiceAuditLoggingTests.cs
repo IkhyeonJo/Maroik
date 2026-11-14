@@ -163,7 +163,7 @@ public class ProfileServiceAuditLoggingTests
     {
         SetupUpload(valid: false, svg: false);
 
-        await CreateSut().UploadAndUpdateAvatarAsync(Email, [1, 2, 3], ".png", TestContext.Current.CancellationToken);
+        await CreateSut().UploadAndUpdateAvatarAsync(Email, Avatar([1, 2, 3], ".png"), TestContext.Current.CancellationToken);
 
         Only(LogLevel.Warning, "Avatar upload refused: not a valid image");
     }
@@ -174,7 +174,7 @@ public class ProfileServiceAuditLoggingTests
     {
         SetupUpload(valid: true, svg: true);
 
-        await CreateSut().UploadAndUpdateAvatarAsync(Email, [1, 2, 3], ".png", TestContext.Current.CancellationToken);
+        await CreateSut().UploadAndUpdateAvatarAsync(Email, Avatar([1, 2, 3], ".png"), TestContext.Current.CancellationToken);
 
         Only(LogLevel.Warning, "Avatar upload refused: SVG is not allowed");
     }
@@ -183,7 +183,7 @@ public class ProfileServiceAuditLoggingTests
     [Fact]
     public async Task UploadAvatar_LogsWarning_WhenTheExtensionIsNotAllowed()
     {
-        await CreateSut().UploadAndUpdateAvatarAsync(Email, [1, 2, 3], ".exe", TestContext.Current.CancellationToken);
+        await CreateSut().UploadAndUpdateAvatarAsync(Email, Avatar([1, 2, 3], ".exe"), TestContext.Current.CancellationToken);
 
         FakeLogRecord record = Only(LogLevel.Warning, "Avatar upload refused: extension not allowed");
         Assert.Contains(".exe", record.Message, StringComparison.Ordinal);
@@ -195,7 +195,7 @@ public class ProfileServiceAuditLoggingTests
     {
         SetupUpload(valid: true, svg: false, FileUploadResult.Infected);
 
-        await CreateSut().UploadAndUpdateAvatarAsync(Email, [0xFF, 0xD8, 0xFF], ".png", TestContext.Current.CancellationToken);
+        await CreateSut().UploadAndUpdateAvatarAsync(Email, Avatar([0xFF, 0xD8, 0xFF], ".png"), TestContext.Current.CancellationToken);
 
         Only(LogLevel.Warning, "Avatar upload refused: virus detected");
     }
@@ -206,7 +206,7 @@ public class ProfileServiceAuditLoggingTests
     {
         SetupUpload(valid: true, svg: false, FileUploadResult.ScanUnavailable);
 
-        await CreateSut().UploadAndUpdateAvatarAsync(Email, [0xFF, 0xD8, 0xFF], ".png", TestContext.Current.CancellationToken);
+        await CreateSut().UploadAndUpdateAvatarAsync(Email, Avatar([0xFF, 0xD8, 0xFF], ".png"), TestContext.Current.CancellationToken);
 
         Only(LogLevel.Error, "Avatar upload failed: virus scanner unavailable");
     }
@@ -217,7 +217,7 @@ public class ProfileServiceAuditLoggingTests
     {
         SetupUpload(valid: true, svg: false, FileUploadResult.Failed);
 
-        await CreateSut().UploadAndUpdateAvatarAsync(Email, [0xFF, 0xD8, 0xFF], ".png", TestContext.Current.CancellationToken);
+        await CreateSut().UploadAndUpdateAvatarAsync(Email, Avatar([0xFF, 0xD8, 0xFF], ".png"), TestContext.Current.CancellationToken);
 
         Only(LogLevel.Error, "Avatar upload failed: file storage refused the upload");
     }
@@ -230,7 +230,7 @@ public class ProfileServiceAuditLoggingTests
         _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(Existing());
         _accountRepo.Setup(r => r.UpdateAvatarPathAsync(It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>())).ReturnsAsync(1);
 
-        await CreateSut().UploadAndUpdateAvatarAsync(Email, [0xFF, 0xD8, 0xFF], ".png", TestContext.Current.CancellationToken);
+        await CreateSut().UploadAndUpdateAvatarAsync(Email, Avatar([0xFF, 0xD8, 0xFF], ".png"), TestContext.Current.CancellationToken);
 
         Only(LogLevel.Information, "Avatar updated");
     }
@@ -252,4 +252,8 @@ public class ProfileServiceAuditLoggingTests
         Assert.Contains("me.png", record.Message, StringComparison.Ordinal);
         Assert.Contains($"CorrelationId={activity.Id}", record.Message, StringComparison.Ordinal);
     }
+
+    /// <summary>The avatar as the Website hands it over: <paramref name="bytes"/> read from a file named with <paramref name="extension"/>.</summary>
+    private static AttachedFileDto Avatar(byte[] bytes, string extension) =>
+        new() { Bytes = bytes, ContentType = "image/png", FileName = $"avatar{extension}", Size = bytes.Length };
 }

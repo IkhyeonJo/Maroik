@@ -45,27 +45,29 @@ public class AttachmentContentService(
     /// <inheritdoc />
     public async Task<SummernoteUploadResult> UploadSummernoteImageAsync(AttachedFileDto file, string area, string subArea, string actorEmail, CancellationToken ct = default)
     {
-        string ext = Path.GetExtension(file.FileName).ToLowerInvariant();
+        // The size first: the Website does not read a body over the limit into memory, so such a file arrives with no bytes
+        // and only its real size (whichever of the two is larger is what was sent).
+        long maxBytes = settings.Value.MaxAttachedFileSizeBytes;
+        long size = Math.Max(file.Size, file.Bytes.LongLength);
+        if (!ImageUploadPolicy.IsValidSize(size, maxBytes))
+        {
+            logger.LogWarning("Editor image upload refused: size {Size} bytes is outside the {MaxBytes}-byte limit in {Area}/{SubArea} for {Email}",
+                size, maxBytes, area, subArea, actorEmail);
+            return SummernoteUploadResult.Fail(ServiceErrorKeys.FileTooLarge, maxBytes / (1024 * 1024));
+        }
 
         // Same allow-list gate the avatar upload path enforces (ImageUploadPolicy is the single
         // source of truth): reject anything outside jpg/png by extension or declared content type,
         // and reject SVG outright. IsValidImage itself only accepts real JPEG/PNG content (by magic
         // bytes, and Magick is told to read exactly that format), so the label on the file never
         // decides which decoder the bytes are fed to.
-        if (!ImageUploadPolicy.IsAllowedExtension(ext) || !ImageUploadPolicy.IsAllowedContentType(file.ContentType))
+        string ext = Path.GetExtension(file.FileName).ToLowerInvariant();
+        bool extensionAllowed = ImageUploadPolicy.IsAllowedExtension(ext);
+        if (!extensionAllowed || !ImageUploadPolicy.IsAllowedContentType(file.ContentType))
         {
             logger.LogWarning("Editor image upload refused: extension or content type not allowed ({Extension}, {ContentType}) in {Area}/{SubArea} for {Email}",
                 ext, file.ContentType, area, subArea, actorEmail);
-            return SummernoteUploadResult.Fail(ServiceErrorKeys.InvalidImageFile);
-        }
-
-        // Re-asserted here, like the allow-list above: the HTTP layer checks first so a large body is never read into memory.
-        long maxBytes = settings.Value.MaxAttachedFileSizeBytes;
-        if (!ImageUploadPolicy.IsValidSize(file.Bytes.Length, maxBytes))
-        {
-            logger.LogWarning("Editor image upload refused: size {Size} bytes is outside the {MaxBytes}-byte limit in {Area}/{SubArea} for {Email}",
-                file.Bytes.Length, maxBytes, area, subArea, actorEmail);
-            return SummernoteUploadResult.Fail(ServiceErrorKeys.FileTooLarge, maxBytes / (1024 * 1024));
+            return SummernoteUploadResult.Fail(extensionAllowed ? ServiceErrorKeys.InvalidImageFile : ServiceErrorKeys.ImageExtensionNotAllowed);
         }
 
         if (imageValidator.IsSvg(file.Bytes))
