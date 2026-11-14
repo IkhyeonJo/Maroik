@@ -566,22 +566,24 @@ public class AttachmentContentServiceTests
     }
 
     /// <summary>
-    /// A refused editor image under an allowed extension (SVG content, undecodable) answers "Invalid image file."; a refused
-    /// extension has its own message (<see cref="UploadSummernoteImageAsync_ReturnsFail_WhenExtensionOrContentTypeNotAllowed"/>).
+    /// A refused editor image under an allowed extension answers "Invalid image file." whatever the reason: SVG content or an
+    /// undecodable image (pinned here), or a content type outside the allow-list
+    /// (<see cref="UploadSummernoteImageAsync_ReturnsFail_WhenExtensionOrContentTypeNotAllowed"/>, photo.png + text/html). A
+    /// refused extension has its own message (the same test).
     /// </summary>
     [Theory]
-    [InlineData("photo.png", "image/png", true, true)]
-    [InlineData("photo.png", "image/png", false, false)]
-    public async Task UploadSummernoteImageAsync_AnswersInvalidImageFile_ForEveryRefusal(string fileName, string contentType, bool svg, bool valid)
+    [InlineData(true, true)]
+    [InlineData(false, false)]
+    public async Task UploadSummernoteImageAsync_AnswersInvalidImageFile_ForARefusedImageUnderAnAllowedExtension(bool svg, bool valid)
     {
         _imageValidator.Setup(v => v.IsSvg(It.IsAny<byte[]>())).Returns(svg);
         _imageValidator.Setup(v => v.IsValidImage(It.IsAny<byte[]>())).Returns(valid);
-        var file = new AttachedFileDto { Bytes = [1, 2, 3], ContentType = contentType, FileName = fileName };
+        var file = new AttachedFileDto { Bytes = [1, 2, 3], ContentType = "image/png", FileName = "photo.png" };
 
         SummernoteUploadResult result = await CreateSut().UploadSummernoteImageAsync(file, "board", "post", "uploader@test.com", TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
-        Assert.Equal("Invalid image file.", result.ErrorKey);
+        Assert.Equal(ServiceErrorKeys.InvalidImageFile, result.ErrorKey);
     }
 
     /// <summary>An editor image is uploaded to the configured file-storage address.</summary>
