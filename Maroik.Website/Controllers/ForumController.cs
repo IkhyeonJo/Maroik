@@ -385,12 +385,12 @@ public class ForumController(
         {
             // Re-fetched from the database by ViewBagPopulatorFilter on every request.
             AccountResponse viewer = HttpContext.GetLoggedInAccount();
-            (ServiceResult result, AttachmentDownload? file) = await boardService.OpenAttachedFileAsync(boardId, BoardKinds.FreeForum, viewer, ct);
+            ServiceValueResult<AttachmentDownload> result = await boardService.OpenAttachedFileAsync(boardId, BoardKinds.FreeForum, viewer, ct);
             if (!result.Success)
                 return Json(new { result = false, error = localizer[result.ErrorKey, result.ErrorArgs].ToPlainString() });
 
-            string contentType = _contentTypeProvider.TryGetContentType(file!.FileName, out string? type) ? type : "application/octet-stream";
-            return File(file.Content, contentType, file.FileName);
+            string contentType = _contentTypeProvider.TryGetContentType(result.Value.FileName, out string? type) ? type : "application/octet-stream";
+            return File(result.Value.Content, contentType, result.Value.FileName);
         }
         catch (Exception ex)
         {

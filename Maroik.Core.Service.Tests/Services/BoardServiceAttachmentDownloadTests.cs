@@ -47,7 +47,8 @@ public class BoardServiceAttachmentDownloadTests
         var stream = new MemoryStream([1, 2, 3, 4]);
         _attachmentContent.Setup(a => a.OpenFileAsync("upload/Forum/FreeForum/7/report.zip", It.IsAny<CancellationToken>())).ReturnsAsync(stream);
 
-        var (result, file) = await CreateSut().OpenAttachedFileAsync(7, BoardTypes.FreeForum, null, TestContext.Current.CancellationToken);
+        var result = await CreateSut().OpenAttachedFileAsync(7, BoardTypes.FreeForum, null, TestContext.Current.CancellationToken);
+        var file = result.Value;
 
         Assert.True(result.Success);
         Assert.NotNull(file);
@@ -64,7 +65,8 @@ public class BoardServiceAttachmentDownloadTests
     {
         GivenAPostWithAnAttachment(locked: true);
 
-        var (result, file) = await CreateSut().OpenAttachedFileAsync(7, BoardTypes.FreeForum, null, TestContext.Current.CancellationToken);
+        var result = await CreateSut().OpenAttachedFileAsync(7, BoardTypes.FreeForum, null, TestContext.Current.CancellationToken);
+        var file = result.Value;
 
         Assert.False(result.Success);
         Assert.Equal("Board.NotFound", result.ErrorCode);
@@ -81,7 +83,7 @@ public class BoardServiceAttachmentDownloadTests
     {
         GivenAPostWithAnAttachment(type: BoardTypes.PrivateNote);
 
-        var (result, _) = await CreateSut().OpenAttachedFileAsync(7, BoardTypes.PrivateNote,
+        var result = await CreateSut().OpenAttachedFileAsync(7, BoardTypes.PrivateNote,
             new AccountResponse { Nickname = "Mallory", Role = Role.User }, TestContext.Current.CancellationToken);
 
         Assert.Equal("Board.NotFound", result.ErrorCode);
@@ -93,7 +95,7 @@ public class BoardServiceAttachmentDownloadTests
     {
         GivenAPostWithAnAttachment(type: BoardTypes.PrivateNote);
 
-        var (result, _) = await CreateSut().OpenAttachedFileAsync(7, BoardTypes.FreeForum,
+        var result = await CreateSut().OpenAttachedFileAsync(7, BoardTypes.FreeForum,
             new AccountResponse { Nickname = "Alice", Role = Role.User }, TestContext.Current.CancellationToken);
 
         Assert.Equal("Board.NotFound", result.ErrorCode);
@@ -103,7 +105,7 @@ public class BoardServiceAttachmentDownloadTests
     [Fact]
     public async Task OpenAttachedFileAsync_ReportsNotFound_ForAMissingPost()
     {
-        var (result, _) = await CreateSut().OpenAttachedFileAsync(99, BoardTypes.FreeForum, null, TestContext.Current.CancellationToken);
+        var result = await CreateSut().OpenAttachedFileAsync(99, BoardTypes.FreeForum, null, TestContext.Current.CancellationToken);
 
         Assert.Equal("Board.NotFound", result.ErrorCode);
     }
@@ -115,7 +117,7 @@ public class BoardServiceAttachmentDownloadTests
         GivenAPostWithAnAttachment();
         _attachedFileRepo.Setup(r => r.FindByBoardIdAsync(7, It.IsAny<CancellationToken>())).ReturnsAsync((BoardAttachedFile?)null);
 
-        var (result, _) = await CreateSut().OpenAttachedFileAsync(7, BoardTypes.FreeForum, null, TestContext.Current.CancellationToken);
+        var result = await CreateSut().OpenAttachedFileAsync(7, BoardTypes.FreeForum, null, TestContext.Current.CancellationToken);
 
         Assert.Equal("Board.AttachedFileNotFound", result.ErrorCode);
         Assert.Equal("The attached file could not be found.", result.ErrorKey);
@@ -128,7 +130,8 @@ public class BoardServiceAttachmentDownloadTests
         GivenAPostWithAnAttachment();
         _attachmentContent.Setup(a => a.OpenFileAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync((Stream?)null);
 
-        var (result, file) = await CreateSut().OpenAttachedFileAsync(7, BoardTypes.FreeForum, null, TestContext.Current.CancellationToken);
+        var result = await CreateSut().OpenAttachedFileAsync(7, BoardTypes.FreeForum, null, TestContext.Current.CancellationToken);
+        var file = result.Value;
 
         Assert.Equal("Board.AttachedFileUnavailable", result.ErrorCode);
         Assert.Equal(ServiceResult.TemporaryErrorKey, result.ErrorKey);
@@ -142,7 +145,7 @@ public class BoardServiceAttachmentDownloadTests
     {
         GivenAPostWithAnAttachment(locked: true);
 
-        var (result, _) = await CreateSut().OpenAttachedFileAsync(7, BoardTypes.FreeForum, null, TestContext.Current.CancellationToken);
+        var result = await CreateSut().OpenAttachedFileAsync(7, BoardTypes.FreeForum, null, TestContext.Current.CancellationToken);
 
         Assert.Equal(ServiceErrorType.NotFound, result.ErrorType);
         Assert.Equal("The post could not be found.", result.ErrorKey);

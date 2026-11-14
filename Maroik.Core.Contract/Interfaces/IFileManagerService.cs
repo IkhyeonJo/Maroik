@@ -14,7 +14,7 @@ public interface IFileManagerService
     Task<FileManagerDriveResponse> GetDriveAsync(string accountEmail, CancellationToken ct = default);
 
     /// <summary>The breadcrumb and items of <paramref name="folderId"/> (null = the root); "not found" for a folder the account does not own.</summary>
-    Task<(ServiceResult Result, FileManagerFolderResponse? Folder)> GetFolderAsync(string accountEmail, long? folderId, CancellationToken ct = default);
+    Task<ServiceValueResult<FileManagerFolderResponse>> GetFolderAsync(string accountEmail, long? folderId, CancellationToken ct = default);
 
     /// <summary>The finished items whose name contains <paramref name="query"/> (ignoring case), each with its location.</summary>
     Task<List<FileManagerItemResponse>> SearchAsync(string accountEmail, string? query, CancellationToken ct = default);
@@ -23,7 +23,7 @@ public interface IFileManagerService
     /// Creates a folder named <paramref name="name"/> in <paramref name="parentId"/>. With <paramref name="merge"/> (a folder upload)
     /// an existing folder of that name is reused; without it the name must be free. Returns the folder's id.
     /// </summary>
-    Task<(ServiceResult Result, long? FolderId)> CreateFolderAsync(string accountEmail, long? parentId, string? name, bool merge, CancellationToken ct = default);
+    Task<ServiceValueResult<long>> CreateFolderAsync(string accountEmail, long? parentId, string? name, bool merge, CancellationToken ct = default);
 
     /// <summary>Renames an item; refused when the name is taken in its folder.</summary>
     Task<ServiceResult> RenameAsync(string accountEmail, long id, string? name, CancellationToken ct = default);
@@ -38,10 +38,10 @@ public interface IFileManagerService
     Task<ServiceResult> CheckQuotaAsync(string accountEmail, long totalBytes, CancellationToken ct = default);
 
     /// <summary>Starts the upload of one file: validates its name and size, resolves a name conflict, checks and reserves the quota.</summary>
-    Task<(ServiceResult Result, FileManagerUploadStart? Start)> BeginUploadAsync(string accountEmail, FileManagerUploadRequest request, CancellationToken ct = default);
+    Task<ServiceValueResult<FileManagerUploadStart>> BeginUploadAsync(string accountEmail, FileManagerUploadRequest request, CancellationToken ct = default);
 
     /// <summary>Sends the next chunk of an upload to file storage; returns the length received so far.</summary>
-    Task<(ServiceResult Result, long Length)> AppendChunkAsync(string accountEmail, Guid uploadId, long offset, Stream chunk, long chunkLength, CancellationToken ct = default);
+    Task<ServiceValueResult<long>> AppendChunkAsync(string accountEmail, Guid uploadId, long offset, Stream chunk, long chunkLength, CancellationToken ct = default);
 
     /// <summary>
     /// Completes an upload, and is called again until it is decided: file storage scans it in the background, and while it does the
@@ -51,7 +51,7 @@ public interface IFileManagerService
     /// <paramref name="overwrite"/> a finished file of the same name is replaced (deleted); without it such a file makes the upload fail.
     /// When file storage cannot be reached the upload is aborted; if the abort fails too it stays for the hourly sweep of abandoned uploads.
     /// </summary>
-    Task<(ServiceResult Result, FileManagerCompletion Completion)> CompleteUploadAsync(string accountEmail, Guid uploadId, bool overwrite, CancellationToken ct = default);
+    Task<ServiceValueResult<FileManagerCompletion>> CompleteUploadAsync(string accountEmail, Guid uploadId, bool overwrite, CancellationToken ct = default);
 
     /// <summary>Abandons an unfinished upload.</summary>
     Task<ServiceResult> AbortUploadAsync(string accountEmail, Guid uploadId, CancellationToken ct = default);
@@ -64,11 +64,11 @@ public interface IFileManagerService
     Task<int> RemoveStaleUploadsAsync(int maxAccounts, CancellationToken ct = default);
 
     /// <summary>Opens a file for download (streamed from file storage).</summary>
-    Task<(ServiceResult Result, AttachmentDownload? File)> OpenFileAsync(string accountEmail, long id, CancellationToken ct = default);
+    Task<ServiceValueResult<AttachmentDownload>> OpenFileAsync(string accountEmail, long id, CancellationToken ct = default);
 
     /// <summary>The bytes and proven Content-Type of a previewable image.</summary>
-    Task<(ServiceResult Result, FileManagerPreview? Preview)> OpenPreviewAsync(string accountEmail, long id, CancellationToken ct = default);
+    Task<ServiceValueResult<FileManagerPreview>> OpenPreviewAsync(string accountEmail, long id, CancellationToken ct = default);
 
     /// <summary>The files a multi-download fetches: each selected file, and every file at any depth under each selected folder.</summary>
-    Task<(ServiceResult Result, List<FileManagerItemResponse> Files)> ListFilesForDownloadAsync(string accountEmail, IReadOnlyCollection<long> ids, CancellationToken ct = default);
+    Task<ServiceValueResult<List<FileManagerItemResponse>>> ListFilesForDownloadAsync(string accountEmail, IReadOnlyCollection<long> ids, CancellationToken ct = default);
 }

@@ -383,12 +383,12 @@ public class ManagementController(
             long? quotaBytes = null;
             if (accountInputViewModel.FileManagerQuotaGb is { } quotaGb)
             {
-                (ServiceResult refusal, long bytes) = uploadPolicy.FileManagerQuotaBytesFromGb(quotaGb);
-                if (!refusal.Success)
+                ServiceValueResult<long> quota = uploadPolicy.FileManagerQuotaBytesFromGb(quotaGb);
+                if (!quota.Success)
                 {
-                    return Json(new { result = false, error = localizer[refusal.ErrorKey, refusal.ErrorArgs].ToPlainString() });
+                    return Json(new { result = false, error = localizer[quota.ErrorKey, quota.ErrorArgs].ToPlainString() });
                 }
-                quotaBytes = bytes;
+                quotaBytes = quota.Value;
             }
 
             // Role validity is enforced by Account.ChangeRole in the Domain layer, which rejects
@@ -1205,13 +1205,13 @@ public class ManagementController(
         {
             // Re-fetched from the database by ViewBagPopulatorFilter on every request.
             AccountResponse loggedInAccount = HttpContext.GetLoggedInAccount();
-            (ServiceResult result, AttachmentDownload? file) = await boardService.OpenAttachedFileAsync(
+            ServiceValueResult<AttachmentDownload> result = await boardService.OpenAttachedFileAsync(
                 boardId, BoardKinds.PrivateNote, loggedInAccount, HttpContext.RequestAborted);
             if (!result.Success)
                 return Json(new { result = false, error = localizer[result.ErrorKey, result.ErrorArgs].ToPlainString() });
 
-            string contentType = _contentTypeProvider.TryGetContentType(file!.FileName, out string? type) ? type : "application/octet-stream";
-            return File(file.Content, contentType, file.FileName);
+            string contentType = _contentTypeProvider.TryGetContentType(result.Value.FileName, out string? type) ? type : "application/octet-stream";
+            return File(result.Value.Content, contentType, result.Value.FileName);
         }
         catch (Exception ex)
         {

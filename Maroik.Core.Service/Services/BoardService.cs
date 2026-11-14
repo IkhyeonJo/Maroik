@@ -482,7 +482,7 @@ public class BoardService(
         => attachmentContent.UploadSummernoteImageAsync(file, area, boardType, actorEmail, ct);
 
     /// <inheritdoc />
-    public async Task<(ServiceResult Result, AttachmentDownload? File)> OpenAttachedFileAsync(
+    public async Task<ServiceValueResult<AttachmentDownload>> OpenAttachedFileAsync(
         long boardId, string boardType, AccountResponse? viewer, CancellationToken ct = default)
     {
         // The same visibility rule as the post itself, checked again here: the download endpoint is
@@ -492,16 +492,17 @@ public class BoardService(
         {
             logger.LogWarning("Attachment download refused: post {BoardId} ({BoardType}) is missing or not visible to {Viewer}",
                 boardId, boardType, viewer?.Nickname ?? Role.Anonymous);
-            return (ServiceResult.NotFound("Board.NotFound", ServiceErrorKeys.PostNotFound), null);
+            return ServiceResult.NotFound("Board.NotFound", ServiceErrorKeys.PostNotFound);
         }
 
         BoardAttachedFile? attachedFile = await boardAttachedFileRepository.FindByBoardIdAsync(boardId, ct);
         if (attachedFile is not { HasFile: true })
-            return (ServiceResult.NotFound("Board.AttachedFileNotFound", ServiceErrorKeys.AttachedFileNotFound), null);
+            return ServiceResult.NotFound("Board.AttachedFileNotFound", ServiceErrorKeys.AttachedFileNotFound);
 
         // OpenFileAsync logs its own failure (with the storage path) where it happens.
         Stream? content = await attachmentContent.OpenFileAsync(attachedFile.Path, ct);
-        return content == null ? (ServiceResult.Failure("Board.AttachedFileUnavailable", ServiceResult.TemporaryErrorKey), null) : (ServiceResult.Ok(), new AttachmentDownload(content, $"{attachedFile.Name}{attachedFile.Extension}"));
+        if (content == null) return ServiceResult.Failure("Board.AttachedFileUnavailable", ServiceResult.TemporaryErrorKey);
+        return new AttachmentDownload(content, $"{attachedFile.Name}{attachedFile.Extension}");
 
     }
 

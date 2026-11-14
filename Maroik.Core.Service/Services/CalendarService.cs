@@ -820,7 +820,7 @@ public class CalendarService(
         => attachmentContent.UploadSummernoteImageAsync(file, "Calendar", roleIndex, actorEmail, ct);
 
     /// <inheritdoc />
-    public async Task<(ServiceResult Result, AttachmentDownload? File)> OpenCalendarEventAttachedFileAsync(
+    public async Task<ServiceValueResult<AttachmentDownload>> OpenCalendarEventAttachedFileAsync(
         long calendarEventId, AccountResponse? viewer, CancellationToken ct = default)
     {
         // The same visibility rule as the event detail, checked again here: the download endpoint is
@@ -834,16 +834,17 @@ public class CalendarService(
         {
             logger.LogWarning("Attachment download refused: calendar event {CalendarEventId} is missing or not visible to {Viewer}",
                 calendarEventId, viewer?.Email ?? Role.Anonymous);
-            return (ServiceResult.NotFound("CalendarEvent.NotFound", ServiceErrorKeys.CalendarEventNotFound), null);
+            return ServiceResult.NotFound("CalendarEvent.NotFound", ServiceErrorKeys.CalendarEventNotFound);
         }
 
         CalendarEventAttachedFile? attachedFile = await calendarEventAttachedFileRepository.FindByCalendarEventIdAsync(calendarEventId, ct);
         if (attachedFile is not { HasFile: true })
-            return (ServiceResult.NotFound("CalendarEvent.AttachedFileNotFound", ServiceErrorKeys.AttachedFileNotFound), null);
+            return ServiceResult.NotFound("CalendarEvent.AttachedFileNotFound", ServiceErrorKeys.AttachedFileNotFound);
 
         // OpenFileAsync logs its own failure (with the storage path) where it happens.
         Stream? content = await attachmentContent.OpenFileAsync(attachedFile.Path, ct);
-        return content == null ? (ServiceResult.Failure("CalendarEvent.AttachedFileUnavailable", ServiceResult.TemporaryErrorKey), null) : (ServiceResult.Ok(), new AttachmentDownload(content, $"{attachedFile.Name}{attachedFile.Extension}"));
+        if (content == null) return ServiceResult.Failure("CalendarEvent.AttachedFileUnavailable", ServiceResult.TemporaryErrorKey);
+        return new AttachmentDownload(content, $"{attachedFile.Name}{attachedFile.Extension}");
 
     }
 

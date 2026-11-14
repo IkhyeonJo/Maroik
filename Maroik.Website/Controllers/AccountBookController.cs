@@ -688,9 +688,9 @@ public class AccountBookController(
         AccountResponse account = HttpContext.GetLoggedInAccount();
         try
         {
-            var (result, sheet) = await budgetService.GetSheetAsync(account.RequireEmail(), Enum.Parse<BudgetSheetKind>(input.Kind), input.Year, account.RequireTimeZoneIanaId(), ct);
+            var result = await budgetService.GetSheetAsync(account.RequireEmail(), Enum.Parse<BudgetSheetKind>(input.Kind), input.Year, account.RequireTimeZoneIanaId(), ct);
             return result.Success
-                ? Json(new { result = true, sheet = sheet!.ToViewModel(key => localizer[key].Value) })
+                ? Json(new { result = true, sheet = result.Value.ToViewModel(key => localizer[key].Value) })
                 : Json(new { result = false, error = localizer[result.ErrorKey, result.ErrorArgs].ToPlainString() });
         }
         catch (Exception ex)
@@ -710,10 +710,10 @@ public class AccountBookController(
         AccountResponse account = HttpContext.GetLoggedInAccount();
         try
         {
-            var (result, preview) = await budgetService.PreviewAsync(account.RequireEmail(), Enum.Parse<BudgetSheetKind>(input.Kind), input.Year, account.RequireTimeZoneIanaId(),
+            var result = await budgetService.PreviewAsync(account.RequireEmail(), Enum.Parse<BudgetSheetKind>(input.Kind), input.Year, account.RequireTimeZoneIanaId(),
                 input.Address, input.Input ?? "", ct);
             return result.Success
-                ? Json(new { result = true, preview = preview!.ToViewModel((key, args) => localizer[key, args].ToPlainString()) })
+                ? Json(new { result = true, preview = result.Value.ToViewModel((key, args) => localizer[key, args].ToPlainString()) })
                 : Json(new { result = false, error = localizer[result.ErrorKey, result.ErrorArgs].ToPlainString() });
         }
         catch (Exception ex)
@@ -733,10 +733,10 @@ public class AccountBookController(
         AccountResponse account = HttpContext.GetLoggedInAccount();
         try
         {
-            var (result, edit) = await budgetService.EditAsync(account.RequireEmail(), Enum.Parse<BudgetSheetKind>(input.Kind), input.Year, account.RequireTimeZoneIanaId(),
+            var result = await budgetService.EditAsync(account.RequireEmail(), Enum.Parse<BudgetSheetKind>(input.Kind), input.Year, account.RequireTimeZoneIanaId(),
                 [.. input.Edits.Select(e => new BudgetCellEditRequest(e.Address, e.Input))], ct);
             return result.Success
-                ? Json(new { result = true, changed = edit!.Changed.Select(c => c.ToViewModel()) })
+                ? Json(new { result = true, changed = result.Value.Changed.Select(c => c.ToViewModel()) })
                 : Json(new { result = false, error = localizer[result.ErrorKey, result.ErrorArgs].ToPlainString() });
         }
         catch (Exception ex)
@@ -756,10 +756,10 @@ public class AccountBookController(
         AccountResponse account = HttpContext.GetLoggedInAccount();
         try
         {
-            var (result, edit) = await budgetService.CopyAsync(account.RequireEmail(), Enum.Parse<BudgetSheetKind>(input.Kind), input.Year, account.RequireTimeZoneIanaId(),
+            var result = await budgetService.CopyAsync(account.RequireEmail(), Enum.Parse<BudgetSheetKind>(input.Kind), input.Year, account.RequireTimeZoneIanaId(),
                 input.Source, input.Target, ct);
             return result.Success
-                ? Json(new { result = true, changed = edit!.Changed.Select(c => c.ToViewModel()) })
+                ? Json(new { result = true, changed = result.Value.Changed.Select(c => c.ToViewModel()) })
                 : Json(new { result = false, error = localizer[result.ErrorKey, result.ErrorArgs].ToPlainString() });
         }
         catch (Exception ex)
@@ -779,10 +779,10 @@ public class AccountBookController(
         AccountResponse account = HttpContext.GetLoggedInAccount();
         try
         {
-            var (result, sheet) = await budgetService.AddLineAsync(account.RequireEmail(), Enum.Parse<BudgetSheetKind>(input.Kind), input.Year, account.RequireTimeZoneIanaId(),
+            var result = await budgetService.AddLineAsync(account.RequireEmail(), Enum.Parse<BudgetSheetKind>(input.Kind), input.Year, account.RequireTimeZoneIanaId(),
                 input.MainClass, input.SubClass, input.Currency, ct);
             return result.Success
-                ? Json(new { result = true, message = localizer["The line was added."].Value, sheet = sheet!.ToViewModel(key => localizer[key].Value) })
+                ? Json(new { result = true, message = localizer["The line was added."].Value, sheet = result.Value.ToViewModel(key => localizer[key].Value) })
                 : Json(new { result = false, error = localizer[result.ErrorKey, result.ErrorArgs].ToPlainString() });
         }
         catch (Exception ex)
@@ -802,10 +802,10 @@ public class AccountBookController(
         AccountResponse account = HttpContext.GetLoggedInAccount();
         try
         {
-            var (result, sheet) = await budgetService.RemoveLineAsync(account.RequireEmail(), Enum.Parse<BudgetSheetKind>(input.Kind), input.Year, account.RequireTimeZoneIanaId(),
+            var result = await budgetService.RemoveLineAsync(account.RequireEmail(), Enum.Parse<BudgetSheetKind>(input.Kind), input.Year, account.RequireTimeZoneIanaId(),
                 input.MainClass, input.SubClass, input.Currency, ct);
             return result.Success
-                ? Json(new { result = true, message = localizer["The line was removed."].Value, sheet = sheet!.ToViewModel(key => localizer[key].Value) })
+                ? Json(new { result = true, message = localizer["The line was removed."].Value, sheet = result.Value.ToViewModel(key => localizer[key].Value) })
                 : Json(new { result = false, error = localizer[result.ErrorKey, result.ErrorArgs].ToPlainString() });
         }
         catch (Exception ex)
@@ -825,9 +825,9 @@ public class AccountBookController(
         AccountResponse account = HttpContext.GetLoggedInAccount();
         try
         {
-            var (result, sheet, copied) = await budgetService.CarryOverAsync(account.RequireEmail(), Enum.Parse<BudgetSheetKind>(input.Kind), input.Year, account.RequireTimeZoneIanaId(), ct);
+            var result = await budgetService.CarryOverAsync(account.RequireEmail(), Enum.Parse<BudgetSheetKind>(input.Kind), input.Year, account.RequireTimeZoneIanaId(), ct);
             return result.Success
-                ? Json(new { result = true, message = localizer["{0} cells were filled from last year.", copied].ToPlainString(), sheet = sheet!.ToViewModel(key => localizer[key].Value) })
+                ? Json(new { result = true, message = localizer["{0} cells were filled from last year.", result.Value.Copied].ToPlainString(), sheet = result.Value.Sheet.ToViewModel(key => localizer[key].Value) })
                 : Json(new { result = false, error = localizer[result.ErrorKey, result.ErrorArgs].ToPlainString() });
         }
         catch (Exception ex)
@@ -845,9 +845,9 @@ public class AccountBookController(
     {
         if (!Enum.TryParse(kind, out BudgetSheetKind budgetKind) || !Enum.IsDefined(budgetKind)) return BadRequest();
         AccountResponse account = HttpContext.GetLoggedInAccount();
-        var (result, sheet) = await budgetService.GetSheetAsync(account.RequireEmail(), budgetKind, year, account.RequireTimeZoneIanaId(), ct);
+        var result = await budgetService.GetSheetAsync(account.RequireEmail(), budgetKind, year, account.RequireTimeZoneIanaId(), ct);
         if (!result.Success) return BadRequest();
-        var stream = excelExportService.CreateBudgetExcel(sheet!, key => localizer[key].Value);
+        var stream = excelExportService.CreateBudgetExcel(result.Value, key => localizer[key].Value);
         string name = fileName.ToExcelFileName(timeZones, account.RequireTimeZoneIanaId(), timeProvider.GetUtcNow().UtcDateTime);
         return File(stream, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", name);
     }

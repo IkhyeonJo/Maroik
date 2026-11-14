@@ -111,7 +111,7 @@ public interface ICalendarService
     /// anonymous visitors; otherwise nothing is opened and the result says why. On success the file is
     /// streamed from file storage.
     /// </summary>
-    Task<(ServiceResult Result, AttachmentDownload? File)> OpenCalendarEventAttachedFileAsync(
+    Task<ServiceValueResult<AttachmentDownload>> OpenCalendarEventAttachedFileAsync(
         long calendarEventId, AccountResponse? viewer, CancellationToken ct = default);
 
     /// <summary>

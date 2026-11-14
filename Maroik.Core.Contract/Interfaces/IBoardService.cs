@@ -119,7 +119,7 @@ public interface IBoardService
     /// the viewer under the same rule as the post itself; otherwise nothing is opened and the result
     /// says why. On success the file is streamed from file storage.
     /// </summary>
-    Task<(ServiceResult Result, AttachmentDownload? File)> OpenAttachedFileAsync(
+    Task<ServiceValueResult<AttachmentDownload>> OpenAttachedFileAsync(
         long boardId, string boardType, AccountResponse? viewer, CancellationToken ct = default);
 
     /// <summary>

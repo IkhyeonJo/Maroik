@@ -58,27 +58,33 @@ public class BudgetService(
     }
 
     /// <inheritdoc />
-    public async Task<(ServiceResult Result, BudgetSheetResponse? Sheet)> GetSheetAsync(string accountEmail, BudgetSheetKind sheetKind, int year, string timeZoneIanaId, CancellationToken ct = default)
+    public async Task<ServiceValueResult<BudgetSheetResponse>> GetSheetAsync(string accountEmail, BudgetSheetKind sheetKind, int year, string timeZoneIanaId, CancellationToken ct = default)
     {
         BudgetKind kind = BudgetMapper.ToDomain(sheetKind);
-        if (Refusal(accountEmail, kind, year) is { } refused) return (refused, null);
+        if (Refusal(accountEmail, kind, year) is { } refused) return refused;
+        return await ViewAsync(accountEmail, kind, year, timeZoneIanaId, ct);
+    }
+
+    /// <summary>The sheet of a kind and year the caller has already found valid, recalculated from the stored inputs.</summary>
+    private async Task<BudgetSheetResponse> ViewAsync(string accountEmail, BudgetKind kind, int year, string timeZoneIanaId, CancellationToken ct)
+    {
         BudgetWorkbook workbook = await LoadAsync(accountEmail, kind, year, timeZoneIanaId, [], ct);
-        return (ServiceResult.Ok(), BudgetMapper.ToResponse(workbook.View(kind, year)));
+        return BudgetMapper.ToResponse(workbook.View(kind, year));
     }
 
     /// <inheritdoc />
-    public async Task<(ServiceResult Result, BudgetPreviewResponse? Preview)> PreviewAsync(string accountEmail, BudgetSheetKind sheetKind, int year, string timeZoneIanaId, string address, string input, CancellationToken ct = default)
+    public async Task<ServiceValueResult<BudgetPreviewResponse>> PreviewAsync(string accountEmail, BudgetSheetKind sheetKind, int year, string timeZoneIanaId, string address, string input, CancellationToken ct = default)
     {
         BudgetKind kind = BudgetMapper.ToDomain(sheetKind);
-        if (Refusal(accountEmail, kind, year) is { } refused) return (refused, null);
+        if (Refusal(accountEmail, kind, year) is { } refused) return refused;
         // Before the input is loaded against or parsed: the preview runs on every pause in typing, with no other bound on its length.
-        if (BudgetCellInput.CheckLength(input) is { IsError: true } tooLong) return (ServiceResult.FromError(tooLong.FirstError), null);
+        if (BudgetCellInput.CheckLength(input) is { IsError: true } tooLong) return ServiceResult.FromError(tooLong.FirstError);
         BudgetWorkbook workbook = await LoadAsync(accountEmail, kind, year, timeZoneIanaId, [input], ct);
-        return (ServiceResult.Ok(), BudgetMapper.ToResponse(workbook.Preview(kind, year, address, input)));
+        return BudgetMapper.ToResponse(workbook.Preview(kind, year, address, input));
     }
 
     /// <inheritdoc />
-    public Task<(ServiceResult Result, BudgetEditResponse? Edit)> EditAsync(string accountEmail, BudgetSheetKind sheetKind, int year, string timeZoneIanaId, IReadOnlyList<BudgetCellEditRequest> edits, CancellationToken ct = default)
+    public Task<ServiceValueResult<BudgetEditResponse>> EditAsync(string accountEmail, BudgetSheetKind sheetKind, int year, string timeZoneIanaId, IReadOnlyList<BudgetCellEditRequest> edits, CancellationToken ct = default)
     {
         BudgetKind kind = BudgetMapper.ToDomain(sheetKind);
         return WriteAsync(accountEmail, kind, year, timeZoneIanaId, [.. edits.Select(e => e.Input ?? "")],
@@ -87,7 +93,7 @@ public class BudgetService(
     }
 
     /// <inheritdoc />
-    public Task<(ServiceResult Result, BudgetEditResponse? Edit)> CopyAsync(string accountEmail, BudgetSheetKind sheetKind, int year, string timeZoneIanaId, string source, string target, CancellationToken ct = default)
+    public Task<ServiceValueResult<BudgetEditResponse>> CopyAsync(string accountEmail, BudgetSheetKind sheetKind, int year, string timeZoneIanaId, string source, string target, CancellationToken ct = default)
     {
         BudgetKind kind = BudgetMapper.ToDomain(sheetKind);
         return WriteAsync(accountEmail, kind, year, timeZoneIanaId, [], workbook => workbook.Copy(kind, year, source, target),
@@ -95,14 +101,13 @@ public class BudgetService(
     }
 
     /// <inheritdoc />
-    public async Task<(ServiceResult Result, BudgetSheetResponse? Sheet, int Copied)> CarryOverAsync(string accountEmail, BudgetSheetKind sheetKind, int year, string timeZoneIanaId, CancellationToken ct = default)
+    public async Task<ServiceValueResult<BudgetCarryOverResponse>> CarryOverAsync(string accountEmail, BudgetSheetKind sheetKind, int year, string timeZoneIanaId, CancellationToken ct = default)
     {
         BudgetKind kind = BudgetMapper.ToDomain(sheetKind);
-        var (result, edit) = await WriteAsync(accountEmail, kind, year, timeZoneIanaId, [], workbook => workbook.CarryOver(kind, year),
+        ServiceValueResult<BudgetEditResponse> edit = await WriteAsync(accountEmail, kind, year, timeZoneIanaId, [], workbook => workbook.CarryOver(kind, year),
             "carry over into", ct);
-        if (!result.Success) return (result, null, 0);
-        var (_, sheet) = await GetSheetAsync(accountEmail, sheetKind, year, timeZoneIanaId, ct);
-        return (result, sheet, edit!.Written);
+        if (!edit.Success) return edit.ToResult();
+        return new BudgetCarryOverResponse { Sheet = await ViewAsync(accountEmail, kind, year, timeZoneIanaId, ct), Copied = edit.Value.Written };
     }
 
     /// <summary>
@@ -110,11 +115,11 @@ public class BudgetService(
     /// loaded, <paramref name="apply"/> turns the request into inputs to store (or refuses it), and they are stored. A failure is logged
     /// with <paramref name="action"/> (what was being done, e.g. "edit").
     /// </summary>
-    private async Task<(ServiceResult Result, BudgetEditResponse? Edit)> WriteAsync(string accountEmail, BudgetKind kind, int year, string timeZoneIanaId,
+    private async Task<ServiceValueResult<BudgetEditResponse>> WriteAsync(string accountEmail, BudgetKind kind, int year, string timeZoneIanaId,
         IReadOnlyList<string> typed, Func<BudgetWorkbook, ErrorOr<BudgetEdit>> apply, string action, CancellationToken ct)
     {
-        if (Refusal(accountEmail, kind, year) is { } refused) return (refused, null);
-        if (await EnsureSheetAsync(accountEmail, kind, year, ct) is { } notCreated) return (notCreated, null);
+        if (Refusal(accountEmail, kind, year) is { } refused) return refused;
+        if (await EnsureSheetAsync(accountEmail, kind, year, ct) is { } notCreated) return notCreated;
 
         await unitOfWork.BeginAsync(ct: ct);
         try
@@ -125,18 +130,18 @@ public class BudgetService(
             if (edit.IsError)
             {
                 await unitOfWork.RollbackAsync(ct);
-                return (ServiceResult.FromError(edit.FirstError), null);
+                return ServiceResult.FromError(edit.FirstError);
             }
 
             await SaveAsync(sheet, edit.Value.Writes, ct);
             await unitOfWork.CommitAsync(ct);
-            return (ServiceResult.Ok(), new BudgetEditResponse { Changed = [.. edit.Value.Changed.Select(BudgetMapper.ToResponse)], Written = edit.Value.Writes.Count });
+            return new BudgetEditResponse { Changed = [.. edit.Value.Changed.Select(BudgetMapper.ToResponse)], Written = edit.Value.Writes.Count };
         }
         catch (Exception e)
         {
             logger.LogError(e, "Budget: failed to {Action} {Sheet} of {Email}", action, BudgetSheetName.Format(kind, year), accountEmail);
             await unitOfWork.RollbackAsync(ct);
-            return (Temporary(), null);
+            return Temporary();
         }
     }
 
@@ -208,11 +213,11 @@ public class BudgetService(
         (await sheetRepository.GetByAccountEmailAsync(accountEmail, ct)).Any(s => s.Kind == kind && s.Year == year);
 
     /// <inheritdoc />
-    public async Task<(ServiceResult Result, BudgetSheetResponse? Sheet)> AddLineAsync(string accountEmail, BudgetSheetKind sheetKind, int year, string timeZoneIanaId, string? mainClass, string? subClass, string? currency, CancellationToken ct = default)
+    public async Task<ServiceValueResult<BudgetSheetResponse>> AddLineAsync(string accountEmail, BudgetSheetKind sheetKind, int year, string timeZoneIanaId, string? mainClass, string? subClass, string? currency, CancellationToken ct = default)
     {
         BudgetKind kind = BudgetMapper.ToDomain(sheetKind);
-        if (Refusal(accountEmail, kind, year) is { } refused) return (refused, null);
-        if (await EnsureSheetAsync(accountEmail, kind, year, ct) is { } notCreated) return (notCreated, null);
+        if (Refusal(accountEmail, kind, year) is { } refused) return refused;
+        if (await EnsureSheetAsync(accountEmail, kind, year, ct) is { } notCreated) return notCreated;
 
         ServiceResult result = await ChangeLinesAsync(accountEmail, kind, year, async (sheet, lines) =>
         {
@@ -225,14 +230,15 @@ public class BudgetService(
             BudgetWorkbook workbook = await LoadAsync(accountEmail, kind, year, timeZoneIanaId, [], ct);
             return workbook.CheckReferences(kind, year) is { IsError: true } tooMany ? ServiceResult.FromError(tooMany.FirstError) : ServiceResult.Ok();
         }, ct);
-        return result.Success ? await GetSheetAsync(accountEmail, sheetKind, year, timeZoneIanaId, ct) : (result, null);
+        if (!result.Success) return result;
+        return await ViewAsync(accountEmail, kind, year, timeZoneIanaId, ct);
     }
 
     /// <inheritdoc />
-    public async Task<(ServiceResult Result, BudgetSheetResponse? Sheet)> RemoveLineAsync(string accountEmail, BudgetSheetKind sheetKind, int year, string timeZoneIanaId, string? mainClass, string? subClass, string? currency, CancellationToken ct = default)
+    public async Task<ServiceValueResult<BudgetSheetResponse>> RemoveLineAsync(string accountEmail, BudgetSheetKind sheetKind, int year, string timeZoneIanaId, string? mainClass, string? subClass, string? currency, CancellationToken ct = default)
     {
         BudgetKind kind = BudgetMapper.ToDomain(sheetKind);
-        if (Refusal(accountEmail, kind, year) is { } refused) return (refused, null);
+        if (Refusal(accountEmail, kind, year) is { } refused) return refused;
 
         ServiceResult result = await ChangeLinesAsync(accountEmail, kind, year, async (sheet, lines) =>
         {
@@ -242,7 +248,8 @@ public class BudgetService(
             await cellRepository.DeleteRowAsync(sheet.Id, line.Value.Key, ct);
             return ServiceResult.Ok();
         }, ct);
-        return result.Success ? await GetSheetAsync(accountEmail, sheetKind, year, timeZoneIanaId, ct) : (result, null);
+        if (!result.Success) return result;
+        return await ViewAsync(accountEmail, kind, year, timeZoneIanaId, ct);
     }
 
     /// <summary>The refusal of a line the sheet does not have.</summary>

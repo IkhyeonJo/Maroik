@@ -53,7 +53,8 @@ public class FileManagerServiceBrowseTests
         _h.Folder("Alpha");
         _h.File("upload.iso", uploading: true);
 
-        var (result, folder) = await _h.Sut.GetFolderAsync(H.Email, null, TestContext.Current.CancellationToken);
+        var result = await _h.Sut.GetFolderAsync(H.Email, null, TestContext.Current.CancellationToken);
+        var folder = result.Value;
 
         Assert.True(result.Success);
         Assert.Null(folder!.FolderId);
@@ -74,7 +75,7 @@ public class FileManagerServiceBrowseTests
         _h.File("logo.png", design, size: 2048);
         _h.File("readme.svg", design, size: 10);
 
-        var (_, folder) = await _h.Sut.GetFolderAsync(H.Email, design, TestContext.Current.CancellationToken);
+        var folder = (await _h.Sut.GetFolderAsync(H.Email, design, TestContext.Current.CancellationToken)).Value;
 
         Assert.Equal(design, folder!.FolderId);
         Assert.Equal([(docs, "Documents"), (design, "Design")], folder.Breadcrumb.Select(c => (c.Id, c.Name)));
@@ -93,7 +94,8 @@ public class FileManagerServiceBrowseTests
 
         foreach (long id in new[] { others, file, 999L })
         {
-            var (result, folder) = await _h.Sut.GetFolderAsync(H.Email, id, TestContext.Current.CancellationToken);
+            var result = await _h.Sut.GetFolderAsync(H.Email, id, TestContext.Current.CancellationToken);
+            var folder = result.Value;
             Assert.Equal(ServiceErrorType.NotFound, result.ErrorType);
             Assert.Equal(ServiceErrorKeys.FileManagerItemNotFound, result.ErrorKey);
             Assert.Null(folder);
@@ -145,10 +147,11 @@ public class FileManagerServiceBrowseTests
         _h.File("half.iso", work, uploading: true);
         long c = _h.File("c.txt");
 
-        var (result, files) = await _h.Sut.ListFilesForDownloadAsync(H.Email, [docs, c, a], TestContext.Current.CancellationToken);
+        var result = await _h.Sut.ListFilesForDownloadAsync(H.Email, [docs, c, a], TestContext.Current.CancellationToken);
+        var files = result.Value;
 
         Assert.True(result.Success);
-        Assert.Equal([a, b, c], files.Select(f => f.Id).Order());
+        Assert.Equal([a, b, c], files!.Select(f => f.Id).Order());
     }
 
     /// <summary>A selection naming an item the account does not own is "not found" as a whole.</summary>
@@ -158,9 +161,10 @@ public class FileManagerServiceBrowseTests
         long mine = _h.File("a.txt");
         long theirs = _h.File("b.txt", email: H.OtherEmail);
 
-        var (result, files) = await _h.Sut.ListFilesForDownloadAsync(H.Email, [mine, theirs], TestContext.Current.CancellationToken);
+        var result = await _h.Sut.ListFilesForDownloadAsync(H.Email, [mine, theirs], TestContext.Current.CancellationToken);
+        var files = result.Value;
 
         Assert.Equal(ServiceErrorType.NotFound, result.ErrorType);
-        Assert.Empty(files);
+        Assert.Null(files);
     }
 }

@@ -25,10 +25,11 @@ public class FileManagerServiceWriteTests
     {
         long docs = _h.Folder("Documents");
 
-        var (result, id) = await _h.Sut.CreateFolderAsync(H.Email, docs, "Design", merge: false, TestContext.Current.CancellationToken);
+        var result = await _h.Sut.CreateFolderAsync(H.Email, docs, "Design", merge: false, TestContext.Current.CancellationToken);
+        var id = result.Value;
 
         Assert.True(result.Success);
-        Assert.Equal(("Design", (long?)docs, true), (_h.Node(id!.Value).Name, _h.Node(id.Value).ParentId, _h.Node(id.Value).IsFolder));
+        Assert.Equal(("Design", (long?)docs, true), (_h.Node(id).Name, _h.Node(id).ParentId, _h.Node(id).IsFolder));
         _h.AssertAccountLocked();
         _h.AssertCommitted();
     }
@@ -39,12 +40,11 @@ public class FileManagerServiceWriteTests
     {
         _h.File("Design");
 
-        var (result, id) = await _h.Sut.CreateFolderAsync(H.Email, null, "Design", merge: false, TestContext.Current.CancellationToken);
+        var result = await _h.Sut.CreateFolderAsync(H.Email, null, "Design", merge: false, TestContext.Current.CancellationToken);
 
         Assert.Equal(ServiceErrorType.Conflict, result.ErrorType);
         Assert.Equal(ServiceErrorKeys.FileManagerNameTaken, result.ErrorKey);
         Assert.Equal(["Design"], result.ErrorArgs);
-        Assert.Null(id);
         _h.AssertRolledBack();
     }
 
@@ -54,7 +54,8 @@ public class FileManagerServiceWriteTests
     {
         long existing = _h.Folder("Design");
 
-        var (result, id) = await _h.Sut.CreateFolderAsync(H.Email, null, "Design", merge: true, TestContext.Current.CancellationToken);
+        var result = await _h.Sut.CreateFolderAsync(H.Email, null, "Design", merge: true, TestContext.Current.CancellationToken);
+        var id = result.Value;
 
         Assert.True(result.Success);
         Assert.Equal(existing, id);
@@ -67,7 +68,7 @@ public class FileManagerServiceWriteTests
     {
         _h.File("Design");
 
-        var (result, _) = await _h.Sut.CreateFolderAsync(H.Email, null, "Design", merge: true, TestContext.Current.CancellationToken);
+        var result = await _h.Sut.CreateFolderAsync(H.Email, null, "Design", merge: true, TestContext.Current.CancellationToken);
 
         Assert.Equal(ServiceErrorKeys.FileManagerNameTaken, result.ErrorKey);
     }
@@ -78,8 +79,8 @@ public class FileManagerServiceWriteTests
     {
         long theirs = _h.Folder("Theirs", email: H.OtherEmail);
 
-        var (invalid, _) = await _h.Sut.CreateFolderAsync(H.Email, null, "a/b", false, TestContext.Current.CancellationToken);
-        var (notFound, _) = await _h.Sut.CreateFolderAsync(H.Email, theirs, "x", false, TestContext.Current.CancellationToken);
+        var invalid = await _h.Sut.CreateFolderAsync(H.Email, null, "a/b", false, TestContext.Current.CancellationToken);
+        var notFound = await _h.Sut.CreateFolderAsync(H.Email, theirs, "x", false, TestContext.Current.CancellationToken);
 
         Assert.Equal("FileManager.NameInvalidCharacter", invalid.ErrorCode);
         Assert.Equal(ServiceErrorKeys.FileManagerItemNotFound, notFound.ErrorKey);

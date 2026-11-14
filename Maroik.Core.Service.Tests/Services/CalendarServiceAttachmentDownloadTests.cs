@@ -78,12 +78,12 @@ public class CalendarServiceAttachmentDownloadTests
         _calendarRepo.Setup(r => r.GetSubscribedByAsync(email, It.IsAny<CancellationToken>())).ReturnsAsync([_calendar]);
 
     /// <summary>Asserts the call was refused as a missing event, nothing was opened, and the denial was logged.</summary>
-    private void AssertRefusedAndLogged(ServiceResult result, AttachmentDownload? file)
+    private void AssertRefusedAndLogged(ServiceValueResult<AttachmentDownload> result)
     {
         Assert.False(result.Success);
         Assert.Equal("CalendarEvent.NotFound", result.ErrorCode);
         Assert.Equal("The calendar event could not be found.", result.ErrorKey);
-        Assert.Null(file);
+        Assert.Null(result.Value);
         _attachmentContent.Verify(a => a.OpenFileAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
         FakeLogRecord denial = Assert.Single(_logger.Collector.GetSnapshot(), r => r.Level == LogLevel.Warning);
         Assert.Contains("Attachment download refused", denial.Message, StringComparison.Ordinal);
@@ -98,7 +98,8 @@ public class CalendarServiceAttachmentDownloadTests
         var stream = new MemoryStream([1, 2, 3, 4]);
         _attachmentContent.Setup(a => a.OpenFileAsync(StoredPath, It.IsAny<CancellationToken>())).ReturnsAsync(stream);
 
-        var (result, file) = await CreateSut().OpenCalendarEventAttachedFileAsync(7, Viewer(), TestContext.Current.CancellationToken);
+        var result = await CreateSut().OpenCalendarEventAttachedFileAsync(7, Viewer(), TestContext.Current.CancellationToken);
+        var file = result.Value;
 
         Assert.True(result.Success);
         Assert.NotNull(file);
@@ -112,9 +113,9 @@ public class CalendarServiceAttachmentDownloadTests
     {
         GivenAnEventWithAnAttachment();
 
-        var (result, file) = await CreateSut().OpenCalendarEventAttachedFileAsync(7, Viewer("mallory@example.com"), TestContext.Current.CancellationToken);
+        var result = await CreateSut().OpenCalendarEventAttachedFileAsync(7, Viewer("mallory@example.com"), TestContext.Current.CancellationToken);
 
-        AssertRefusedAndLogged(result, file);
+        AssertRefusedAndLogged(result);
     }
 
     /// <summary>An account subscribed to a calendar that is still shared with users may download.</summary>
@@ -125,7 +126,8 @@ public class CalendarServiceAttachmentDownloadTests
         GivenSubscribed("bob@example.com");
         _attachmentContent.Setup(a => a.OpenFileAsync(StoredPath, It.IsAny<CancellationToken>())).ReturnsAsync(new MemoryStream([1]));
 
-        var (result, file) = await CreateSut().OpenCalendarEventAttachedFileAsync(7, Viewer("bob@example.com"), TestContext.Current.CancellationToken);
+        var result = await CreateSut().OpenCalendarEventAttachedFileAsync(7, Viewer("bob@example.com"), TestContext.Current.CancellationToken);
+        var file = result.Value;
 
         Assert.True(result.Success);
         Assert.Equal("report.zip", file!.FileName);
@@ -139,7 +141,7 @@ public class CalendarServiceAttachmentDownloadTests
         GivenSharedWithGuests();
         _attachmentContent.Setup(a => a.OpenFileAsync(StoredPath, It.IsAny<CancellationToken>())).ReturnsAsync(new MemoryStream([1]));
 
-        var (result, _) = await CreateSut().OpenCalendarEventAttachedFileAsync(7, null, TestContext.Current.CancellationToken);
+        var result = await CreateSut().OpenCalendarEventAttachedFileAsync(7, null, TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
     }
@@ -150,9 +152,9 @@ public class CalendarServiceAttachmentDownloadTests
     {
         GivenAnEventWithAnAttachment();
 
-        var (result, file) = await CreateSut().OpenCalendarEventAttachedFileAsync(7, null, TestContext.Current.CancellationToken);
+        var result = await CreateSut().OpenCalendarEventAttachedFileAsync(7, null, TestContext.Current.CancellationToken);
 
-        AssertRefusedAndLogged(result, file);
+        AssertRefusedAndLogged(result);
     }
 
     /// <summary>A missing event is refused the same way as an invisible one.</summary>
@@ -162,9 +164,9 @@ public class CalendarServiceAttachmentDownloadTests
         GivenAnEventWithAnAttachment();
         _eventRepo.Setup(r => r.FindByIdAsync(7, It.IsAny<CancellationToken>())).ReturnsAsync((CalendarEvent?)null);
 
-        var (result, file) = await CreateSut().OpenCalendarEventAttachedFileAsync(7, Viewer(), TestContext.Current.CancellationToken);
+        var result = await CreateSut().OpenCalendarEventAttachedFileAsync(7, Viewer(), TestContext.Current.CancellationToken);
 
-        AssertRefusedAndLogged(result, file);
+        AssertRefusedAndLogged(result);
     }
 
     /// <summary>An event without an attachment, or with the cleared (empty-path) record, is reported as such.</summary>
@@ -177,11 +179,12 @@ public class CalendarServiceAttachmentDownloadTests
         _attachedFileRepo.Setup(r => r.FindByCalendarEventIdAsync(7, It.IsAny<CancellationToken>()))
             .ReturnsAsync(clearedRecord ? CalendarEventAttachedFile.Reconstitute(1, 7, 0, "", "", "") : null);
 
-        var (result, file) = await CreateSut().OpenCalendarEventAttachedFileAsync(7, Viewer(), TestContext.Current.CancellationToken);
+        var result = await CreateSut().OpenCalendarEventAttachedFileAsync(7, Viewer(), TestContext.Current.CancellationToken);
+        var file = result.Value;
 
         Assert.Equal("CalendarEvent.AttachedFileNotFound", result.ErrorCode);
         Assert.Equal("The attached file could not be found.", result.ErrorKey);
-        Assert.Null(file);
+        Assert.Null(result.Value);
         _attachmentContent.Verify(a => a.OpenFileAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
@@ -192,7 +195,8 @@ public class CalendarServiceAttachmentDownloadTests
         GivenAnEventWithAnAttachment();
         _attachmentContent.Setup(a => a.OpenFileAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync((Stream?)null);
 
-        var (result, file) = await CreateSut().OpenCalendarEventAttachedFileAsync(7, Viewer(), TestContext.Current.CancellationToken);
+        var result = await CreateSut().OpenCalendarEventAttachedFileAsync(7, Viewer(), TestContext.Current.CancellationToken);
+        var file = result.Value;
 
         Assert.Equal("CalendarEvent.AttachedFileUnavailable", result.ErrorCode);
         Assert.Equal(ServiceResult.TemporaryErrorKey, result.ErrorKey);

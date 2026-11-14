@@ -75,8 +75,8 @@ public class FileManagerController(
         if (!ModelState.IsValid) return Json(new { result = false, error = localizer["Input is invalid"].Value });
         try
         {
-            var (result, folder) = await fileManagerService.GetFolderAsync(Email, input.FolderId, ct);
-            return result.Success ? Json(new { result = true, folder = folder!.ToViewModel(timeZones, TimeZone, RootName) }) : Json(new { result = false, error = localizer[result.ErrorKey, result.ErrorArgs].ToPlainString() });
+            var result = await fileManagerService.GetFolderAsync(Email, input.FolderId, ct);
+            return result.Success ? Json(new { result = true, folder = result.Value.ToViewModel(timeZones, TimeZone, RootName) }) : Json(new { result = false, error = localizer[result.ErrorKey, result.ErrorArgs].ToPlainString() });
         }
         catch (Exception ex)
         {
@@ -113,10 +113,10 @@ public class FileManagerController(
         if (!ModelState.IsValid) return Json(new { result = false, error = localizer["Input is invalid"].Value });
         try
         {
-            var (result, files) = await fileManagerService.ListFilesForDownloadAsync(Email, input.Ids, ct);
+            var result = await fileManagerService.ListFilesForDownloadAsync(Email, input.Ids, ct);
             // bytes: each file's size, which the page's download progress bar is measured against.
             return result.Success
-                ? Json(new { result = true, files = files.Select(f => new { id = f.Id, name = f.Name, bytes = f.Size }) })
+                ? Json(new { result = true, files = result.Value.Select(f => new { id = f.Id, name = f.Name, bytes = f.Size }) })
                 : Json(new { result = false, error = localizer[result.ErrorKey, result.ErrorArgs].ToPlainString() });
         }
         catch (Exception ex)
@@ -134,9 +134,9 @@ public class FileManagerController(
     {
         try
         {
-            var (result, file) = await fileManagerService.OpenFileAsync(Email, id, ct);
+            var result = await fileManagerService.OpenFileAsync(Email, id, ct);
             // application/octet-stream whatever the type (with the global nosniff), so the browser saves it instead of rendering it.
-            return result.Success ? File(file!.Content, "application/octet-stream", file.FileName) : Json(new { result = false, error = localizer[result.ErrorKey, result.ErrorArgs].ToPlainString() });
+            return result.Success ? File(result.Value.Content, "application/octet-stream", result.Value.FileName) : Json(new { result = false, error = localizer[result.ErrorKey, result.ErrorArgs].ToPlainString() });
         }
         catch (Exception ex)
         {
@@ -153,8 +153,8 @@ public class FileManagerController(
     {
         try
         {
-            var (result, preview) = await fileManagerService.OpenPreviewAsync(Email, id, ct);
-            return result.Success ? File(preview!.Bytes, preview.ContentType) : Json(new { result = false, error = localizer[result.ErrorKey, result.ErrorArgs].ToPlainString() });
+            var result = await fileManagerService.OpenPreviewAsync(Email, id, ct);
+            return result.Success ? File(result.Value.Bytes, result.Value.ContentType) : Json(new { result = false, error = localizer[result.ErrorKey, result.ErrorArgs].ToPlainString() });
         }
         catch (Exception ex)
         {
@@ -176,9 +176,9 @@ public class FileManagerController(
         if (!ModelState.IsValid) return Json(new { result = false, error = localizer["Input is invalid"].Value });
         try
         {
-            var (result, folderId) = await fileManagerService.CreateFolderAsync(Email, input.ParentId, input.Name, input.Merge, ct);
+            var result = await fileManagerService.CreateFolderAsync(Email, input.ParentId, input.Name, input.Merge, ct);
             return result.Success
-                ? Json(new { result = true, message = localizer["The folder has been created."].Value, folderId })
+                ? Json(new { result = true, message = localizer["The folder has been created."].Value, folderId = result.Value })
                 : Json(new { result = false, error = localizer[result.ErrorKey, result.ErrorArgs].ToPlainString() });
         }
         catch (Exception ex)
@@ -279,12 +279,12 @@ public class FileManagerController(
             return Json(new { result = false, error = localizer["Input is invalid"].Value });
         try
         {
-            var (result, start) = await fileManagerService.BeginUploadAsync(Email, new FileManagerUploadRequest
+            var result = await fileManagerService.BeginUploadAsync(Email, new FileManagerUploadRequest
             {
                 ParentId = input.ParentId, Name = input.Name, Size = input.Size, Conflict = conflict
             }, ct);
             return result.Success
-                ? Json(new { result = true, conflict = start!.Conflict, uploadId = start.UploadId.ToString("D"), name = start.Name, chunkBytes = start.ChunkBytes })
+                ? Json(new { result = true, conflict = result.Value.Conflict, uploadId = result.Value.UploadId.ToString("D"), name = result.Value.Name, chunkBytes = result.Value.ChunkBytes })
                 : Json(new { result = false, error = localizer[result.ErrorKey, result.ErrorArgs].ToPlainString() });
         }
         catch (Exception ex)
@@ -304,8 +304,8 @@ public class FileManagerController(
         try
         {
             await using Stream chunk = input.Chunk.OpenReadStream();
-            var (result, length) = await fileManagerService.AppendChunkAsync(Email, input.UploadId, input.Offset, chunk, input.Chunk.Length, ct);
-            return result.Success ? Json(new { result = true, length }) : Json(new { result = false, error = localizer[result.ErrorKey, result.ErrorArgs].ToPlainString() });
+            var result = await fileManagerService.AppendChunkAsync(Email, input.UploadId, input.Offset, chunk, input.Chunk.Length, ct);
+            return result.Success ? Json(new { result = true, length = result.Value }) : Json(new { result = false, error = localizer[result.ErrorKey, result.ErrorArgs].ToPlainString() });
         }
         catch (Exception ex)
         {
@@ -327,9 +327,9 @@ public class FileManagerController(
         if (!ModelState.IsValid) return Json(new { result = false, error = localizer["Input is invalid"].Value });
         try
         {
-            var (result, completion) = await fileManagerService.CompleteUploadAsync(Email, input.UploadId, input.Overwrite, ct);
+            var result = await fileManagerService.CompleteUploadAsync(Email, input.UploadId, input.Overwrite, ct);
             if (!result.Success) return Json(new { result = false, error = localizer[result.ErrorKey, result.ErrorArgs].ToPlainString() });
-            return completion == FileManagerCompletion.Scanning
+            return result.Value == FileManagerCompletion.Scanning
                 ? Json(new { result = true, scanning = true })
                 : Json(new { result = true, scanning = false, message = localizer["The file has been uploaded."].Value });
         }

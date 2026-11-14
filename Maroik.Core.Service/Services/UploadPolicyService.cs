@@ -15,10 +15,11 @@ public sealed class UploadPolicyService : IUploadPolicyService
     public IReadOnlyList<string> GetAllowedImageContentTypes() => ImageUploadPolicy.AllowedContentTypes;
 
     /// <inheritdoc />
-    public (ServiceResult Result, long Bytes) FileManagerQuotaBytesFromGb(decimal gb)
+    public ServiceValueResult<long> FileManagerQuotaBytesFromGb(decimal gb)
     {
         var quota = FileManagerUploadPolicy.QuotaBytesFromGb(gb);
-        return quota.IsError ? (ServiceResult.FromError(quota.FirstError), 0) : (ServiceResult.Ok(), quota.Value);
+        if (quota.IsError) return ServiceResult.FromError(quota.FirstError);
+        return quota.Value;
     }
 
     /// <inheritdoc />

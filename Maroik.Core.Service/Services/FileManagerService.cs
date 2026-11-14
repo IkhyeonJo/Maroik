@@ -106,18 +106,18 @@ public class FileManagerService(
     }
 
     /// <inheritdoc />
-    public async Task<(ServiceResult Result, FileManagerFolderResponse? Folder)> GetFolderAsync(string accountEmail, long? folderId, CancellationToken ct = default)
+    public async Task<ServiceValueResult<FileManagerFolderResponse>> GetFolderAsync(string accountEmail, long? folderId, CancellationToken ct = default)
     {
         FileManagerTree tree = await LoadTreeAsync(accountEmail, ct);
         if (!tree.IsFolderOrRoot(folderId))
-            return (ItemNotFound(), null);
+            return ItemNotFound();
 
-        return (ServiceResult.Ok(), new FileManagerFolderResponse
+        return new FileManagerFolderResponse
         {
             FolderId = folderId,
             Breadcrumb = [.. tree.Ancestry(folderId).Reverse().Select(id => new FileManagerCrumbResponse { Id = id, Name = tree.Find(id)!.Name })],
             Items = [.. Sorted(tree.FinishedChildren(folderId)).Select(n => ToItem(tree, n))]
-        });
+        };
     }
 
     /// <inheritdoc />
@@ -132,27 +132,27 @@ public class FileManagerService(
     }
 
     /// <inheritdoc />
-    public async Task<(ServiceResult Result, List<FileManagerItemResponse> Files)> ListFilesForDownloadAsync(string accountEmail, IReadOnlyCollection<long> ids, CancellationToken ct = default)
+    public async Task<ServiceValueResult<List<FileManagerItemResponse>>> ListFilesForDownloadAsync(string accountEmail, IReadOnlyCollection<long> ids, CancellationToken ct = default)
     {
         FileManagerTree tree = await LoadTreeAsync(accountEmail, ct);
         Dictionary<long, FileManagerNode> files = [];
         foreach (long id in ids)
         {
             if (tree.FindFinished(id) is not { } node)
-                return (ItemNotFound(), []);
+                return ItemNotFound();
 
             IEnumerable<FileManagerNode> found = node.IsFolder ? tree.Descendants(node.Id).Where(n => n is { IsFolder: false, Uploading: false }) : [node];
             foreach (FileManagerNode file in found)
                 files.TryAdd(file.Id, file);
         }
 
-        return (ServiceResult.Ok(), [.. files.Values.Select(n => ToItem(tree, n))]);
+        return files.Values.Select(n => ToItem(tree, n)).ToList();
     }
 
     // -- Structural writes ----------------------------------------------------------------
 
     /// <inheritdoc />
-    public async Task<(ServiceResult Result, long? FolderId)> CreateFolderAsync(string accountEmail, long? parentId, string? name, bool merge, CancellationToken ct = default)
+    public async Task<ServiceValueResult<long>> CreateFolderAsync(string accountEmail, long? parentId, string? name, bool merge, CancellationToken ct = default)
     {
         await unitOfWork.BeginAsync(ct: ct);
         try
@@ -162,14 +162,14 @@ public class FileManagerService(
             if (!tree.IsFolderOrRoot(parentId))
             {
                 await unitOfWork.RollbackAsync(ct);
-                return (ItemNotFound(), null);
+                return ItemNotFound();
             }
 
             var created = FileManagerNode.CreateFolder(accountEmail, parentId, name, UtcNow);
             if (created.IsError)
             {
                 await unitOfWork.RollbackAsync(ct);
-                return (ServiceResult.FromError(created.FirstError), null);
+                return ServiceResult.FromError(created.FirstError);
             }
 
             FileManagerNode folder = created.Value;
@@ -177,20 +177,21 @@ public class FileManagerService(
             {
                 await unitOfWork.RollbackAsync(ct);
                 // A folder upload merges into a folder of the same name; anything else is a taken name.
-                return merge && existing.IsFolder ? (ServiceResult.Ok(), existing.Id) : (NameTaken(folder.Name), null);
+                if (merge && existing.IsFolder) return existing.Id;
+                return NameTaken(folder.Name);
             }
 
             await nodeRepository.CreateAsync(folder, ct);
             await unitOfWork.CommitAsync(ct);
             long id = (await nodeRepository.GetByAccountEmailAsync(accountEmail, ct))
                 .Single(n => n.IsFolder && n.ParentId == parentId && n.Name == folder.Name).Id;
-            return (ServiceResult.Ok(), id);
+            return id;
         }
         catch (Exception e)
         {
             logger.LogError(e, "File Manager: failed to create a folder for {Email}", accountEmail);
             await unitOfWork.RollbackAsync(ct);
-            return (Temporary(), null);
+            return Temporary();
         }
     }
 
@@ -329,7 +330,7 @@ public class FileManagerService(
     }
 
     /// <inheritdoc />
-    public async Task<(ServiceResult Result, FileManagerUploadStart? Start)> BeginUploadAsync(string accountEmail, FileManagerUploadRequest request, CancellationToken ct = default)
+    public async Task<ServiceValueResult<FileManagerUploadStart>> BeginUploadAsync(string accountEmail, FileManagerUploadRequest request, CancellationToken ct = default)
     {
         List<FileManagerNode> stale;
         FileManagerUploadStart start;
@@ -345,7 +346,7 @@ public class FileManagerService(
             if (!tree.IsFolderOrRoot(request.ParentId))
             {
                 await unitOfWork.RollbackAsync(ct);
-                return (ItemNotFound(), null);
+                return ItemNotFound();
             }
 
             Guid storageId = Guid.NewGuid();
@@ -353,7 +354,7 @@ public class FileManagerService(
             if (started.IsError)
             {
                 await unitOfWork.RollbackAsync(ct);
-                return (ServiceResult.FromError(started.FirstError), null);
+                return ServiceResult.FromError(started.FirstError);
             }
 
             // Uploads idle for more than an hour are removed now, ahead of the worker's hourly sweep: they stop counting against the quota.
@@ -365,13 +366,13 @@ public class FileManagerService(
                 {
                     case FileManagerConflictOption.Ask:
                         await unitOfWork.RollbackAsync(ct);
-                        return (ServiceResult.Ok(), new FileManagerUploadStart(true, Guid.Empty, name, FileManagerUploadPolicy.ChunkBytes));
+                        return new FileManagerUploadStart(true, Guid.Empty, name, FileManagerUploadPolicy.ChunkBytes);
                     case FileManagerConflictOption.KeepBoth:
                         name = FileManagerNamePolicy.KeepBothName(name, [.. tree.Children(request.ParentId).Except(stale).Select(n => n.Name)]);
                         break;
                     case FileManagerConflictOption.Overwrite when !existing.CanBeOverwritten:
                         await unitOfWork.RollbackAsync(ct);
-                        return (NameTaken(name), null);
+                        return NameTaken(name);
                 }
             }
 
@@ -382,7 +383,7 @@ public class FileManagerService(
                 await unitOfWork.RollbackAsync(ct);
                 logger.LogWarning("File Manager upload refused for {Email}: over quota ({Requested} bytes requested, {Used} used of {Quota})",
                     accountEmail, request.Size, used, quota);
-                return (ServiceResult.FromError(quotaResult.FirstError), null);
+                return ServiceResult.FromError(quotaResult.FirstError);
             }
 
             if (stale.Count > 0)
@@ -396,7 +397,7 @@ public class FileManagerService(
         {
             logger.LogError(e, "File Manager: failed to start an upload for {Email}", accountEmail);
             await unitOfWork.RollbackAsync(ct);
-            return (Temporary(), null);
+            return Temporary();
         }
 
         if (stale.Count > 0)
@@ -406,40 +407,40 @@ public class FileManagerService(
             logger.LogInformation("File Manager: removed {Count} abandoned upload(s) of {Email}", stale.Count, accountEmail);
         }
 
-        return (ServiceResult.Ok(), start);
+        return start;
     }
 
     /// <inheritdoc />
-    public async Task<(ServiceResult Result, long Length)> AppendChunkAsync(string accountEmail, Guid uploadId, long offset, Stream chunk, long chunkLength, CancellationToken ct = default)
+    public async Task<ServiceValueResult<long>> AppendChunkAsync(string accountEmail, Guid uploadId, long offset, Stream chunk, long chunkLength, CancellationToken ct = default)
     {
         if (await FindUploadAsync(accountEmail, uploadId, ct) is not { } upload)
-            return (UploadNotFound(), 0);
+            return UploadNotFound();
 
         // Nothing beyond the declared (and reserved) size is accepted. Compared as offset > size - length, not offset + length > size:
         // the sum of a huge offset and the length overflows a long into a negative number that would pass.
         if (offset < 0 || offset > upload.Size - chunkLength)
-            return (ServiceResult.Validation("FileManager.ChunkInvalid", ServiceErrorKeys.InputInvalid), 0);
+            return ServiceResult.Validation("FileManager.ChunkInvalid", ServiceErrorKeys.InputInvalid);
 
         long? length = await fileClient.AppendFileManagerChunkAsync(uploadId, offset, chunk, ct);
         if (length is { } received)
         {
             // A stored chunk keeps the upload alive, however long the whole upload takes.
             await nodeRepository.RecordUploadActivityAsync(accountEmail, upload.Id, UtcNow, ct);
-            return (ServiceResult.Ok(), received);
+            return received;
         }
 
         logger.LogWarning("File Manager: chunk at {Offset} of upload {UploadId} of {Email} was not stored", offset, uploadId, accountEmail);
-        return (Temporary(), 0);
+        return Temporary();
     }
 
     /// <inheritdoc />
-    public async Task<(ServiceResult Result, FileManagerCompletion Completion)> CompleteUploadAsync(string accountEmail, Guid uploadId, bool overwrite, CancellationToken ct = default)
+    public async Task<ServiceValueResult<FileManagerCompletion>> CompleteUploadAsync(string accountEmail, Guid uploadId, bool overwrite, CancellationToken ct = default)
     {
         if (await nodeRepository.FindByEmailAndStoragePathAsync(accountEmail, StoragePathOf(uploadId), ct) is not { } upload)
-            return (UploadNotFound(), FileManagerCompletion.Decided);
+            return UploadNotFound();
         // The page asks again while the scan runs, so an upload completed already (a repeated or a second answer) answers the same.
         if (!upload.Uploading)
-            return (ServiceResult.Ok(), FileManagerCompletion.Decided);
+            return FileManagerCompletion.Decided;
 
         // Read when the upload completes, so an administrator's change made while it was sent is the one that counts.
         bool scanDisabled = (await accountRepository.FindByEmailAsync(accountEmail, ct))?.FileManagerScanDisabled == true;
@@ -448,7 +449,7 @@ public class FileManagerService(
         if (outcome == FileUploadResult.Scanning)
         {
             await nodeRepository.RecordUploadActivityAsync(accountEmail, upload.Id, UtcNow, ct);
-            return (ServiceResult.Ok(), FileManagerCompletion.Scanning);
+            return FileManagerCompletion.Scanning;
         }
 
         // A failure (a timeout, a lost answer) is not a refusal: file storage may still hold the staging file, a queued scan or the stored
@@ -457,7 +458,7 @@ public class FileManagerService(
         if (outcome == FileUploadResult.Failed && !await fileClient.AbortFileManagerUploadAsync(uploadId, ct))
         {
             logger.LogWarning("File Manager: upload {UploadId} of {Email} could not be completed or aborted; left for the hourly sweep", uploadId, accountEmail);
-            return (Temporary(), FileManagerCompletion.Decided);
+            return Temporary();
         }
 
         if (outcome != FileUploadResult.Stored)
@@ -468,18 +469,20 @@ public class FileManagerService(
             {
                 case FileUploadResult.Infected:
                     logger.LogWarning("File Manager upload refused for {Email}: file {ItemId} infected", accountEmail, upload.Id);
-                    return (ServiceResult.Validation("FileManager.Infected", ServiceErrorKeys.FileManagerInfected), FileManagerCompletion.Decided);
+                    return ServiceResult.Validation("FileManager.Infected", ServiceErrorKeys.FileManagerInfected);
                 case FileUploadResult.ScanUnavailable:
                 case FileUploadResult.ScanLimitExceeded:
                     logger.LogWarning("File Manager upload refused for {Email}: file {ItemId} could not be scanned", accountEmail, upload.Id);
-                    return (ServiceResult.Failure("FileManager.ScanUnavailable", ServiceErrorKeys.FileManagerScanUnavailable), FileManagerCompletion.Decided);
+                    return ServiceResult.Failure("FileManager.ScanUnavailable", ServiceErrorKeys.FileManagerScanUnavailable);
                 default:
                     logger.LogWarning("File Manager upload of file {ItemId} of {Email} could not be stored", upload.Id, accountEmail);
-                    return (Temporary(), FileManagerCompletion.Decided);
+                    return Temporary();
             }
         }
 
-        return (await FinishUploadAsync(accountEmail, uploadId, upload, overwrite, scanDisabled, ct), FileManagerCompletion.Decided);
+        ServiceResult finished = await FinishUploadAsync(accountEmail, uploadId, upload, overwrite, scanDisabled, ct);
+        if (!finished.Success) return finished;
+        return FileManagerCompletion.Decided;
     }
 
     /// <summary>
@@ -617,32 +620,32 @@ public class FileManagerService(
         await nodeRepository.FindByEmailAndIdAsync(accountEmail, id, ct) is { IsFolder: false, Uploading: false } file ? file : null;
 
     /// <inheritdoc />
-    public async Task<(ServiceResult Result, AttachmentDownload? File)> OpenFileAsync(string accountEmail, long id, CancellationToken ct = default)
+    public async Task<ServiceValueResult<AttachmentDownload>> OpenFileAsync(string accountEmail, long id, CancellationToken ct = default)
     {
         if (await FindFileAsync(accountEmail, id, ct) is not { StoragePath: { } path } file)
-            return (ItemNotFound(), null);
+            return ItemNotFound();
 
         try
         {
             Stream content = await fileClient.OpenReadAsync(path, ct);
-            return (ServiceResult.Ok(), new AttachmentDownload(content, file.Name));
+            return new AttachmentDownload(content, file.Name);
         }
         catch (Exception e)
         {
             logger.LogError(e, "File Manager: stored file {FilePath} could not be opened", path);
-            return (Temporary(), null);
+            return Temporary();
         }
     }
 
     /// <inheritdoc />
-    public async Task<(ServiceResult Result, FileManagerPreview? Preview)> OpenPreviewAsync(string accountEmail, long id, CancellationToken ct = default)
+    public async Task<ServiceValueResult<FileManagerPreview>> OpenPreviewAsync(string accountEmail, long id, CancellationToken ct = default)
     {
         if (await FindFileAsync(accountEmail, id, ct) is not { StoragePath: { } path } file)
-            return (ItemNotFound(), null);
+            return ItemNotFound();
 
         ServiceResult noPreview = ServiceResult.Validation("FileManager.NoPreview", ServiceErrorKeys.FileManagerNoPreview);
         if (!file.IsPreviewable)
-            return (noPreview, null);
+            return noPreview;
 
         byte[] bytes;
         try
@@ -652,12 +655,11 @@ public class FileManagerService(
         catch (Exception e)
         {
             logger.LogError(e, "File Manager: stored file {FilePath} could not be opened", path);
-            return (Temporary(), null);
+            return Temporary();
         }
 
         // The extension is not trusted: only an image the leading bytes prove is previewed, under the Content-Type they prove.
-        return FileManagerPreviewPolicy.ContentTypeOf(bytes) is { } contentType
-            ? (ServiceResult.Ok(), new FileManagerPreview(bytes, contentType))
-            : (noPreview, null);
+        if (FileManagerPreviewPolicy.ContentTypeOf(bytes) is not { } contentType) return noPreview;
+        return new FileManagerPreview(bytes, contentType);
     }
 }

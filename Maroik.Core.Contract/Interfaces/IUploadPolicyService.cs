@@ -12,7 +12,7 @@ public interface IUploadPolicyService
     IReadOnlyList<string> GetAllowedImageContentTypes();
 
     /// <summary>Turns a File Manager quota typed in GB into bytes, or refuses a negative or oversized value.</summary>
-    (ServiceResult Result, long Bytes) FileManagerQuotaBytesFromGb(decimal gb);
+    ServiceValueResult<long> FileManagerQuotaBytesFromGb(decimal gb);
 
     /// <summary>A File Manager quota in GB, for the admin form.</summary>
     decimal FileManagerQuotaGbFromBytes(long bytes);

@@ -27,7 +27,8 @@ public class FileManagerServiceDownloadTests
         string path = _h.Node(id).StoragePath!;
         _h.Files.Setup(f => f.OpenReadAsync(path, It.IsAny<CancellationToken>())).ReturnsAsync(new MemoryStream([1, 2]));
 
-        var (result, file) = await _h.Sut.OpenFileAsync(H.Email, id, TestContext.Current.CancellationToken);
+        var result = await _h.Sut.OpenFileAsync(H.Email, id, TestContext.Current.CancellationToken);
+        var file = result.Value;
 
         Assert.True(result.Success);
         Assert.Equal("report.pdf", file!.FileName);
@@ -43,7 +44,7 @@ public class FileManagerServiceDownloadTests
         long upload = _h.File("b.txt", uploading: true);
 
         foreach (long id in new[] { theirs, folder, upload, 999L })
-            Assert.Equal(ServiceErrorKeys.FileManagerItemNotFound, (await _h.Sut.OpenFileAsync(H.Email, id, TestContext.Current.CancellationToken)).Result.ErrorKey);
+            Assert.Equal(ServiceErrorKeys.FileManagerItemNotFound, (await _h.Sut.OpenFileAsync(H.Email, id, TestContext.Current.CancellationToken)).ErrorKey);
         _h.Files.Verify(f => f.OpenReadAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
@@ -55,7 +56,8 @@ public class FileManagerServiceDownloadTests
         string path = _h.Node(id).StoragePath!;
         _h.Files.Setup(f => f.OpenReadAsync(path, It.IsAny<CancellationToken>())).ThrowsAsync(new HttpRequestException("404"));
 
-        var (result, file) = await _h.Sut.OpenFileAsync(H.Email, id, TestContext.Current.CancellationToken);
+        var result = await _h.Sut.OpenFileAsync(H.Email, id, TestContext.Current.CancellationToken);
+        var file = result.Value;
 
         Assert.Equal(ServiceResult.TemporaryErrorKey, result.ErrorKey);
         Assert.Null(file);
@@ -69,7 +71,8 @@ public class FileManagerServiceDownloadTests
         long id = _h.File("photo.jpg", size: _png.Length);
         _h.Files.Setup(f => f.DownloadAsync(_h.Node(id).StoragePath!, It.IsAny<CancellationToken>())).ReturnsAsync(_png);
 
-        var (result, preview) = await _h.Sut.OpenPreviewAsync(H.Email, id, TestContext.Current.CancellationToken);
+        var result = await _h.Sut.OpenPreviewAsync(H.Email, id, TestContext.Current.CancellationToken);
+        var preview = result.Value;
 
         Assert.True(result.Success);
         Assert.Equal("image/png", preview!.ContentType);
@@ -85,7 +88,8 @@ public class FileManagerServiceDownloadTests
     {
         long id = _h.File(name, size: size);
 
-        var (result, preview) = await _h.Sut.OpenPreviewAsync(H.Email, id, TestContext.Current.CancellationToken);
+        var result = await _h.Sut.OpenPreviewAsync(H.Email, id, TestContext.Current.CancellationToken);
+        var preview = result.Value;
 
         Assert.Equal(ServiceErrorKeys.FileManagerNoPreview, result.ErrorKey);
         Assert.Null(preview);
@@ -99,7 +103,7 @@ public class FileManagerServiceDownloadTests
         long id = _h.File("trick.png");
         _h.Files.Setup(f => f.DownloadAsync(_h.Node(id).StoragePath!, It.IsAny<CancellationToken>())).ReturnsAsync([.. "<html><script>alert(1)</script>"u8]);
 
-        Assert.Equal(ServiceErrorKeys.FileManagerNoPreview, (await _h.Sut.OpenPreviewAsync(H.Email, id, TestContext.Current.CancellationToken)).Result.ErrorKey);
+        Assert.Equal(ServiceErrorKeys.FileManagerNoPreview, (await _h.Sut.OpenPreviewAsync(H.Email, id, TestContext.Current.CancellationToken)).ErrorKey);
     }
 
     /// <summary>Another account's image is "not found".</summary>
@@ -108,6 +112,6 @@ public class FileManagerServiceDownloadTests
     {
         long theirs = _h.File("a.png", email: H.OtherEmail);
 
-        Assert.Equal(ServiceErrorKeys.FileManagerItemNotFound, (await _h.Sut.OpenPreviewAsync(H.Email, theirs, TestContext.Current.CancellationToken)).Result.ErrorKey);
+        Assert.Equal(ServiceErrorKeys.FileManagerItemNotFound, (await _h.Sut.OpenPreviewAsync(H.Email, theirs, TestContext.Current.CancellationToken)).ErrorKey);
     }
 }

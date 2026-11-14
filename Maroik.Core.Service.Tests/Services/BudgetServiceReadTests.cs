@@ -49,7 +49,8 @@ public class BudgetServiceReadTests
         _h.Spend(_meal, 120000m, new DateTime(2026, 4, 10));
         _h.Spend(_meal, 99m, new DateTime(2025, 4, 10));
 
-        var (result, sheet) = await _h.Sut.GetSheetAsync(H.Email, BudgetSheetKind.Expenditure, 2026, "UTC", TestContext.Current.CancellationToken);
+        var result = await _h.Sut.GetSheetAsync(H.Email, BudgetSheetKind.Expenditure, 2026, "UTC", TestContext.Current.CancellationToken);
+        var sheet = result.Value;
 
         Assert.True(result.Success);
         Assert.Equal(("Expenditure", 2026, true), (sheet!.Kind, sheet.Year, sheet.Exists));
@@ -66,7 +67,7 @@ public class BudgetServiceReadTests
     [Fact]
     public async Task GetSheetAsync_ShowsAnAbsentSheetWithItsDefaultLines()
     {
-        var (_, sheet) = await _h.Sut.GetSheetAsync(H.Email, BudgetSheetKind.Income, 2030, "UTC", TestContext.Current.CancellationToken);
+        var sheet = (await _h.Sut.GetSheetAsync(H.Email, BudgetSheetKind.Income, 2030, "UTC", TestContext.Current.CancellationToken)).Value;
 
         Assert.False(sheet!.Exists);
         Assert.Equal(8, sheet.Rows.Count(r => r.Kind == "Line"));
@@ -81,7 +82,7 @@ public class BudgetServiceReadTests
         long other = _h.Sheet(BudgetKind.Expenditure, 2026, "other@example.com", _meal);
         _h.Cell(other, _meal.Key, "B", "5");
 
-        var (_, sheet) = await _h.Sut.GetSheetAsync(H.Email, BudgetSheetKind.Expenditure, 2026, "UTC", TestContext.Current.CancellationToken);
+        var sheet = (await _h.Sut.GetSheetAsync(H.Email, BudgetSheetKind.Expenditure, 2026, "UTC", TestContext.Current.CancellationToken)).Value;
 
         Assert.False(sheet!.Exists);
         Assert.DoesNotContain(sheet.Cells, c => c.Input == "5");
@@ -91,7 +92,8 @@ public class BudgetServiceReadTests
     [Fact]
     public async Task GetSheetAsync_RefusesABadYear()
     {
-        var (result, sheet) = await _h.Sut.GetSheetAsync(H.Email, BudgetSheetKind.Income, 0, "UTC", TestContext.Current.CancellationToken);
+        var result = await _h.Sut.GetSheetAsync(H.Email, BudgetSheetKind.Income, 0, "UTC", TestContext.Current.CancellationToken);
+        var sheet = result.Value;
 
         Assert.False(result.Success);
         Assert.Equal(("Budget.YearInvalid", "The year must be between {0} and {1}.", ServiceErrorType.Validation), (result.ErrorCode, result.ErrorKey, result.ErrorType));
@@ -105,7 +107,7 @@ public class BudgetServiceReadTests
         long id = _h.Sheet(BudgetKind.Expenditure, 2026, H.Email, _meal);
         _h.Cell(id, "F.1", "B", "=Income2030!N{L.RegularIncome.LaborIncome.4B5257}+1");
 
-        var (_, sheet) = await _h.Sut.GetSheetAsync(H.Email, BudgetSheetKind.Expenditure, 2026, "UTC", TestContext.Current.CancellationToken);
+        var sheet = (await _h.Sut.GetSheetAsync(H.Email, BudgetSheetKind.Expenditure, 2026, "UTC", TestContext.Current.CancellationToken)).Value;
 
         Assert.Equal(("Number", 1m), (Cell(sheet!, "B5").Value.Kind, Cell(sheet!, "B5").Value.Number));
     }
@@ -117,7 +119,7 @@ public class BudgetServiceReadTests
         _h.Sheet(BudgetKind.Expenditure, 2026, H.Email, _meal);
         _h.Spend(BudgetLine.Create(BudgetKind.Expenditure, "ConsumerSpending", "PinMoney", "USD").Value, 7m, new DateTime(2026, 2, 1));
 
-        var (_, sheet) = await _h.Sut.GetSheetAsync(H.Email, BudgetSheetKind.Expenditure, 2026, "UTC", TestContext.Current.CancellationToken);
+        var sheet = (await _h.Sut.GetSheetAsync(H.Email, BudgetSheetKind.Expenditure, 2026, "UTC", TestContext.Current.CancellationToken)).Value;
 
         BudgetUnbudgetedResponse line = Assert.Single(sheet!.Unbudgeted);
         Assert.Equal(("ConsumerSpending", "PinMoney", "USD", 7m), (line.MainClass, line.SubClass, line.Currency, line.Months[1]));
@@ -134,7 +136,8 @@ public class BudgetServiceReadTests
         _h.Sheet(BudgetKind.Expenditure, 2026, H.Email, _meal);
         string input = "=" + new string('-', BudgetCellInput.MaxLength) + "1";
 
-        var (result, preview) = await _h.Sut.PreviewAsync(H.Email, BudgetSheetKind.Expenditure, 2026, "UTC", "C2", input, TestContext.Current.CancellationToken);
+        var result = await _h.Sut.PreviewAsync(H.Email, BudgetSheetKind.Expenditure, 2026, "UTC", "C2", input, TestContext.Current.CancellationToken);
+        var preview = result.Value;
 
         Assert.Equal(("Budget.InputTooLong", "A cell can hold at most {0} characters.", ServiceErrorType.Validation),
             (result.ErrorCode, result.ErrorKey, result.ErrorType));
@@ -149,8 +152,9 @@ public class BudgetServiceReadTests
         long id = _h.Sheet(BudgetKind.Expenditure, 2026, H.Email, _meal);
         _h.Cell(id, _meal.Key, "B", "40");
 
-        var (result, preview) = await _h.Sut.PreviewAsync(H.Email, BudgetSheetKind.Expenditure, 2026, "UTC", "C2", "=B2*2+FOO(1)", TestContext.Current.CancellationToken);
-        var (_, ok) = await _h.Sut.PreviewAsync(H.Email, BudgetSheetKind.Expenditure, 2026, "UTC", "C2", "=B2*2", TestContext.Current.CancellationToken);
+        var result = await _h.Sut.PreviewAsync(H.Email, BudgetSheetKind.Expenditure, 2026, "UTC", "C2", "=B2*2+FOO(1)", TestContext.Current.CancellationToken);
+        var preview = result.Value;
+        var ok = (await _h.Sut.PreviewAsync(H.Email, BudgetSheetKind.Expenditure, 2026, "UTC", "C2", "=B2*2", TestContext.Current.CancellationToken)).Value;
 
         Assert.True(result.Success);
         Assert.Equal(["operator", "reference", "operator", "number", "operator", "unknown-function", "paren", "number", "paren"], preview!.Tokens.Select(t => t.Class));
@@ -166,5 +170,5 @@ public class BudgetServiceReadTests
     /// <summary>The preview refuses a bad year too.</summary>
     [Fact]
     public async Task PreviewAsync_RefusesABadYear() =>
-        Assert.False((await _h.Sut.PreviewAsync(H.Email, BudgetSheetKind.Income, 10000, "UTC", "B2", "=1", TestContext.Current.CancellationToken)).Result.Success);
+        Assert.False((await _h.Sut.PreviewAsync(H.Email, BudgetSheetKind.Income, 10000, "UTC", "B2", "=1", TestContext.Current.CancellationToken)).Success);
 }

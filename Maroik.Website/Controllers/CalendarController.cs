@@ -361,13 +361,13 @@ public class CalendarController(
             // HttpContext.GetLoggedInAccount() never returns null, so an actually-anonymous viewer is identified by Role.
             AccountResponse loggedInAccount = HttpContext.GetLoggedInAccount();
             AccountResponse? viewer = loggedInAccount.Role == AccountRoles.Anonymous ? null : loggedInAccount;
-            (ServiceResult result, AttachmentDownload? file) = await calendarService.OpenCalendarEventAttachedFileAsync(
+            ServiceValueResult<AttachmentDownload> result = await calendarService.OpenCalendarEventAttachedFileAsync(
                 calendarEventId, viewer, HttpContext.RequestAborted);
             if (!result.Success)
                 return Json(new { result = false, error = localizer[result.ErrorKey, result.ErrorArgs].ToPlainString() });
 
-            string contentType = _contentTypeProvider.TryGetContentType(file!.FileName, out string? type) ? type : "application/octet-stream";
-            return File(file.Content, contentType, file.FileName);
+            string contentType = _contentTypeProvider.TryGetContentType(result.Value.FileName, out string? type) ? type : "application/octet-stream";
+            return File(result.Value.Content, contentType, result.Value.FileName);
         }
         catch (Exception ex)
         {

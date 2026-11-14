@@ -28,7 +28,8 @@ public class UploadPolicyServiceTests
     [Fact]
     public void FileManagerQuotaBytesFromGb_TurnsGigabytesIntoBytes()
     {
-        (ServiceResult result, long bytes) = _sut.FileManagerQuotaBytesFromGb(2m);
+        var result = _sut.FileManagerQuotaBytesFromGb(2m);
+        long bytes = result.Value;
 
         Assert.True(result.Success);
         Assert.Equal(FileManagerUploadPolicy.QuotaBytesFromGb(2m).Value, bytes);
@@ -38,7 +39,8 @@ public class UploadPolicyServiceTests
     [Fact]
     public void FileManagerQuotaBytesFromGb_RefusesANegativeQuota()
     {
-        (ServiceResult result, long bytes) = _sut.FileManagerQuotaBytesFromGb(-1m);
+        var result = _sut.FileManagerQuotaBytesFromGb(-1m);
+        long bytes = result.Value;
 
         Assert.False(result.Success);
         Assert.Equal(ServiceResult.FromError(FileManagerUploadPolicy.QuotaBytesFromGb(-1m).FirstError).ErrorKey, result.ErrorKey);
