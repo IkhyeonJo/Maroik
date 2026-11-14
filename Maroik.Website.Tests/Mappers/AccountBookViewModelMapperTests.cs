@@ -127,6 +127,21 @@ public class AccountBookViewModelMapperTests
         Assert.Equal("KRW", vm.MonetaryUnit);
     }
 
+    /// <summary>
+    /// A record the service judged unusually large carries the localized mark in its amount-check column; every other record an
+    /// empty one (so the column sorts and filters like text).
+    /// </summary>
+    [Fact]
+    public void ExpenditureToDisplayViewModels_MarksTheUnusuallyLargeRecords()
+    {
+        ExpenditureResponse[] responses = [new() { Id = 1 }, new() { Id = 2 }];
+
+        var vms = responses.ToDisplayViewModels(new TimeZoneDisplayService(), [], Prefix("L:"), "UTC", new HashSet<long> { 2 });
+
+        Assert.Equal("", vms[0].AmountFlag);
+        Assert.Equal("L:Unusually large", vms[1].AmountFlag);
+    }
+
     // ── IsValidLocalDateTime / ToCreatedUtc ──────────────────────────────────────
     // Created is the account's own local wall-clock time ("yyyy-MM-dd HH:mm:ss"), converted to
     // UTC using the account's IANA time zone (known server-side from the session) — never the

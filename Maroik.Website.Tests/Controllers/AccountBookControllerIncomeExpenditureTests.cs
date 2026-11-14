@@ -525,6 +525,53 @@ public class AccountBookControllerIncomeExpenditureTests(MaroikWebApplicationFac
     }
 
     /// <summary>
+    /// The expenditure grid marks, in Korean, the one amount far above the account's usual meals and no other row. A dedicated
+    /// account keeps the other tests' meal records out of its "usual".
+    /// </summary>
+    [Fact]
+    public async Task ExpenditureGrid_MarksTheUnusuallyLargeAmount()
+    {
+        const string email = "accountbook-outlier-user@test.com";
+        var session = await AuthenticatedSessionHelper.LoginAsync(factory, _client, email, "UserPassword1!", Role.User, TestContext.Current.CancellationToken);
+        long flagged;
+        using (var scope = factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+            if (!db.Assets.Any(a => a.AccountEmail == email && a.ProductName == "wallet"))
+            {
+                db.Assets.Add(new Asset
+                {
+                    ProductName = "wallet", AccountEmail = email, Item = "CashAsset", Amount = 1000, MonetaryUnit = "KRW",
+                    Deleted = false, Created = DateTime.UtcNow, Updated = DateTime.UtcNow
+                });
+            }
+            db.Expenditures.RemoveRange(db.Expenditures.Where(e => e.AccountEmail == email));
+            List<Expenditure> rows =
+            [
+                .. new decimal[] { 10, 10, 11, 12, 12, 13, 14, 100 }.Select(amount => new Expenditure
+                {
+                    AccountEmail = email, MainClass = "ConsumerSpending", SubClass = "MealOrEatOutExpenses", Content = $"meal {amount}",
+                    Amount = amount, PaymentMethod = "wallet", Created = DateTime.UtcNow, Updated = DateTime.UtcNow
+                })
+            ];
+            db.Expenditures.AddRange(rows);
+            await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+            flagged = rows[^1].Id;
+        }
+
+        using var request = new HttpRequestMessage(HttpMethod.Get, "/AccountBook/Expenditure");
+        request.Headers.Add("Cookie", session.CookieHeader);
+        request.Headers.Add("X-Requested-With", "XMLHttpRequest");
+        request.Headers.AcceptLanguage.ParseAdd("ko-KR");
+        string html = await (await _client.SendAsync(request, TestContext.Current.CancellationToken)).Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        using var page = await new AngleSharp.Html.Parser.HtmlParser().ParseDocumentAsync(html, TestContext.Current.CancellationToken);
+
+        var rowsWithMark = page.QuerySelectorAll("tr.clsGridRow").Where(r => r.TextContent.Contains("평소보다 큼", StringComparison.Ordinal)).ToList();
+        Assert.Equal(flagged.ToString(System.Globalization.CultureInfo.InvariantCulture), Assert.Single(rowsWithMark).GetAttribute("data-id"));
+        Assert.Contains(page.QuerySelectorAll("th"), th => th.TextContent.Contains("금액 확인", StringComparison.Ordinal));
+    }
+
+    /// <summary>
     /// The income suggestion is the signed-in user's own income model, trained on their incomes in the real database: new content
     /// about a salary is answered with labor income. A dedicated account keeps the other tests' records out of the model.
     /// </summary>

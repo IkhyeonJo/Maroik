@@ -19,6 +19,12 @@ public interface IExpenditureService
     /// </summary>
     Task<ClassSuggestionResponse?> SuggestClassAsync(string accountEmail, string? content, CancellationToken ct = default);
 
+    /// <summary>
+    /// The ids of the account's expenditures that are unusually large for their sub-class and currency, judged against all of
+    /// the account's records (a search shows them with the same marks). Shown next to the amount; nothing is changed.
+    /// </summary>
+    Task<IReadOnlySet<long>> GetUnusuallyLargeIdsAsync(string accountEmail, CancellationToken ct = default);
+
     /// <summary>Returns a single expenditure record owned by the account, or null if not found.</summary>
     Task<ExpenditureResponse?> GetByIdAsync(string accountEmail, long id, CancellationToken ct = default);
 

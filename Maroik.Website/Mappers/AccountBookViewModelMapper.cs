@@ -147,18 +147,27 @@ public static class AccountBookViewModelMapper
 
     extension(IEnumerable<ExpenditureResponse> items)
     {
-        /// <summary>Maps all <see cref="ExpenditureResponse"/> items to display view models.</summary>
+        /// <summary>
+        /// Maps all <see cref="ExpenditureResponse"/> items to display view models; those in <paramref name="unusuallyLarge"/>
+        /// carry the localized "Unusually large" mark in <see cref="ExpenditureOutputViewModel.AmountFlag"/>.
+        /// </summary>
         public List<ExpenditureOutputViewModel> ToDisplayViewModels(
             ITimeZoneDisplayService timeZones, IEnumerable<AssetResponse> assets,
             Func<string, string> localize,
-            string timeZoneIanaId)
+            string timeZoneIanaId,
+            IReadOnlySet<long> unusuallyLarge)
         {
             var currencyByProduct = assets
                 .GroupBy(a => a.ProductName ?? "")
                 .ToDictionary(g => g.Key, g => g.Last().MonetaryUnit);
             return
             [
-                .. items.Select(i => i.ToDisplayViewModel(timeZones, currencyByProduct, localize, timeZoneIanaId))
+                .. items.Select(i =>
+                {
+                    ExpenditureOutputViewModel vm = i.ToDisplayViewModel(timeZones, currencyByProduct, localize, timeZoneIanaId);
+                    vm.AmountFlag = unusuallyLarge.Contains(i.Id) ? localize("Unusually large") : "";
+                    return vm;
+                })
             ];
         }
     }

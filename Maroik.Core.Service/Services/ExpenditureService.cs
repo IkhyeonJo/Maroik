@@ -54,6 +54,10 @@ public class ExpenditureService(
     }
 
     /// <inheritdoc />
+    public async Task<IReadOnlySet<long>> GetUnusuallyLargeIdsAsync(string accountEmail, CancellationToken ct = default)
+        => ExpenditureOutlierPolicy.UnusuallyLarge(await expenditureRepository.GetByAccountEmailAsync(accountEmail, ct));
+
+    /// <inheritdoc />
     public async Task<ExpenditureResponse?> GetByIdAsync(string accountEmail, long id, CancellationToken ct = default)
     {
         var expenditure = await expenditureRepository.FindByEmailAndIdAsync(accountEmail, id, ct);

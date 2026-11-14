@@ -579,6 +579,22 @@ public class ExpenditureServiceTests
         _expenditureRepo.Verify(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
+    // -- GetUnusuallyLargeIdsAsync ------------------------------------------------
+
+    /// <summary>The marks are judged against all of the caller's records, read through the repository for that account.</summary>
+    [Fact]
+    public async Task GetUnusuallyLargeIdsAsync_JudgesTheCallersRecords()
+    {
+        const string email = "user@example.com";
+        decimal[] amounts = [10, 10, 11, 12, 12, 13, 14, 100];
+        _expenditureRepo.Setup(r => r.GetByAccountEmailAsync(email, It.IsAny<CancellationToken>()))
+            .ReturnsAsync([.. amounts.Select((a, i) => Expenditure.Reconstitute(i + 1, email, "ConsumerSpending", "MealOrEatOutExpenses", "x", a, "KRW", "Wallet", null, null, DateTime.UtcNow, DateTime.UtcNow))]);
+
+        IReadOnlySet<long> result = await CreateSut().GetUnusuallyLargeIdsAsync(email, TestContext.Current.CancellationToken);
+
+        Assert.Equal([8L], result);
+    }
+
     // -- CreateAsync: money-affecting failure branches -------------------------------
 
     /// <summary>Owner e-mail the asset lookups are keyed on.</summary>

@@ -517,8 +517,9 @@ public class AccountBookController(
             var expenditures = string.IsNullOrEmpty(wholeSearch)
                 ? await expenditureService.GetExpendituresAsync(account.RequireEmail(), ct)
                 : await expenditureService.SearchExpendituresAsync(account.RequireEmail(), wholeSearch, ct);
+            IReadOnlySet<long> unusuallyLarge = await expenditureService.GetUnusuallyLargeIdsAsync(account.RequireEmail(), ct);
             var viewModels = expenditures
-                .ToDisplayViewModels(timeZones, assets, key => localizer[key].Value, account.RequireTimeZoneIanaId())
+                .ToDisplayViewModels(timeZones, assets, key => localizer[key].Value, account.RequireTimeZoneIanaId(), unusuallyLarge)
                 .OrderByDescending(m => m.Created)
                 .ThenByDescending(m => m.Updated)
                 .AsQueryable();

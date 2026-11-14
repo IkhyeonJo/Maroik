@@ -153,4 +153,7 @@
   <data name="Updated" xml:space="preserve">
     <value>Updated</value>
   </data>
+  <data name="AmountFlag" xml:space="preserve">
+    <value>Amount check</value>
+  </data>
 </root>
