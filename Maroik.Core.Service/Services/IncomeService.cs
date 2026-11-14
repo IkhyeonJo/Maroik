@@ -1,6 +1,7 @@
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Domain.Finances;
+using Maroik.Core.Service.Classifiers;
 using Maroik.Core.Service.Extensions;
 using Maroik.Core.Service.Mappers;
 using Microsoft.Extensions.Logging;
@@ -13,7 +14,7 @@ namespace Maroik.Core.Service.Services;
 /// All write operations are wrapped in a database transaction via <see cref="IUnitOfWork"/>.
 /// </summary>
 public class IncomeService(IIncomeRepository incomeRepository, IAssetBalanceStore assetBalance, 
-    IUnitOfWork unitOfWork, ILogger<IncomeService> logger, TimeProvider timeProvider) : IIncomeService
+    IUnitOfWork unitOfWork, ILogger<IncomeService> logger, TimeProvider timeProvider, ContentClassifierCache classifiers) : IIncomeService
 {
     /// <inheritdoc />
     public async Task<List<IncomeResponse>> GetIncomesAsync(string accountEmail, CancellationToken ct = default)
@@ -26,6 +27,21 @@ public class IncomeService(IIncomeRepository incomeRepository, IAssetBalanceStor
             .. (await incomeRepository.SearchByAccountEmailAsync(accountEmail, search, ct)).Select(IncomeMapper
                 .ToResponse)
         ];
+
+    /// <inheritdoc />
+    public async Task<ClassSuggestionResponse?> SuggestClassAsync(string accountEmail, string? content, CancellationToken ct = default)
+    {
+        // The form asks on every pause in typing; content without a letter or a digit has nothing to go on, so the records are not read for it.
+        if (!ClassSuggestionPolicy.HasEvidence(content))
+            return null;
+
+        IReadOnlyList<ClassSample> samples = IncomeClassSuggestionPolicy.Learnable(await incomeRepository.GetByAccountEmailAsync(accountEmail, ct));
+        if (samples.Count == 0)
+            return null;
+
+        ClassSuggestion suggestion = classifiers.GetOrTrain("Income", accountEmail, samples).Predict(content);
+        return new ClassSuggestionResponse { MainClass = suggestion.MainClass, SubClass = suggestion.SubClass };
+    }
 
     /// <inheritdoc />
     public async Task<IncomeResponse?> GetByIdAsync(string accountEmail, long id, CancellationToken ct = default)

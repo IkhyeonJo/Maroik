@@ -357,4 +357,10 @@
   <data name="YearSuffix" xml:space="preserve">
     <value>년</value>
   </data>
+  <data name="Suggested class:" xml:space="preserve">
+    <value>추천 분류:</value>
+  </data>
+  <data name="Apply" xml:space="preserve">
+    <value>적용</value>
+  </data>
 </root>

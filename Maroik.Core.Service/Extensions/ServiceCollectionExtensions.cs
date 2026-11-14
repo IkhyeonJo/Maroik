@@ -1,4 +1,5 @@
 using Maroik.Core.Contract.Interfaces;
+using Maroik.Core.Service.Classifiers;
 using Maroik.Core.Service.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -31,6 +32,8 @@ public static class ServiceCollectionExtensions
             services.AddScoped<IAssetBalanceStore, AssetBalanceStore>();
             services.AddScoped<IIncomeService, IncomeService>();
             services.AddScoped<IExpenditureService, ExpenditureService>();
+            // One text model per account, kept across requests (ContentClassifierCache): training takes about a second.
+            services.AddSingleton<ContentClassifierCache>();
             services.AddScoped<IFixedIncomeService, FixedIncomeService>();
             services.AddScoped<IFixedExpenditureService, FixedExpenditureService>();
             services.AddScoped<IDashboardService, DashboardService>();

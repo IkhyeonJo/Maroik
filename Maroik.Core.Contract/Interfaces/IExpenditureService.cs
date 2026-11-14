@@ -13,6 +13,12 @@ public interface IExpenditureService
     /// <summary>Returns expenditure records for the given account whose fields contain <paramref name="search"/>, filtered in the database.</summary>
     Task<List<ExpenditureResponse>> SearchExpendituresAsync(string accountEmail, string search, CancellationToken ct = default);
 
+    /// <summary>
+    /// Proposes a class for an expenditure with <paramref name="content"/>, learned from the account's own past expenditures,
+    /// or null when there is nothing to go on. A hint only: the user applies it by hand.
+    /// </summary>
+    Task<ClassSuggestionResponse?> SuggestClassAsync(string accountEmail, string? content, CancellationToken ct = default);
+
     /// <summary>Returns a single expenditure record owned by the account, or null if not found.</summary>
     Task<ExpenditureResponse?> GetByIdAsync(string accountEmail, long id, CancellationToken ct = default);
 

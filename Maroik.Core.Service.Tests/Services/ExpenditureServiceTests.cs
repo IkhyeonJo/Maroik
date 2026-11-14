@@ -1,6 +1,7 @@
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Domain.Finances;
+using Maroik.Core.Service.Classifiers;
 using Maroik.Core.Service.Services;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Testing;
@@ -37,7 +38,8 @@ public class ExpenditureServiceTests
         _assetBalance.Object,
         _unitOfWork.Object,
         _logger,
-        _time);
+        _time,
+        new ContentClassifierCache(new FakeLogger<ContentClassifierCache>(), _time));
 
     /// <summary>Initializes the test fixture, setting up all required test doubles and the system under test.</summary>
     public ExpenditureServiceTests()
@@ -503,6 +505,78 @@ public class ExpenditureServiceTests
         List<ExpenditureResponse> result = await CreateSut().SearchExpendituresAsync(email, "lunch", TestContext.Current.CancellationToken);
 
         Assert.Equal(7, Assert.Single(result).Id);
+    }
+
+    // -- SuggestClassAsync -------------------------------------------------------
+
+    /// <summary>
+    /// The proposal is learned from the caller's own records only (read through the repository for that account) and comes back
+    /// as the stored main class + sub-class strings.
+    /// </summary>
+    [Fact]
+    public async Task SuggestClassAsync_LearnsFromTheCallersRecords_AndReturnsTheClass()
+    {
+        const string email = "user@example.com";
+        _expenditureRepo.Setup(r => r.GetByAccountEmailAsync(email, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(
+            [
+                Expenditure.Reconstitute(1, email, "ConsumerSpending", "MealOrEatOutExpenses", "스타벅스 역삼점", 100m, "KRW", "Wallet", null, null, DateTime.UtcNow, DateTime.UtcNow),
+                Expenditure.Reconstitute(2, email, "ConsumerSpending", "TransportationCost", "지하철", 100m, "KRW", "Wallet", null, null, DateTime.UtcNow, DateTime.UtcNow),
+            ]);
+
+        ClassSuggestionResponse? result = await CreateSut().SuggestClassAsync(email, "스타벅스 강남점", TestContext.Current.CancellationToken);
+
+        Assert.NotNull(result);
+        Assert.Equal("ConsumerSpending", result.MainClass);
+        Assert.Equal("MealOrEatOutExpenses", result.SubClass);
+        _expenditureRepo.Verify(r => r.GetByAccountEmailAsync(It.Is<string>(e => e != email), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    /// <summary>
+    /// Content recorded before is answered by the model too, not by a "same content as before" rule: measured with monthly
+    /// retraining on the owner's 1,848 newest expenditures, such a rule was never right where the model was wrong (and wrong twice
+    /// where it was right). "쿠팡" was a meal once and then household supplies; with the other meals the model answers meals.
+    /// </summary>
+    [Fact]
+    public async Task SuggestClassAsync_ContentRecordedBefore_IsAnsweredByTheModelToo()
+    {
+        const string email = "user@example.com";
+        DateTime older = new(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc), newer = older.AddDays(1);
+        _expenditureRepo.Setup(r => r.GetByAccountEmailAsync(email, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(
+            [
+                Expenditure.Reconstitute(1, email, "ConsumerSpending", "MealOrEatOutExpenses", "쿠팡", 100m, "KRW", "Wallet", null, null, older, older),
+                Expenditure.Reconstitute(2, email, "ConsumerSpending", "HousingOrSuppliesCost", "쿠팡", 100m, "KRW", "Wallet", null, null, newer, newer),
+                Expenditure.Reconstitute(3, email, "ConsumerSpending", "MealOrEatOutExpenses", "치킨", 100m, "KRW", "Wallet", null, null, older, older),
+                Expenditure.Reconstitute(4, email, "ConsumerSpending", "MealOrEatOutExpenses", "피자", 100m, "KRW", "Wallet", null, null, older, older),
+                Expenditure.Reconstitute(5, email, "ConsumerSpending", "MealOrEatOutExpenses", "김밥", 100m, "KRW", "Wallet", null, null, older, older),
+            ]);
+
+        ClassSuggestionResponse? result = await CreateSut().SuggestClassAsync(email, "쿠팡", TestContext.Current.CancellationToken);
+
+        Assert.Equal("MealOrEatOutExpenses", result?.SubClass);
+    }
+
+    /// <summary>With no record to learn from (here only one whose stored class is not in the taxonomy) there is no proposal.</summary>
+    [Fact]
+    public async Task SuggestClassAsync_ReturnsNull_WhenNoRecordIsLearnable()
+    {
+        const string email = "user@example.com";
+        _expenditureRepo.Setup(r => r.GetByAccountEmailAsync(email, It.IsAny<CancellationToken>()))
+            .ReturnsAsync([Expenditure.Reconstitute(1, email, "ConsumerSpending", "Tax", "지하철", 100m, "KRW", "Wallet", null, null, DateTime.UtcNow, DateTime.UtcNow)]);
+
+        Assert.Null(await CreateSut().SuggestClassAsync(email, "지하철", TestContext.Current.CancellationToken));
+    }
+
+    /// <summary>Content without a letter or a digit is answered without reading the records at all.</summary>
+    [Theory]
+    [InlineData("  ")]
+    [InlineData("...!!")]
+    public async Task SuggestClassAsync_ContentWithoutEvidence_ReturnsNull_WithoutReadingTheRecords(string content)
+    {
+        Assert.Null(await CreateSut().SuggestClassAsync("user@example.com", content, TestContext.Current.CancellationToken));
+
+        _expenditureRepo.Verify(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     // -- CreateAsync: money-affecting failure branches -------------------------------

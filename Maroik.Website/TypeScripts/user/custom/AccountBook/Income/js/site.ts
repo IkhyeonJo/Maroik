@@ -604,6 +604,89 @@
         });
     }
 
+    // --- Class suggestion for the typed content --------------------------
+    // The server proposes a class learned from the user's own past incomes
+    // (IncomeClassSuggestionPolicy). The script only shows it as a hint under the content
+    // field and applies it when the user clicks it: the class fields are never filled by
+    // themselves, so the classification stays the user's own choice.
+    const $createIncomeClassSuggestion = $("#createIncomeClassSuggestion");
+    const $createIncomeClassSuggestionText = $("#createIncomeClassSuggestionText");
+    const $btnApplyIncomeClassSuggestion = $("#btnApplyIncomeClassSuggestion");
+    const classSuggestionReply = replies.read({
+        suggestion: check.nullable(check.object({ mainClass: check.string, subClass: check.string })),
+    });
+    /** How long typing must pause before the server is asked (one request per pause, not per key). */
+    const classSuggestionDelayMs = 400;
+    let classSuggestionTimer: ReturnType<typeof setTimeout> | undefined;
+
+    /** The label the view rendered for the option `value` of `$select` (the localized class name). */
+    function OptionLabel($select: JQuery, value: string): string {
+        return $select.find("option").filter(function(this: HTMLOptionElement) {
+            return this.value === value;
+        }).text();
+    }
+
+    function HideIncomeClassSuggestion() {
+        $createIncomeClassSuggestion.hide();
+    }
+
+    /** Shows `suggestion` as a hint (nothing when it is the class already chosen); its button applies it. */
+    function ShowIncomeClassSuggestion(suggestion: { mainClass: string; subClass: string }) {
+        if (selectValue($createIncomeMainClass) === suggestion.mainClass && selectValue($createIncomeSubClass) === suggestion.subClass) {
+            HideIncomeClassSuggestion();
+            return;
+        }
+
+        $createIncomeClassSuggestionText.text(
+            OptionLabel($createIncomeMainClass, suggestion.mainClass) + " › " + OptionLabel($createIncomeSubClass, suggestion.subClass)
+        );
+        $btnApplyIncomeClassSuggestion.off("click").on("click", function() {
+            // Through the same change wiring as a manual pick: the main class narrows the
+            // sub-classes, then the sub-class shows / hides the deposit-asset block.
+            $createIncomeMainClass.val(suggestion.mainClass).trigger("change");
+            $createIncomeSubClass.val(suggestion.subClass).trigger("change");
+            HideIncomeClassSuggestion();
+        });
+        $createIncomeClassSuggestion.show();
+    }
+
+    /** Asks the server for a class for `content`; a reply for content the user has since changed is dropped. */
+    function SuggestIncomeClass(content: string) {
+        void $.ajax({
+            url: "/AccountBook/SuggestIncomeClass" + "?content=" + encodeURIComponent(content),
+            type: "POST",
+            headers: { "RequestVerificationToken": fieldValue($__RequestVerificationToken) },
+            dataType: "json",
+            contentType: "application/json; charset=utf-8",
+            success: onReply(classSuggestionReply, function(data) {
+                if (fieldValue($createIncomeContent) !== content) {
+                    return;
+                }
+                if (data.result && data.suggestion !== null) {
+                    ShowIncomeClassSuggestion(data.suggestion);
+                } else {
+                    HideIncomeClassSuggestion();
+                }
+            }),
+            // Only a hint: no toast when it cannot be had (the server logs its own failures).
+            error: function() {
+                HideIncomeClassSuggestion();
+            }
+        });
+    }
+
+    $createIncomeContent.off("input.classSuggestion").on("input.classSuggestion", function() {
+        clearTimeout(classSuggestionTimer);
+        const content = fieldValue($createIncomeContent);
+        if (content.trim() === "") {
+            HideIncomeClassSuggestion();
+            return;
+        }
+        classSuggestionTimer = setTimeout(function() {
+            SuggestIncomeClass(content);
+        }, classSuggestionDelayMs);
+    });
+
     // --- Button / form / select wiring --------------------------------
     $btnEditIncomeGridRow.off("click").on("click", function() {
         EditIncomeGridRow(attribute($(this), "data-errorMessageSelectGridRow"));

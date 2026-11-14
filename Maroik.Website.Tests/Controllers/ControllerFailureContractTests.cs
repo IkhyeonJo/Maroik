@@ -87,6 +87,8 @@ public class ControllerFailureContractTests(MaroikWebApplicationFactory factory)
         (Role.User, "/AccountBook/IsAssetExists?productName=x", false),
         (Role.User, "/AccountBook/IsIncomeExists?id=1", false),
         (Role.User, "/AccountBook/IsExpenditureExists?id=1", false),
+        (Role.User, "/AccountBook/SuggestExpenditureClass?content=x", false),
+        (Role.User, "/AccountBook/SuggestIncomeClass?content=x", false),
         (Role.User, "/Forum/DownloadFreeBoardAttachedFile?boardId=1", false),
         (Role.User, "/Management/DownloadPrivateNoteAttachedFile?boardId=1", false),
         (Role.User, "/Kanban/DeleteKanbanCard?id=1", false),
@@ -378,6 +380,34 @@ public class ControllerFailureContractTests(MaroikWebApplicationFactory factory)
 
         Assert.Equal(16, BodyEndpoints.Count(e => e.Url.StartsWith("/AccountBook/", StringComparison.Ordinal)));
         Assert.True(failures.Count == 0, string.Join(Environment.NewLine, failures));
+    }
+
+    /// <summary>
+    /// The class suggestions (income and expenditure) log a service failure once, at Error, with the exception attached and the
+    /// signed-in owner named; the user only sees the generic message (and the form simply shows no suggestion).
+    /// </summary>
+    [Theory]
+    [InlineData("/AccountBook/SuggestExpenditureClass?content=x")]
+    [InlineData("/AccountBook/SuggestIncomeClass?content=x")]
+    public async Task AServiceFailure_InAClassSuggestion_IsLoggedAsAnErrorWithTheException(string url)
+    {
+        var logger = new FakeLogger<AccountBookController>();
+        await using var host = CreateBrokenHost().WithWebHostBuilder(builder => builder.ConfigureTestServices(services =>
+            services.AddSingleton<ILogger<AccountBookController>>(logger)));
+        var client = host.CreateClient(new WebApplicationFactoryClientOptions
+        {
+            BaseAddress = new Uri("https://www.localhost/"), AllowAutoRedirect = false, HandleCookies = false
+        });
+        const string email = "failure-suggest-log@test.com";
+        var session = await AuthenticatedSessionHelper.LoginAsync(host, client, email, "UserPassword1!", Role.User, TestContext.Current.CancellationToken);
+        logger.Collector.Clear();
+
+        using var request = session.BuildJsonPostRequest(url);
+        _ = await client.SendAsync(request, TestContext.Current.CancellationToken);
+
+        var error = Assert.Single(logger.Collector.GetSnapshot(), r => r.Level == LogLevel.Error);
+        Assert.Equal(Secret, error.Exception?.Message);
+        Assert.Contains(email, error.Message, StringComparison.Ordinal);
     }
 
     /// <summary>

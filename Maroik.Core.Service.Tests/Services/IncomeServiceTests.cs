@@ -1,6 +1,7 @@
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Domain.Finances;
+using Maroik.Core.Service.Classifiers;
 using Maroik.Core.Service.Services;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Testing;
@@ -37,7 +38,8 @@ public class IncomeServiceTests
         _assetBalance.Object,
         _unitOfWork.Object,
         _logger,
-        _time);
+        _time,
+        new ContentClassifierCache(new FakeLogger<ContentClassifierCache>(), _time));
 
     /// <summary>Initializes the test fixture, setting up all required test doubles and the system under test.</summary>
     public IncomeServiceTests()
@@ -868,5 +870,74 @@ public class IncomeServiceTests
         await CreateSut().DeleteAsync(Email, 1, TestContext.Current.CancellationToken);
 
         AssertLoggedFailure("Failed to delete income 1", thrown);
+    }
+
+    // -- SuggestClassAsync -------------------------------------------------------
+
+    /// <summary>A stored income of <paramref name="content"/> in <paramref name="mainClass"/> / <paramref name="subClass"/>.</summary>
+    private static Income IncomeOf(long id, string content, string mainClass, string subClass, DateTime? created = null) =>
+        Income.Reconstitute(id, "user@example.com", mainClass, subClass, content, 100m, "KRW", "Wallet", null,
+            created ?? new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc), created ?? new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc));
+
+    /// <summary>
+    /// Content never recorded before is answered by the account's income model, learned from the caller's own incomes (read
+    /// through the repository for that account), as the stored main class + sub-class.
+    /// </summary>
+    [Fact]
+    public async Task SuggestClassAsync_NewContent_IsAnsweredByTheModel_FromTheCallersIncomes()
+    {
+        const string email = "user@example.com";
+        _incomeRepo.Setup(r => r.GetByAccountEmailAsync(email, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(
+            [
+                IncomeOf(1, "11월 급여", "RegularIncome", "LaborIncome"), IncomeOf(2, "10월 급여", "RegularIncome", "LaborIncome"),
+                IncomeOf(3, "예금 이자", "RegularIncome", "FinancialIncome"), IncomeOf(4, "적금 이자", "RegularIncome", "FinancialIncome"),
+            ]);
+
+        ClassSuggestionResponse? result = await CreateSut().SuggestClassAsync(email, "12월 급여", TestContext.Current.CancellationToken);
+
+        Assert.Equal(("RegularIncome", "LaborIncome"), (result?.MainClass, result?.SubClass));
+        _incomeRepo.Verify(r => r.GetByAccountEmailAsync(It.Is<string>(e => e != email), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    /// <summary>
+    /// Content recorded before is answered by the model too, not by a "same content as before" rule (which gained nothing on the
+    /// owner's incomes): "보너스" was labor income once and then other income, and the other labor incomes pull the model to labor income.
+    /// </summary>
+    [Fact]
+    public async Task SuggestClassAsync_ContentRecordedBefore_IsAnsweredByTheModelToo()
+    {
+        DateTime older = new(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc), newer = older.AddDays(1);
+        _incomeRepo.Setup(r => r.GetByAccountEmailAsync("user@example.com", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(
+            [
+                IncomeOf(1, "보너스", "IrregularIncome", "LaborIncome", older), IncomeOf(2, "보너스", "IrregularIncome", "OtherIncome", newer),
+                IncomeOf(3, "성과급", "IrregularIncome", "LaborIncome", older), IncomeOf(4, "명절 상여", "IrregularIncome", "LaborIncome", older),
+                IncomeOf(5, "연말 상여", "IrregularIncome", "LaborIncome", older),
+            ]);
+
+        ClassSuggestionResponse? result = await CreateSut().SuggestClassAsync("user@example.com", "보너스", TestContext.Current.CancellationToken);
+
+        Assert.Equal("LaborIncome", result?.SubClass);
+    }
+
+    /// <summary>With no income to learn from there is no proposal.</summary>
+    [Fact]
+    public async Task SuggestClassAsync_ReturnsNull_WhenNoRecordIsLearnable()
+    {
+        _incomeRepo.Setup(r => r.GetByAccountEmailAsync("user@example.com", It.IsAny<CancellationToken>())).ReturnsAsync([]);
+
+        Assert.Null(await CreateSut().SuggestClassAsync("user@example.com", "급여", TestContext.Current.CancellationToken));
+    }
+
+    /// <summary>Content without a letter or a digit is answered without reading the records at all.</summary>
+    [Theory]
+    [InlineData("  ")]
+    [InlineData("--")]
+    public async Task SuggestClassAsync_ContentWithoutEvidence_ReturnsNull_WithoutReadingTheRecords(string content)
+    {
+        Assert.Null(await CreateSut().SuggestClassAsync("user@example.com", content, TestContext.Current.CancellationToken));
+
+        _incomeRepo.Verify(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 }

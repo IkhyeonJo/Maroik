@@ -32,7 +32,9 @@ function fixture(): string {
      <button id="btnDeleteExpenditure" data-errorMessageSelectGridRow="L_SelectRow"></button>
      <select id="createExpenditurePaymentMethod"><option value="Card" selected>Card</option></select>
      <select id="editExpenditurePaymentMethod"><option value="Card">Card</option><option value="Cash">Cash</option></select>
-     <span id="labelCreateExpenditureAmount"></span><span id="labelEditExpenditureAmount"></span>`
+     <span id="labelCreateExpenditureAmount"></span><span id="labelEditExpenditureAmount"></span>
+     <input id="createExpenditureContent" />
+     <div id="createExpenditureClassSuggestion" style="display:none"><span id="createExpenditureClassSuggestionText"></span><button type="button" id="btnApplyExpenditureClassSuggestion"></button></div>`
     );
 }
 
@@ -164,4 +166,154 @@ describeMissingServerConstants("user", "AccountBook", "Expenditure", () => fixtu
 describeAmountInput({
     feature: "AccountBook", page: "Expenditure", fixture: () => fixture(), existsKey: "expenditure", rowKey: "Id", allowNegative: false,
     record: { id: 1, mainClass: "Living", subClass: "Food", content: "c", amount: 1, created: "2025-01-02T09:30:00", paymentMethod: "Card", myDepositAsset: null, note: "" },
+});
+
+describe("AccountBook/Expenditure — class suggestion for the typed content", () => {
+    /** Loads the page with fake timers (after load: loadSite manages its own while it evaluates the script). */
+    const load = () => {
+        const h = loadSite("user", "AccountBook", "Expenditure", fixture());
+        h.$("#createExpenditureMainClass").val("Living").trigger("change"); // the form's default: Living › Food
+        vi.useFakeTimers();
+        return h;
+    };
+    /** Types `text` into the content field and lets the typing pause pass. */
+    const type = (h: ReturnType<typeof load>, text: string) => {
+        h.$("#createExpenditureContent").val(text).trigger("input");
+        vi.advanceTimersByTime(400);
+    };
+    const suggestCalls = (h: ReturnType<typeof load>) => h.ajaxCalls.filter((c) => String(c.url).includes("SuggestExpenditureClass"));
+    const hint = (h: ReturnType<typeof load>) => h.win.document.getElementById("createExpenditureClassSuggestion");
+
+    it("asks the server only after a pause in typing, for the content as typed, with the anti-forgery token", () => {
+        const h = load();
+        try {
+            h.$("#createExpenditureContent").val("스타").trigger("input");
+            vi.advanceTimersByTime(200);
+            h.$("#createExpenditureContent").val("스타벅스 & co").trigger("input");
+            vi.advanceTimersByTime(399);
+            expect(suggestCalls(h)).toHaveLength(0);
+
+            vi.advanceTimersByTime(1);
+
+            const call = lastOf(suggestCalls(h));
+            expect(suggestCalls(h)).toHaveLength(1);
+            expect(call.url).toBe("/AccountBook/SuggestExpenditureClass?content=" + encodeURIComponent("스타벅스 & co"));
+            expect(call.type).toBe("POST");
+            expect(call.headers).toEqual({ RequestVerificationToken: "tok" });
+        } finally {
+            vi.useRealTimers();
+        }
+    });
+
+    it("shows the suggestion with the options' own labels, and leaves the class fields as they are", () => {
+        const h = load();
+        try {
+            type(h, "적금");
+            successOf(lastOf(suggestCalls(h)))({ result: true, suggestion: { mainClass: "Transfer", subClass: "ToSavings" } });
+
+            expect(hiddenByStyle(hint(h))).toBe(false);
+            expect(h.$("#createExpenditureClassSuggestionText").text()).toBe("Transfer › ToSavings");
+            expect(h.$("#createExpenditureMainClass").val()).toBe("Living");
+            expect(h.$("#createExpenditureSubClass").val()).toBe("Food");
+        } finally {
+            vi.useRealTimers();
+        }
+    });
+
+    it("applies the suggestion only when the user clicks it, through the same main → sub-class wiring, then hides it", () => {
+        const h = load();
+        try {
+            type(h, "적금");
+            successOf(lastOf(suggestCalls(h)))({ result: true, suggestion: { mainClass: "Transfer", subClass: "ToSavings" } });
+
+            h.$("#btnApplyExpenditureClassSuggestion").trigger("click");
+
+            expect(h.$("#createExpenditureMainClass").val()).toBe("Transfer");
+            expect(h.$("#createExpenditureSubClass").val()).toBe("ToSavings");
+            expect(hiddenByStyle(h.win.document.getElementById("divCreateExpenditureMyDepositAsset"))).toBe(false);
+            expect(hiddenByStyle(hint(h))).toBe(true);
+        } finally {
+            vi.useRealTimers();
+        }
+    });
+
+    it("applies a sub-class that is not its main class's first option", () => {
+        const h = load();
+        try {
+            type(h, "월세");
+            successOf(lastOf(suggestCalls(h)))({ result: true, suggestion: { mainClass: "Living", subClass: "Rent" } });
+
+            h.$("#btnApplyExpenditureClassSuggestion").trigger("click");
+
+            expect(h.$("#createExpenditureMainClass").val()).toBe("Living");
+            expect(h.$("#createExpenditureSubClass").val()).toBe("Rent");
+        } finally {
+            vi.useRealTimers();
+        }
+    });
+
+    it("shows nothing when the suggestion is the class already chosen", () => {
+        const h = load();
+        try {
+            type(h, "점심");
+            successOf(lastOf(suggestCalls(h)))({ result: true, suggestion: { mainClass: "Living", subClass: "Food" } });
+
+            expect(hiddenByStyle(hint(h))).toBe(true);
+        } finally {
+            vi.useRealTimers();
+        }
+    });
+
+    it("hides an earlier suggestion when the server has none, refuses, or cannot be reached", () => {
+        const h = load();
+        try {
+            for (const answer of [
+                (c: Parameters<typeof successOf>[0]) => successOf(c)({ result: true, suggestion: null }),
+                (c: Parameters<typeof successOf>[0]) => successOf(c)({ result: false, error: "A temporary error occurred." }),
+                (c: Parameters<typeof successOf>[0]) => c?.error?.(),
+            ]) {
+                type(h, "적금");
+                successOf(lastOf(suggestCalls(h)))({ result: true, suggestion: { mainClass: "Transfer", subClass: "ToSavings" } });
+                expect(hiddenByStyle(hint(h))).toBe(false);
+
+                type(h, "적금 2");
+                answer(lastOf(suggestCalls(h)));
+
+                expect(hiddenByStyle(hint(h))).toBe(true);
+            }
+            expect(h.toastr.error).not.toHaveBeenCalled();
+        } finally {
+            vi.useRealTimers();
+        }
+    });
+
+    it("ignores a reply for content the user has since changed", () => {
+        const h = load();
+        try {
+            type(h, "적금");
+            const stale = lastOf(suggestCalls(h));
+            h.$("#createExpenditureContent").val("적금 자동이체").trigger("input");
+
+            successOf(stale)({ result: true, suggestion: { mainClass: "Transfer", subClass: "ToSavings" } });
+
+            expect(hiddenByStyle(hint(h))).toBe(true);
+        } finally {
+            vi.useRealTimers();
+        }
+    });
+
+    it("blank content hides the suggestion without asking the server", () => {
+        const h = load();
+        try {
+            type(h, "적금");
+            successOf(lastOf(suggestCalls(h)))({ result: true, suggestion: { mainClass: "Transfer", subClass: "ToSavings" } });
+
+            type(h, "   ");
+
+            expect(suggestCalls(h)).toHaveLength(1);
+            expect(hiddenByStyle(hint(h))).toBe(true);
+        } finally {
+            vi.useRealTimers();
+        }
+    });
 });

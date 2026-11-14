@@ -13,6 +13,12 @@ public interface IIncomeService
     /// <summary>Returns income records for the given account whose fields contain <paramref name="search"/>, filtered in the database.</summary>
     Task<List<IncomeResponse>> SearchIncomesAsync(string accountEmail, string search, CancellationToken ct = default);
 
+    /// <summary>
+    /// Proposes a class for an income with <paramref name="content"/>, learned from the account's own past incomes, or null when
+    /// there is nothing to go on. A hint only: the user applies it by hand.
+    /// </summary>
+    Task<ClassSuggestionResponse?> SuggestClassAsync(string accountEmail, string? content, CancellationToken ct = default);
+
     /// <summary>Returns a single income record owned by the account, or null if not found.</summary>
     Task<IncomeResponse?> GetByIdAsync(string accountEmail, long id, CancellationToken ct = default);
 

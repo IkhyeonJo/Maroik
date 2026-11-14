@@ -1,6 +1,7 @@
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Domain.Finances;
+using Maroik.Core.Service.Classifiers;
 using Maroik.Core.Service.Extensions;
 using Maroik.Core.Service.Mappers;
 using Microsoft.Extensions.Logging;
@@ -17,7 +18,8 @@ public class ExpenditureService(
     IAssetBalanceStore assetBalance,
     IUnitOfWork unitOfWork,
     ILogger<ExpenditureService> logger,
-    TimeProvider timeProvider) : IExpenditureService
+    TimeProvider timeProvider,
+    ContentClassifierCache classifiers) : IExpenditureService
 {
     /// <inheritdoc />
     public async Task<List<ExpenditureResponse>> GetExpendituresAsync(string accountEmail, CancellationToken ct = default)
@@ -34,6 +36,22 @@ public class ExpenditureService(
             .. (await expenditureRepository.SearchByAccountEmailAsync(accountEmail, search, ct)).Select(
                 ExpenditureMapper.ToResponse)
         ];
+
+    /// <inheritdoc />
+    public async Task<ClassSuggestionResponse?> SuggestClassAsync(string accountEmail, string? content, CancellationToken ct = default)
+    {
+        // The form asks on every pause in typing; content without a letter or a digit has nothing to go on, so the records are not read for it.
+        if (!ClassSuggestionPolicy.HasEvidence(content))
+            return null;
+
+        IReadOnlyList<ClassSample> samples =
+            ExpenditureClassSuggestionPolicy.Learnable(await expenditureRepository.GetByAccountEmailAsync(accountEmail, ct));
+        if (samples.Count == 0)
+            return null;
+
+        ClassSuggestion suggestion = classifiers.GetOrTrain("Expenditure", accountEmail, samples).Predict(content);
+        return new ClassSuggestionResponse { MainClass = suggestion.MainClass, SubClass = suggestion.SubClass };
+    }
 
     /// <inheritdoc />
     public async Task<ExpenditureResponse?> GetByIdAsync(string accountEmail, long id, CancellationToken ct = default)
