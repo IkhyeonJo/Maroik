@@ -520,17 +520,11 @@ dotnet test --project Maroik.Core.Service.Tests            # any single project
 - The .NET 10 SDK version pinned in `global.json` (`rollForward: disable`, so exactly that version)
 - Node 22 (`npm ci` in `Maroik.Website/`) for the client scripts and their tests when building on the host
 - Docker and Docker Compose
-- Visual Studio (Windows) or JetBrains Rider (Linux/Mac)
+- JetBrains Rider (Windows/Linux/Mac)
 
 ### Running the Project
 
-#### Windows
-1. Install Visual Studio
-2. Open Maroik.slnx
-3. Set docker-compose as startup project
-4. Press F5 to run in debug mode
-
-#### Linux/Mac
+#### Windows/Linux/Mac
 1. Install JetBrains Rider
 2. Open Maroik.slnx and build the solution; restart Rider when it asks (see [Rider settings](#rider-settings))
 3. Start debug mode with docker-compose.debug.yml
