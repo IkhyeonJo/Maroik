@@ -1,0 +1,84 @@
+<Project>
+  <!--
+    ReSharper inspections are a build gate (owner's decision, 2026-11-14): after `dotnet build Maroik.slnx` (also the build
+    that `dotnet test` starts for the whole solution) has compiled every project, InspectCode, the command-line form of
+    Rider's code analysis, inspects the solution with solution-wide analysis and the shared severities of
+    Maroik.slnx.DotSettings. Every finding Rider shows, down to a hint (owner's decision: as strict as possible), is
+    reported as a build error with its file and line, so the build fails until the code is clean.
+
+    It reads what Rider reads, so the build fails on what the editor shows:
+    - the settings layers: the shared Maroik.slnx.DotSettings, this PC's personal Maroik.slnx.DotSettings.user, and Rider's
+      own computer-wide settings (resharper-host/GlobalSettingsStorage.DotSettings of the newest Rider* configuration folder,
+      when one exists; added with settings, which keeps the other layers);
+    - the ReSharper half of the Structured Logging plugin (.idea externalDependencies), pinned to one version;
+    - spelling: InspectCode does not run Rider's typo inspections (a misspelled comment passed it, 2026-11-14), so the
+      cspell test (SpellingDictionaryArchitectureTests, reading the same UserDictionary) runs last and checks every file,
+      the C# code included.
+
+    MSBuild reads this file only for a solution build. Building one project (or Rider's per-project build) does not run it.
+    The tool version is pinned in .config/dotnet-tools.json and restored here, so CI and every PC run the same one.
+    It takes minutes and a few GB of memory; switch it off for a quick build with `-p:RunInspectCode=false`.
+    `-p:InspectCodeSeverity=WARNING` (or SUGGESTION) narrows it for a one-off build.
+  -->
+  <PropertyGroup>
+    <RunInspectCode Condition="'$(RunInspectCode)' == ''">true</RunInspectCode>
+    <InspectCodeSeverity Condition="'$(InspectCodeSeverity)' == ''">HINT</InspectCodeSeverity>
+    <_InspectCodeReport>$(MSBuildThisFileDirectory)artifacts/inspectcode/report.xml</_InspectCodeReport>
+    <_InspectCodeExtensions>ReSharper.Structured.Logging/2026.3.0.159</_InspectCodeExtensions>
+    <!-- Rider's configuration folder: %APPDATA%\JetBrains on Windows, ~/Library/Application Support/JetBrains on macOS,
+         ~/.config/JetBrains on Linux. -->
+    <_RiderConfigRoot Condition="'$(APPDATA)' != ''">$(APPDATA)/JetBrains</_RiderConfigRoot>
+    <_RiderConfigRoot Condition="'$(_RiderConfigRoot)' == '' And $([MSBuild]::IsOSPlatform('OSX'))">$(HOME)/Library/Application Support/JetBrains</_RiderConfigRoot>
+    <_RiderConfigRoot Condition="'$(_RiderConfigRoot)' == ''">$(HOME)/.config/JetBrains</_RiderConfigRoot>
+  </PropertyGroup>
+
+  <UsingTask TaskName="ReportInspectCodeIssues" TaskFactory="RoslynCodeTaskFactory"
+             AssemblyFile="$(MSBuildToolsPath)/Microsoft.Build.Tasks.Core.dll">
+    <ParameterGroup>
+      <ReportPath ParameterType="System.String" Required="true" />
+      <SolutionDirectory ParameterType="System.String" Required="true" />
+    </ParameterGroup>
+    <Task>
+      <Using Namespace="System.Xml.Linq" />
+      <Code Type="Fragment" Language="cs"><![CDATA[
+        // One build error per issue, at its file and line, so the IDE and the console link straight to it.
+        XDocument report = XDocument.Load(ReportPath);
+        int count = 0;
+        foreach (XElement issue in report.Descendants("Issue"))
+        {
+            string relativeFile = ((string)issue.Attribute("File") ?? "").Replace('\\', Path.DirectorySeparatorChar);
+            int line = (int?)issue.Attribute("Line") ?? 0;
+            Log.LogError("ReSharper", (string)issue.Attribute("TypeId"), null, Path.Combine(SolutionDirectory, relativeFile),
+                line, 0, 0, 0, (string)issue.Attribute("Message"));
+            count++;
+        }
+
+        if (count > 0)
+            Log.LogError("InspectCode found {0} issue(s); fix them (Rider shows each one) or build with -p:RunInspectCode=false.", count);
+      ]]></Code>
+    </Task>
+  </UsingTask>
+
+  <Target Name="InspectCode" AfterTargets="Build" Condition="'$(RunInspectCode)' == 'true'">
+    <Message Importance="high" Text="InspectCode: inspecting $(SolutionFileName) (severity $(InspectCodeSeverity) and above)" />
+    <!-- InspectCode logs its own progress lines as "warning : ..." (e.g. Razor generator files); its findings come from the
+         report below, so its output is not read as MSBuild warnings. -->
+    <Exec Command="dotnet tool restore" WorkingDirectory="$(MSBuildThisFileDirectory)" StandardOutputImportance="low" />
+    <ItemGroup>
+      <_RiderGlobalSettings Include="$(_RiderConfigRoot)/Rider*/resharper-host/GlobalSettingsStorage.DotSettings" />
+    </ItemGroup>
+    <!-- Batching leaves the last one: the folders sort by version (Rider2025.3, Rider2026.2, ...), so it is the newest. -->
+    <PropertyGroup>
+      <_RiderGlobalSettingsFile Condition="'@(_RiderGlobalSettings)' != ''">%(_RiderGlobalSettings.FullPath)</_RiderGlobalSettingsFile>
+      <_InspectCodeSettingsArgument Condition="'$(_RiderGlobalSettingsFile)' != ''">--settings=&quot;$(_RiderGlobalSettingsFile)&quot;</_InspectCodeSettingsArgument>
+    </PropertyGroup>
+    <Message Importance="high" Condition="'$(_RiderGlobalSettingsFile)' != ''" Text="InspectCode: with Rider's settings $(_RiderGlobalSettingsFile)" />
+    <Delete Files="$(_InspectCodeReport)" />
+    <Exec Command="dotnet jb inspectcode &quot;$(SolutionPath)&quot; --no-build --swea --severity=$(InspectCodeSeverity) --format=Xml --output=&quot;$(_InspectCodeReport)&quot; -x=$(_InspectCodeExtensions) $(_InspectCodeSettingsArgument) &quot;--properties:Configuration=$(Configuration);RunInspectCode=false&quot;"
+          WorkingDirectory="$(MSBuildThisFileDirectory)" StandardOutputImportance="low" IgnoreStandardErrorWarningFormat="true" />
+    <ReportInspectCodeIssues ReportPath="$(_InspectCodeReport)" SolutionDirectory="$(MSBuildThisFileDirectory)" />
+    <!-- The spelling, which InspectCode does not check; the test is already built by this solution build. -->
+    <Exec Command="dotnet test --project Maroik.Core.Contract.Tests --no-build -c $(Configuration) --filter-class &quot;*SpellingDictionaryArchitectureTests&quot;"
+          WorkingDirectory="$(MSBuildThisFileDirectory)" />
+  </Target>
+</Project>

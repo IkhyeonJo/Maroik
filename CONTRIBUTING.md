@@ -14,11 +14,17 @@ down.
 
 ```bash
 cd Maroik.Website && npm ci && npm test && cd ..          # tsc + Vitest (client scripts)
-dotnet build Maroik.slnx                                   # analyzers are errors: zero warnings
+dotnet build Maroik.slnx                                   # analyzers are errors: zero warnings; then InspectCode
 dotnet test --solution Maroik.slnx --max-parallel-test-modules 1
 ```
 
 Run the test modules one at a time: the E2E browser fails when another suite's container leaves the Docker bridge.
+
+A solution build ends with InspectCode, Rider's code analysis on the command line (`Directory.Solution.targets`, the
+version pinned in `.config/dotnet-tools.json`): every ReSharper finding Rider shows, down to a hint, is a build error at
+its file and line. It reads the personal `Maroik.slnx.DotSettings.user` and Rider's computer-wide settings too, loads the
+Structured Logging plugin, and ends with the cspell test. It takes a few minutes; `-p:RunInspectCode=false`
+skips it for a quick build. Building a single project does not run it.
 CI (`.github/workflows/ci-cd.yml`, on pull requests into `main`) runs the same steps plus a coverage gate
 (line >= 80 %, branch >= 65 %).
 
