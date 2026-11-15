@@ -20,12 +20,25 @@ public sealed class ClassModelSource(
     ILogger<ClassModelSource> logger)
 {
     /// <summary>
-    /// The model of <paramref name="accountEmail"/>'s <paramref name="book"/> to answer with for the account's current
-    /// <paramref name="samples"/>, or null when there is none yet; asks for a training when the stored model is not current.
+    /// The model of <paramref name="accountEmail"/>'s <paramref name="book"/> to answer with for the account's current records, or null
+    /// when there is none yet (or no record to learn from); asks for a training when the stored model is not current.
+    /// <paramref name="learnableRecords"/> reads the account's learnable records. It runs only when their fingerprint is not known
+    /// yet: on the first question, and on the first after <see cref="RecordsChanged"/>, so the form's question on every pause in
+    /// typing does not read every record again.
     /// </summary>
-    public async Task<ContentClassifier?> GetAsync(string book, string accountEmail, IReadOnlyList<ClassSample> samples, CancellationToken ct = default)
+    public async Task<ContentClassifier?> GetAsync(string book, string accountEmail, Func<CancellationToken, Task<IReadOnlyList<ClassSample>>> learnableRecords, CancellationToken ct = default)
     {
-        string fingerprint = ClassSampleFingerprint.Of(samples);
+        if (!cache.TryFindFingerprint(book, accountEmail, out string? fingerprint, out long version))
+        {
+            IReadOnlyList<ClassSample> samples = await learnableRecords(ct);
+            fingerprint = samples.Count == 0 ? null : ClassSampleFingerprint.Of(samples);
+            cache.KeepFingerprint(book, accountEmail, version, fingerprint);
+        }
+
+        // Nothing to learn from: no model to look for, and the worker would have nothing to train on.
+        if (fingerprint == null)
+            return null;
+
         ClassModel? record = await records.FindAsync(accountEmail, book, ct);
 
         ContentClassifier? classifier = null;
@@ -38,6 +51,12 @@ public sealed class ClassModelSource(
 
         return classifier;
     }
+
+    /// <summary>
+    /// Tells the source that <paramref name="accountEmail"/>'s <paramref name="book"/> records changed (a committed create, edit or
+    /// delete), so the next question reads them again and asks for a training of the new records.
+    /// </summary>
+    public void RecordsChanged(string book, string accountEmail) => cache.ForgetFingerprint(book, accountEmail);
 
     /// <summary>Reads the model file of <paramref name="record"/> and keeps it; null (logged) when it cannot be read.</summary>
     private async Task<ContentClassifier?> LoadAsync(ClassModel record, CancellationToken ct)

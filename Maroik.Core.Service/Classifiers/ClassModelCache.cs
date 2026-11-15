@@ -12,6 +12,8 @@ namespace Maroik.Core.Service.Classifiers;
 /// users, at most <c>capacity</c> accounts' books are kept (the least recently used leaves first). A model that left is read again
 /// from its file when needed. It also remembers which training it already asked the worker for, so one is asked for once per change
 /// of records rather than on every question — and again after <see cref="TrainingRequestRetryAfter"/> if no model came (a lost message).
+/// And it keeps the fingerprint of each account's records until they change (<see cref="ForgetFingerprint"/>), so a question does not
+/// read every record of the account to tell whether the stored model is current.
 /// </summary>
 public sealed class ClassModelCache : IDisposable
 {
@@ -84,7 +86,22 @@ public sealed class ClassModelCache : IDisposable
 
         /// <summary>When the entry was last used.</summary>
         public DateTimeOffset LastUsed { get; set; }
+
+        /// <summary>Whether <see cref="Fingerprint"/> is known (the records were read since the last change).</summary>
+        public bool FingerprintKnown { get; set; }
+
+        /// <summary>The fingerprint of the account's learnable records; null when there is none to learn from.</summary>
+        public string? Fingerprint { get; set; }
+
+        /// <summary>
+        /// Changes whenever the records change (and differs from every earlier entry's), so a fingerprint read before a change is not
+        /// kept: see <see cref="KeepFingerprint"/>.
+        /// </summary>
+        public long RecordsVersion { get; set; }
     }
+
+    /// <summary>The last <see cref="Entry.RecordsVersion"/> given out (guarded by <see cref="_lock"/>).</summary>
+    private long _lastRecordsVersion;
 
     /// <summary>Guards <see cref="_entries"/> and <see cref="_recency"/>.</summary>
     private readonly Lock _lock = new();
@@ -121,7 +138,7 @@ public sealed class ClassModelCache : IDisposable
         }
         else
         {
-            node = new LinkedListNode<Entry>(new Entry(key));
+            node = new LinkedListNode<Entry>(new Entry(key) { RecordsVersion = ++_lastRecordsVersion });
             _entries[key] = node;
         }
 
@@ -176,6 +193,56 @@ public sealed class ClassModelCache : IDisposable
             entry.RequestedFingerprint = fingerprint;
             entry.RequestedAt = now;
             return true;
+        }
+    }
+
+    /// <summary>
+    /// Whether the fingerprint of <paramref name="email"/>'s <paramref name="book"/> records is known: then <paramref name="fingerprint"/>
+    /// is it (null: no record to learn from) and the records need not be read. Otherwise the caller reads them and hands the fingerprint
+    /// to <see cref="KeepFingerprint"/> with <paramref name="version"/>, which keeps it only if the records did not change meanwhile.
+    /// </summary>
+    public bool TryFindFingerprint(string book, string email, out string? fingerprint, out long version)
+    {
+        lock (_lock)
+        {
+            Entry entry = Use((book, email), _timeProvider.GetUtcNow());
+            fingerprint = entry.Fingerprint;
+            version = entry.RecordsVersion;
+            return entry.FingerprintKnown;
+        }
+    }
+
+    /// <summary>
+    /// Keeps <paramref name="fingerprint"/> (null: no record to learn from) of <paramref name="email"/>'s <paramref name="book"/> records,
+    /// read at <paramref name="version"/> (from <see cref="TryFindFingerprint"/>). Not kept when the records changed since
+    /// (<see cref="ForgetFingerprint"/>) or the entry left memory meanwhile: the records it came from may be older than the stored ones.
+    /// </summary>
+    public void KeepFingerprint(string book, string email, long version, string? fingerprint)
+    {
+        lock (_lock)
+        {
+            if (!_entries.TryGetValue((book, email), out LinkedListNode<Entry>? node) || node.Value.RecordsVersion != version)
+                return;
+
+            node.Value.Fingerprint = fingerprint;
+            node.Value.FingerprintKnown = true;
+        }
+    }
+
+    /// <summary>
+    /// Forgets the fingerprint of <paramref name="email"/>'s <paramref name="book"/> records after they changed (a record created, edited
+    /// or deleted), so the next question reads them again; a fingerprint being computed from the older records meanwhile is not kept.
+    /// </summary>
+    public void ForgetFingerprint(string book, string email)
+    {
+        lock (_lock)
+        {
+            if (!_entries.TryGetValue((book, email), out LinkedListNode<Entry>? node))
+                return;
+
+            node.Value.Fingerprint = null;
+            node.Value.FingerprintKnown = false;
+            node.Value.RecordsVersion = ++_lastRecordsVersion;
         }
     }
 }

@@ -68,6 +68,12 @@ expenditures and 581 incomes against simpler alternatives). They only read the l
     end itself cannot be watched (a closed browser tells the server nothing; the sessions live in Valkey). Whatever the number of
     users, at most `DefaultCapacity` = 50 accounts' books are kept (least recently used out; a model of 8,649 records is a 655 KB
     file and ~6.5 MB in memory). A model of older records still answers; none of another version is read.
+  - The cache also keeps the fingerprint of each account's records (since 2026-11-15, owner's request): a question reads the
+    account's records only when their fingerprint is not known yet — the first question, or the first after a committed create,
+    edit or delete of that book (`ClassModelSource.RecordsChanged`, called by `IncomeService` / `ExpenditureService`). Before, every
+    pause in typing read all of the account's records. Only those two services write income / expenditure rows (the foreign keys
+    cascade asset names, which the fingerprint does not include). A fingerprint read while the records changed is not kept
+    (`ClassModelCache.KeepFingerprint` compares the entry's records version).
   - No model, an older one or an unreadable one: it publishes `TrainClassModelMessage` on `maroik.class-model-training`, once per
     fingerprint within `ClassModelCache.TrainingRequestRetryAfter` (10 minutes). So an account's very first question (and the first
     after a redeploy that recreated the database) answers nothing until the worker is done (about a second). A restart only reads the

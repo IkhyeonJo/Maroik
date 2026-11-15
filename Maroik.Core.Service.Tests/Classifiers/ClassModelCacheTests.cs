@@ -131,6 +131,78 @@ public sealed class ClassModelCacheTests : IDisposable
         Assert.True(cache.ClaimTrainingRequest("Expenditure", "a@test.com", "fp"));
     }
 
+    /// <summary>
+    /// The fingerprint of an account's records is kept, so the form's next pause in typing does not read every record again; it is
+    /// kept per account and book. A null fingerprint (no record to learn from) is kept as known too.
+    /// </summary>
+    [Fact]
+    public void KeepFingerprint_IsFoundAgain_ForThatAccountAndBookOnly()
+    {
+        using ClassModelCache cache = Sut();
+        Assert.False(cache.TryFindFingerprint("Expenditure", "a@test.com", out _, out long version));
+
+        cache.KeepFingerprint("Expenditure", "a@test.com", version, "fp1");
+
+        Assert.True(cache.TryFindFingerprint("Expenditure", "a@test.com", out string? found, out _));
+        Assert.Equal("fp1", found);
+        Assert.False(cache.TryFindFingerprint("Income", "a@test.com", out _, out long incomeVersion));
+        Assert.False(cache.TryFindFingerprint("Expenditure", "b@test.com", out _, out _));
+
+        cache.KeepFingerprint("Income", "a@test.com", incomeVersion, null);
+        Assert.True(cache.TryFindFingerprint("Income", "a@test.com", out string? none, out _));
+        Assert.Null(none);
+    }
+
+    /// <summary>A change of the account's records forgets the kept fingerprint of that book only, so the next question reads them again.</summary>
+    [Fact]
+    public void ForgetFingerprint_DropsTheKeptFingerprint_OfThatBookOnly()
+    {
+        using ClassModelCache cache = Sut();
+        cache.TryFindFingerprint("Expenditure", "a@test.com", out _, out long expenditureVersion);
+        cache.KeepFingerprint("Expenditure", "a@test.com", expenditureVersion, "fp1");
+        cache.TryFindFingerprint("Income", "a@test.com", out _, out long incomeVersion);
+        cache.KeepFingerprint("Income", "a@test.com", incomeVersion, "fp2");
+
+        cache.ForgetFingerprint("Expenditure", "a@test.com");
+
+        Assert.False(cache.TryFindFingerprint("Expenditure", "a@test.com", out _, out _));
+        Assert.True(cache.TryFindFingerprint("Income", "a@test.com", out _, out _));
+    }
+
+    /// <summary>
+    /// A fingerprint computed from records read before a change is not kept: the change forgot the fingerprint while the records were
+    /// being read, and keeping the older one would leave the model untrained on the change until the entry leaves memory.
+    /// </summary>
+    [Fact]
+    public void KeepFingerprint_OfRecordsReadBeforeAChange_IsNotKept()
+    {
+        using ClassModelCache cache = Sut();
+        cache.TryFindFingerprint("Expenditure", "a@test.com", out _, out long version);
+
+        cache.ForgetFingerprint("Expenditure", "a@test.com");
+        cache.KeepFingerprint("Expenditure", "a@test.com", version, "fp-before-the-change");
+
+        Assert.False(cache.TryFindFingerprint("Expenditure", "a@test.com", out _, out _));
+    }
+
+    /// <summary>
+    /// A fingerprint whose entry left memory while the records were read (and came back for another question) is not kept either: the
+    /// change that may have happened meanwhile found no entry to forget.
+    /// </summary>
+    [Fact]
+    public void KeepFingerprint_AfterTheEntryLeftMemory_IsNotKept()
+    {
+        using ClassModelCache cache = Sut(capacity: 1);
+        cache.TryFindFingerprint("Expenditure", "a@test.com", out _, out long version);
+        cache.ClaimTrainingRequest("Expenditure", "b@test.com", "fp");
+        cache.ForgetFingerprint("Expenditure", "a@test.com");
+        cache.ClaimTrainingRequest("Expenditure", "a@test.com", "fp");
+
+        cache.KeepFingerprint("Expenditure", "a@test.com", version, "fp-before-the-change");
+
+        Assert.False(cache.TryFindFingerprint("Expenditure", "a@test.com", out _, out _));
+    }
+
     /// <summary>Keeps, claims and finds <paramref name="email"/>'s model in the shared cache on a thread-pool thread.</summary>
     private Task<ContentClassifier?> UseConcurrentlyAsync(string email, ContentClassifier model) => Task.Run(() =>
     {

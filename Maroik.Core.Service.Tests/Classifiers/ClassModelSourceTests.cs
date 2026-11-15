@@ -53,8 +53,21 @@ public sealed class ClassModelSourceTests : IDisposable
         _files.Setup(f => f.DownloadAsync(ModelPath, It.IsAny<CancellationToken>())).ReturnsAsync(ContentClassifier.Train(samples).ToBytes());
     }
 
-    /// <summary>Asks the source for the model of <see cref="_samples"/>.</summary>
-    private Task<ContentClassifier?> GetAsync() => Sut().GetAsync(Book, Email, _samples, TestContext.Current.CancellationToken);
+    /// <summary>How many times the source read the account's records.</summary>
+    private int _recordReads;
+
+    /// <summary>The account's records as the source reads them (counted in <see cref="_recordReads"/>).</summary>
+    private List<ClassSample> _accountRecords = _samples;
+
+    /// <summary>Reads the account's learnable records, as the income / expenditure service hands the reading to the source.</summary>
+    private Task<IReadOnlyList<ClassSample>> ReadRecordsAsync(CancellationToken ct)
+    {
+        _recordReads++;
+        return Task.FromResult<IReadOnlyList<ClassSample>>(_accountRecords);
+    }
+
+    /// <summary>Asks the source for the model of the account's records (<see cref="_samples"/> unless a test changes them).</summary>
+    private Task<ContentClassifier?> GetAsync() => Sut().GetAsync(Book, Email, ReadRecordsAsync, TestContext.Current.CancellationToken);
 
     /// <summary>The training requests sent.</summary>
     private void VerifyRequested(Times times) =>
@@ -139,5 +152,71 @@ public sealed class ClassModelSourceTests : IDisposable
         FakeLogRecord warning = Assert.Single(_logger.Collector.GetSnapshot(), r => r.Level == LogLevel.Warning);
         Assert.Equal($"Could not request a {Book} class model training for {Email}", warning.Message);
         Assert.IsType<InvalidOperationException>(warning.Exception);
+    }
+
+    /// <summary>
+    /// The form asks on every pause in typing: the account's records are read (and fingerprinted) once, not on every question, while
+    /// they do not change.
+    /// </summary>
+    [Fact]
+    public async Task GetAsync_ReadsTheRecordsOnce_WhileTheyDoNotChange()
+    {
+        Stored(_samples);
+
+        await GetAsync();
+        await GetAsync();
+        ContentClassifier? third = await GetAsync();
+
+        Assert.NotNull(third);
+        Assert.Equal(1, _recordReads);
+    }
+
+    /// <summary>
+    /// After the account's records changed (a record created, edited or deleted) the next question reads them again, and a training of
+    /// the new records is asked for while the older model answers.
+    /// </summary>
+    [Fact]
+    public async Task GetAsync_AfterTheRecordsChanged_ReadsThemAgain_AndAsksForTheirTraining()
+    {
+        Stored(_samples);
+        await GetAsync();
+        _accountRecords = [.. _samples, new ClassSample("버스", new ClassSuggestion("ConsumerSpending", "TransportationCost"))];
+
+        Sut().RecordsChanged(Book, Email);
+        ContentClassifier? model = await GetAsync();
+
+        Assert.NotNull(model);
+        Assert.Equal(2, _recordReads);
+        VerifyRequested(Times.Once());
+    }
+
+    /// <summary>A change of the other book's records does not make this book's records be read again.</summary>
+    [Fact]
+    public async Task GetAsync_AChangeOfTheOtherBook_DoesNotReadTheRecordsAgain()
+    {
+        Stored(_samples);
+        await GetAsync();
+
+        Sut().RecordsChanged(ClassModel.IncomeBook, Email);
+        await GetAsync();
+
+        Assert.Equal(1, _recordReads);
+    }
+
+    /// <summary>
+    /// With no record to learn from there is no answer: no model is looked for and no training is asked for (the worker would have
+    /// nothing to learn); that is remembered like a fingerprint until the records change.
+    /// </summary>
+    [Fact]
+    public async Task GetAsync_NoLearnableRecord_AnswersNothing_WithoutLookingForAModel_OrAskingForATraining()
+    {
+        _accountRecords = [];
+
+        Assert.Null(await GetAsync());
+        Assert.Null(await GetAsync());
+
+        Assert.Equal(1, _recordReads);
+        _records.Verify(r => r.FindAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+        VerifyRequested(Times.Never());
     }
 }

@@ -629,6 +629,43 @@ public sealed class ExpenditureServiceTests : IDisposable
         _expenditureRepo.Verify(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
+    /// <summary>How many times the service read the account's expenditures.</summary>
+    private int RecordReads() =>
+        _expenditureRepo.Invocations.Count(i => i.Method.Name == nameof(IExpenditureRepository.GetByAccountEmailAsync));
+
+    /// <summary>
+    /// The form asks on every pause in typing, so the account's records are read for the suggestion once and not again until a
+    /// committed create, edit or delete changes them; then the next question reads them again.
+    /// </summary>
+    [Theory]
+    [InlineData("create")]
+    [InlineData("update")]
+    [InlineData("delete")]
+    public async Task SuggestClassAsync_ReadsTheRecordsOnce_UntilACommittedWriteChangesThem(string write)
+    {
+        CancellationToken ct = TestContext.Current.CancellationToken;
+        GivenExistingExpenditure(ExistingConsumer());
+        GivenAssets(MakeAsset("Wallet"));
+        ExpenditureService sut = CreateSut();
+
+        await sut.SuggestClassAsync(Email, "Lunch", ct);
+        await sut.SuggestClassAsync(Email, "Lunch", ct);
+        Assert.Equal(1, RecordReads());
+
+        ServiceResult result = write switch
+        {
+            "create" => await sut.CreateAsync(Email, ConsumerRequest(), ct),
+            "update" => await sut.UpdateAsync(Email, WithId(ConsumerRequest()), ct),
+            _ => await sut.DeleteAsync(Email, 1, ct),
+        };
+        Assert.True(result.Success);
+        int readsAfterTheWrite = RecordReads();
+
+        await sut.SuggestClassAsync(Email, "Lunch", ct);
+
+        Assert.Equal(readsAfterTheWrite + 1, RecordReads());
+    }
+
     // -- GetUnusuallyLargeIdsAsync ------------------------------------------------
 
     /// <summary>The marks are judged against all of the caller's records, read through the repository for that account.</summary>

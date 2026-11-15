@@ -902,6 +902,43 @@ public sealed class IncomeServiceTests : IDisposable
         AssertLoggedFailure("Failed to delete income 1", thrown);
     }
 
+    /// <summary>How many times the service read the account's incomes.</summary>
+    private int RecordReads() =>
+        _incomeRepo.Invocations.Count(i => i.Method.Name == nameof(IIncomeRepository.GetByAccountEmailAsync));
+
+    /// <summary>
+    /// The form asks on every pause in typing, so the account's records are read for the suggestion once and not again until a
+    /// committed create, edit or delete changes them; then the next question reads them again.
+    /// </summary>
+    [Theory]
+    [InlineData("create")]
+    [InlineData("update")]
+    [InlineData("delete")]
+    public async Task SuggestClassAsync_ReadsTheRecordsOnce_UntilACommittedWriteChangesThem(string write)
+    {
+        CancellationToken ct = TestContext.Current.CancellationToken;
+        GivenExistingIncome(MakeIncome(1));
+        GivenAssets(MakeAsset("SavingsAccount"));
+        IncomeService sut = CreateSut();
+
+        await sut.SuggestClassAsync(Email, "급여", ct);
+        await sut.SuggestClassAsync(Email, "급여", ct);
+        Assert.Equal(1, RecordReads());
+
+        ServiceResult result = write switch
+        {
+            "create" => await sut.CreateAsync(Email, ValidRequest(), ct),
+            "update" => await sut.UpdateAsync(Email, WithId(ValidRequest()), ct),
+            _ => await sut.DeleteAsync(Email, 1, ct),
+        };
+        Assert.True(result.Success);
+        int readsAfterTheWrite = RecordReads();
+
+        await sut.SuggestClassAsync(Email, "급여", ct);
+
+        Assert.Equal(readsAfterTheWrite + 1, RecordReads());
+    }
+
     // -- SuggestClassAsync -------------------------------------------------------
 
     /// <summary>A stored income of <paramref name="content"/> in <paramref name="mainClass"/> / <paramref name="subClass"/>.</summary>
