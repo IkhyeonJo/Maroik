@@ -643,6 +643,8 @@
 
     /** True once the running batch was canceled: the file being sent is aborted before its next chunk, the rest are not started. */
     let canceled = false;
+    /** Whether the upload dialog has finished opening (Bootstrap ignores a hide while it is still fading in). */
+    let uploadModalShown = false;
 
     /**
      * Uploads one file: starts it (with the batch's remembered conflict answer, if any), asks on a name conflict and sends its chunks;
@@ -813,7 +815,13 @@
 
         $uploadProgressText.text(format(text.uploadSummary, uploaded, failed, skipped));
         $uploadProgressBar.css("width", "100%");
-        $btnUploadClose.prop("disabled", false);
+        // A small batch can end before the dialog has finished fading in, and a Close clicked then would be ignored (the dialog
+        // stays open): Close is enabled once the dialog is open.
+        if (uploadModalShown) {
+            $btnUploadClose.prop("disabled", false);
+        } else {
+            $uploadModal.one("shown.bs.modal", () => $btnUploadClose.prop("disabled", false));
+        }
         $btnUploadCancel.prop("disabled", true);
         await Refresh();
     }
@@ -1067,6 +1075,7 @@
     $("#btnMoveSelected").on("click", () => OpenMove([...selected]));
     $("#btnDeleteSelected").on("click", () => ConfirmDelete([...selected]));
     $downloadModal.on("shown.bs.modal", () => { downloadModalShown = true; }).on("hidden.bs.modal", () => { downloadModalShown = false; });
+    $uploadModal.on("shown.bs.modal", () => { uploadModalShown = true; }).on("hidden.bs.modal", () => { uploadModalShown = false; });
     $btnDownloadCancel.on("click", function() {
         downloadCanceled = true;
         abortDownload();

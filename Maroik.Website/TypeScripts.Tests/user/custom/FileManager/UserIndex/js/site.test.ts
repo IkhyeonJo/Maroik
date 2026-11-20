@@ -569,6 +569,7 @@ describe("FileManager/UserIndex — upload", () => {
         await flush();
         await answer(h, "/FileManager/CheckQuota", { result: true });
         expect(modals).toContainEqual(["uploadModal", "show"]);
+        h.$("#uploadModal").trigger("shown.bs.modal");
         expect(h.$("#btnUploadClose").prop("disabled")).toBe(true);
         expect(h.$("#uploadProgressText").text()).toBe("Uploading 1/1: a.txt");
 
@@ -587,6 +588,34 @@ describe("FileManager/UserIndex — upload", () => {
         expect(h.$("#uploadProgressText").text()).toBe("1 up, 0 failed, 0 skipped");
         expect(h.$("#btnUploadClose").prop("disabled")).toBe(false);
         expect(callsTo(h, "/FileManager/GetDrive")).toHaveLength(2);
+    });
+
+    it("Close is enabled only once the upload dialog has finished opening (Bootstrap ignores a hide during the fade)", async () => {
+        const { h } = await load();
+
+        // Finished before the dialog finished opening: Close waits for it to open.
+        pick(h, "fileManagerFileInput", [file("a.txt", 3)]);
+        await flush();
+        await answer(h, "/FileManager/CheckQuota", { result: true });
+        await answer(h, "/FileManager/BeginUpload", { result: true, conflict: false, uploadId: "u-1", name: "a.txt", chunkBytes: 16 });
+        await answer(h, "/FileManager/UploadChunk", { result: true, length: 3 });
+        await answer(h, "/FileManager/CompleteUpload", { result: true, scanning: false, message: "ok" });
+        expect(h.$("#uploadProgressText").text()).toBe("1 up, 0 failed, 0 skipped");
+        expect(h.$("#btnUploadClose").prop("disabled")).toBe(true);
+        h.$("#uploadModal").trigger("shown.bs.modal");
+        expect(h.$("#btnUploadClose").prop("disabled")).toBe(false);
+        h.$("#uploadModal").trigger("hidden.bs.modal");
+
+        // Opened already: Close is enabled as soon as the upload ends.
+        pick(h, "fileManagerFileInput", [file("b.txt", 3)]);
+        await flush();
+        await answer(h, "/FileManager/CheckQuota", { result: true });
+        h.$("#uploadModal").trigger("shown.bs.modal");
+        expect(h.$("#btnUploadClose").prop("disabled")).toBe(true);
+        await answer(h, "/FileManager/BeginUpload", { result: true, conflict: false, uploadId: "u-2", name: "b.txt", chunkBytes: 16 });
+        await answer(h, "/FileManager/UploadChunk", { result: true, length: 3 });
+        await answer(h, "/FileManager/CompleteUpload", { result: true, scanning: false, message: "ok" });
+        expect(h.$("#btnUploadClose").prop("disabled")).toBe(false);
     });
 
     it("a refused or failed file is listed with its reason and the next one still goes; a failed chunk aborts its upload", async () => {
@@ -636,6 +665,7 @@ describe("FileManager/UserIndex — upload", () => {
         pick(h, "fileManagerFileInput", [file("big.zip")]);
         await flush();
         await answer(h, "/FileManager/CheckQuota", { result: true });
+        h.$("#uploadModal").trigger("shown.bs.modal");
         await answer(h, "/FileManager/BeginUpload", { result: true, conflict: false, uploadId: "u-1", name: "big.zip", chunkBytes: 16 });
         await answer(h, "/FileManager/UploadChunk", { result: true, length: 3 });
 
@@ -1098,6 +1128,7 @@ describe("FileManager/UserIndex — canceling an upload", () => {
         pick(h, "fileManagerFileInput", [file("a.txt", 3), file("b.txt"), file("c.txt")]);
         await flush();
         await answer(h, "/FileManager/CheckQuota", { result: true });
+        h.$("#uploadModal").trigger("shown.bs.modal");
         await answer(h, "/FileManager/BeginUpload", { result: true, conflict: false, uploadId: "u-a", name: "a.txt", chunkBytes: 2 });
 
         h.$("#btnUploadCancel").trigger("click");
