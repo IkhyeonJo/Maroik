@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# Full deploy of Maroik. Run it as ubuntu (bash Maroik.DeployOps/Deploy.sh); it asks how to deploy:
-#   1) Build here — builds the three app images (Website, FileStorage, Worker) from the source in /home/ubuntu/Maroik as it is
+# Full deploy of Maroik. Run it as the account that owns the clone (bash Maroik.DeployOps/Deploy.sh); it asks how to deploy:
+#   1) Build here — builds the three app images (Website, FileStorage, Worker) from the source in this clone as it is
 #      (a git clone on any branch or commit, or source copied here by hand) and starts the stack. Nothing is fetched, checked out
 #      or pulled from GitHub / ghcr.io, and AutoDeploy.sh is not installed (it follows GitHub's main and would replace this build).
 #   2) GitHub — checks out the newest main whose CI/CD publish job succeeded (.github/workflows/ci-cd.yml), pulls its three images
@@ -21,14 +21,15 @@
 # Choice 2 always runs the Cloudflare Tunnel with .env.prod's domain, as AutoDeploy.sh does.
 # Either way the server-only files (.env.prod, whose template is .env.prod.example, the Production Init.sql and the upload folders)
 # are checked first; they are git-ignored, so a checkout never touches them.
-REPO_DIR="/home/ubuntu/Maroik"
+# The clone is the folder above this script, wherever it was put and whoever owns it: no path or account is fixed here.
+REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 REPO_URL="https://github.com/IkhyeonJo/Maroik.git"
 APP_SERVICES="maroik.website maroik.filestorage maroik.worker"
 
-# Run as ubuntu, not with sudo: the clone must belong to ubuntu, because AutoDeploy.sh (root's cron) runs git as
-# ubuntu. The commands below that need root use sudo themselves.
+# Run as the account that owns the clone, not with sudo: AutoDeploy.sh (root's cron) runs git as the clone's owner, so
+# the clone must not belong to root. The commands below that need root use sudo themselves.
 if [ "$(id -u)" = "0" ]; then
-  echo "[ERROR] Run Deploy.sh as ubuntu (bash Maroik.DeployOps/Deploy.sh), not as root or with sudo."
+  echo "[ERROR] Run Deploy.sh as the account that owns $REPO_DIR (bash Maroik.DeployOps/Deploy.sh), not as root or with sudo."
   exit 1
 fi
 cd "$REPO_DIR" || exit 1
@@ -136,6 +137,8 @@ else
   case "$(env_value EXTERNAL_DRIVE_UUID)" in
     ""|"<CHANGE_ME>") missing+=(".env.prod: EXTERNAL_DRIVE_UUID is empty (the backup drive's UUID: sudo blkid).") ;;
   esac
+  [ -n "$(env_value EXTERNAL_DRIVE_MOUNT)" ] \
+    || missing+=(".env.prod: EXTERNAL_DRIVE_MOUNT is empty (the folder the backup drive is mounted on).")
   [ -n "$(env_value BACKUP_BASE_DIR)" ] \
     || missing+=(".env.prod: BACKUP_BASE_DIR is empty (the backup folder on the external drive).")
 fi
@@ -227,8 +230,8 @@ fi
 
 # Target upload directories
 paths=(
-  "/home/ubuntu/Maroik/Maroik.Website/wwwroot/upload"
-  "/home/ubuntu/Maroik/Maroik.FileStorage/upload"
+  "$REPO_DIR/Maroik.Website/wwwroot/upload"
+  "$REPO_DIR/Maroik.FileStorage/upload"
 )
 
 for path in "${paths[@]}"; do
@@ -240,8 +243,8 @@ for path in "${paths[@]}"; do
 done
 
 # Set Maroik Logs
-mkdir -p /home/ubuntu/Maroik/Maroik.Log
-chmod 755 /home/ubuntu/Maroik/Maroik.Log
+mkdir -p "$REPO_DIR/Maroik.Log"
+chmod 755 "$REPO_DIR/Maroik.Log"
 
 # apt upgrade auto restart services
 sudo sed -i 's/#$nrconf{restart} = '"'"'i'"'"';/$nrconf{restart} = '"'"'a'"'"';/g' /etc/needrestart/needrestart.conf
@@ -287,10 +290,10 @@ fi
 COMPOSE="docker compose"
 
 # Set permissions for scripts
-chmod 755 /home/ubuntu/Maroik/Maroik.Crontab/*.sh
+chmod 755 "$REPO_DIR"/Maroik.Crontab/*.sh
 
 # check docker-compose.prod.yml file
-COMPOSE_PROD_PATH="/home/ubuntu/Maroik/docker-compose.prod.yml"
+COMPOSE_PROD_PATH="$REPO_DIR/docker-compose.prod.yml"
 if [ ! -f "$COMPOSE_PROD_PATH" ]; then
   echo "[INFO] Deployment is not set up yet: $COMPOSE_PROD_PATH not found."
   echo "[INFO] Set up the deployment files first."
@@ -316,8 +319,7 @@ EXTERNAL_DRIVE_UUID=$(grep "^EXTERNAL_DRIVE_UUID=" "$ENV_PROD_PATH" | cut -d '='
 EXTERNAL_DRIVE_MOUNT=$(grep "^EXTERNAL_DRIVE_MOUNT=" "$ENV_PROD_PATH" | cut -d '=' -f2)
 BACKUP_BASE_DIR=$(grep "^BACKUP_BASE_DIR=" "$ENV_PROD_PATH" | cut -d '=' -f2)
 
-# Set default value if not specified
-EXTERNAL_DRIVE_MOUNT="${EXTERNAL_DRIVE_MOUNT:-/home/ubuntu/512GB}"
+# EXTERNAL_DRIVE_MOUNT and BACKUP_BASE_DIR have no default: the preflight at the top requires both in .env.prod.
 
 # Check if external drive UUID is configured
 if [ -z "$EXTERNAL_DRIVE_UUID" ] || [ "$EXTERNAL_DRIVE_UUID" == "<CHANGE_ME>" ]; then
@@ -408,11 +410,13 @@ sudo docker image prune -f
 sudo docker builder prune -f --filter until=168h
 
 # Set up cron jobs: backup and resource monitoring, and — when production follows GitHub's main — AutoDeploy.sh. A build made
-# here drops it (it would replace this build with GitHub's main).
+# here drops it (it would replace this build with GitHub's main). Cron needs absolute paths, so InitCron names the clone
+# __REPO_DIR__ and it is filled in here.
+CRON_JOBS=$(sed "s|__REPO_DIR__|$REPO_DIR|g" "$REPO_DIR/Maroik.Crontab/InitCron")
 if [ "$MODE" = "github" ]; then
-  sudo crontab /home/ubuntu/Maroik/Maroik.Crontab/InitCron
+  echo "$CRON_JOBS" | sudo crontab -
 else
-  grep -v 'AutoDeploy.sh' /home/ubuntu/Maroik/Maroik.Crontab/InitCron | sudo crontab -
+  echo "$CRON_JOBS" | grep -v 'AutoDeploy.sh' | sudo crontab -
 fi
 
 # Reload cron service

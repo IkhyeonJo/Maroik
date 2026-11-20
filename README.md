@@ -46,14 +46,15 @@ Contact: <admin@maroik.com>
 
 ## How to Deploy
 
-The server runs Ubuntu Server 26.04 and Maroik lives in `/home/ubuntu/Maroik`. Run every command below **as `ubuntu`,
-not with `sudo`**: `Deploy.sh` refuses to run as root, because the folder must belong to `ubuntu` (it calls `sudo` itself
-where it needs it). It asks how to deploy; without a terminal, pass the choice (`bash Maroik.DeployOps/Deploy.sh local`
+The server runs Ubuntu Server 26.04. Maroik can be cloned into any folder by any account: the scripts find the clone
+from their own location, and the cron jobs run git as the clone's owner. Run every command below **as the account that
+owns the clone, not with `sudo`**: `Deploy.sh` refuses to run as root, because the folder must not belong to root (it
+calls `sudo` itself where it needs it). The commands below use `~/Maroik` as an example. It asks how to deploy; without a terminal, pass the choice (`bash Maroik.DeployOps/Deploy.sh local`
 or `github`):
 
 | Choice | What it deploys |
 |---|---|
-| `1` / `local` — build here | The source in `/home/ubuntu/Maroik` as it is (a clone on any branch, or source copied by hand). Builds the three app images on the server (release build, as CI does), asks how the site is reached (below) and starts the stack for it. No GitHub, no ghcr.io, no CI check; does not install `AutoDeploy.sh` (and removes it from the cron jobs). |
+| `1` / `local` — build here | The source in the clone as it is (a clone on any branch, or source copied by hand). Builds the three app images on the server (release build, as CI does), asks how the site is reached (below) and starts the stack for it. No GitHub, no ghcr.io, no CI check; does not install `AutoDeploy.sh` (and removes it from the cron jobs). |
 | `2` / `github` — GitHub | The newest `main` whose CI `publish` job succeeded: checks it out, pulls its three images from ghcr.io, starts the stack and installs `AutoDeploy.sh`, so merged changes reach production by themselves. |
 | `3` — quit | Nothing. |
 
@@ -74,14 +75,13 @@ does anything and lists whatever is missing:
 
 | Item | What it is |
 |---|---|
-| `.env.prod` | Passwords and settings: copy `.env.prod.example` and fill in the database, RabbitMQ and SMTP credentials, `TUNNEL_TOKEN` (Cloudflare Zero Trust > Networks > Tunnels > connector token; the tunnel only), `EXTERNAL_DRIVE_UUID` (`sudo blkid`) and `BACKUP_BASE_DIR`. |
+| `.env.prod` | Passwords and settings: copy `.env.prod.example` and fill in the database, RabbitMQ and SMTP credentials, `TUNNEL_TOKEN` (Cloudflare Zero Trust > Networks > Tunnels > connector token; the tunnel only), `EXTERNAL_DRIVE_UUID` (`sudo blkid`), `EXTERNAL_DRIVE_MOUNT` (the folder the drive is mounted on) and `BACKUP_BASE_DIR`. |
 | `Maroik.DB/PostgreSQL/SQL_Init_Script/Production/Init.sql` | The database the stack starts from: a backup's `pg_dump`, or `Debugging/Init.sql` (same schema, demo data) on a new server. `SQL_Init_Script/SeedDemo.sql` (tracked, shared by both compose files) runs right after it and puts the demo account back to its sample data; other accounts are not touched. |
 | `Maroik.FileStorage/upload/` | Uploaded attachments. Empty is allowed only on a new server: `Deploy.sh` asks first (`ALLOW_EMPTY_UPLOAD=1` skips the question). |
 
 Every backup `Maroik.Crontab/Backup.sh` makes (`Maroik-Backup-YYYY-MM-DD-HH-MM-SS.tar.xz`, daily at 04:00) holds exactly these
 three, laid out like the clone, so extracting it into the clone puts each one where `Deploy.sh` looks. The archives are
-on the backup drive in `BACKUP_BASE_DIR` (`/home/ubuntu/512GB/Maroik-Backup` by default), and the newest one is also kept
-next to the clone, in `/home/ubuntu`.
+on the backup drive in `BACKUP_BASE_DIR`, and the newest one is also kept next to the clone (in the clone's parent folder).
 
 Either choice then starts the whole stack, mounts the backup drive, installs the cron jobs (daily backup at 04:00, resource
 monitoring, and with choice 2 the auto deploy) and closes every inbound port but the mode's (80 / 443 for port forwarding,
@@ -92,16 +92,16 @@ on the server or `2` when production should follow GitHub's `main`.
 
 ```bash
 # 1. Mount the backup drive to reach the archives (Deploy.sh mounts it for good later; `sudo blkid` shows the UUID)
-sudo mkdir -p /home/ubuntu/512GB
-sudo mount UUID=<backup drive UUID> /home/ubuntu/512GB
-ls /home/ubuntu/512GB/Maroik-Backup/            # pick the newest Maroik-Backup-YYYY-MM-DD-HH-MM-SS.tar.xz
+sudo mkdir -p /mnt/backup                       # the EXTERNAL_DRIVE_MOUNT of the backup's .env.prod
+sudo mount UUID=<backup drive UUID> /mnt/backup
+ls /mnt/backup/Maroik-Backup/                   # pick the newest Maroik-Backup-YYYY-MM-DD-HH-MM-SS.tar.xz
 
 # 2. Clone, then extract the backup over the clone: .env.prod, the Production Init.sql and the uploads land in place
-git clone https://github.com/IkhyeonJo/Maroik.git /home/ubuntu/Maroik
-tar xJf /home/ubuntu/512GB/Maroik-Backup/Maroik-Backup-YYYY-MM-DD-HH-MM-SS.tar.xz --strip-components=1 -C /home/ubuntu/Maroik
+git clone https://github.com/IkhyeonJo/Maroik.git ~/Maroik
+tar xJf /mnt/backup/Maroik-Backup/Maroik-Backup-YYYY-MM-DD-HH-MM-SS.tar.xz --strip-components=1 -C ~/Maroik
 
 # 3. Deploy
-cd /home/ubuntu/Maroik && bash Maroik.DeployOps/Deploy.sh
+cd ~/Maroik && bash Maroik.DeployOps/Deploy.sh
 ```
 
 On a different machine, check `EXTERNAL_DRIVE_UUID` in the restored `.env.prod` against `sudo blkid` before step 3.
@@ -109,8 +109,8 @@ On a different machine, check `EXTERNAL_DRIVE_UUID` in the restored `.env.prod` 
 ### First deploy (a new server, no backup)
 
 ```bash
-git clone https://github.com/IkhyeonJo/Maroik.git /home/ubuntu/Maroik
-cd /home/ubuntu/Maroik
+git clone https://github.com/IkhyeonJo/Maroik.git ~/Maroik
+cd ~/Maroik
 
 cp .env.prod.example .env.prod                  # then edit it: replace every dummy value (see the table above)
 cp Maroik.DB/PostgreSQL/SQL_Init_Script/Debugging/Init.sql Maroik.DB/PostgreSQL/SQL_Init_Script/Production/Init.sql
@@ -126,16 +126,16 @@ has to be rebuilt from `Init.sql`. `Undeploy.sh` removes **every** Docker volume
 backup right before it:
 
 ```bash
-cd /home/ubuntu/Maroik
+cd ~/Maroik
 
-# 1. A fresh backup of the running server (the newest archive is also left in /home/ubuntu)
+# 1. A fresh backup of the running server (the newest archive is also left next to the clone, in ~)
 bash Maroik.Crontab/Backup.sh
 
 # 2. Take the stack down: containers, volumes (the database too), images and cron jobs; unmounts the backup drive
 bash Maroik.DeployOps/Undeploy.sh
 
 # 3. Put the backup back in place
-tar xJf /home/ubuntu/Maroik-Backup-YYYY-MM-DD-HH-MM-SS.tar.xz --strip-components=1 -C /home/ubuntu/Maroik
+tar xJf ~/Maroik-Backup-YYYY-MM-DD-HH-MM-SS.tar.xz --strip-components=1 -C ~/Maroik
 
 # 4. Bring Maroik.DB/PostgreSQL/SQL_Init_Script/Production/Init.sql up to the new schema: make the same change the release
 #    made to the tracked Init.sql variants (the backup's dump still has the old schema)

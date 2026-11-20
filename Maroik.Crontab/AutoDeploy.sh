@@ -13,7 +13,8 @@
 # Maroik.DeployOps/Undeploy.sh -> Deploy.sh (choice 2) -> restore with the new columns. It is logged, and later commits wait behind it until
 # Deploy.sh (choice 2) has run (it writes .deployed-sha).
 
-REPO_DIR="/home/ubuntu/Maroik"
+# The clone is the folder above this script, wherever it was put.
+REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 COMPOSE_FILE="$REPO_DIR/docker-compose.prod.yml"
 LOG="$REPO_DIR/Maroik.Log/AutoDeploy.log"
 STATE_FILE="$REPO_DIR/.deployed-sha"
@@ -21,9 +22,11 @@ FAILED_FILE="$REPO_DIR/.failed-sha"
 # The app services in docker-compose.prod.yml whose image is ghcr.io/ikhyeonjo/maroik-*:${MAROIK_TAG}.
 APP_SERVICES="maroik.website maroik.filestorage maroik.worker"
 
-# Cron runs this as root (InitCron is root's crontab), but the clone belongs to ubuntu. Git as ubuntu, so git does not
-# refuse the repository ("dubious ownership") and .git never gets root-owned files that would break Deploy.sh (choice 2) later.
-GIT="sudo -u ubuntu git -C $REPO_DIR"
+# Cron runs this as root (InitCron is root's crontab), but the clone belongs to the account that ran Deploy.sh. Git as
+# that owner, so git does not refuse the repository ("dubious ownership") and .git never gets root-owned files that would
+# break Deploy.sh (choice 2) later.
+REPO_OWNER=$(stat -c %U "$REPO_DIR")
+git_as_owner() { sudo -u "$REPO_OWNER" git -C "$REPO_DIR" "$@"; }
 
 log() { echo "[$(date '+%F %T')] $*" >> "$LOG"; }
 
@@ -47,8 +50,8 @@ fi
 [ -f "$STATE_FILE" ] || exit 0
 CURRENT_SHA=$(cat "$STATE_FILE")
 
-$GIT fetch -q origin main || { log "git fetch failed"; exit 1; }
-NEW_SHA=$($GIT rev-parse origin/main)
+git_as_owner fetch -q origin main || { log "git fetch failed"; exit 1; }
+NEW_SHA=$(git_as_owner rev-parse origin/main)
 [ "$NEW_SHA" = "$CURRENT_SHA" ] && exit 0
 # A commit whose deploy already failed is not retried every 5 minutes; the next commit is.
 [ "$NEW_SHA" = "$(cat "$FAILED_FILE" 2>/dev/null)" ] && exit 0
@@ -63,14 +66,14 @@ case "$CI_STATE" in
 esac
 
 # Schema change -> manual deploy. Logged once per commit.
-if ! $GIT diff --quiet "$CURRENT_SHA" "$NEW_SHA" -- Maroik.DB/; then
+if ! git_as_owner diff --quiet "$CURRENT_SHA" "$NEW_SHA" -- Maroik.DB/; then
   grep -q "$NEW_SHA" "$LOG" 2>/dev/null || \
     log "Maroik.DB/ changed between $CURRENT_SHA and $NEW_SHA. Run Maroik.DeployOps/Undeploy.sh -> Deploy.sh (choice 2) by hand."
   exit 0
 fi
 
 # Keep the clone at the deployed commit, so the next run diffs Maroik.DB/ from here.
-if ! $GIT checkout -q --detach "$NEW_SHA"; then
+if ! git_as_owner checkout -q --detach "$NEW_SHA"; then
   # A tracked file edited on this box. Logged once; Deploy.sh (choice 2) (whose checkout overwrites such edits) clears it.
   grep -q "checkout $NEW_SHA failed" "$LOG" 2>/dev/null || \
     log "git checkout $NEW_SHA failed: a tracked file was changed on this box (git status). Fix it or run Deploy.sh (choice 2)."
