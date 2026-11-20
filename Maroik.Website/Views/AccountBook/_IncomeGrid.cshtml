@@ -17,7 +17,7 @@
         columns.Add(model => model.SubClass).Titled(Localizer[nameof(Maroik.Website.Models.ViewModels.AccountBooks.IncomeOutputViewModel.SubClass)]);
         columns.Add(model => model.Content).Titled(Localizer[nameof(Maroik.Website.Models.ViewModels.AccountBooks.IncomeOutputViewModel.Content)]);
         columns.Add(model => model.MonetaryUnit).Titled(Localizer[nameof(Maroik.Website.Models.ViewModels.AccountBooks.IncomeOutputViewModel.MonetaryUnit)]);
-        columns.Add(model => model.Amount).Titled(Localizer[nameof(Maroik.Website.Models.ViewModels.AccountBooks.IncomeOutputViewModel.Amount)]).Formatted(Maroik.Website.Constants.AmountDisplay.GridFormat);
+        columns.Add(model => model.Amount).Titled(Localizer[nameof(Maroik.Website.Models.ViewModels.AccountBooks.IncomeOutputViewModel.Amount)]).RenderedAs(model => model.AmountText);
         columns.Add(model => model.DepositMyAssetProductName).Titled(Localizer[nameof(Maroik.Website.Models.ViewModels.AccountBooks.IncomeOutputViewModel.DepositMyAssetProductName)]);
         columns.Add(model => model.Created).Titled(Localizer[nameof(Maroik.Website.Models.ViewModels.AccountBooks.IncomeOutputViewModel.Created)]);
         columns.Add(model => model.Updated).Titled(Localizer[nameof(Maroik.Website.Models.ViewModels.AccountBooks.IncomeOutputViewModel.Updated)]);

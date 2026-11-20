@@ -14,10 +14,10 @@
 #          Everything else (source, docker-compose.prod.yml, Maroik.Crontab, Maroik.DeployOps) is in the
 #          repository, so it is not backed up.
 #
-# How to restore (as ubuntu, on a fresh server or after `mv Maroik Maroik.old`):
-#   git clone https://github.com/IkhyeonJo/Maroik.git /home/ubuntu/Maroik
-#   tar xJf Maroik-Backup-YYYY-MM-DD-HH-MM-SS.tar.xz --strip-components=1 -C /home/ubuntu/Maroik
-#   cd /home/ubuntu/Maroik && bash Maroik.DeployOps/Deploy.sh
+# How to restore (as the account that will own the clone, on a fresh server or after `mv Maroik Maroik.old`):
+#   git clone https://github.com/IkhyeonJo/Maroik.git Maroik
+#   tar xJf Maroik-Backup-YYYY-MM-DD-HH-MM-SS.tar.xz --strip-components=1 -C Maroik
+#   cd Maroik && bash Maroik.DeployOps/Deploy.sh
 #
 #   The archive has the same layout as the clone, so extracting it puts the three items exactly where
 #   Deploy.sh's preflight check looks for them. Run Deploy.sh without sudo.
@@ -28,7 +28,8 @@
 set -e
 
 # Configuration
-MAROIK_ROOT_DIR="/home/ubuntu/Maroik"
+# The clone is the folder above this script, wherever it was put.
+MAROIK_ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 ENV_FILE="$MAROIK_ROOT_DIR/.env.prod"
 
 # Server-only files copied as-is from $MAROIK_ROOT_DIR (the database dump and the uploads are handled below)
@@ -58,10 +59,9 @@ EXTERNAL_DRIVE_MOUNT=$(grep "^EXTERNAL_DRIVE_MOUNT=" "$ENV_FILE" | cut -d '=' -f
 # Set defaults
 POSTGRES_USER="${POSTGRES_USER:-postgres}"
 POSTGRES_DB="${POSTGRES_DB:-Maroik}"
-EXTERNAL_DRIVE_MOUNT="${EXTERNAL_DRIVE_MOUNT:-/home/ubuntu/512GB}"
 
-# Local backup folder: the layout above is built in /home/ubuntu/Maroik-Backup, then compressed
-# to /home/ubuntu/Maroik-Backup-YYYY-MM-DD-HH-MM-SS.tar.xz and copied to external drive.
+# Local backup folder: the layout above is built in Maroik-Backup next to the clone, then compressed
+# to Maroik-Backup-YYYY-MM-DD-HH-MM-SS.tar.xz in the same folder and copied to external drive.
 # Locally only the latest .tar.xz is kept (the build folder is removed after compression).
 # It sits next to the Maroik folder (not inside it), so it is never part of the
 # Maroik checkout or its docker build context.
@@ -131,8 +131,8 @@ find "$WORK_DIR" -maxdepth 1 -type f -name "Maroik-Backup-*.tar.xz" ! -name "$(b
 # Step 5: Copy to external drive (if configured and mounted)
 log INFO "Preparing to copy backup to external drive..."
 
-if [ -z "$BACKUP_BASE_DIR" ]; then
-    log INFO "BACKUP_BASE_DIR not configured, skipping external drive backup"
+if [ -z "$BACKUP_BASE_DIR" ] || [ -z "$EXTERNAL_DRIVE_MOUNT" ]; then
+    log INFO "BACKUP_BASE_DIR or EXTERNAL_DRIVE_MOUNT not configured, skipping external drive backup"
     exit 1
 fi
 

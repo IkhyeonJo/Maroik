@@ -153,4 +153,7 @@
   <data name="Updated" xml:space="preserve">
     <value>업데이트일</value>
   </data>
+  <data name="AmountFlag" xml:space="preserve">
+    <value>금액 확인</value>
+  </data>
 </root>

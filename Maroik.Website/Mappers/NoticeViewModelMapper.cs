@@ -2,6 +2,7 @@ using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Contract.Enums;
 using Maroik.Core.Contract.Dtos;
 using Maroik.Website.Extensions;
+using Maroik.Website.Constants;
 using Maroik.Website.Models.ViewModels.Notices;
 
 namespace Maroik.Website.Mappers;
@@ -47,6 +48,7 @@ public static class NoticeViewModelMapper
                 Content = item.Content,
                 Amount = item.Amount,
                 MonetaryUnit = currencyByProduct.GetValueOrDefault(item.DepositMyAssetProductName ?? ""),
+                AmountText = AmountDisplay.Text(item.Amount, currencyByProduct.GetValueOrDefault(item.DepositMyAssetProductName ?? "")),
                 DepositMonth = item.DepositMonth,
                 DepositDay = item.DepositDay,
                 MaturityDate = item.MaturityDate.ToMaturityDateString(),
@@ -107,6 +109,7 @@ public static class NoticeViewModelMapper
                 Content = item.Content,
                 Amount = item.Amount,
                 MonetaryUnit = currencyByProduct.GetValueOrDefault(item.PaymentMethod ?? ""),
+                AmountText = AmountDisplay.Text(item.Amount, currencyByProduct.GetValueOrDefault(item.PaymentMethod ?? "")),
                 PaymentMethod = item.PaymentMethod,
                 MyDepositAsset = item.MyDepositAsset,
                 DepositMonth = item.DepositMonth,

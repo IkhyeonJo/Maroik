@@ -111,11 +111,11 @@
         ShowForgotPasswordLoading();
     });
 
-    $("#aChangeCultureEnUS").off("click").on("click", function() {
+    $("#aLoginCultureEnUS").off("click").on("click", function() {
         ChangeCulture("en-US");
     });
 
-    $("#aChangeCultureKoKR").off("click").on("click", function() {
+    $("#aLoginCultureKoKR").off("click").on("click", function() {
         ChangeCulture("ko-KR");
     });
 

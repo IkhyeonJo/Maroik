@@ -46,14 +46,15 @@ Contact: <admin@maroik.com>
 
 ## How to Deploy
 
-The server runs Ubuntu Server 26.04 and Maroik lives in `/home/ubuntu/Maroik`. Run every command below **as `ubuntu`,
-not with `sudo`**: `Deploy.sh` refuses to run as root, because the folder must belong to `ubuntu` (it calls `sudo` itself
-where it needs it). It asks how to deploy; without a terminal, pass the choice (`bash Maroik.DeployOps/Deploy.sh local`
+The server runs Ubuntu Server 26.04. Maroik can be cloned into any folder by any account: the scripts find the clone
+from their own location, and the cron jobs run git as the clone's owner. Run every command below **as the account that
+owns the clone, not with `sudo`**: `Deploy.sh` refuses to run as root, because the folder must not belong to root (it
+calls `sudo` itself where it needs it). The commands below use `~/Maroik` as an example. It asks how to deploy; without a terminal, pass the choice (`bash Maroik.DeployOps/Deploy.sh local`
 or `github`):
 
 | Choice | What it deploys |
 |---|---|
-| `1` / `local` — build here | The source in `/home/ubuntu/Maroik` as it is (a clone on any branch, or source copied by hand). Builds the three app images on the server (release build, as CI does), asks how the site is reached (below) and starts the stack for it. No GitHub, no ghcr.io, no CI check; does not install `AutoDeploy.sh` (and removes it from the cron jobs). |
+| `1` / `local` — build here | The source in the clone as it is (a clone on any branch, or source copied by hand). Builds the three app images on the server (release build, as CI does), asks how the site is reached (below) and starts the stack for it. No GitHub, no ghcr.io, no CI check; does not install `AutoDeploy.sh` (and removes it from the cron jobs). |
 | `2` / `github` — GitHub | The newest `main` whose CI `publish` job succeeded: checks it out, pulls its three images from ghcr.io, starts the stack and installs `AutoDeploy.sh`, so merged changes reach production by themselves. |
 | `3` — quit | Nothing. |
 
@@ -74,14 +75,13 @@ does anything and lists whatever is missing:
 
 | Item | What it is |
 |---|---|
-| `.env.prod` | Passwords and settings: copy `.env.prod.example` and fill in the database, RabbitMQ and SMTP credentials, `TUNNEL_TOKEN` (Cloudflare Zero Trust > Networks > Tunnels > connector token; the tunnel only), `EXTERNAL_DRIVE_UUID` (`sudo blkid`) and `BACKUP_BASE_DIR`. |
+| `.env.prod` | Passwords and settings: copy `.env.prod.example` and fill in the database, RabbitMQ and SMTP credentials, `TUNNEL_TOKEN` (Cloudflare Zero Trust > Networks > Tunnels > connector token; the tunnel only), `EXTERNAL_DRIVE_UUID` (`sudo blkid`), `EXTERNAL_DRIVE_MOUNT` (the folder the drive is mounted on) and `BACKUP_BASE_DIR`. |
 | `Maroik.DB/PostgreSQL/SQL_Init_Script/Production/Init.sql` | The database the stack starts from: a backup's `pg_dump`, or `Debugging/Init.sql` (same schema, demo data) on a new server. `SQL_Init_Script/SeedDemo.sql` (tracked, shared by both compose files) runs right after it and puts the demo account back to its sample data; other accounts are not touched. |
 | `Maroik.FileStorage/upload/` | Uploaded attachments. Empty is allowed only on a new server: `Deploy.sh` asks first (`ALLOW_EMPTY_UPLOAD=1` skips the question). |
 
 Every backup `Maroik.Crontab/Backup.sh` makes (`Maroik-Backup-YYYY-MM-DD-HH-MM-SS.tar.xz`, daily at 04:00) holds exactly these
 three, laid out like the clone, so extracting it into the clone puts each one where `Deploy.sh` looks. The archives are
-on the backup drive in `BACKUP_BASE_DIR` (`/home/ubuntu/512GB/Maroik-Backup` by default), and the newest one is also kept
-next to the clone, in `/home/ubuntu`.
+on the backup drive in `BACKUP_BASE_DIR`, and the newest one is also kept next to the clone (in the clone's parent folder).
 
 Either choice then starts the whole stack, mounts the backup drive, installs the cron jobs (daily backup at 04:00, resource
 monitoring, and with choice 2 the auto deploy) and closes every inbound port but the mode's (80 / 443 for port forwarding,
@@ -92,16 +92,16 @@ on the server or `2` when production should follow GitHub's `main`.
 
 ```bash
 # 1. Mount the backup drive to reach the archives (Deploy.sh mounts it for good later; `sudo blkid` shows the UUID)
-sudo mkdir -p /home/ubuntu/512GB
-sudo mount UUID=<backup drive UUID> /home/ubuntu/512GB
-ls /home/ubuntu/512GB/Maroik-Backup/            # pick the newest Maroik-Backup-YYYY-MM-DD-HH-MM-SS.tar.xz
+sudo mkdir -p /mnt/backup                       # the EXTERNAL_DRIVE_MOUNT of the backup's .env.prod
+sudo mount UUID=<backup drive UUID> /mnt/backup
+ls /mnt/backup/Maroik-Backup/                   # pick the newest Maroik-Backup-YYYY-MM-DD-HH-MM-SS.tar.xz
 
 # 2. Clone, then extract the backup over the clone: .env.prod, the Production Init.sql and the uploads land in place
-git clone https://github.com/IkhyeonJo/Maroik.git /home/ubuntu/Maroik
-tar xJf /home/ubuntu/512GB/Maroik-Backup/Maroik-Backup-YYYY-MM-DD-HH-MM-SS.tar.xz --strip-components=1 -C /home/ubuntu/Maroik
+git clone https://github.com/IkhyeonJo/Maroik.git ~/Maroik
+tar xJf /mnt/backup/Maroik-Backup/Maroik-Backup-YYYY-MM-DD-HH-MM-SS.tar.xz --strip-components=1 -C ~/Maroik
 
 # 3. Deploy
-cd /home/ubuntu/Maroik && bash Maroik.DeployOps/Deploy.sh
+cd ~/Maroik && bash Maroik.DeployOps/Deploy.sh
 ```
 
 On a different machine, check `EXTERNAL_DRIVE_UUID` in the restored `.env.prod` against `sudo blkid` before step 3.
@@ -109,8 +109,8 @@ On a different machine, check `EXTERNAL_DRIVE_UUID` in the restored `.env.prod` 
 ### First deploy (a new server, no backup)
 
 ```bash
-git clone https://github.com/IkhyeonJo/Maroik.git /home/ubuntu/Maroik
-cd /home/ubuntu/Maroik
+git clone https://github.com/IkhyeonJo/Maroik.git ~/Maroik
+cd ~/Maroik
 
 cp .env.prod.example .env.prod                  # then edit it: replace every dummy value (see the table above)
 cp Maroik.DB/PostgreSQL/SQL_Init_Script/Debugging/Init.sql Maroik.DB/PostgreSQL/SQL_Init_Script/Production/Init.sql
@@ -126,16 +126,16 @@ has to be rebuilt from `Init.sql`. `Undeploy.sh` removes **every** Docker volume
 backup right before it:
 
 ```bash
-cd /home/ubuntu/Maroik
+cd ~/Maroik
 
-# 1. A fresh backup of the running server (the newest archive is also left in /home/ubuntu)
+# 1. A fresh backup of the running server (the newest archive is also left next to the clone, in ~)
 bash Maroik.Crontab/Backup.sh
 
 # 2. Take the stack down: containers, volumes (the database too), images and cron jobs; unmounts the backup drive
 bash Maroik.DeployOps/Undeploy.sh
 
 # 3. Put the backup back in place
-tar xJf /home/ubuntu/Maroik-Backup-YYYY-MM-DD-HH-MM-SS.tar.xz --strip-components=1 -C /home/ubuntu/Maroik
+tar xJf ~/Maroik-Backup-YYYY-MM-DD-HH-MM-SS.tar.xz --strip-components=1 -C ~/Maroik
 
 # 4. Bring Maroik.DB/PostgreSQL/SQL_Init_Script/Production/Init.sql up to the new schema: make the same change the release
 #    made to the tracked Init.sql variants (the backup's dump still has the old schema)
@@ -218,6 +218,21 @@ Maroik is a modern web application built with ASP.NET Core MVC, featuring a comp
 - Account export to Excel without password hashes or registration/reset tokens
 - Analytics dashboard
 
+### 9. Spending Insights and AI Class Suggestion
+Built on what the author learned in the Alpaco AI developer boot camp (2022), and kept only where it measurably beat a
+simpler method on five years of the author's own records (8,649 expenditures, 581 incomes).
+- **Class suggestion (machine learning).** Typing the content of a new income or expenditure ("Starbucks Seoul") shows a
+  suggested class under the field; it is applied only when the user clicks it. A per-account text model — character
+  n-grams weighted by TF-IDF and a logistic regression over all classes (ML.NET) — learns from the user's own records (no data
+  leaves the server). The worker trains it when the records change (asked through RabbitMQ) and stores it in the file storage;
+  the web server only reads it, keeping a bounded number of models in memory. Measured with monthly retraining on the
+  newest records it was right 98.5 % (expenditures) and 98.4 % (incomes) of the time; naive Bayes reached 91 %, and a
+  "same content as before" rule in front of the model added nothing, so it was dropped.
+- **Unusual amounts (statistics).** The expenditure list marks an amount far above the usual for its sub-class and
+  currency (the box-plot rule on log amounts, groups of at least 8): 1.9 % of the records, against 4.8 % on raw amounts.
+- **Amounts in each currency's own decimals.** KRW and JPY without decimals, USD and EUR with two; a currency label that
+  is not a known code keeps every stored decimal.
+
 ### Error messages
 - A refused write shows its actual reason, localized in English and Korean (e.g. "Only zip extension allowed.", "Cannot add a comment to a locked post.", "Role must be Admin, User or Anonymous.").
 - A server-side fault (database, file storage) shows "A temporary error occurred. Please try again later." instead of blaming the user's input; the exception is logged once, where it is handled.
@@ -235,10 +250,14 @@ Maroik is a modern web application built with ASP.NET Core MVC, featuring a comp
   templates) are checked over every source with the Roslyn parser; memory-safety, security, culture and banned-API
   (direct clock reads, sync-over-async) analyzers are build errors; one .NET SDK is pinned for `global.json`, every
   Dockerfile and CI.
+- **Evidence before technique.** Every analytics feature was compared offline with simpler baselines on real data —
+  time-ordered train / test splits and monthly retraining for the classifier, an exact significance test between close
+  candidates — and only what won was built. The measurements, the alternatives not taken and the known
+  limits are written down next to the code (`.claude/rules/finance.md`).
 - **Production runs what CI tested.** CI builds the three images once, versions them from the commit messages and publishes them to GHCR; the server only pulls them. A release that changes the database schema is never deployed automatically.
 
 ## Development Timeline
-Maroik has been built by one developer since May 2021. It was developed in a private repository until September 2026, when the project moved to this public repository; all development now happens here. The earlier history — about 4,300 commits — stays in the private repository; those commits show on the contribution graph of the [author's GitHub profile](https://github.com/IkhyeonJo).
+Maroik has been built by one developer since May 2021. It was developed in a private repository until September 2026, when the project moved to this public repository; all development now happens here. The earlier history is merged into this repository, so `git log` goes back to the first commit of May 2021, and the private repository no longer exists: this repository is the project's only history. Before the merge it was cleaned: keys and certificates, environment files, database dumps, uploads, personal documents, data sets, the Python code, the bot project, copied example projects and the old `CSharp` folder were removed, the remaining secret values, server addresses and personal e-mail addresses were replaced with `***REMOVED***`, and the dependency bot's and other contributors' commits were dropped — 3,378 of the original 4,284 commits remain.
 
 **Authorship.** Through 2025 the code was written by hand (C#, JavaScript). From 2026 the large mechanical refactors — the DDD + Clean Architecture restructuring, the test suites and the TypeScript migration — were done with AI assistance (Claude Code) under the author's design and review; the feature design and the original implementation are the author's own. Commits made with AI assistance carry a `Co-Authored-By: Claude` trailer.
 
@@ -273,8 +292,9 @@ Maroik has been built by one developer since May 2021. It was developed in a pri
 | 2026-05 – 08 | DDD + Clean Architecture refactor, ending with the Maroik.Core.Domain project; CI/CD with a coverage gate; Serilog |
 | 2026-07 | Valkey (replacing Redis), RabbitMQ and the Maroik.Worker mail service |
 | 2026-09 | Client scripts migrated to TypeScript; repository and E2E tests on real PostgreSQL (Testcontainers); a series of whole-solution reviews fixing race conditions and security gaps; strict TDD and logging rules; mutation testing (Domain 78 % → 92 %) |
-| 2026-09-28 | Moved from the private repository to this public repository, where all development continues |
+| 2026-09-28 | Moved from the private repository to this public repository, where all development continues; the private repository's cleaned history was merged here in 2026-11 and the private repository deleted |
 | 2026-10 | Service mutation score 70 % → 96 %; TLS ended at Cloudflare through a Cloudflare Tunnel; RSA replaced with ASP.NET Core Data Protection; memory-safety, logging-template, security and banned-API analyzers as build errors; admin and menu safeguards against locking administrators out; GitHub Actions CI (coverage gate, isolated E2E run), release-only minified client scripts, semver from Conventional Commits, images published to GHCR and pulled by the server; calendar reminders delivered by e-mail (scheduled by the domain, sent once a minute by the worker through the mail queue); one pinned .NET SDK with a weekly bump pull request; personal Kanban board; personal File Manager (chunked uploads, quotas, background virus scan, download progress); Income and Expenditure Budget sheets with an Excel-compatible formula engine; `Deploy.sh` hosting modes (Cloudflare Tunnel, port forwarding behind Caddy, no domain) |
+| 2026-11 | Income and expenditure class suggestion with ML.NET (logistic regression on character n-grams, chosen over naive Bayes on the author's own records; trained by the worker, stored in the file storage); unusual-amount marks in the expenditure list; amounts shown in each currency's own decimals |
 
 ## Architecture
 
@@ -407,6 +427,7 @@ generic error instead of failing half-way through a handler.
 - Cross-Origin Resource Sharing (CORS)
 - Magick.NET — image validation and metadata stripping
 - DocumentFormat.OpenXml — Excel export
+- ML.NET — per-account text classification for the income / expenditure class suggestion
 
 ### Frontend
 - AdminLTE 3.1.0
@@ -499,17 +520,11 @@ dotnet test --project Maroik.Core.Service.Tests            # any single project
 - The .NET 10 SDK version pinned in `global.json` (`rollForward: disable`, so exactly that version)
 - Node 22 (`npm ci` in `Maroik.Website/`) for the client scripts and their tests when building on the host
 - Docker and Docker Compose
-- Visual Studio (Windows) or JetBrains Rider (Linux/Mac)
+- JetBrains Rider (Windows/Linux/Mac)
 
 ### Running the Project
 
-#### Windows
-1. Install Visual Studio
-2. Open Maroik.slnx
-3. Set docker-compose as startup project
-4. Press F5 to run in debug mode
-
-#### Linux/Mac
+#### Windows/Linux/Mac
 1. Install JetBrains Rider
 2. Open Maroik.slnx and build the solution; restart Rider when it asks (see [Rider settings](#rider-settings))
 3. Start debug mode with docker-compose.debug.yml

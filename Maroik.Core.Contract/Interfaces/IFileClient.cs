@@ -67,4 +67,15 @@ public interface IFileClient
 
     /// <summary>Deletes the stored File Manager file at <paramref name="storagePath"/>; false when refused, missing or unreachable (logged).</summary>
     public Task<bool> DeleteFileManagerFileAsync(string storagePath, CancellationToken ct = default);
+
+    // -- Class-suggestion models (Maroik.FileStorage api/ClassModel; read back with DownloadAsync) --------------------
+
+    /// <summary>
+    /// Saves a trained class-suggestion model at <paramref name="storagePath"/> (<c>upload/ClassModels/{guid}.zip</c>; no virus scan, the
+    /// worker wrote it). False when refused or unreachable (logged).
+    /// </summary>
+    public Task<bool> SaveClassModelAsync(string storagePath, byte[] model, CancellationToken ct = default);
+
+    /// <summary>Deletes the model file at <paramref name="storagePath"/>; false when refused, missing or unreachable (logged).</summary>
+    public Task<bool> DeleteClassModelAsync(string storagePath, CancellationToken ct = default);
 }

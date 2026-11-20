@@ -10,7 +10,8 @@
 
 @model UserIndexOutputViewModel
 
-@Html.Hidden("amountMaxDecimalPlaces", PolicyLimits.AmountMaxDecimalPlaces)
+@Html.Hidden("amountMinDecimalPlaces", Model.AmountMinDecimalPlaces)
+@Html.Hidden("amountMaxDecimalPlaces", Model.AmountMaxDecimalPlaces)
 @Html.Hidden("dashboardCharts", ClientJsonSerializer.Serialize(Model.Charts))
 @Html.Hidden("dashboardChartLabels", ClientJsonSerializer.Serialize(Model.ChartSubClasses.Select(subClass => new { Key = subClass, Label = Localizer[subClass].Value })))
 

@@ -357,4 +357,10 @@
   <data name="YearSuffix" xml:space="preserve">
     <value></value>
   </data>
+  <data name="Suggested class:" xml:space="preserve">
+    <value>Suggested class:</value>
+  </data>
+  <data name="Apply" xml:space="preserve">
+    <value>Apply</value>
+  </data>
 </root>

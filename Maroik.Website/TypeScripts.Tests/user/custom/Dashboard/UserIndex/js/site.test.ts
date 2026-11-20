@@ -14,7 +14,7 @@ function hiddenJson(id: string, value: unknown): string {
 }
 
 /** The dashboard DOM: the chart canvases, the server's charts and the period / unit controls. */
-function fixture(amount = 1500): string {
+function fixture(amount = 1500, minDecimals = "0", maxDecimals = "4"): string {
     return (
         antiForgery +
         `<select id="year"><option value="2024" selected>2024</option></select>
@@ -31,7 +31,8 @@ function fixture(amount = 1500): string {
             };
         })) +
         hiddenJson("dashboardChartLabels", Array.from({ length: 12 }, (_, slice) => ({ Key: `sub${slice}`, Label: `Label ${slice}` }))) +
-        hidden("amountMaxDecimalPlaces", "4")
+        hidden("amountMinDecimalPlaces", minDecimals) +
+        hidden("amountMaxDecimalPlaces", maxDecimals)
     );
 }
 
@@ -86,6 +87,21 @@ describe("Dashboard/UserIndex — donut charts", () => {
             });
         }
         expect(checked).toBeGreaterThan(40);
+    });
+
+    it("a tooltip shows the default currency's own decimals: two kept for USD (12.5 → 12.50), none for KRW (1234.5678 → 1,235)", () => {
+        const usd = loadSite("user", "Dashboard", "UserIndex", fixture(12.5, "2", "2"));
+        const krw = loadSite("user", "Dashboard", "UserIndex", fixture(1234.5678, "0", "0"));
+        /** The first chart's first tooltip, without its "<label>: " prefix. */
+        const first = (h: typeof usd) => {
+            const { cfg } = h.charts[0] ?? (() => { throw new Error("no chart"); })();
+            const text: string = cfg.options.tooltips.callbacks.label({ index: 0 }, cfg.data);
+            return text.slice(text.indexOf(": ") + 2);
+        };
+
+        expect(first(usd)).toBe(`${(12.5).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} (12.50%)`);
+        expect(first(usd)).toContain("12.50");
+        expect(first(krw)).toBe(`${(1235).toLocaleString()} (12.50%)`);
     });
 
     it("every tooltip shows the amount to the server-supplied number of decimal places (1234.5678 keeps all four)", () => {

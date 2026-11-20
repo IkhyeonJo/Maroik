@@ -282,7 +282,7 @@ public class RabbitMqEmailPublisherTests
 
         await using var sut = new RabbitMqEmailPublisher(realFactory, NullLogger<RabbitMqEmailPublisher>.Instance);
 
-        var field = typeof(RabbitMqEmailPublisher).GetField(
+        var field = typeof(RabbitMqQueuePublisher).GetField(
             "_connectionRecoveryGraceWindow", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
         Assert.Equal(TimeSpan.FromSeconds(42), (TimeSpan)field!.GetValue(sut)!);
     }

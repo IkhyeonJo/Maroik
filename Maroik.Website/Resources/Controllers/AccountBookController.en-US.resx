@@ -612,4 +612,7 @@
   <data name="An account can keep at most {0} budget sheets." xml:space="preserve">
     <value>An account can keep at most {0} budget sheets.</value>
   </data>
+  <data name="Unusually large" xml:space="preserve">
+    <value>Unusually large</value>
+  </data>
 </root>

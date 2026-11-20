@@ -1,6 +1,7 @@
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Domain.Finances;
+using Maroik.Core.Service.Classifiers;
 using Maroik.Core.Service.Extensions;
 using Maroik.Core.Service.Mappers;
 using Microsoft.Extensions.Logging;
@@ -17,7 +18,8 @@ public class ExpenditureService(
     IAssetBalanceStore assetBalance,
     IUnitOfWork unitOfWork,
     ILogger<ExpenditureService> logger,
-    TimeProvider timeProvider) : IExpenditureService
+    TimeProvider timeProvider,
+    ClassModelSource classModels) : IExpenditureService
 {
     /// <inheritdoc />
     public async Task<List<ExpenditureResponse>> GetExpendituresAsync(string accountEmail, CancellationToken ct = default)
@@ -34,6 +36,27 @@ public class ExpenditureService(
             .. (await expenditureRepository.SearchByAccountEmailAsync(accountEmail, search, ct)).Select(
                 ExpenditureMapper.ToResponse)
         ];
+
+    /// <inheritdoc />
+    public async Task<ClassSuggestionResponse?> SuggestClassAsync(string accountEmail, string? content, CancellationToken ct = default)
+    {
+        // The form asks on every pause in typing; content without a letter or a digit has nothing to go on, so the records are not read for it.
+        if (!ClassSuggestionPolicy.HasEvidence(content))
+            return null;
+
+        // The worker trains the model; until it has one of the current records, the older model answers, or nothing does. The source
+        // reads the records only when it does not know their fingerprint yet (the first question, or the first after they changed).
+        if (await classModels.GetAsync(ClassModel.ExpenditureBook, accountEmail,
+                async token => ExpenditureClassSuggestionPolicy.Learnable(await expenditureRepository.GetByAccountEmailAsync(accountEmail, token)), ct) is not { } classifier)
+            return null;
+
+        ClassSuggestion suggestion = classifier.Predict(content);
+        return new ClassSuggestionResponse { MainClass = suggestion.MainClass, SubClass = suggestion.SubClass };
+    }
+
+    /// <inheritdoc />
+    public async Task<IReadOnlySet<long>> GetUnusuallyLargeIdsAsync(string accountEmail, CancellationToken ct = default)
+        => ExpenditureOutlierPolicy.UnusuallyLarge(await expenditureRepository.GetByAccountEmailAsync(accountEmail, ct));
 
     /// <inheritdoc />
     public async Task<ExpenditureResponse?> GetByIdAsync(string accountEmail, long id, CancellationToken ct = default)
@@ -99,6 +122,7 @@ public class ExpenditureService(
             }
 
             await unitOfWork.CommitAsync(ct);
+            classModels.RecordsChanged(ClassModel.ExpenditureBook, accountEmail);
             return ServiceResult.Ok();
         }
         catch (Exception ex)
@@ -176,6 +200,7 @@ public class ExpenditureService(
             }
 
             await unitOfWork.CommitAsync(ct);
+            classModels.RecordsChanged(ClassModel.ExpenditureBook, accountEmail);
             return ServiceResult.Ok();
         }
         catch (Exception ex)
@@ -221,6 +246,7 @@ public class ExpenditureService(
             await expenditureRepository.DeleteByIdAsync(expenditure.Id, ct);
 
             await unitOfWork.CommitAsync(ct);
+            classModels.RecordsChanged(ClassModel.ExpenditureBook, accountEmail);
             return ServiceResult.Ok();
         }
         catch (Exception ex)

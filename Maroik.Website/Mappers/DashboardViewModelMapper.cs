@@ -1,4 +1,6 @@
 using Maroik.Core.Contract.Dtos;
+using Maroik.Core.Service.Constants;
+using Maroik.Website.Constants;
 using Maroik.Website.Models.ViewModels.Dashboards;
 
 namespace Maroik.Website.Mappers;
@@ -22,7 +24,9 @@ public static class DashboardViewModelMapper
             SelectedYear = summary.SelectedYear,
             SelectedMonth = summary.SelectedMonth,
             Charts = [.. summary.Charts.Select(ToViewModel)],
-            ChartSubClasses = [.. summary.Charts.SelectMany(c => c.Slices).Select(s => s.SubClass).Distinct()]
+            ChartSubClasses = [.. summary.Charts.SelectMany(c => c.Slices).Select(s => s.SubClass).Distinct()],
+            AmountMinDecimalPlaces = AmountDisplay.DecimalPlacesOf(summary.DefaultMonetaryUnit) ?? 0,
+            AmountMaxDecimalPlaces = AmountDisplay.DecimalPlacesOf(summary.DefaultMonetaryUnit) ?? PolicyLimits.AmountMaxDecimalPlaces
         };
     }
 

@@ -11,6 +11,25 @@ namespace Maroik.Website.Tests.Mappers;
 /// </summary>
 public class DashboardViewModelMapperTests
 {
+    /// <summary>
+    /// The chart tooltips get the default currency's decimal places as their least and most digits (KRW 0–0, USD 2–2); an
+    /// unknown currency or none shows every stored place (0–4).
+    /// </summary>
+    [Theory]
+    [InlineData("KRW", 0, 0)]
+    [InlineData("USD", 2, 2)]
+    [InlineData("$", 0, 4)]
+    [InlineData(null, 0, 4)]
+    public void ToViewModel_GivesTheChartsTheDefaultCurrencyDecimals(string? currency, int least, int most)
+    {
+        DashboardDto dto = BaseDto();
+        dto.DefaultMonetaryUnit = currency;
+
+        UserIndexOutputViewModel vm = dto.ToViewModel();
+
+        Assert.Equal((least, most), (vm.AmountMinDecimalPlaces, vm.AmountMaxDecimalPlaces));
+    }
+
     /// <summary>A dashboard DTO with fixed selectors and no charts, to be adjusted per test.</summary>
     private static DashboardDto BaseDto() => new()
     {

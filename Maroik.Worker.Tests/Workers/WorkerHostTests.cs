@@ -131,6 +131,22 @@ public class WorkerHostTests(WorkerBrokerFixture broker) : IClassFixture<WorkerB
         Assert.IsType<RabbitMqEmailPublisher>(host.Services.GetRequiredService<IEmailPublisher>());
     }
 
+    /// <summary>
+    /// The class-model training is wired: the consumer runs as a hosted service and the training service is scoped (it uses the
+    /// DbContext) and stores the models through the file client.
+    /// </summary>
+    [Fact]
+    public async Task Build_WiresTheClassModelTraining()
+    {
+        IHost host = WorkerHost.Build(Args("amqp://guest:guest@127.0.0.1:5672/"));
+        await using var hostLifetime = (IAsyncDisposable)host;
+
+        await using AsyncServiceScope scope = host.Services.CreateAsyncScope();
+
+        Assert.Contains(host.Services.GetServices<IHostedService>(), s => s is ClassModelTrainingWorker);
+        Assert.IsType<ClassModelTrainingService>(scope.ServiceProvider.GetRequiredService<IClassModelTrainingService>());
+    }
+
     /// <summary>The RabbitMQ connection is the configured one, with automatic and topology recovery on and a recognizable client name.</summary>
     [Fact]
     public void Build_ConfiguresTheBrokerConnectionFactory()

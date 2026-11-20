@@ -136,27 +136,33 @@ public class FinanceReadEndpointsTests(MaroikWebApplicationFactory factory)
     // -- Grid partials -----------------------------------------------------------------------------------
 
     /// <summary>
-    /// Every finance grid shows an amount with every decimal place the column stores (up to four, trailing zeros
-    /// dropped) and with a thousands separator: 1234.5678 is listed as "1,234.5678", not rounded to "1234.57".
+    /// Every finance grid shows an amount with its currency's usual decimal places when the currency is a known code (USD: two,
+    /// so 1234.5678 is listed as "1,234.57"), and with every decimal place the column stores when it is not ("$": "1,234.5678") —
+    /// with a thousands separator either way.
     /// </summary>
     [Theory]
-    [InlineData("/AccountBook/Asset")]
-    [InlineData("/AccountBook/Income")]
-    [InlineData("/AccountBook/Expenditure")]
-    [InlineData("/Notice/FixedIncome")]
-    [InlineData("/Notice/FixedExpenditure")]
-    public async Task Grid_ShowsEveryStoredDecimalPlace_WithAThousandsSeparator(string url)
+    [InlineData("/AccountBook/Asset", "USD", "1,234.57")]
+    [InlineData("/AccountBook/Income", "USD", "1,234.57")]
+    [InlineData("/AccountBook/Expenditure", "USD", "1,234.57")]
+    [InlineData("/Notice/FixedIncome", "USD", "1,234.57")]
+    [InlineData("/Notice/FixedExpenditure", "USD", "1,234.57")]
+    [InlineData("/AccountBook/Asset", "$", "1,234.5678")]
+    [InlineData("/AccountBook/Income", "$", "1,234.5678")]
+    [InlineData("/AccountBook/Expenditure", "$", "1,234.5678")]
+    [InlineData("/Notice/FixedIncome", "$", "1,234.5678")]
+    [InlineData("/Notice/FixedExpenditure", "$", "1,234.5678")]
+    public async Task Grid_ShowsTheCurrencyDecimalPlaces_WithAThousandsSeparator(string url, string currency, string expected)
     {
-        string email = $"fin-read-grid-decimals-{url.Replace("/", "-", StringComparison.Ordinal).ToLowerInvariant()}@test.com";
+        string email = $"fin-read-grid-decimals-{url.Replace("/", "-", StringComparison.Ordinal).ToLowerInvariant()}-{(currency == "$" ? "sign" : currency.ToLowerInvariant())}@test.com";
         var session = await LoginAsync(email);
-        SeedGridRow(url, email, "Decimals-", 1234.5678m);
+        SeedGridRow(url, email, "Decimals-", 1234.5678m, currency);
 
         string grid = await (await GetAsync(url, session, ajax: true)).Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
-        Assert.Contains("1,234.5678", grid, StringComparison.Ordinal);
+        Assert.Contains($">{expected}<", grid, StringComparison.Ordinal);
     }
 
-    /// <summary>Every finance grid lists the monetary unit column before the amount column ("USD | 1,234.5678").</summary>
+    /// <summary>Every finance grid lists the monetary unit column before the amount column ("USD | 1,234.57").</summary>
     [Theory]
     [InlineData("/AccountBook/Asset")]
     [InlineData("/AccountBook/Income")]
@@ -173,21 +179,21 @@ public class FinanceReadEndpointsTests(MaroikWebApplicationFactory factory)
         string row = grid[grid.IndexOf("<tbody", StringComparison.Ordinal)..];
 
         int unit = row.IndexOf(">USD<", StringComparison.Ordinal);
-        int amount = row.IndexOf(">1,234.5678<", StringComparison.Ordinal);
+        int amount = row.IndexOf(">1,234.57<", StringComparison.Ordinal);
         Assert.True(unit >= 0 && amount >= 0, "the row renders both the unit and the amount cell");
         Assert.True(unit < amount, "the monetary unit cell comes before the amount cell");
     }
 
     /// <summary>
-    /// Seeds one row of <paramref name="amount"/> for the grid at <paramref name="url"/>, on a "USD" asset named
+    /// Seeds one row of <paramref name="amount"/> for the grid at <paramref name="url"/>, on a <paramref name="currency"/> asset named
     /// <paramref name="assetPrefix"/> plus the page name (the asset itself carries the amount on the asset page).
     /// </summary>
-    private void SeedGridRow(string url, string email, string assetPrefix, decimal amount)
+    private void SeedGridRow(string url, string email, string assetPrefix, decimal amount, string currency = "USD")
     {
         string asset = assetPrefix + url.Split('/')[^1];
         Seed(db => db.Assets.Add(new Asset
         {
-            ProductName = asset, AccountEmail = email, Item = "FreeDepositAndWithdrawal", MonetaryUnit = "USD",
+            ProductName = asset, AccountEmail = email, Item = "FreeDepositAndWithdrawal", MonetaryUnit = currency,
             Amount = url == "/AccountBook/Asset" ? amount : 0m, Note = "", Deleted = false, Created = DateTime.UtcNow, Updated = DateTime.UtcNow
         }));
         switch (url)

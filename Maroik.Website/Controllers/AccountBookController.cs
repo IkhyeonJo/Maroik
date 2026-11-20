@@ -324,6 +324,29 @@ public class AccountBookController(
         }
     }
 
+    /// <summary>
+    /// Proposes a class for the content typed into the income form, learned from the signed-in user's own past incomes
+    /// (<c>suggestion</c> is null when there is nothing to go on). The form shows it as a hint the user applies by hand; it never
+    /// fills the class fields by itself.
+    /// </summary>
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    [RequiredHttpPostAccess(Role = AccountRoles.User)]
+    public async Task<IActionResult> SuggestIncomeClass(string? content, CancellationToken ct)
+    {
+        AccountResponse account = HttpContext.GetLoggedInAccount();
+        try
+        {
+            ClassSuggestionResponse? suggestion = await incomeService.SuggestClassAsync(account.RequireEmail(), content, ct);
+            return Json(new { result = true, suggestion });
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Failed to suggest an income class for {Email}", account.Email);
+            return Json(new { result = false, error = localizer[ServiceResult.TemporaryErrorKey].Value });
+        }
+    }
+
     /// <summary>Returns a formatted amount label for the given income product.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
@@ -494,8 +517,9 @@ public class AccountBookController(
             var expenditures = string.IsNullOrEmpty(wholeSearch)
                 ? await expenditureService.GetExpendituresAsync(account.RequireEmail(), ct)
                 : await expenditureService.SearchExpendituresAsync(account.RequireEmail(), wholeSearch, ct);
+            IReadOnlySet<long> unusuallyLarge = await expenditureService.GetUnusuallyLargeIdsAsync(account.RequireEmail(), ct);
             var viewModels = expenditures
-                .ToDisplayViewModels(timeZones, assets, key => localizer[key].Value, account.RequireTimeZoneIanaId())
+                .ToDisplayViewModels(timeZones, assets, key => localizer[key].Value, account.RequireTimeZoneIanaId(), unusuallyLarge)
                 .OrderByDescending(m => m.Created)
                 .ThenByDescending(m => m.Updated)
                 .AsQueryable();
@@ -563,6 +587,29 @@ public class AccountBookController(
         {
             logger.LogError(ex, "Failed to get expenditure amount label for product {ProductName}", productName);
             return Json(new { result = false, label = localizer["Amount"].Value });
+        }
+    }
+
+    /// <summary>
+    /// Proposes a class for the content typed into the expenditure form, learned from the signed-in user's own past
+    /// expenditures (<c>suggestion</c> is null when there is nothing to go on). The form shows it as a hint the user applies by hand;
+    /// it never fills the class fields by itself.
+    /// </summary>
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    [RequiredHttpPostAccess(Role = AccountRoles.User)]
+    public async Task<IActionResult> SuggestExpenditureClass(string? content, CancellationToken ct)
+    {
+        AccountResponse account = HttpContext.GetLoggedInAccount();
+        try
+        {
+            ClassSuggestionResponse? suggestion = await expenditureService.SuggestClassAsync(account.RequireEmail(), content, ct);
+            return Json(new { result = true, suggestion });
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Failed to suggest an expenditure class for {Email}", account.Email);
+            return Json(new { result = false, error = localizer[ServiceResult.TemporaryErrorKey].Value });
         }
     }
 

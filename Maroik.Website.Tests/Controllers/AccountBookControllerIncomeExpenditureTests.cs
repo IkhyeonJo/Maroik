@@ -452,4 +452,200 @@ public class AccountBookControllerIncomeExpenditureTests(MaroikWebApplicationFac
 
         Assert.Contains("\"result\":true", json, StringComparison.Ordinal);
     }
+
+    // -- SuggestExpenditureClass -------------------------------------------------------
+
+    /// <summary>Asks <paramref name="path"/> for a suggestion for <paramref name="content"/>; returns the JSON reply.</summary>
+    private async Task<string> SuggestAsync(AuthenticatedSession session, string path, string content)
+    {
+        using var request = session.BuildJsonPostRequest($"{path}?content={Uri.EscapeDataString(content)}");
+        using HttpResponseMessage response = await _client.SendAsync(request, TestContext.Current.CancellationToken);
+        return await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+    }
+
+    /// <summary>
+    /// The suggestion is the signed-in user's own model, trained by the worker's training on their expenditures in the real database:
+    /// the first question asks for the model, and then new content about the subway is answered with transport. A dedicated account
+    /// keeps the other tests' records out of the model.
+    /// </summary>
+    [Fact]
+    public async Task SuggestExpenditureClass_NewContent_IsAnsweredFromTheUsersOwnRecords()
+    {
+        const string email = "accountbook-suggest-expenditure@test.com";
+        var session = await AuthenticatedSessionHelper.LoginAsync(factory, _client, email, "UserPassword1!", Role.User, TestContext.Current.CancellationToken);
+        using (var scope = factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+            if (!db.Assets.Any(a => a.AccountEmail == email))
+                db.Assets.Add(new Asset { ProductName = "wallet", AccountEmail = email, Item = "CashAsset", Amount = 0, MonetaryUnit = "KRW", Deleted = false, Created = DateTime.UtcNow, Updated = DateTime.UtcNow });
+            db.Expenditures.RemoveRange(db.Expenditures.Where(e => e.AccountEmail == email));
+            foreach ((string content, string subClass) in new[] { ("지하철 교통카드", "TransportationCost"), ("지하철 정기권", "TransportationCost"), ("스타벅스 강남", "MealOrEatOutExpenses"), ("스타벅스 역삼", "MealOrEatOutExpenses") })
+            {
+                db.Expenditures.Add(new Expenditure
+                {
+                    AccountEmail = email, MainClass = "ConsumerSpending", SubClass = subClass, Content = content, Amount = 1000,
+                    PaymentMethod = "wallet", Created = DateTime.UtcNow, Updated = DateTime.UtcNow
+                });
+            }
+            await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+        }
+
+        // The first question finds no model and asks the worker for one (here trained at once); the next one is answered by it.
+        string first = await SuggestAsync(session, "/AccountBook/SuggestExpenditureClass", "지하철 2호선");
+        string second = await SuggestAsync(session, "/AccountBook/SuggestExpenditureClass", "지하철 2호선");
+
+        Assert.Equal("""{"result":true,"suggestion":null}""", first);
+        Assert.Equal("""{"result":true,"suggestion":{"mainClass":"ConsumerSpending","subClass":"TransportationCost"}}""", second);
+    }
+
+    /// <summary>Content that matches none of the user's rows succeeds with no suggestion (null), so the form shows nothing.</summary>
+    [Fact]
+    public async Task SuggestExpenditureClass_NothingMatches_ReturnsNoSuggestion()
+    {
+        var session = await LoginAsync();
+
+        using var request = session.BuildJsonPostRequest("/AccountBook/SuggestExpenditureClass?content=%E2%80%A6%21");
+        string json = await (await _client.SendAsync(request, TestContext.Current.CancellationToken)).Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        Assert.Equal("""{"result":true,"suggestion":null}""", json);
+    }
+
+    /// <summary>
+    /// The create form carries the hidden suggestion hint the page script fills (text + apply button), labeled through the
+    /// page's resx: without it the script would have nowhere to show a suggestion.
+    /// </summary>
+    [Fact]
+    public async Task ExpenditurePage_RendersTheHiddenClassSuggestionHint_InKorean()
+    {
+        var session = await LoginAsync();
+        using var request = new HttpRequestMessage(HttpMethod.Get, "/AccountBook/Expenditure");
+        request.Headers.Add("Cookie", session.CookieHeader);
+        request.Headers.AcceptLanguage.ParseAdd("ko-KR");
+
+        var response = await _client.SendAsync(request, TestContext.Current.CancellationToken);
+        string html = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        using var page = await new AngleSharp.Html.Parser.HtmlParser().ParseDocumentAsync(html, TestContext.Current.CancellationToken);
+
+        var hint = page.GetElementById("createExpenditureClassSuggestion");
+        Assert.NotNull(hint);
+        Assert.Contains("display:none", hint.GetAttribute("style"), StringComparison.Ordinal);
+        Assert.Contains("추천 분류:", hint.TextContent, StringComparison.Ordinal);
+        Assert.NotNull(hint.QuerySelector("#createExpenditureClassSuggestionText"));
+        Assert.Equal("적용", hint.QuerySelector("#btnApplyExpenditureClassSuggestion")?.TextContent.Trim());
+        Assert.NotNull(page.GetElementById("formCreateExpenditure")?.QuerySelector("#createExpenditureClassSuggestion"));
+    }
+
+    /// <summary>
+    /// The expenditure grid marks, in Korean, the one amount far above the account's usual meals and no other row. A dedicated
+    /// account keeps the other tests' meal records out of its "usual".
+    /// </summary>
+    [Fact]
+    public async Task ExpenditureGrid_MarksTheUnusuallyLargeAmount()
+    {
+        const string email = "accountbook-outlier-user@test.com";
+        var session = await AuthenticatedSessionHelper.LoginAsync(factory, _client, email, "UserPassword1!", Role.User, TestContext.Current.CancellationToken);
+        long flagged;
+        using (var scope = factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+            if (!db.Assets.Any(a => a.AccountEmail == email && a.ProductName == "wallet"))
+            {
+                db.Assets.Add(new Asset
+                {
+                    ProductName = "wallet", AccountEmail = email, Item = "CashAsset", Amount = 1000, MonetaryUnit = "KRW",
+                    Deleted = false, Created = DateTime.UtcNow, Updated = DateTime.UtcNow
+                });
+            }
+            db.Expenditures.RemoveRange(db.Expenditures.Where(e => e.AccountEmail == email));
+            List<Expenditure> rows =
+            [
+                .. new decimal[] { 10, 10, 11, 12, 12, 13, 14, 100 }.Select(amount => new Expenditure
+                {
+                    AccountEmail = email, MainClass = "ConsumerSpending", SubClass = "MealOrEatOutExpenses", Content = $"meal {amount}",
+                    Amount = amount, PaymentMethod = "wallet", Created = DateTime.UtcNow, Updated = DateTime.UtcNow
+                })
+            ];
+            db.Expenditures.AddRange(rows);
+            await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+            flagged = rows[^1].Id;
+        }
+
+        using var request = new HttpRequestMessage(HttpMethod.Get, "/AccountBook/Expenditure");
+        request.Headers.Add("Cookie", session.CookieHeader);
+        request.Headers.Add("X-Requested-With", "XMLHttpRequest");
+        request.Headers.AcceptLanguage.ParseAdd("ko-KR");
+        string html = await (await _client.SendAsync(request, TestContext.Current.CancellationToken)).Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        using var page = await new AngleSharp.Html.Parser.HtmlParser().ParseDocumentAsync(html, TestContext.Current.CancellationToken);
+
+        var rowsWithMark = page.QuerySelectorAll("tr.clsGridRow").Where(r => r.TextContent.Contains("평소보다 큼", StringComparison.Ordinal)).ToList();
+        Assert.Equal(flagged.ToString(System.Globalization.CultureInfo.InvariantCulture), Assert.Single(rowsWithMark).GetAttribute("data-id"));
+        Assert.Contains(page.QuerySelectorAll("th"), th => th.TextContent.Contains("금액 확인", StringComparison.Ordinal));
+    }
+
+    /// <summary>
+    /// The income suggestion is the signed-in user's own income model, trained by the worker's training on their incomes in the real
+    /// database: the first question asks for the model, and then new content about a salary is answered with labor income. A dedicated
+    /// account keeps the other tests' records out of the model.
+    /// </summary>
+    [Fact]
+    public async Task SuggestIncomeClass_NewContent_IsAnsweredFromTheUsersOwnRecords()
+    {
+        const string email = "accountbook-suggest-income@test.com";
+        var session = await AuthenticatedSessionHelper.LoginAsync(factory, _client, email, "UserPassword1!", Role.User, TestContext.Current.CancellationToken);
+        using (var scope = factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+            if (!db.Assets.Any(a => a.AccountEmail == email))
+                db.Assets.Add(new Asset { ProductName = "wallet", AccountEmail = email, Item = "CashAsset", Amount = 0, MonetaryUnit = "KRW", Deleted = false, Created = DateTime.UtcNow, Updated = DateTime.UtcNow });
+            db.Incomes.RemoveRange(db.Incomes.Where(i => i.AccountEmail == email));
+            foreach ((string content, string subClass) in new[] { ("11월 급여", "LaborIncome"), ("10월 급여", "LaborIncome"), ("예금 이자", "FinancialIncome"), ("적금 이자", "FinancialIncome") })
+            {
+                db.Incomes.Add(new Income
+                {
+                    AccountEmail = email, MainClass = "RegularIncome", SubClass = subClass, Content = content, Amount = 1000,
+                    DepositMyAssetProductName = "wallet", Created = DateTime.UtcNow, Updated = DateTime.UtcNow
+                });
+            }
+            await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+        }
+
+        // The first question finds no model and asks the worker for one (here trained at once); the next one is answered by it.
+        string first = await SuggestAsync(session, "/AccountBook/SuggestIncomeClass", "12월 급여");
+        string second = await SuggestAsync(session, "/AccountBook/SuggestIncomeClass", "12월 급여");
+
+        Assert.Equal("""{"result":true,"suggestion":null}""", first);
+        Assert.Equal("""{"result":true,"suggestion":{"mainClass":"RegularIncome","subClass":"LaborIncome"}}""", second);
+    }
+
+    /// <summary>Income content without a letter or a digit succeeds with no suggestion (null), so the form shows nothing.</summary>
+    [Fact]
+    public async Task SuggestIncomeClass_ContentWithoutEvidence_ReturnsNoSuggestion()
+    {
+        var session = await LoginAsync();
+
+        using var request = session.BuildJsonPostRequest("/AccountBook/SuggestIncomeClass?content=%E2%80%A6%21");
+        string json = await (await _client.SendAsync(request, TestContext.Current.CancellationToken)).Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        Assert.Equal("""{"result":true,"suggestion":null}""", json);
+    }
+
+    /// <summary>The income create form carries the hidden suggestion hint the page script fills, labeled through the page's resx.</summary>
+    [Fact]
+    public async Task IncomePage_RendersTheHiddenClassSuggestionHint_InKorean()
+    {
+        var session = await LoginAsync();
+        using var request = new HttpRequestMessage(HttpMethod.Get, "/AccountBook/Income");
+        request.Headers.Add("Cookie", session.CookieHeader);
+        request.Headers.AcceptLanguage.ParseAdd("ko-KR");
+
+        string html = await (await _client.SendAsync(request, TestContext.Current.CancellationToken)).Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        using var page = await new AngleSharp.Html.Parser.HtmlParser().ParseDocumentAsync(html, TestContext.Current.CancellationToken);
+
+        var hint = page.GetElementById("formCreateIncome")?.QuerySelector("#createIncomeClassSuggestion");
+        Assert.NotNull(hint);
+        Assert.Contains("display:none", hint.GetAttribute("style"), StringComparison.Ordinal);
+        Assert.Contains("추천 분류:", hint.TextContent, StringComparison.Ordinal);
+        Assert.NotNull(hint.QuerySelector("#createIncomeClassSuggestionText"));
+        Assert.Equal("적용", hint.QuerySelector("#btnApplyIncomeClassSuggestion")?.TextContent.Trim());
+    }
 }

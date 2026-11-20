@@ -32,6 +32,19 @@ public class ExpenditureOutputViewModel
     [Display(Name = "Amount")]
     public decimal Amount { get; set; }
 
+    /// <summary>
+    /// <see cref="Amount"/> as the grid shows it: in its currency's decimal places when the currency is a known code
+    /// (<c>AmountDisplay.Text</c>). The grid sorts and filters on <see cref="Amount"/>.
+    /// </summary>
+    public string AmountText { get; set; } = "";
+
+    /// <summary>
+    /// The localized "unusually large" mark when the amount is far above the usual for its sub-class and currency
+    /// (<c>IExpenditureService.GetUnusuallyLargeIdsAsync</c>); empty otherwise.
+    /// </summary>
+    [Display(Name = "AmountFlag")]
+    public string AmountFlag { get; set; } = "";
+
     /// <summary>Currency code for the amount (e.g. "KRW", "USD"), sourced from the linked asset.</summary>
     [Display(Name = "MonetaryUnit")]
     public string? MonetaryUnit { get; set; }

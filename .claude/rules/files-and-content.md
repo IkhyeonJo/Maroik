@@ -46,7 +46,8 @@ that specific change. Check every candidate review finding in this area against 
 - Replacing or clearing an attachment (post, private note, calendar event) only rewrites its database
   record; the old file stays in Maroik.FileStorage, as does a file uploaded by a write whose transaction
   later rolls back. There is no delete API for them on purpose — do not add one or a cleanup job. (The File Manager's
-  `api/FileManager/delete` is the one exception, and it only accepts its own `upload/FileManager/{guid}` paths; see File Manager.)
+  `api/FileManager/delete` and the class-suggestion models' `api/ClassModel/delete` are the exceptions, and each only accepts its own
+  paths, `upload/FileManager/{guid}` / `upload/ClassModels/{guid}.zip`; see File Manager and Finance.)
 - `HtmlContentSanitizerService` starts from the original allow-list (Ganss defaults plus `class`) and narrows only
   three things: URL schemes to http/https, no `data-*` attributes, and no `position` / `top` / `left` / `right` /
   `bottom` / `z-index` / `opacity` in inline styles (so a post cannot overlay the page). The rest of that

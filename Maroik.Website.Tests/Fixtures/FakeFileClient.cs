@@ -139,4 +139,15 @@ public sealed class FakeFileClient : IFileClient
     {
         return Task.FromResult(_files.TryRemove(storagePath, out _));
     }
+
+    /// <inheritdoc />
+    public Task<bool> SaveClassModelAsync(string storagePath, byte[] model, CancellationToken ct = default)
+    {
+        Store(model, "application/zip", storagePath);
+        return Task.FromResult(true);
+    }
+
+    /// <inheritdoc />
+    public Task<bool> DeleteClassModelAsync(string storagePath, CancellationToken ct = default)
+        => Task.FromResult(_files.TryRemove(storagePath, out _));
 }

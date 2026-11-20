@@ -108,6 +108,11 @@ internal static class WorkerHost
         builder.Services.AddHostedService<CalendarReminderScheduler>();
         builder.Services.AddSingleton<EmailDeadLetterRedriver>();
 
+        // Class-suggestion models: the website asks for a training on this queue; the consumer trains one request at a time, saves the
+        // model in file storage and points the account's record at it (ClassModelTrainingService).
+        builder.Services.AddScoped<IClassModelTrainingService, ClassModelTrainingService>();
+        builder.Services.AddHostedService<ClassModelTrainingWorker>();
+
         // File Manager: once an hour the scheduler removes the abandoned uploads — their rows here, their staging files in file storage.
         builder.Services.AddHttpClient();
         builder.Services.AddScoped<IFileClient, FileClient>();

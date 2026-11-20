@@ -1,6 +1,7 @@
 using Maroik.Core.Contract.Interfaces;
 using System.Globalization;
 using Maroik.Core.Contract.Dtos;
+using Maroik.Website.Constants;
 using Maroik.Website.Models.ViewModels.AccountBooks;
 
 namespace Maroik.Website.Mappers;
@@ -60,6 +61,7 @@ public static class AccountBookViewModelMapper
             Item = localize(item.Item ?? ""),
             Amount = item.Amount,
             MonetaryUnit = item.MonetaryUnit,
+            AmountText = AmountDisplay.Text(item.Amount, item.MonetaryUnit),
             Created = timeZones.ToTimeZone(item.Created, timeZoneIanaId),
             Updated = timeZones.ToTimeZone(item.Updated, timeZoneIanaId),
             Note = item.Note,
@@ -95,6 +97,7 @@ public static class AccountBookViewModelMapper
                 Content = item.Content,
                 Amount = item.Amount,
                 MonetaryUnit = currencyByProduct.GetValueOrDefault(item.DepositMyAssetProductName ?? ""),
+                AmountText = AmountDisplay.Text(item.Amount, currencyByProduct.GetValueOrDefault(item.DepositMyAssetProductName ?? "")),
                 DepositMyAssetProductName = item.DepositMyAssetProductName,
                 Created = timeZones.ToTimeZone(item.Created, timeZoneIanaId),
                 Updated = timeZones.ToTimeZone(item.Updated, timeZoneIanaId),
@@ -137,6 +140,7 @@ public static class AccountBookViewModelMapper
                 Content = item.Content,
                 Amount = item.Amount,
                 MonetaryUnit = currencyByProduct.GetValueOrDefault(item.PaymentMethod ?? ""),
+                AmountText = AmountDisplay.Text(item.Amount, currencyByProduct.GetValueOrDefault(item.PaymentMethod ?? "")),
                 PaymentMethod = item.PaymentMethod,
                 Note = item.Note,
                 MyDepositAsset = item.MyDepositAsset,
@@ -147,18 +151,27 @@ public static class AccountBookViewModelMapper
 
     extension(IEnumerable<ExpenditureResponse> items)
     {
-        /// <summary>Maps all <see cref="ExpenditureResponse"/> items to display view models.</summary>
+        /// <summary>
+        /// Maps all <see cref="ExpenditureResponse"/> items to display view models; those in <paramref name="unusuallyLarge"/>
+        /// carry the localized "Unusually large" mark in <see cref="ExpenditureOutputViewModel.AmountFlag"/>.
+        /// </summary>
         public List<ExpenditureOutputViewModel> ToDisplayViewModels(
             ITimeZoneDisplayService timeZones, IEnumerable<AssetResponse> assets,
             Func<string, string> localize,
-            string timeZoneIanaId)
+            string timeZoneIanaId,
+            IReadOnlySet<long> unusuallyLarge)
         {
             var currencyByProduct = assets
                 .GroupBy(a => a.ProductName ?? "")
                 .ToDictionary(g => g.Key, g => g.Last().MonetaryUnit);
             return
             [
-                .. items.Select(i => i.ToDisplayViewModel(timeZones, currencyByProduct, localize, timeZoneIanaId))
+                .. items.Select(i =>
+                {
+                    ExpenditureOutputViewModel vm = i.ToDisplayViewModel(timeZones, currencyByProduct, localize, timeZoneIanaId);
+                    vm.AmountFlag = unusuallyLarge.Contains(i.Id) ? localize("Unusually large") : "";
+                    return vm;
+                })
             ];
         }
     }

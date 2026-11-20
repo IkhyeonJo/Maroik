@@ -15,8 +15,8 @@
  * All the numbers are computed on the server and rendered into hidden inputs
  * (`#dashboardCharts`, `#dashboardChartLabels`). This script only reads those
  * inputs and plots them — no maths beyond `toLocaleString()` for display — to as
- * many decimal places as the server says an amount is stored with
- * (`#amountMaxDecimalPlaces`).
+ * the decimal places the server gives for the default currency
+ * (`#amountMinDecimalPlaces`, `#amountMaxDecimalPlaces`).
  *
  * IIFE-wrapped, no `import` / `export`.
  */
@@ -26,8 +26,10 @@
 
     // The replies this page reads, mirroring the controllers' Json(...) results (see window.replies).
     const resultReply = check.object({ result: check.boolean });
-    // Authoritative in FinanceAmountPolicy.MaxDecimalPlaces (server): the stored scale of an amount, so a
-    // tooltip shows 1234.5678 as "1,234.5678" instead of the browser default's three decimals.
+    // The default currency's decimal places, decided on the server (AmountDisplay.DecimalPlacesOf): KRW 0–0 ("1,235"),
+    // USD 2–2 ("12.50"), and for an unknown currency 0 to the stored scale (FinanceAmountPolicy.MaxDecimalPlaces), so
+    // 1234.5678 shows as "1,234.5678" instead of the browser default's three decimals.
+    const amountMinDecimalPlaces = parseInt(fieldValue($("#amountMinDecimalPlaces")), 10);
     const amountMaxDecimalPlaces = parseInt(fieldValue($("#amountMaxDecimalPlaces")), 10);
     // The charts, computed on the server (one per main class and period, in the domain's display order).
     const charts = parseJson(fieldValue($("#dashboardCharts")), check.array(check.object({
@@ -103,7 +105,7 @@
                                 const index = required(tooltipItem.index, "the slice index");
                                 const label = required(data.labels, "the chart labels")[index];
                                 const value = required(chart.Amounts[index], "the slice value");
-                                return `${label}: ${value.toLocaleString(undefined, { maximumFractionDigits: amountMaxDecimalPlaces })} (${required(chart.Percentages[index], "the slice percentage").toFixed(2)}%)`;
+                                return `${label}: ${value.toLocaleString(undefined, { minimumFractionDigits: amountMinDecimalPlaces, maximumFractionDigits: amountMaxDecimalPlaces })} (${required(chart.Percentages[index], "the slice percentage").toFixed(2)}%)`;
                             }
                         }
                     }

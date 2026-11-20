@@ -1,4 +1,5 @@
 using Maroik.Core.Contract.Interfaces;
+using Maroik.Core.Service.Classifiers;
 using Maroik.Core.Service.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -31,6 +32,9 @@ public static class ServiceCollectionExtensions
             services.AddScoped<IAssetBalanceStore, AssetBalanceStore>();
             services.AddScoped<IIncomeService, IncomeService>();
             services.AddScoped<IExpenditureService, ExpenditureService>();
+            // The class-suggestion models the worker trained, read from the file storage and kept in memory (bounded, ClassModelCache).
+            services.AddSingleton<ClassModelCache>();
+            services.AddScoped<ClassModelSource>();
             services.AddScoped<IFixedIncomeService, FixedIncomeService>();
             services.AddScoped<IFixedExpenditureService, FixedExpenditureService>();
             services.AddScoped<IDashboardService, DashboardService>();

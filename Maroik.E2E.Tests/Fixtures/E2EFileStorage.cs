@@ -112,4 +112,15 @@ public sealed class E2EFileStorage : IFileClient
     /// <inheritdoc />
     public Task<bool> DeleteFileManagerFileAsync(string storagePath, CancellationToken ct = default)
         => Task.FromResult(_files.TryRemove(storagePath.TrimStart('/'), out _));
+
+    /// <inheritdoc />
+    public Task<bool> SaveClassModelAsync(string storagePath, byte[] model, CancellationToken ct = default)
+    {
+        Seed(storagePath, model);
+        return Task.FromResult(true);
+    }
+
+    /// <inheritdoc />
+    public Task<bool> DeleteClassModelAsync(string storagePath, CancellationToken ct = default)
+        => Task.FromResult(_files.TryRemove(storagePath.TrimStart('/'), out _));
 }
