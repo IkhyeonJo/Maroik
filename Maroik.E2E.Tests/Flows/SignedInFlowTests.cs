@@ -145,8 +145,15 @@ public class SignedInFlowTests(E2ESharedFixture fixture) : E2ETestBase(fixture)
     {
         var page = await NewPageAsync();
 
-        var response = await page.APIRequest.GetAsync(BaseUrl + path);
+        // Fetched from inside the browser, not with page.APIRequest: the API request runs in Playwright's
+        // Node driver, which resolves www.localhost with the OS resolver — and Windows does not map
+        // *.localhost to loopback (getaddrinfo ENOTFOUND), while every browser does so itself. Not a
+        // page.GotoAsync(path) either: Chromium fails a navigation to an empty-bodied 403
+        // (net::ERR_HTTP_RESPONSE_CODE_FAILURE), so an anonymous page of the site is opened first.
+        await GotoAsync(page, "/Account/Login");
 
-        Assert.Equal(403, response.Status);
+        var status = await page.EvaluateAsync<int>("async path => (await fetch(path)).status", path);
+
+        Assert.Equal(403, status);
     }
 }
