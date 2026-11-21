@@ -206,8 +206,16 @@ public static class FormulaEvaluator
 
             if (number < 0) return _numError;
             double value = Math.Pow((double)number, (double)exponent);
-            return double.IsFinite(value) && Math.Abs(value) < (double)decimal.MaxValue ? new NumberValue((decimal)value) : _numError;
+            return double.IsFinite(value) && Math.Abs(value) < (double)decimal.MaxValue ? new NumberValue(FromDouble(value)) : _numError;
         }
+
+        /// <summary>
+        /// <paramref name="value"/> as a decimal of the 15 significant digits a double carries, as Excel shows a power: √1.21 is 1.1.
+        /// Since .NET 11 the <c>(decimal)</c> conversion keeps the double's exact binary value (1.100000000000000088817841970012523);
+        /// before, it rounded to these 15 digits itself. A value below a decimal's 1E-28 is 0.
+        /// </summary>
+        private static decimal FromDouble(double value) =>
+            decimal.Parse(value.ToString("G15", CultureInfo.InvariantCulture), NumberStyles.Float, CultureInfo.InvariantCulture);
 
         /// <summary>A comparison with Excel's ordering: number &lt; text &lt; boolean; an empty side takes the other side's type.</summary>
         private static FormulaValue Compare(string op, FormulaValue left, FormulaValue right)

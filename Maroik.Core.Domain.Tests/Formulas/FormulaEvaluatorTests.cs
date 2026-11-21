@@ -1,3 +1,4 @@
+using System.Globalization;
 using Maroik.Core.Domain.Formulas;
 using static Maroik.Core.Domain.Tests.Fixtures.FormulaFixture;
 
@@ -23,16 +24,16 @@ public class FormulaEvaluatorTests
 
     /// <summary>Arithmetic with Excel's precedence, in decimals (0.1 + 0.2 is exactly 0.3).</summary>
     [Theory]
-    [InlineData("=1+2*3", 7)]
-    [InlineData("=-2^2", 4)]
-    [InlineData("=2^3^2", 64)]
-    [InlineData("=0.1+0.2", 0.3)]
-    [InlineData("=10/4", 2.5)]
-    [InlineData("=50%", 0.5)]
-    [InlineData("=2^-1", 0.5)]
-    [InlineData("=-(3-5)", 2)]
-    [InlineData("=+3", 3)]
-    public void Arithmetic_IsExcels(string input, double expected) => Assert.Equal(N((decimal)expected), Evaluate(input));
+    [InlineData("=1+2*3", "7")]
+    [InlineData("=-2^2", "4")]
+    [InlineData("=2^3^2", "64")]
+    [InlineData("=0.1+0.2", "0.3")]
+    [InlineData("=10/4", "2.5")]
+    [InlineData("=50%", "0.5")]
+    [InlineData("=2^-1", "0.5")]
+    [InlineData("=-(3-5)", "2")]
+    [InlineData("=+3", "3")]
+    public void Arithmetic_IsExcels(string input, string expected) => Assert.Equal(N(decimal.Parse(expected, CultureInfo.InvariantCulture)), Evaluate(input));
 
     /// <summary>A fractional power is computed in double precision and comes back as a decimal.</summary>
     [Fact]
@@ -42,6 +43,21 @@ public class FormulaEvaluatorTests
 
         Assert.Equal(1.41421356, (double)value.Value, 8);
     }
+
+    /// <summary>
+    /// A fractional power keeps the 15 significant digits a double carries, as Excel shows it: √1.21 is 1.1, not the double's
+    /// 1.100000000000000088817841970012523 that .NET 11's exact double-to-decimal conversion gives. Before .NET 11 the conversion itself
+    /// rounded to 15 digits.
+    /// </summary>
+    [Theory]
+    [InlineData("=1.21^0.5", "1.1")]
+    [InlineData("=2^0.5", "1.41421356237310")]
+    [InlineData("=10^-0.5", "0.316227766016838")]
+    [InlineData("=1E20^0.5", "10000000000")]
+    [InlineData("=2^60.5", "1630477228166600000")]
+    [InlineData("=0.5^100.5", "0")]
+    public void AFractionalPower_KeepsTheDoublesFifteenSignificantDigits(string input, string expected) =>
+        Assert.Equal(N(decimal.Parse(expected, CultureInfo.InvariantCulture)), Evaluate(input));
 
     /// <summary>Division by zero, overflow and impossible powers are errors.</summary>
     [Theory]
@@ -106,7 +122,7 @@ public class FormulaEvaluatorTests
         {
             ErrorValue e => FormulaLexer.ErrorText(e.Kind),
             TextValue t => t.Value,
-            NumberValue n => n.Value.ToString(System.Globalization.CultureInfo.InvariantCulture),
+            NumberValue n => n.Value.ToString(CultureInfo.InvariantCulture),
             _ => value.ToString(),
         });
     }
@@ -215,21 +231,21 @@ public class FormulaEvaluatorTests
 
     /// <summary>ROUND rounds half away from zero; ROUNDUP away from zero; ROUNDDOWN toward zero; digits may be negative and are truncated.</summary>
     [Theory]
-    [InlineData("=ROUND(2.5,0)", 3)]
-    [InlineData("=ROUND(-2.5,0)", -3)]
-    [InlineData("=ROUND(1234,-2)", 1200)]
-    [InlineData("=ROUND(1.25,1.9)", 1.3)]
-    [InlineData("=ROUND(1.5,)", 2)]
-    [InlineData("=ROUNDUP(1.21,1)", 1.3)]
-    [InlineData("=ROUNDUP(-1.21,1)", -1.3)]
-    [InlineData("=ROUNDUP(1201,-2)", 1300)]
-    [InlineData("=ROUNDDOWN(1.29,1)", 1.2)]
-    [InlineData("=ROUNDDOWN(-1.29,1)", -1.2)]
-    [InlineData("=ROUNDDOWN(1299,-2)", 1200)]
-    [InlineData("=ABS(-3)", 3)]
-    [InlineData("=ROUND(5,-40)", 0)]
-    [InlineData("=ROUND(1.23456,40)", 1.23456)]
-    public void Rounding_IsExcels(string input, double expected) => Assert.Equal(N((decimal)expected), Evaluate(input));
+    [InlineData("=ROUND(2.5,0)", "3")]
+    [InlineData("=ROUND(-2.5,0)", "-3")]
+    [InlineData("=ROUND(1234,-2)", "1200")]
+    [InlineData("=ROUND(1.25,1.9)", "1.3")]
+    [InlineData("=ROUND(1.5,)", "2")]
+    [InlineData("=ROUNDUP(1.21,1)", "1.3")]
+    [InlineData("=ROUNDUP(-1.21,1)", "-1.3")]
+    [InlineData("=ROUNDUP(1201,-2)", "1300")]
+    [InlineData("=ROUNDDOWN(1.29,1)", "1.2")]
+    [InlineData("=ROUNDDOWN(-1.29,1)", "-1.2")]
+    [InlineData("=ROUNDDOWN(1299,-2)", "1200")]
+    [InlineData("=ABS(-3)", "3")]
+    [InlineData("=ROUND(5,-40)", "0")]
+    [InlineData("=ROUND(1.23456,40)", "1.23456")]
+    public void Rounding_IsExcels(string input, string expected) => Assert.Equal(N(decimal.Parse(expected, CultureInfo.InvariantCulture)), Evaluate(input));
 
     /// <summary>A rounding argument that is not a number is #VALUE!; an error is passed on.</summary>
     [Fact]

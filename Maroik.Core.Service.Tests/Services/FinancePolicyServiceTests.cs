@@ -1,3 +1,4 @@
+using System.Globalization;
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Enums;
 using Maroik.Core.Domain.Finances;
@@ -13,13 +14,13 @@ public class FinancePolicyServiceTests
 
     /// <summary>An amount field's text is read, and anything else refused.</summary>
     [Theory]
-    [InlineData("1,234.5", true, 1234.5)]
-    [InlineData("12x", false, 0)]
-    [InlineData(null, false, 0)]
-    public void TryParseAmount_ReadsWhatThePolicyReads(string? input, bool parsed, double expected)
+    [InlineData("1,234.5", true, "1234.5")]
+    [InlineData("12x", false, "0")]
+    [InlineData(null, false, "0")]
+    public void TryParseAmount_ReadsWhatThePolicyReads(string? input, bool parsed, string expected)
     {
         Assert.Equal(parsed, _sut.TryParseAmount(input, out decimal amount));
-        Assert.Equal((decimal)expected, amount);
+        Assert.Equal(decimal.Parse(expected, CultureInfo.InvariantCulture), amount);
     }
 
     /// <summary>A transfer subclass needs a deposit asset; others do not.</summary>

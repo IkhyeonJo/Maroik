@@ -103,7 +103,9 @@ public class StylesheetFlowTests(E2ESharedFixture fixture) : E2ETestBase(fixture
         Assert.Equal("pointer", await StyleAsync(page, closeButton, "cursor"));
         Assert.Equal("200px", await StyleAsync(page, $"{popup} .popup-body", "max-height"));
         Assert.Equal("14px", await StyleAsync(page, $"{popup} .popup-body p", "font-size"));
-        Assert.Equal("flex-end", await StyleAsync(page, $"{popup} .popup-footer", "justify-content"));
+        // The stylesheet says flex-end; Chrome 158 reports that computed value under its new name flow-end (the buttons still sit at
+        // the end), older browsers as flex-end. Anything else (normal, flex-start / flow-start, center, ...) is a wrong footer.
+        Assert.Contains(await StyleAsync(page, $"{popup} .popup-footer", "justify-content"), (string[])["flex-end", "flow-end"]);
 
         // An event of the page's own markup (the seed data may have none in view): its title shows the pointer too.
         await page.EvaluateAsync("""() => document.body.insertAdjacentHTML("beforeend", '<a class="fc-event" id="styleProbe"><span class="fc-event-title">e</span></a>')""");

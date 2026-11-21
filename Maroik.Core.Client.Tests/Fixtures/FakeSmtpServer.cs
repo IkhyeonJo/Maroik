@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Security;
 using System.Net.Sockets;
+using System.Security.Authentication;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 
@@ -130,7 +131,17 @@ internal sealed class FakeSmtpServer : IAsyncDisposable
                             case "STARTTLS" when Certificate != null:
                                 await writer.WriteLineAsync("220 2.0.0 Ready to start TLS");
                                 ssl = new SslStream(network, leaveInnerStreamOpen: true);
-                                await ssl.AuthenticateAsServerAsync(Certificate, clientCertificateRequired: false, checkCertificateRevocation: false);
+                                try
+                                {
+                                    await ssl.AuthenticateAsServerAsync(Certificate, clientCertificateRequired: false, checkCertificateRevocation: false);
+                                }
+                                catch (AuthenticationException)
+                                {
+                                    // The client refused the certificate: since .NET 11 it says so with a TLS alert (handshake_failure)
+                                    // instead of only closing the connection. The session ends here, as when the client goes away.
+                                    return;
+                                }
+
                                 reader.Dispose();
                                 await writer.DisposeAsync();
                                 reader = ReaderOver(ssl);
