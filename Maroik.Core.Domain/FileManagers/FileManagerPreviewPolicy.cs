@@ -16,7 +16,7 @@ public static class FileManagerPreviewPolicy
     private const int HeaderBytes = 12;
 
     /// <summary>The previewable extensions (lower-case).</summary>
-    private static readonly HashSet<string> _extensions = new(StringComparer.Ordinal) { ".png", ".jpg", ".jpeg", ".gif", ".webp" };
+    private static readonly HashSet<string> _extensions = [with(StringComparer.Ordinal), ".png", ".jpg", ".jpeg", ".gif", ".webp"];
 
     /// <summary>Whether a file named <paramref name="name"/> of <paramref name="size"/> bytes may be offered a preview.</summary>
     public static bool IsPreviewable(string name, long size) =>

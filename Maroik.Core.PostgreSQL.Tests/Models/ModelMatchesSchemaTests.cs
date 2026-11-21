@@ -252,7 +252,7 @@ public abstract class ModelMatchesSchemaTests(SchemaDatabaseFixture database)
                let store = StoreObjectIdentifier.Table(e.GetTableName()!, e.GetSchema())
                from i in e.GetIndexes()
                where i.IsUnique
-               select $"{e.GetTableName()}.{i.GetDatabaseName()}({string.Join(',', i.Properties.Select(p => p.GetColumnName(store)!))})"
+               select $"{e.GetTableName()}.{i.GetDatabaseName()}({string.Join(',', i.Properties.Cast<IProperty>().Select(p => p.GetColumnName(store)!))})"
         ];
         List<string> missing = [.. real.Where(key => !modeled.Contains(key))];
 

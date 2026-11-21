@@ -18,20 +18,22 @@ public static class AmountDisplay
     public static readonly string Format = "#,0." + new string('#', PolicyLimits.AmountMaxDecimalPlaces);
 
     /// <summary>ISO 4217 currencies without minor units.</summary>
-    private static readonly HashSet<string> _noDecimals = new(StringComparer.Ordinal)
-    {
+    private static readonly HashSet<string> _noDecimals =
+    [
+        with(StringComparer.Ordinal),
         "BIF", "CLP", "DJF", "GNF", "ISK", "JPY", "KMF", "KRW", "PYG", "RWF", "UGX", "UYI", "VND", "VUV", "XAF", "XOF", "XPF"
-    };
+    ];
 
     /// <summary>ISO 4217 currencies with three decimal places.</summary>
-    private static readonly HashSet<string> _threeDecimals = new(StringComparer.Ordinal) { "BHD", "IQD", "JOD", "KWD", "LYD", "OMR", "TND" };
+    private static readonly HashSet<string> _threeDecimals = [with(StringComparer.Ordinal), "BHD", "IQD", "JOD", "KWD", "LYD", "OMR", "TND"];
 
     /// <summary>Widely used ISO 4217 currencies with two decimal places.</summary>
-    private static readonly HashSet<string> _twoDecimals = new(StringComparer.Ordinal)
-    {
+    private static readonly HashSet<string> _twoDecimals =
+    [
+        with(StringComparer.Ordinal),
         "AED", "AUD", "BRL", "CAD", "CHF", "CNY", "CZK", "DKK", "EUR", "GBP", "HKD", "HUF", "IDR", "ILS", "INR", "MXN", "MYR", "NOK",
         "NZD", "PHP", "PLN", "RUB", "SAR", "SEK", "SGD", "THB", "TRY", "TWD", "USD", "ZAR"
-    };
+    ];
 
     /// <summary>The usual decimal places of <paramref name="currency"/> when it is a known code (any case, blanks trimmed), or null.</summary>
     public static int? DecimalPlacesOf(string? currency)

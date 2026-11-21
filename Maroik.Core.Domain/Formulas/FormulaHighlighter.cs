@@ -10,7 +10,7 @@ public static class FormulaHighlighter
     /// <summary>The highlight of <paramref name="input"/> in <paramref name="scope"/>; input that is not a formula has none.</summary>
     public static FormulaHighlight Highlight(string input, FormulaScope scope)
     {
-        if (!input.StartsWith('=')) return new FormulaHighlight([], [], []);
+        if (!input.StartsWith('=', StringComparison.Ordinal)) return new FormulaHighlight([], [], []);
 
         FormulaSyntax syntax = FormulaParser.Parse(input, canonical: false);
         BoundFormula bound = FormulaBinder.Bind(syntax, scope);

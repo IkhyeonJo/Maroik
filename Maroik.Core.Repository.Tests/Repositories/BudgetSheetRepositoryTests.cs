@@ -167,7 +167,7 @@ public sealed class BudgetSheetRepositoryTests(DatabaseFixture database) : Repos
         var (_, id) = await CreateSheetAsync(lines: [_meal]);
         await Cells.CreateAsync(BudgetSheetCell.Create(id, "F.1", "B", "1", _now), TestContext.Current.CancellationToken);
 
-        await Context.Database.ExecuteSqlInterpolatedAsync($"""DELETE FROM "BudgetSheet" WHERE "Id" = {id}""", TestContext.Current.CancellationToken);
+        await Context.Database.ExecuteSqlAsync($"""DELETE FROM "BudgetSheet" WHERE "Id" = {id}""", TestContext.Current.CancellationToken);
 
         Assert.Empty(await Lines.GetBySheetIdsAsync([id], TestContext.Current.CancellationToken));
         Assert.Empty(await Cells.GetBySheetIdsAsync([id], TestContext.Current.CancellationToken));

@@ -42,7 +42,7 @@ public class BudgetSheetRepository(ApplicationDbContext context)
         // Raw SQL because EF Core LINQ cannot emit FOR UPDATE; AsNoTracking so a row this context already tracks is not handed back
         // instead of the row the lock just read (as AccountRepository.FindByEmailForUpdateAsync).
         string kindName = kind.ToString();
-        var entities = await Set.FromSqlInterpolated(
+        var entities = await Set.FromSql(
             $"""
              SELECT *
              FROM "BudgetSheet"

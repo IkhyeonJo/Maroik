@@ -9,7 +9,7 @@ namespace Maroik.Core.Contract.Tests.ArchitectureRules;
 /// file) and in every Dockerfile's build stage. The analyzers run as build errors, and an SDK update can bring a newer
 /// Roslyn with new diagnostics (or an analyzer that no longer loads), so a floating SDK could break a build that did not
 /// change. Bumping the SDK is therefore one deliberate change to all of these places at once.
-/// The runtime images (<c>aspnet</c> / <c>runtime</c>) stay on the floating <c>10.0</c> tag on purpose: they only run the
+/// The runtime images (<c>aspnet</c> / <c>runtime</c>) stay on the floating <c>11.0</c> tag on purpose: they only run the
 /// published app and should pick up runtime security patches without a commit.
 /// </summary>
 public class SdkPinArchitectureTests

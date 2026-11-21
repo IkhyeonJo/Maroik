@@ -202,7 +202,7 @@ public sealed class CategoryRepositoryTests(DatabaseFixture database) : Reposito
         await using var other = NewDbContext();
         await using var otherUnitOfWork = new UnitOfWork(other);
         await otherUnitOfWork.BeginAsync(ct: TestContext.Current.CancellationToken);
-        var ex = await Assert.ThrowsAsync<Npgsql.PostgresException>(() => other.Database.ExecuteSqlInterpolatedAsync(
+        var ex = await Assert.ThrowsAsync<Npgsql.PostgresException>(() => other.Database.ExecuteSqlAsync(
             $"""SELECT 1 FROM "Category" WHERE "Id" = {category.Id} FOR UPDATE NOWAIT""", TestContext.Current.CancellationToken));
         Assert.Equal(Npgsql.PostgresErrorCodes.LockNotAvailable, ex.SqlState);
         await otherUnitOfWork.RollbackAsync(TestContext.Current.CancellationToken);

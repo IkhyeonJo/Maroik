@@ -101,7 +101,7 @@ public class ExpenditureRepository(ApplicationDbContext context)
         // root runs the statement verbatim so FOR UPDATE stays at the top level. AsNoTracking so the
         // lock read is never satisfied from a stale already-tracked instance. This first call only
         // takes the lock — nothing is tracked here.
-        var locked = await Set.FromSqlInterpolated(
+        var locked = await Set.FromSql(
             $"""
              SELECT *
              FROM "Expenditure"

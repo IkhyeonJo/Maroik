@@ -53,7 +53,7 @@ public class CalendarSharedRepository(ApplicationDbContext context)
         // AssetRepository.FindByEmailAndProductNamesForUpdateAsync uses to guarantee two concurrent
         // batched-lock callers with overlapping id sets can never acquire their locks in different
         // orders and deadlock.
-        var entities = await Set.FromSqlInterpolated(
+        var entities = await Set.FromSql(
             $"""
              SELECT *
              FROM "CalendarShared"

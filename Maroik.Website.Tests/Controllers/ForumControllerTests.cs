@@ -198,7 +198,7 @@ public class ForumControllerTests(MaroikWebApplicationFactory factory)
     public async Task WriteFreeComment_AnonymousSession_IsForbidden()
     {
         using var request = new HttpRequestMessage(HttpMethod.Post, "/Forum/WriteFreeComment");
-        request.Content = System.Net.Http.Json.JsonContent.Create(new { BoardId = 1, Content = "x", DetailCurrentPage = 1 });
+        request.Content = JsonContent.Create(new { BoardId = 1, Content = "x", DetailCurrentPage = 1 });
 
         var response = await _client.SendAsync(request, TestContext.Current.CancellationToken);
 

@@ -201,7 +201,7 @@ public class DashboardControllerTests
     public async Task UserUpdateDefaultMonetary_AnonymousSession_IsForbidden()
     {
         using var request = new HttpRequestMessage(HttpMethod.Post, "/Dashboard/UserUpdateDefaultMonetary");
-        request.Content = System.Net.Http.Json.JsonContent.Create(new { DefaultMonetaryUnit = "USD" });
+        request.Content = JsonContent.Create(new { DefaultMonetaryUnit = "USD" });
 
         var response = await _client.SendAsync(request, TestContext.Current.CancellationToken);
 
@@ -237,7 +237,7 @@ public class DashboardControllerTests
         using var request = new HttpRequestMessage(HttpMethod.Post, "/Dashboard/CultureManagement");
         request.Headers.Add("Cookie", antiForgeryCookie);
         request.Headers.Add("RequestVerificationToken", antiForgeryToken);
-        request.Content = System.Net.Http.Json.JsonContent.Create(new { Culture = "en-US" });
+        request.Content = JsonContent.Create(new { Culture = "en-US" });
 
         var response = await _client.SendAsync(request, TestContext.Current.CancellationToken);
         string json = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);

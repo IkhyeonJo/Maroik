@@ -173,7 +173,7 @@ public class RepositoryFailureContractTests(MaroikWebApplicationFactory factory)
         string json = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
         Assert.Equal(System.Net.HttpStatusCode.OK, response.StatusCode);
-        Assert.False(JsonDocument.Parse(json).RootElement.GetProperty("result").GetBoolean());
+        Assert.False(JsonElement.Parse(json).GetProperty("result").GetBoolean());
         Assert.Contains("A temporary error occurred. Please try again later.", json, StringComparison.Ordinal);
         Assert.DoesNotContain(DatabaseSecret, json, StringComparison.Ordinal);
     }

@@ -53,7 +53,7 @@ public static class FormulaRewriter
     /// </summary>
     private static string Rewrite(string input, FormulaScope scope, bool canonical, Func<IReadOnlyList<string>, Corner, string?> corner)
     {
-        if (!input.StartsWith('=')) return input;
+        if (!input.StartsWith('=', StringComparison.Ordinal)) return input;
         IReadOnlyList<FormulaToken> tokens = FormulaLexer.Tokenize(input, 1, canonical);
         var output = new StringBuilder();
         int copied = 0;

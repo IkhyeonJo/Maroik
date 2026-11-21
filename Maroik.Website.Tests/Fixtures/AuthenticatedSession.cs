@@ -1,4 +1,3 @@
-using System.Net.Http.Json;
 using Microsoft.AspNetCore.Http;
 
 namespace Maroik.Website.Tests.Fixtures;

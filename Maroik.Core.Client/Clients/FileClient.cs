@@ -33,7 +33,7 @@ public class FileClient(IHttpClientFactory httpClientFactory, IOptions<ServerSet
         // (see DownloadAsync/UploadAsync below) — checking the un-normalized string would let that
         // form slip past this guard.
         string normalized = filePath.Replace('\\', '/');
-        return !normalized.StartsWith('/')
+        return !normalized.StartsWith('/', StringComparison.Ordinal)
             && !Path.IsPathRooted(normalized)
             && !normalized.Split('/').Contains("..");
     }

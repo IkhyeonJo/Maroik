@@ -123,10 +123,10 @@ public class InvalidInputContractTests(MaroikWebApplicationFactory factory)
         string createTooLong = await Post("/Management/CreateCategory", Category(new string('n', 5000)));
         string createSubOfMissing = await Post("/Management/CreateSubCategory", SubCategory(name, 987654321));
 
-        Assert.False(JsonDocument.Parse(createTooLong).RootElement.GetProperty("result").GetBoolean());
-        Assert.Equal("'Name' must be 255 characters or fewer.", JsonDocument.Parse(createTooLong).RootElement.GetProperty("error").GetString());
-        Assert.False(JsonDocument.Parse(createSubOfMissing).RootElement.GetProperty("result").GetBoolean());
-        Assert.Equal("A temporary error occurred. Please try again later.", JsonDocument.Parse(createSubOfMissing).RootElement.GetProperty("error").GetString());
+        Assert.False(JsonElement.Parse(createTooLong).GetProperty("result").GetBoolean());
+        Assert.Equal("'Name' must be 255 characters or fewer.", JsonElement.Parse(createTooLong).GetProperty("error").GetString());
+        Assert.False(JsonElement.Parse(createSubOfMissing).GetProperty("result").GetBoolean());
+        Assert.Equal("A temporary error occurred. Please try again later.", JsonElement.Parse(createSubOfMissing).GetProperty("error").GetString());
         return;
 
         // Posts body as JSON as the admin, asserts 200, and returns the response body.

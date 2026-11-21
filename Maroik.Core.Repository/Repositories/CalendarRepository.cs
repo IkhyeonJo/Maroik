@@ -70,7 +70,7 @@ public class CalendarRepository(ApplicationDbContext context)
         // Raw SQL is required because EF Core LINQ cannot emit FOR UPDATE. AsNoTracking so a
         // pre-lock instance already tracked in this context can't snap back and defeat the lock
         // (see BoardRepository.FindActiveByIdForUpdateAsync for the same rationale).
-        var entities = await Set.FromSqlInterpolated(
+        var entities = await Set.FromSql(
             $"""
              SELECT *
              FROM "Calendar"

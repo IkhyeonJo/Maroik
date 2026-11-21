@@ -174,7 +174,7 @@ public class AccountRepository(ApplicationDbContext context)
         // already-tracked (pre-lock) instance instead of the row this FOR UPDATE just (re-)read —
         // silently defeating the lock's whole purpose. AsNoTracking always materializes a fresh
         // instance from what was actually just selected, bypassing that snap-back.
-        var entities = await Set.FromSqlInterpolated(
+        var entities = await Set.FromSql(
             $"""
              SELECT *
              FROM "Account"
@@ -194,7 +194,7 @@ public class AccountRepository(ApplicationDbContext context)
         // locks in one fixed order, so two administrators editing accounts at the same time queue up here
         // instead of each holding one administrator row and waiting for the other's (the same ORDER BY +
         // FOR UPDATE technique as AssetRepository.FindByEmailAndProductNamesForUpdateAsync).
-        var entities = await Set.FromSqlInterpolated(
+        var entities = await Set.FromSql(
             $"""
              SELECT *
              FROM "Account"

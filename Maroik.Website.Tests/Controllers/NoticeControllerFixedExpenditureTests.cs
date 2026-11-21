@@ -79,7 +79,7 @@ public class NoticeControllerFixedExpenditureTests(MaroikWebApplicationFactory f
     public async Task CreateFixedExpenditure_AnonymousSession_IsForbidden()
     {
         using var request = new HttpRequestMessage(HttpMethod.Post, "/Notice/CreateFixedExpenditure");
-        request.Content = System.Net.Http.Json.JsonContent.Create(new { });
+        request.Content = JsonContent.Create(new { });
 
         var response = await _client.SendAsync(request, TestContext.Current.CancellationToken);
 

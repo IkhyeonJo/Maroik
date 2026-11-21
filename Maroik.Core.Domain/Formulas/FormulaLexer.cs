@@ -203,7 +203,7 @@ public static class FormulaLexer
 
         if (canonical && p < input.Length && input[p] == '{')
         {
-            int close = input.IndexOf('}', p);
+            int close = input.IndexOf('}', p, StringComparison.Ordinal);
             if (close < 0) return false;
             string key = input[(p + 1)..close];
             if (key.Length == 0 || !key.All(ch => char.IsAsciiLetterOrDigit(ch) || ch == '.')) return false;

@@ -49,7 +49,7 @@ Also `error`, by rule ID:
   in `.Tests` (a build-time analyzer, `PrivateAssets=all`, so not a runtime dependency — the `.csproj` package graph that
   `SolutionLayeringArchitectureTests` checks is unchanged). A method ID names one overload, so the file lists every overload;
   before bumping the analyzer, check that the `Microsoft.CodeAnalysis` version its DLL references (not the package number;
-  5.6.0 references 4.12) is not newer than the SDK's compiler (Roslyn 5.0), or the analyzer silently fails to load (CS8032).
+  5.6.0 references 4.12) is not newer than the SDK's compiler (Roslyn 5.12), or the analyzer silently fails to load (CS8032).
 
 - **Unnecessary usings** (IDE0005): it runs at build time only because `Directory.Build.props` sets
   `GenerateDocumentationFile` (which also checks doc-comment references such as `paramref`; missing doc comments, CS1591,
@@ -64,7 +64,7 @@ The code has no `#pragma warning disable`.
 - **One pinned SDK.** `global.json` pins the exact .NET SDK (`rollForward: disable`); CI installs it from that file and every
   Dockerfile's build stage uses the same `sdk:<version>` tag (pinned by `SdkPinArchitectureTests`). The analyzers are build
   errors, so an SDK bump (a newer Roslyn) is one deliberate change to all of these at once. The runtime images (`aspnet` /
-  `runtime`) stay on the floating `10.0` tag so they pick up runtime security patches. `.github/workflows/sdk-bump.yml` checks
+  `runtime`) stay on the floating `11.0` tag so they pick up runtime security patches. `.github/workflows/sdk-bump.yml` checks
   weekly for a newer SDK of the pinned channel and opens one pull request that moves all of them together (Dependabot would
   split global.json and the Dockerfiles into pull requests that each fail the test); it starts CI/CD on that branch itself,
   since a pull request opened with `GITHUB_TOKEN` triggers no workflow. It needs the repository setting "Allow GitHub Actions

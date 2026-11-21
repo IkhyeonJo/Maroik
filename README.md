@@ -408,12 +408,12 @@ generic error instead of failing half-way through a handler.
 ## Technologies Used
 
 ### Backend
-- ASP.NET Core MVC 10.0
+- ASP.NET Core MVC 11.0
   - Improved performance
   - Enhanced routing
   - Better dependency injection
 - PostgreSQL 17
-- Entity Framework Core 10.0
+- Entity Framework Core 11.0
   - Improved query performance
   - Better async support
   - Enhanced change tracking

@@ -281,7 +281,7 @@ public class KanbanControllerTests(MaroikWebApplicationFactory factory)
     public async Task CreateKanbanCard_RefusesAnAnonymousSession()
     {
         using var request = new HttpRequestMessage(HttpMethod.Post, "/Kanban/CreateKanbanCard");
-        request.Content = System.Net.Http.Json.JsonContent.Create(new { Lane = "ToDo", Title = "x" });
+        request.Content = JsonContent.Create(new { Lane = "ToDo", Title = "x" });
 
         var response = await _client.SendAsync(request, TestContext.Current.CancellationToken);
 

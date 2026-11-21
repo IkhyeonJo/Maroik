@@ -12,7 +12,7 @@ public class RecalculationEngineTests
 {
     /// <summary>The definition of a cell from its A1 input on sheet S: a formula, or a number.</summary>
     private static CellDefinition Def(string input) =>
-        input.StartsWith('=') ? CellDefinition.Of(Bind(input)) : CellDefinition.Of(new NumberValue(decimal.Parse(input, System.Globalization.CultureInfo.InvariantCulture)));
+        input.StartsWith('=', StringComparison.Ordinal) ? CellDefinition.Of(Bind(input)) : CellDefinition.Of(new NumberValue(decimal.Parse(input, System.Globalization.CultureInfo.InvariantCulture)));
 
     /// <summary>An engine with the given cells ("B1" → input), fully calculated.</summary>
     private static RecalculationEngine Engine(Func<CellAddress, decimal?>? actualOf = null, params (string Cell, string Input)[] cells)

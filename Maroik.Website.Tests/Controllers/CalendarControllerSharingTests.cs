@@ -107,7 +107,7 @@ public class CalendarControllerSharingTests(MaroikWebApplicationFactory factory)
     public async Task UpdateOtherCalendar_AnonymousSession_IsForbidden()
     {
         using var request = new HttpRequestMessage(HttpMethod.Post, "/Calendar/UpdateOtherCalendar");
-        request.Content = System.Net.Http.Json.JsonContent.Create(new[] { new { AccountEmail = "x@test.com", CalendarId = 1 } });
+        request.Content = JsonContent.Create(new[] { new { AccountEmail = "x@test.com", CalendarId = 1 } });
 
         var response = await _client.SendAsync(request, TestContext.Current.CancellationToken);
 

@@ -171,7 +171,7 @@ public class BoardRepository(ApplicationDbContext context)
         // already-tracked (pre-lock) instance instead of the row this FOR UPDATE just (re-)read —
         // silently defeating the lock's whole purpose. AsNoTracking always materializes a fresh
         // instance from what was actually just selected, bypassing that snap-back.
-        var entities = await Set.FromSqlInterpolated(
+        var entities = await Set.FromSql(
             $"""
              SELECT *
              FROM "Board"

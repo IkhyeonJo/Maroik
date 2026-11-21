@@ -59,7 +59,7 @@ public class CalendarControllerCalendarTests(MaroikWebApplicationFactory factory
     public async Task CreateCalendar_AnonymousSession_IsForbidden()
     {
         using var request = new HttpRequestMessage(HttpMethod.Post, "/Calendar/CreateCalendar");
-        request.Content = System.Net.Http.Json.JsonContent.Create(ValidCalendarPayload("Blocked"));
+        request.Content = JsonContent.Create(ValidCalendarPayload("Blocked"));
 
         var response = await _client.SendAsync(request, TestContext.Current.CancellationToken);
 

@@ -334,7 +334,7 @@ public sealed class BudgetWorkbook
     {
         Sheet sheet = _sheets[BudgetSheetName.Format(kind, year)];
         FormulaHighlight highlight = FormulaHighlighter.Highlight(input, sheet.Scope);
-        if (!input.StartsWith('=') || !highlight.CanSave || sheet.Layout.Locate(address) is not var (key, column))
+        if (!input.StartsWith('=', StringComparison.Ordinal) || !highlight.CanSave || sheet.Layout.Locate(address) is not var (key, column))
             return new BudgetFormulaPreview(highlight, null);
 
         var cell = new CellAddress(sheet.Name, key, column);

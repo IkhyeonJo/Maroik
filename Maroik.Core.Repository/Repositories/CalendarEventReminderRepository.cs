@@ -48,7 +48,7 @@ public class CalendarEventReminderRepository(ApplicationDbContext context)
         // one run. The "LIMIT with ORDER BY ... FOR UPDATE" caveat (a row changed by a concurrent commit can be dropped from the
         // page) only delays such a row to the next run. The partial index CalendarEventReminder_index_1 serves the range scan.
         DateTime now = DateTime.SpecifyKind(nowUtc, DateTimeKind.Unspecified);
-        var entities = await Set.FromSqlInterpolated(
+        var entities = await Set.FromSql(
             $"""
              SELECT *
              FROM "CalendarEventReminder"

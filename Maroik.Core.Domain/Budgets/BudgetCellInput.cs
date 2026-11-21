@@ -36,7 +36,7 @@ public static class BudgetCellInput
         string text = input?.Trim() ?? "";
         if (text.Length == 0) return (string?)null;
 
-        if (text.StartsWith('='))
+        if (text.StartsWith('=', StringComparison.Ordinal))
         {
             FormulaHighlight highlight = FormulaHighlighter.Highlight(text, scope);
             if (highlight.Problems.FirstOrDefault(p => p.Blocking) is { } problem) return problem.Diagnostic.Error;
@@ -55,7 +55,7 @@ public static class BudgetCellInput
     /// <summary>The definition of a stored input: a bound formula, or a number, boolean or text constant.</summary>
     public static CellDefinition Define(string stored, FormulaScope scope)
     {
-        if (stored.StartsWith('='))
+        if (stored.StartsWith('=', StringComparison.Ordinal))
             return CellDefinition.Of(FormulaBinder.Bind(FormulaParser.Parse(stored, canonical: true), scope));
         if (decimal.TryParse(stored, System.Globalization.NumberStyles.Number, System.Globalization.CultureInfo.InvariantCulture, out decimal number))
             return CellDefinition.Of(new NumberValue(number));

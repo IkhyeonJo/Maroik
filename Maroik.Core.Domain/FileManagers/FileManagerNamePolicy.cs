@@ -34,7 +34,7 @@ public static class FileManagerNamePolicy
         if (normalized is "." or "..")
             return DomainError.Validation("FileManager.NameReserved", "\".\" and \"..\" cannot be used as a name.");
 
-        if (normalized.EndsWith('.') || normalized.EndsWith(' '))
+        if (normalized.EndsWith('.', StringComparison.Ordinal) || normalized.EndsWith(' ', StringComparison.Ordinal))
             return DomainError.Validation("FileManager.NameTrailingDotOrSpace", "A name cannot end with a dot or a space.");
 
         return normalized;
@@ -48,7 +48,7 @@ public static class FileManagerNamePolicy
     /// </summary>
     public static string KeepBothName(string name, IReadOnlyCollection<string> taken)
     {
-        int dot = name.LastIndexOf('.');
+        int dot = name.LastIndexOf('.', StringComparison.Ordinal);
         (string stem, string extension) = dot > 0 ? (name[..dot], name[dot..]) : (name, "");
 
         for (int n = 1; ; n++)

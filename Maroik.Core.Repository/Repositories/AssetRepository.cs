@@ -24,7 +24,7 @@ public class AssetRepository(ApplicationDbContext context)
         try
         {
             // Raw SQL is required because the composite PK (ProductName, AccountEmail) changes.
-            return await Context.Database.ExecuteSqlInterpolatedAsync(
+            return await Context.Database.ExecuteSqlAsync(
                 $"""
                  UPDATE "Asset"
                  SET
@@ -51,28 +51,28 @@ public class AssetRepository(ApplicationDbContext context)
     {
         // One statement per table (FOR UPDATE cannot follow a UNION), always in this table order and each in id order,
         // so two renames locking overlapping records take them in the same order.
-        await Context.Database.ExecuteSqlInterpolatedAsync(
+        await Context.Database.ExecuteSqlAsync(
             $"""
              SELECT 1 FROM "Income"
              WHERE "AccountEmail" = {accountEmail} AND "DepositMyAssetProductName" = {productName}
              ORDER BY "Id"
              FOR UPDATE
              """, ct);
-        await Context.Database.ExecuteSqlInterpolatedAsync(
+        await Context.Database.ExecuteSqlAsync(
             $"""
              SELECT 1 FROM "FixedIncome"
              WHERE "AccountEmail" = {accountEmail} AND "DepositMyAssetProductName" = {productName}
              ORDER BY "Id"
              FOR UPDATE
              """, ct);
-        await Context.Database.ExecuteSqlInterpolatedAsync(
+        await Context.Database.ExecuteSqlAsync(
             $"""
              SELECT 1 FROM "Expenditure"
              WHERE "AccountEmail" = {accountEmail} AND ("PaymentMethod" = {productName} OR "MyDepositAsset" = {productName})
              ORDER BY "Id"
              FOR UPDATE
              """, ct);
-        await Context.Database.ExecuteSqlInterpolatedAsync(
+        await Context.Database.ExecuteSqlAsync(
             $"""
              SELECT 1 FROM "FixedExpenditure"
              WHERE "AccountEmail" = {accountEmail} AND ("PaymentMethod" = {productName} OR "MyDepositAsset" = {productName})
@@ -147,7 +147,7 @@ public class AssetRepository(ApplicationDbContext context)
         // instance instead of the row this FOR UPDATE just (re-)read — silently defeating the
         // lock's whole purpose. AsNoTracking always materializes a fresh instance from what was
         // actually just selected, bypassing that snap-back.
-        var entities = await Set.FromSqlInterpolated(
+        var entities = await Set.FromSql(
             $"""
              SELECT *
              FROM "Asset"
@@ -173,7 +173,7 @@ public class AssetRepository(ApplicationDbContext context)
         // sorts its requested names (see AssetBalanceOrdinalLockExtensions) would have locked them
         // one at a time, so batching here doesn't change the deadlock-avoidance guarantee -- and the
         // ORDER BY + FOR UPDATE lock is what keeps concurrent balance writes from losing an update.
-        var entities = await Set.FromSqlInterpolated(
+        var entities = await Set.FromSql(
             $"""
              SELECT *
              FROM "Asset"
