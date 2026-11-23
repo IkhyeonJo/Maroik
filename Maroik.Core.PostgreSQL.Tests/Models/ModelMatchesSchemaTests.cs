@@ -472,11 +472,11 @@ public abstract class ModelMatchesSchemaTests(SchemaDatabaseFixture database)
     public void EveryEntity_HasADbSet()
     {
         using ApplicationDbContext db = CreateContext();
-        Type[] withDbSet = [.. typeof(ApplicationDbContext).GetProperties()
+        Type[] withDBSet = [.. typeof(ApplicationDbContext).GetProperties()
             .Where(p => p.PropertyType.IsGenericType && p.PropertyType.GetGenericTypeDefinition() == typeof(DbSet<>))
             .Select(p => p.PropertyType.GetGenericArguments()[0]).OrderBy(t => t.Name, StringComparer.Ordinal)];
         Type[] entities = [.. db.Model.GetEntityTypes().Select(e => e.ClrType).OrderBy(t => t.Name, StringComparer.Ordinal)];
 
-        Assert.Equal(entities, withDbSet);
+        Assert.Equal(entities, withDBSet);
     }
 }

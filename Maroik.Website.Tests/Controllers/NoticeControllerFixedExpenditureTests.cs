@@ -191,8 +191,8 @@ public class NoticeControllerFixedExpenditureTests(MaroikWebApplicationFactory f
         Assert.Contains("\"result\":true", json, StringComparison.Ordinal);
 
         using var verifyScope = factory.Services.CreateScope();
-        var verifyDb = verifyScope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        var updated = verifyDb.FixedExpenditures.Single(f => f.Id == created.Id);
+        var verifyDB = verifyScope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        var updated = verifyDB.FixedExpenditures.Single(f => f.Id == created.Id);
         Assert.Equal("TransportationCost", updated.SubClass);
         Assert.Equal("updated", updated.Note);
     }
@@ -233,7 +233,7 @@ public class NoticeControllerFixedExpenditureTests(MaroikWebApplicationFactory f
         Assert.Contains("\"result\":true", json, StringComparison.Ordinal);
 
         using var verifyScope = factory.Services.CreateScope();
-        var verifyDb = verifyScope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        Assert.False(verifyDb.FixedExpenditures.Any(f => f.Id == created.Id));
+        var verifyDB = verifyScope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        Assert.False(verifyDB.FixedExpenditures.Any(f => f.Id == created.Id));
     }
 }

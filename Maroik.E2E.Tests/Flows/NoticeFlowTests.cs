@@ -29,11 +29,11 @@ public class NoticeFlowTests(E2ESharedFixture fixture) : E2ETestBase(fixture)
     public async Task FixedIncome_Grid_ShowsOnlyTheSignedInUsersSchedules()
     {
         var (page, account) = await NewSignedInPageAsync();
-        SeededAccount other = await Db.SeedAccountAsync();
-        await Db.SeedAssetAsync(account.Email, "SavingsAccount", 0);
-        await Db.SeedAssetAsync(other.Email, "OthersAccount", 0);
-        await Db.SeedFixedIncomeAsync(account.Email, "SavingsAccount", "My monthly salary");
-        await Db.SeedFixedIncomeAsync(other.Email, "OthersAccount", "Someone elses salary");
+        SeededAccount other = await DB.SeedAccountAsync();
+        await DB.SeedAssetAsync(account.Email, "SavingsAccount", 0);
+        await DB.SeedAssetAsync(other.Email, "OthersAccount", 0);
+        await DB.SeedFixedIncomeAsync(account.Email, "SavingsAccount", "My monthly salary");
+        await DB.SeedFixedIncomeAsync(other.Email, "OthersAccount", "Someone elses salary");
 
         await GotoAsync(page, "/Notice/FixedIncome");
 
@@ -46,10 +46,10 @@ public class NoticeFlowTests(E2ESharedFixture fixture) : E2ETestBase(fixture)
     public async Task FixedIncome_Edit_PersistsTheUnpunctualityFlag_BothWays()
     {
         var (page, account) = await NewSignedInPageAsync();
-        await Db.SeedAssetAsync(account.Email, "SavingsAccount", 0);
-        await Db.SeedFixedIncomeAsync(account.Email, "SavingsAccount", "Quarterly bonus");
+        await DB.SeedAssetAsync(account.Email, "SavingsAccount", 0);
+        await DB.SeedFixedIncomeAsync(account.Email, "SavingsAccount", "Quarterly bonus");
         const string flagSql = """SELECT "Unpunctuality" FROM "FixedIncome" WHERE "AccountEmail" = @email AND "Content" = 'Quarterly bonus'""";
-        Assert.False(await Db.ScalarAsync<bool>(flagSql, ("email", account.Email)));
+        Assert.False(await DB.ScalarAsync<bool>(flagSql, ("email", account.Email)));
 
         // -- switch it on
         await GotoAsync(page, "/Notice/FixedIncome");
@@ -60,7 +60,7 @@ public class NoticeFlowTests(E2ESharedFixture fixture) : E2ETestBase(fixture)
         await page.Locator("#formEditFixedIncome input[type='submit']").ClickAsync();
         await Assertions.Expect(page.Locator(".toast-success")).ToBeVisibleAsync();
 
-        Assert.True(await Db.ScalarAsync<bool>(flagSql, ("email", account.Email)));
+        Assert.True(await DB.ScalarAsync<bool>(flagSql, ("email", account.Email)));
 
         // -- and off again
         await GotoAsync(page, "/Notice/FixedIncome");
@@ -72,7 +72,7 @@ public class NoticeFlowTests(E2ESharedFixture fixture) : E2ETestBase(fixture)
         await page.Locator("#formEditFixedIncome input[type='submit']").ClickAsync();
         await Assertions.Expect(page.Locator(".toast-success")).ToBeVisibleAsync();
 
-        Assert.False(await Db.ScalarAsync<bool>(flagSql, ("email", account.Email)));
+        Assert.False(await DB.ScalarAsync<bool>(flagSql, ("email", account.Email)));
     }
 
     // -- Fixed expenditure ------------------------------------------------------------
@@ -82,10 +82,10 @@ public class NoticeFlowTests(E2ESharedFixture fixture) : E2ETestBase(fixture)
     public async Task FixedExpenditure_Edit_PersistsTheUnpunctualityFlag()
     {
         var (page, account) = await NewSignedInPageAsync();
-        await Db.SeedAssetAsync(account.Email, "Cash-Wallet", 5000);
-        await Db.SeedFixedExpenditureAsync(account.Email, "Cash-Wallet", "Gym membership");
+        await DB.SeedAssetAsync(account.Email, "Cash-Wallet", 5000);
+        await DB.SeedFixedExpenditureAsync(account.Email, "Cash-Wallet", "Gym membership");
         const string flagSql = """SELECT "Unpunctuality" FROM "FixedExpenditure" WHERE "AccountEmail" = @email AND "Content" = 'Gym membership'""";
-        Assert.False(await Db.ScalarAsync<bool>(flagSql, ("email", account.Email)));
+        Assert.False(await DB.ScalarAsync<bool>(flagSql, ("email", account.Email)));
 
         await GotoAsync(page, "/Notice/FixedExpenditure");
         await SelectGridRowAsync(page, "Gym membership");
@@ -95,7 +95,7 @@ public class NoticeFlowTests(E2ESharedFixture fixture) : E2ETestBase(fixture)
         await page.Locator("#formEditFixedExpenditure input[type='submit']").ClickAsync();
         await Assertions.Expect(page.Locator(".toast-success")).ToBeVisibleAsync();
 
-        Assert.True(await Db.ScalarAsync<bool>(flagSql, ("email", account.Email)));
+        Assert.True(await DB.ScalarAsync<bool>(flagSql, ("email", account.Email)));
     }
 
     /// <summary>The fixed-expenditure page lists only the signed-in User's schedules.</summary>
@@ -103,11 +103,11 @@ public class NoticeFlowTests(E2ESharedFixture fixture) : E2ETestBase(fixture)
     public async Task FixedExpenditure_Grid_ShowsOnlyTheSignedInUsersSchedules()
     {
         var (page, account) = await NewSignedInPageAsync();
-        SeededAccount other = await Db.SeedAccountAsync();
-        await Db.SeedAssetAsync(account.Email, "Cash-Wallet", 100);
-        await Db.SeedAssetAsync(other.Email, "Others-Wallet", 100);
-        await Db.SeedFixedExpenditureAsync(account.Email, "Cash-Wallet", "My rent");
-        await Db.SeedFixedExpenditureAsync(other.Email, "Others-Wallet", "Someone elses rent");
+        SeededAccount other = await DB.SeedAccountAsync();
+        await DB.SeedAssetAsync(account.Email, "Cash-Wallet", 100);
+        await DB.SeedAssetAsync(other.Email, "Others-Wallet", 100);
+        await DB.SeedFixedExpenditureAsync(account.Email, "Cash-Wallet", "My rent");
+        await DB.SeedFixedExpenditureAsync(other.Email, "Others-Wallet", "Someone elses rent");
 
         await GotoAsync(page, "/Notice/FixedExpenditure");
 

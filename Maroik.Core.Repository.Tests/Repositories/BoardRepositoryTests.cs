@@ -232,7 +232,7 @@ public sealed class BoardRepositoryTests(DatabaseFixture database) : RepositoryT
         long boardId = seeded[0].Id;
         await EnsureNicknamesAsync([.. Enumerable.Range(0, writerCount).Select(i => $"Writer{i}{Token}")]);
 
-        ApplicationDbContext[] contexts = [.. Enumerable.Range(0, writerCount).Select(_ => NewDbContext())];
+        ApplicationDbContext[] contexts = [.. Enumerable.Range(0, writerCount).Select(_ => NewDBContext())];
 
         await Task.WhenAll(contexts.Select(async (context, i) =>
         {

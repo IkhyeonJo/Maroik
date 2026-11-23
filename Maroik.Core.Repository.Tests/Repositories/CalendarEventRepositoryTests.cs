@@ -111,7 +111,7 @@ public sealed class CalendarEventRepositoryTests(DatabaseFixture database) : Rep
         var calendarEvent = CalendarEvent.Reconstitute(
             id: 0, calendarId: cal, title: Unique("New Event"), description: null, allDay: true,
             startDate: DateTime.UtcNow.Date, endDate: DateTime.UtcNow.Date.AddDays(1),
-            startTz: null, endTz: null, location: null, status: "Busy", recurrenceId: null,
+            startTZ: null, endTZ: null, location: null, status: "Busy", recurrenceId: null,
             created: DateTime.UtcNow, updated: DateTime.UtcNow);
 
         long id = await Sut.CreateCalendarEventAsync(calendarEvent, TestContext.Current.CancellationToken);
@@ -174,7 +174,7 @@ public sealed class CalendarEventRepositoryTests(DatabaseFixture database) : Rep
         var calendarEvent = CalendarEvent.Reconstitute(
             id: 0, calendarId: cal, title: Unique("Backwards"), description: null, allDay: false,
             startDate: DateTime.UtcNow, endDate: DateTime.UtcNow.AddHours(-1),
-            startTz: null, endTz: null, location: null, status: "Busy", recurrenceId: null,
+            startTZ: null, endTZ: null, location: null, status: "Busy", recurrenceId: null,
             created: DateTime.UtcNow, updated: DateTime.UtcNow);
 
         await Assert.ThrowsAsync<DbUpdateException>(
@@ -194,7 +194,7 @@ public sealed class CalendarEventRepositoryTests(DatabaseFixture database) : Rep
         var calendarEvent = CalendarEvent.Reconstitute(
             id: orm.Id, calendarId: cal, title: "Updated Title", description: null, allDay: false,
             startDate: DateTime.UtcNow, endDate: DateTime.UtcNow.AddHours(2),
-            startTz: null, endTz: null, location: null, status: "Free", recurrenceId: null,
+            startTZ: null, endTZ: null, location: null, status: "Free", recurrenceId: null,
             created: orm.Created, updated: DateTime.UtcNow);
 
         await Sut.UpdateEntityAsync(calendarEvent, TestContext.Current.CancellationToken);

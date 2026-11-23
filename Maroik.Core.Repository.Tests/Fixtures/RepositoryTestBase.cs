@@ -32,10 +32,10 @@ public abstract class RepositoryTestBase : IClassFixture<DatabaseFixture>, IAsyn
     protected RepositoryTestBase(DatabaseFixture database)
     {
         _database = database;
-        Context = NewDbContext();
+        Context = NewDBContext();
     }
 
-    /// <summary>Primary context for the test. Use <see cref="NewDbContext"/> for an independent
+    /// <summary>Primary context for the test. Use <see cref="NewDBContext"/> for an independent
     /// second connection (e.g. to simulate a concurrent writer).</summary>
     protected ApplicationDbContext Context { get; }
 
@@ -222,7 +222,7 @@ public abstract class RepositoryTestBase : IClassFixture<DatabaseFixture>, IAsyn
     /// Creates an additional context on the same database, with any <paramref name="interceptors"/> attached
     /// (e.g. to record the SQL a repository call sends); it is disposed with the test.
     /// </summary>
-    protected ApplicationDbContext NewDbContext(params IInterceptor[] interceptors)
+    protected ApplicationDbContext NewDBContext(params IInterceptor[] interceptors)
     {
         var options = new DbContextOptionsBuilder<ApplicationDbContext>()
             .UseNpgsql(_database.ConnectionString)

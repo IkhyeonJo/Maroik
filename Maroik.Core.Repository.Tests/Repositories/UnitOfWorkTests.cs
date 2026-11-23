@@ -19,7 +19,7 @@ namespace Maroik.Core.Repository.Tests.Repositories;
 public sealed class UnitOfWorkTests(DatabaseFixture database) : RepositoryTestBase(database)
 {
     /// <summary>A unit of work over a fresh context.</summary>
-    private UnitOfWork NewUnitOfWork() => new(NewDbContext());
+    private UnitOfWork NewUnitOfWork() => new(NewDBContext());
 
     // -- Null-guard paths (no BeginAsync) -------------------------------------
 
@@ -109,7 +109,7 @@ public sealed class UnitOfWorkTests(DatabaseFixture database) : RepositoryTestBa
     [Fact]
     public async Task BeginAsync_WithIsolationLevel_OpensTransactionAtThatLevel()
     {
-        await using var context = NewDbContext();
+        await using var context = NewDBContext();
         await using var uow = new UnitOfWork(context);
 
         await uow.BeginAsync(IsolationLevel.RepeatableRead, TestContext.Current.CancellationToken);
@@ -136,7 +136,7 @@ public sealed class UnitOfWorkTests(DatabaseFixture database) : RepositoryTestBa
         string email = UniqueEmail("dup");
         await EnsureAccountsAsync(email);
 
-        await using var context = NewDbContext();
+        await using var context = NewDBContext();
         await using var uow = new UnitOfWork(context);
         await uow.BeginAsync(ct: ct);
         context.Accounts.Add(new OrmAccount
@@ -171,7 +171,7 @@ public sealed class UnitOfWorkTests(DatabaseFixture database) : RepositoryTestBa
         string email = UniqueEmail("dup-retry");
         await EnsureAccountsAsync(email);
 
-        await using var context = NewDbContext();
+        await using var context = NewDBContext();
         await using var uow = new UnitOfWork(context);
         await uow.BeginAsync(ct: ct);
         context.Accounts.Add(new OrmAccount
@@ -206,7 +206,7 @@ public sealed class UnitOfWorkTests(DatabaseFixture database) : RepositoryTestBa
     private async Task<(UnitOfWork Uow, PostgreSQL.Contexts.ApplicationDbContext Context)> BeginAndKillTheSessionAsync()
     {
         CancellationToken ct = TestContext.Current.CancellationToken;
-        var context = NewDbContext();
+        var context = NewDBContext();
         var uow = new UnitOfWork(context);
         await uow.BeginAsync(ct: ct);
         int pid = await context.Database.SqlQueryRaw<int>("SELECT pg_backend_pid() AS \"Value\"").SingleAsync(ct);
@@ -258,7 +258,7 @@ public sealed class UnitOfWorkTests(DatabaseFixture database) : RepositoryTestBa
     private async Task<(UnitOfWork Uow, PostgreSQL.Contexts.ApplicationDbContext Context, Exception Failure)> BeginWithAFailingRollbackAsync()
     {
         var interceptor = new FailingRollbackInterceptor();
-        var context = NewDbContext(interceptor);
+        var context = NewDBContext(interceptor);
         var uow = new UnitOfWork(context);
         await uow.BeginAsync(ct: TestContext.Current.CancellationToken);
         context.Accounts.Add(new OrmAccount { Email = UniqueEmail("tracked"), Nickname = Unique("Tracked"), HashedPassword = "x", AvatarImagePath = "/a", Role = "User", TimeZoneIanaId = "UTC", SecurityStamp = "s" });

@@ -25,7 +25,7 @@ public sealed class GenericRepositoryTransactionTests(DatabaseFixture database) 
     /// <summary>True when a category named <paramref name="name"/> is visible from a fresh context, i.e. has been committed.</summary>
     private async Task<bool> ExistsInSeparateConnectionAsync(string name)
     {
-        await using var probe = NewDbContext();
+        await using var probe = NewDBContext();
         return await probe.Categories.AsNoTracking().AnyAsync(c => c.Name == name, TestContext.Current.CancellationToken);
     }
 

@@ -245,9 +245,9 @@ public class AccountBookControllerAssetTests(MaroikWebApplicationFactory factory
         Assert.Contains("\"result\":true", json, StringComparison.Ordinal);
 
         using var verifyScope = factory.Services.CreateScope();
-        var verifyDb = verifyScope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        Assert.True(verifyDb.Assets.Any(a => a.AccountEmail == email && a.ProductName == newName));
-        var income = verifyDb.Incomes.Single(i => i.AccountEmail == email && i.Content == "Salary");
+        var verifyDB = verifyScope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        Assert.True(verifyDB.Assets.Any(a => a.AccountEmail == email && a.ProductName == newName));
+        var income = verifyDB.Incomes.Single(i => i.AccountEmail == email && i.Content == "Salary");
         Assert.Equal(newName, income.DepositMyAssetProductName);
     }
 

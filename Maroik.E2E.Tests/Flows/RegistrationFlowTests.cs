@@ -41,7 +41,7 @@ public class RegistrationFlowTests(E2ESharedFixture fixture) : E2ETestBase(fixtu
     {
         // Still on the registration form, with an error shown, and nothing was created.
         await Assertions.Expect(page.Locator("#registerForm")).ToBeVisibleAsync();
-        long created = await Db.ScalarAsync<long>("""SELECT count(*) FROM "Account" WHERE "Email" = @email""", ("email", email));
+        long created = await DB.ScalarAsync<long>("""SELECT count(*) FROM "Account" WHERE "Email" = @email""", ("email", email));
         Assert.Equal(0, created);
     }
 
@@ -67,7 +67,7 @@ public class RegistrationFlowTests(E2ESharedFixture fixture) : E2ETestBase(fixtu
     public async Task Register_WithANicknameDifferingOnlyByCase_IsRefused()
     {
         string key = Guid.NewGuid().ToString("N")[..8];
-        await Db.SeedAccountAsync(nickname: $"Existing{key}");
+        await DB.SeedAccountAsync(nickname: $"Existing{key}");
         var page = await NewPageAsync();
 
         string email = await SubmitRegistrationAsync(page, $"EXISTING{key}");

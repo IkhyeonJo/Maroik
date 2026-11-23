@@ -199,7 +199,7 @@ public sealed class CategoryRepositoryTests(DatabaseFixture database) : Reposito
         await unitOfWork.BeginAsync(ct: TestContext.Current.CancellationToken);
         _ = await Sut.GetAllForUpdateAsync(TestContext.Current.CancellationToken);
 
-        await using var other = NewDbContext();
+        await using var other = NewDBContext();
         await using var otherUnitOfWork = new UnitOfWork(other);
         await otherUnitOfWork.BeginAsync(ct: TestContext.Current.CancellationToken);
         var ex = await Assert.ThrowsAsync<Npgsql.PostgresException>(() => other.Database.ExecuteSqlAsync(

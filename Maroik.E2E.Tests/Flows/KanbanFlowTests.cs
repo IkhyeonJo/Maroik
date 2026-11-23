@@ -19,9 +19,9 @@ public class KanbanFlowTests(E2ESharedFixture fixture) : E2ETestBase(fixture)
     public async Task Board_ShowsTheFourLanes_AndOnlyTheUsersCards()
     {
         var (page, account) = await NewSignedInPageAsync();
-        SeededAccount other = await Db.SeedAccountAsync();
-        await Db.SeedKanbanCardAsync(account.Email, "ToDo", "My own card");
-        await Db.SeedKanbanCardAsync(other.Email, "ToDo", "Someone elses card");
+        SeededAccount other = await DB.SeedAccountAsync();
+        await DB.SeedKanbanCardAsync(account.Email, "ToDo", "My own card");
+        await DB.SeedKanbanCardAsync(other.Email, "ToDo", "Someone elses card");
 
         await GotoAsync(page, "/Kanban/UserIndex");
 
@@ -51,7 +51,7 @@ public class KanbanFlowTests(E2ESharedFixture fixture) : E2ETestBase(fixture)
         ILocator card = Lane(page, "InProgress").Locator(".kanban-card-item", new LocatorLocatorOptions { HasTextString = "Draft the report" });
         await Assertions.Expect(card).ToBeVisibleAsync();
         await Assertions.Expect(card.Locator(".kanban-due")).ToHaveTextAsync("2999-05-28");
-        Assert.Equal("InProgress", await Db.ScalarAsync<string>(
+        Assert.Equal("InProgress", await DB.ScalarAsync<string>(
             """SELECT "Lane" FROM "KanbanCard" WHERE "AccountEmail" = @email AND "Title" = 'Draft the report'""", ("email", account.Email)));
     }
 
@@ -60,7 +60,7 @@ public class KanbanFlowTests(E2ESharedFixture fixture) : E2ETestBase(fixture)
     public async Task EditCard_ChangesTheTitle_AndKeepsTheLane()
     {
         var (page, account) = await NewSignedInPageAsync();
-        long id = await Db.SeedKanbanCardAsync(account.Email, "Backlog", "Old title", "Some notes");
+        long id = await DB.SeedKanbanCardAsync(account.Email, "Backlog", "Old title", "Some notes");
         await GotoAsync(page, "/Kanban/UserIndex");
 
         await page.Locator($".kanban-card-item[data-id='{id}']").ClickAsync();
@@ -72,7 +72,7 @@ public class KanbanFlowTests(E2ESharedFixture fixture) : E2ETestBase(fixture)
 
         await Assertions.Expect(page.Locator(".toast-success")).ToBeVisibleAsync();
         await Assertions.Expect(Lane(page, "Backlog").Locator($".kanban-card-item[data-id='{id}']")).ToContainTextAsync("New title");
-        Assert.Equal("Backlog", await Db.ScalarAsync<string>("""SELECT "Lane" FROM "KanbanCard" WHERE "Id" = @id""", ("id", id)));
+        Assert.Equal("Backlog", await DB.ScalarAsync<string>("""SELECT "Lane" FROM "KanbanCard" WHERE "Id" = @id""", ("id", id)));
     }
 
     /// <summary>Delete, then confirming, removes the card from the board and the database.</summary>
@@ -80,7 +80,7 @@ public class KanbanFlowTests(E2ESharedFixture fixture) : E2ETestBase(fixture)
     public async Task DeleteCard_RemovesIt_AfterConfirmation()
     {
         var (page, account) = await NewSignedInPageAsync();
-        long id = await Db.SeedKanbanCardAsync(account.Email, "Done", "Finished work");
+        long id = await DB.SeedKanbanCardAsync(account.Email, "Done", "Finished work");
         await GotoAsync(page, "/Kanban/UserIndex");
 
         await page.Locator($".kanban-card-item[data-id='{id}']").ClickAsync();
@@ -90,7 +90,7 @@ public class KanbanFlowTests(E2ESharedFixture fixture) : E2ETestBase(fixture)
 
         await Assertions.Expect(page.Locator(".toast-success")).ToBeVisibleAsync();
         await Assertions.Expect(page.Locator($".kanban-card-item[data-id='{id}']")).ToHaveCountAsync(0);
-        Assert.Equal(0L, await Db.ScalarAsync<long>("""SELECT count(*) FROM "KanbanCard" WHERE "Id" = @id""", ("id", id)));
+        Assert.Equal(0L, await DB.ScalarAsync<long>("""SELECT count(*) FROM "KanbanCard" WHERE "Id" = @id""", ("id", id)));
     }
 
     /// <summary>
@@ -101,9 +101,9 @@ public class KanbanFlowTests(E2ESharedFixture fixture) : E2ETestBase(fixture)
     public async Task DueDate_IsRed_OnlyOnceOverdue_AndTheCardColorNeverChanges()
     {
         var (page, account) = await NewSignedInPageAsync();
-        long overdue = await Db.SeedKanbanCardAsync(account.Email, "ToDo", "Late", dueDate: new DateOnly(2000, 1, 2));
-        long upcoming = await Db.SeedKanbanCardAsync(account.Email, "ToDo", "Later", dueDate: new DateOnly(2999, 1, 2));
-        long undated = await Db.SeedKanbanCardAsync(account.Email, "ToDo", "Whenever");
+        long overdue = await DB.SeedKanbanCardAsync(account.Email, "ToDo", "Late", dueDate: new DateOnly(2000, 1, 2));
+        long upcoming = await DB.SeedKanbanCardAsync(account.Email, "ToDo", "Later", dueDate: new DateOnly(2999, 1, 2));
+        long undated = await DB.SeedKanbanCardAsync(account.Email, "ToDo", "Whenever");
         await GotoAsync(page, "/Kanban/UserIndex");
 
         ILocator late = page.Locator($".kanban-card-item[data-id='{overdue}']");

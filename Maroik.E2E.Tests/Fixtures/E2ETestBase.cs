@@ -15,7 +15,7 @@ public abstract class E2ETestBase(E2ESharedFixture fixture)
     protected string BaseUrl => fixture.ServerBaseUrl;
 
     /// <summary>The seeded database, for creating fixtures and checking what the server persisted.</summary>
-    protected E2EDatabase Db => fixture.Database;
+    protected E2EDatabase DB => fixture.Database;
 
     /// <summary>The in-memory file storage the website reads attachments and images from.</summary>
     protected E2EFileStorage Files => fixture.Files;
@@ -41,7 +41,7 @@ public abstract class E2ETestBase(E2ESharedFixture fixture)
     /// <summary>Seeds an account of <paramref name="role"/>, opens a fresh page and signs it in.</summary>
     protected async Task<(IPage Page, SeededAccount Account)> NewSignedInPageAsync(string role = "User")
     {
-        SeededAccount account = await Db.SeedAccountAsync(role);
+        SeededAccount account = await DB.SeedAccountAsync(role);
         IPage page = await NewPageAsync();
         await LoginAsync(page, account);
         return (page, account);

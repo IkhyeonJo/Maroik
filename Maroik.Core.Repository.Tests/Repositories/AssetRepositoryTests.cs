@@ -348,7 +348,7 @@ public sealed class AssetRepositoryTests(DatabaseFixture database) : RepositoryT
         string alice = UniqueEmail("alice");
         await SeedAsync(MakeAsset("RaceWallet", alice, amount: 1000m));
 
-        ApplicationDbContext[] contexts = [NewDbContext(), NewDbContext()];
+        ApplicationDbContext[] contexts = [NewDBContext(), NewDBContext()];
 
         await Task.WhenAll(WithdrawAsync(contexts[0], 100m), WithdrawAsync(contexts[1], 100m));
 
@@ -396,7 +396,7 @@ public sealed class AssetRepositoryTests(DatabaseFixture database) : RepositoryT
             a => a.ProductName == "Wallet" && a.AccountEmail == alice, TestContext.Current.CancellationToken);
         Assert.Equal(1000m, tracked.Amount);
 
-        await using (var other = NewDbContext())
+        await using (var other = NewDBContext())
         {
             OrmAsset row = await other.Assets.FirstAsync(
                 a => a.ProductName == "Wallet" && a.AccountEmail == alice, TestContext.Current.CancellationToken);

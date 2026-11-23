@@ -176,8 +176,8 @@ public class ForumControllerTests(MaroikWebApplicationFactory factory)
         Assert.Contains("\"result\":true", json, StringComparison.Ordinal);
 
         using var verifyScope = factory.Services.CreateScope();
-        var verifyDb = verifyScope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        Assert.Contains(verifyDb.BoardComments, c => c.BoardId == boardId && c.Writer == session.Nickname && c.Content == "Nice post!");
+        var verifyDB = verifyScope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        Assert.Contains(verifyDB.BoardComments, c => c.BoardId == boardId && c.Writer == session.Nickname && c.Content == "Nice post!");
     }
 
     /// <summary>Write free comment empty content returns failure result.</summary>

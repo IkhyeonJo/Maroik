@@ -121,7 +121,7 @@ public class StylesheetFlowTests(E2ESharedFixture fixture) : E2ETestBase(fixture
     public async Task Kanban_LaysTheLanesSideBySide_AndKeepsLineBreaks()
     {
         var (page, account) = await NewSignedInPageAsync();
-        await Db.SeedKanbanCardAsync(account.Email, "ToDo", "Styled card", "line 1\nline 2");
+        await DB.SeedKanbanCardAsync(account.Email, "ToDo", "Styled card", "line 1\nline 2");
         await page.WaitForURLAsync(url => url.Contains("/Dashboard/", StringComparison.Ordinal), new PageWaitForURLOptions { Timeout = 30_000 });
         await GotoAsync(page, "/Kanban/UserIndex");
 
@@ -148,7 +148,7 @@ public class StylesheetFlowTests(E2ESharedFixture fixture) : E2ETestBase(fixture
     public async Task FileManager_StylesTheTreeTilesAndDropArea()
     {
         var (page, account) = await NewSignedInPageAsync();
-        await Db.ExecuteAsync("""UPDATE "Account" SET "FileManagerQuotaBytes" = 1048576 WHERE "Email" = @email""", ("email", account.Email));
+        await DB.ExecuteAsync("""UPDATE "Account" SET "FileManagerQuotaBytes" = 1048576 WHERE "Email" = @email""", ("email", account.Email));
         await page.WaitForURLAsync(url => url.Contains("/Dashboard/", StringComparison.Ordinal), new PageWaitForURLOptions { Timeout = 30_000 });
         await GotoAsync(page, "/FileManager/UserIndex");
         await page.Locator("#btnNewFolder").ClickAsync();
@@ -170,7 +170,7 @@ public class StylesheetFlowTests(E2ESharedFixture fixture) : E2ETestBase(fixture
     public async Task Budget_KeepsTheHeadersInView_AndAlignsNumbers()
     {
         var (page, account) = await NewSignedInPageAsync();
-        await Db.SeedAssetAsync(account.Email, "Wallet", 0m);
+        await DB.SeedAssetAsync(account.Email, "Wallet", 0m);
         await page.WaitForURLAsync(url => url.Contains("/Dashboard/", StringComparison.Ordinal), new PageWaitForURLOptions { Timeout = 30_000 });
         await GotoAsync(page, "/AccountBook/IncomeBudget");
         await Assertions.Expect(page.Locator("#budgetGrid td[data-address='N2']")).ToHaveTextAsync("0");

@@ -21,7 +21,7 @@ public class FileManagerFlowTests(E2ESharedFixture fixture) : E2ETestBase(fixtur
     private async Task<(IPage Page, SeededAccount Account)> OpenAsync(long quotaBytes = Gb)
     {
         var (page, account) = await NewSignedInPageAsync();
-        await Db.ExecuteAsync("""UPDATE "Account" SET "FileManagerQuotaBytes" = @quota WHERE "Email" = @email""", ("quota", quotaBytes), ("email", account.Email));
+        await DB.ExecuteAsync("""UPDATE "Account" SET "FileManagerQuotaBytes" = @quota WHERE "Email" = @email""", ("quota", quotaBytes), ("email", account.Email));
         await page.WaitForURLAsync(url => url.Contains("/Dashboard/", StringComparison.Ordinal), new PageWaitForURLOptions { Timeout = 30_000 });
         await GotoAsync(page, "/FileManager/UserIndex");
         await Assertions.Expect(page.Locator("#fileManagerTree .jstree-anchor").First).ToBeVisibleAsync();
@@ -76,7 +76,7 @@ public class FileManagerFlowTests(E2ESharedFixture fixture) : E2ETestBase(fixtur
         await page.Locator("#btnUploadClose").ClickAsync();
         await Assertions.Expect(Tile(page, "notes.txt")).ToBeVisibleAsync();
         await Assertions.Expect(page.Locator("#fileManagerUsage")).ToHaveTextAsync("21 B / 1 GB");
-        string? path = await Db.ScalarAsync<string>("""SELECT "StoragePath" FROM "FileManagerNode" WHERE "AccountEmail" = @email AND "Name" = 'notes.txt'""", ("email", account.Email));
+        string? path = await DB.ScalarAsync<string>("""SELECT "StoragePath" FROM "FileManagerNode" WHERE "AccountEmail" = @email AND "Name" = 'notes.txt'""", ("email", account.Email));
         Assert.Equal("hello"u8.ToArray(), Files.BytesOf(path!));
     }
 
@@ -114,7 +114,7 @@ public class FileManagerFlowTests(E2ESharedFixture fixture) : E2ETestBase(fixtur
     public async Task Upload_StoresTheFileWithoutAScan_WhenTheAccountsScanIsOff()
     {
         var (page, account) = await OpenAsync();
-        await Db.ExecuteAsync("""UPDATE "Account" SET "FileManagerScanDisabled" = true WHERE "Email" = @email""", ("email", account.Email));
+        await DB.ExecuteAsync("""UPDATE "Account" SET "FileManagerScanDisabled" = true WHERE "Email" = @email""", ("email", account.Email));
         Files.ScanTooLarge(true);
         try
         {
@@ -124,7 +124,7 @@ public class FileManagerFlowTests(E2ESharedFixture fixture) : E2ETestBase(fixtur
             await page.Locator("#btnUploadClose").ClickAsync();
             await Assertions.Expect(Tile(page, "huge.zip")).ToBeVisibleAsync();
             await Assertions.Expect(page.Locator("#unscannedModal")).ToHaveCountAsync(0);
-            Assert.Equal(1L, await Db.ScalarAsync<long>("""SELECT count(*) FROM "FileManagerNode" WHERE "AccountEmail" = @email AND "Name" = 'huge.zip' AND NOT "Uploading" """, ("email", account.Email)));
+            Assert.Equal(1L, await DB.ScalarAsync<long>("""SELECT count(*) FROM "FileManagerNode" WHERE "AccountEmail" = @email AND "Name" = 'huge.zip' AND NOT "Uploading" """, ("email", account.Email)));
         }
         finally
         {
@@ -143,7 +143,7 @@ public class FileManagerFlowTests(E2ESharedFixture fixture) : E2ETestBase(fixtur
             await page.Locator("#fileManagerFileInput").SetInputFilesAsync(new FilePayload { Name = "huge.zip", MimeType = "application/zip", Buffer = [1, 2, 3] });
 
             await Assertions.Expect(page.Locator("#uploadResults li")).ToHaveTextAsync("huge.zip — 파일의 바이러스 검사를 할 수 없습니다.");
-            Assert.Equal(0L, await Db.ScalarAsync<long>("""SELECT count(*) FROM "FileManagerNode" WHERE "AccountEmail" = @email""", ("email", account.Email)));
+            Assert.Equal(0L, await DB.ScalarAsync<long>("""SELECT count(*) FROM "FileManagerNode" WHERE "AccountEmail" = @email""", ("email", account.Email)));
         }
         finally
         {
@@ -160,7 +160,7 @@ public class FileManagerFlowTests(E2ESharedFixture fixture) : E2ETestBase(fixtur
         await page.Locator("#fileManagerFileInput").SetInputFilesAsync(new FilePayload { Name = "a.txt", MimeType = "text/plain", Buffer = [.. "x"u8] });
 
         await Assertions.Expect(page.Locator(".toast-error")).ToContainTextAsync("0.1GB 부족");
-        Assert.Equal(0L, await Db.ScalarAsync<long>("""SELECT count(*) FROM "FileManagerNode" WHERE "AccountEmail" = @email""", ("email", account.Email)));
+        Assert.Equal(0L, await DB.ScalarAsync<long>("""SELECT count(*) FROM "FileManagerNode" WHERE "AccountEmail" = @email""", ("email", account.Email)));
     }
 
     /// <summary>In the list view a file is renamed, previewed (images only) and deleted.</summary>
@@ -188,7 +188,7 @@ public class FileManagerFlowTests(E2ESharedFixture fixture) : E2ETestBase(fixtur
         await row.Locator("[data-action='delete']").ClickAsync();
         await page.Locator("#btnConfirmDelete").ClickAsync();
         await Assertions.Expect(page.Locator(".file-manager-list")).ToHaveCountAsync(0);
-        Assert.Equal(0L, await Db.ScalarAsync<long>("""SELECT count(*) FROM "FileManagerNode" WHERE "AccountEmail" = @email""", ("email", account.Email)));
+        Assert.Equal(0L, await DB.ScalarAsync<long>("""SELECT count(*) FROM "FileManagerNode" WHERE "AccountEmail" = @email""", ("email", account.Email)));
     }
 
     /// <summary>
@@ -218,7 +218,7 @@ public class FileManagerFlowTests(E2ESharedFixture fixture) : E2ETestBase(fixtur
         await Assertions.Expect(page.Locator("#btnUploadClose")).ToBeEnabledAsync(new LocatorAssertionsToBeEnabledOptions { Timeout = 30_000 });
         await Assertions.Expect(page.Locator("#uploadResults li")).ToHaveTextAsync(["big.bin — 취소됨", "next.txt — 취소됨"]);
         await Assertions.Expect(page.Locator("#btnUploadCancel")).ToBeDisabledAsync();
-        Assert.Equal(0L, await Db.ScalarAsync<long>("""SELECT count(*) FROM "FileManagerNode" WHERE "AccountEmail" = @email""", ("email", account.Email)));
+        Assert.Equal(0L, await DB.ScalarAsync<long>("""SELECT count(*) FROM "FileManagerNode" WHERE "AccountEmail" = @email""", ("email", account.Email)));
     }
 
     /// <summary>Uploads one text file named <paramref name="name"/> and switches to the list view.</summary>

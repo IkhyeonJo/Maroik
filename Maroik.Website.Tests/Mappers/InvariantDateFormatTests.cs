@@ -45,11 +45,11 @@ public sealed class InvariantDateFormatTests : IDisposable
         var allDay = new CalendarEventResponse { AllDay = true, StartDate = new DateTime(2025, 6, 15), EndDate = new DateTime(2025, 6, 16) };
         var timed = new CalendarEventResponse { StartDate = new DateTime(2025, 6, 15, 9, 0, 0), EndDate = new DateTime(2025, 6, 15, 10, 30, 0) };
 
-        CalendarEventOutputViewModel allDayVm = allDay.ToDisplayViewModel(new TimeZoneDisplayService(), "UTC", null, forGrid: false);
-        CalendarEventOutputViewModel timedVm = timed.ToDisplayViewModel(new TimeZoneDisplayService(), "UTC", null, forGrid: false);
+        CalendarEventOutputViewModel allDayVM = allDay.ToDisplayViewModel(new TimeZoneDisplayService(), "UTC", null, forGrid: false);
+        CalendarEventOutputViewModel timedVM = timed.ToDisplayViewModel(new TimeZoneDisplayService(), "UTC", null, forGrid: false);
 
-        Assert.Equal(("2025-06-15", "2025-06-16"), (allDayVm.DisplayStartDate, allDayVm.DisplayEndDate));
-        Assert.Equal(("2025-06-15 09:00", "2025-06-15 10:30"), (timedVm.DisplayStartDate, timedVm.DisplayEndDate));
+        Assert.Equal(("2025-06-15", "2025-06-16"), (allDayVM.DisplayStartDate, allDayVM.DisplayEndDate));
+        Assert.Equal(("2025-06-15 09:00", "2025-06-15 10:30"), (timedVM.DisplayStartDate, timedVM.DisplayEndDate));
     }
 
     /// <summary>The current date the calendar and account-book pages pre-fill their pickers with is Gregorian.</summary>

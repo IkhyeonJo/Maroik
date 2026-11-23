@@ -59,7 +59,7 @@ public class DatabaseHealthCheckTests(DatabaseFixture database) : RepositoryTest
     [Fact]
     public async Task CheckHealthAsync_ThrowsBeforeCanConnectRuns_ReturnsUnhealthy_WithException()
     {
-        var brokenContext = NewDbContext();
+        var brokenContext = NewDBContext();
         await brokenContext.DisposeAsync();
         var sut = new DatabaseHealthCheck(brokenContext);
 

@@ -37,7 +37,7 @@ public class AccountBookFlowTests(E2ESharedFixture fixture) : E2ETestBase(fixtur
         await Assertions.Expect(SuccessToast(page)).ToBeVisibleAsync();
         await Assertions.Expect(page.Locator(".mvc-grid")).ToContainTextAsync(name);
 
-        decimal amount = await Db.ScalarAsync<decimal>(
+        decimal amount = await DB.ScalarAsync<decimal>(
             """SELECT "Amount" FROM "Asset" WHERE "AccountEmail" = @email AND "ProductName" = @name""",
             ("email", account.Email), ("name", name));
         Assert.Equal(1000m, amount);
@@ -64,7 +64,7 @@ public class AccountBookFlowTests(E2ESharedFixture fixture) : E2ETestBase(fixtur
 
         await Assertions.Expect(SuccessToast(page)).ToBeVisibleAsync();
 
-        decimal amount = await Db.ScalarAsync<decimal>(
+        decimal amount = await DB.ScalarAsync<decimal>(
             """SELECT "Amount" FROM "Asset" WHERE "AccountEmail" = @email AND "ProductName" = @name""",
             ("email", account.Email), ("name", name));
         Assert.Equal(1234567.5m, amount);
@@ -90,7 +90,7 @@ public class AccountBookFlowTests(E2ESharedFixture fixture) : E2ETestBase(fixtur
         // browser's locale decides the language, so only the number is asserted.
         await Assertions.Expect(ErrorToast(page)).ToContainTextAsync("255");
 
-        long count = await Db.ScalarAsync<long>("""SELECT count(*) FROM "Asset" WHERE "AccountEmail" = @email""", ("email", account.Email));
+        long count = await DB.ScalarAsync<long>("""SELECT count(*) FROM "Asset" WHERE "AccountEmail" = @email""", ("email", account.Email));
         Assert.Equal(0, count);
     }
 
@@ -109,7 +109,7 @@ public class AccountBookFlowTests(E2ESharedFixture fixture) : E2ETestBase(fixtur
 
         await Assertions.Expect(ErrorToast(page)).ToContainTextAsync("9,999,999,999,999,999.99");
 
-        long count = await Db.ScalarAsync<long>("""SELECT count(*) FROM "Asset" WHERE "AccountEmail" = @email""", ("email", account.Email));
+        long count = await DB.ScalarAsync<long>("""SELECT count(*) FROM "Asset" WHERE "AccountEmail" = @email""", ("email", account.Email));
         Assert.Equal(0, count);
     }
 
@@ -118,9 +118,9 @@ public class AccountBookFlowTests(E2ESharedFixture fixture) : E2ETestBase(fixtur
     public async Task Asset_Grid_ShowsOnlyTheSignedInUsersAssets()
     {
         var (page, account) = await NewSignedInPageAsync();
-        SeededAccount other = await Db.SeedAccountAsync();
-        await Db.SeedAssetAsync(account.Email, "MyOwnAsset", 10);
-        await Db.SeedAssetAsync(other.Email, "SomeoneElsesAsset", 10);
+        SeededAccount other = await DB.SeedAccountAsync();
+        await DB.SeedAssetAsync(account.Email, "MyOwnAsset", 10);
+        await DB.SeedAssetAsync(other.Email, "SomeoneElsesAsset", 10);
 
         await GotoAsync(page, "/AccountBook/Asset");
 
@@ -140,7 +140,7 @@ public class AccountBookFlowTests(E2ESharedFixture fixture) : E2ETestBase(fixtur
     {
         var (page, account) = await NewSignedInPageAsync();
         const string name = "A&B Bank #1";
-        await Db.SeedAssetAsync(account.Email, name, 10);
+        await DB.SeedAssetAsync(account.Email, name, 10);
 
         await GotoAsync(page, "/AccountBook/Asset");
         var row = page.Locator(".mvc-grid tbody tr", new PageLocatorOptions { HasTextString = name });
@@ -157,7 +157,7 @@ public class AccountBookFlowTests(E2ESharedFixture fixture) : E2ETestBase(fixtur
     public async Task Income_Create_AddsTheAmountToTheDepositAsset()
     {
         var (page, account) = await NewSignedInPageAsync();
-        await Db.SeedAssetAsync(account.Email, "Salary-Account", 1000);
+        await DB.SeedAssetAsync(account.Email, "Salary-Account", 1000);
 
         await GotoAsync(page, "/AccountBook/Income");
         await page.Locator("button[data-target='#createIncomeDialogModal']").ClickAsync();
@@ -168,10 +168,10 @@ public class AccountBookFlowTests(E2ESharedFixture fixture) : E2ETestBase(fixtur
 
         await Assertions.Expect(SuccessToast(page)).ToBeVisibleAsync();
 
-        long incomes = await Db.ScalarAsync<long>(
+        long incomes = await DB.ScalarAsync<long>(
             """SELECT count(*) FROM "Income" WHERE "AccountEmail" = @email AND "Content" = 'March salary' AND "Amount" = 250""",
             ("email", account.Email));
-        decimal balance = await Db.ScalarAsync<decimal>(
+        decimal balance = await DB.ScalarAsync<decimal>(
             """SELECT "Amount" FROM "Asset" WHERE "AccountEmail" = @email AND "ProductName" = 'Salary-Account'""",
             ("email", account.Email));
         Assert.Equal(1, incomes);
@@ -183,7 +183,7 @@ public class AccountBookFlowTests(E2ESharedFixture fixture) : E2ETestBase(fixtur
     public async Task Income_Create_WithAnOutOfRangeAmount_IsRefused_AndLeavesTheBalanceUntouched()
     {
         var (page, account) = await NewSignedInPageAsync();
-        await Db.SeedAssetAsync(account.Email, "Salary-Account", 1000);
+        await DB.SeedAssetAsync(account.Email, "Salary-Account", 1000);
 
         await GotoAsync(page, "/AccountBook/Income");
         await page.Locator("button[data-target='#createIncomeDialogModal']").ClickAsync();
@@ -194,8 +194,8 @@ public class AccountBookFlowTests(E2ESharedFixture fixture) : E2ETestBase(fixtur
 
         await Assertions.Expect(ErrorToast(page)).ToContainTextAsync("9,999,999,999,999,999.99");
 
-        long incomes = await Db.ScalarAsync<long>("""SELECT count(*) FROM "Income" WHERE "AccountEmail" = @email""", ("email", account.Email));
-        decimal balance = await Db.ScalarAsync<decimal>(
+        long incomes = await DB.ScalarAsync<long>("""SELECT count(*) FROM "Income" WHERE "AccountEmail" = @email""", ("email", account.Email));
+        decimal balance = await DB.ScalarAsync<decimal>(
             """SELECT "Amount" FROM "Asset" WHERE "AccountEmail" = @email AND "ProductName" = 'Salary-Account'""", ("email", account.Email));
         Assert.Equal(0, incomes);
         Assert.Equal(1000m, balance);
@@ -208,7 +208,7 @@ public class AccountBookFlowTests(E2ESharedFixture fixture) : E2ETestBase(fixtur
     public async Task Expenditure_Create_DeductsTheAmountFromThePaymentAsset()
     {
         var (page, account) = await NewSignedInPageAsync();
-        await Db.SeedAssetAsync(account.Email, "Cash-Wallet", 5000);
+        await DB.SeedAssetAsync(account.Email, "Cash-Wallet", 5000);
 
         await GotoAsync(page, "/AccountBook/Expenditure");
         await page.Locator("button[data-target='#createExpenditureDialogModal']").ClickAsync();
@@ -221,10 +221,10 @@ public class AccountBookFlowTests(E2ESharedFixture fixture) : E2ETestBase(fixtur
 
         await Assertions.Expect(SuccessToast(page)).ToBeVisibleAsync();
 
-        long rows = await Db.ScalarAsync<long>(
+        long rows = await DB.ScalarAsync<long>(
             """SELECT count(*) FROM "Expenditure" WHERE "AccountEmail" = @email AND "Content" = 'Lunch' AND "Amount" = 1200""",
             ("email", account.Email));
-        decimal balance = await Db.ScalarAsync<decimal>(
+        decimal balance = await DB.ScalarAsync<decimal>(
             """SELECT "Amount" FROM "Asset" WHERE "AccountEmail" = @email AND "ProductName" = 'Cash-Wallet'""", ("email", account.Email));
         Assert.Equal(1, rows);
         Assert.Equal(3800m, balance);

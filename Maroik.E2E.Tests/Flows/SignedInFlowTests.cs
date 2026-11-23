@@ -39,7 +39,7 @@ public class SignedInFlowTests(E2ESharedFixture fixture) : E2ETestBase(fixture)
     [Fact]
     public async Task Login_WithWrongPassword_StaysOnTheLoginPage()
     {
-        SeededAccount account = await Db.SeedAccountAsync();
+        SeededAccount account = await DB.SeedAccountAsync();
         var page = await NewPageAsync();
 
         await GotoAsync(page, "/Account/Login");
@@ -52,7 +52,7 @@ public class SignedInFlowTests(E2ESharedFixture fixture) : E2ETestBase(fixture)
         await Assertions.Expect(page.Locator("#loginForm")).ToBeVisibleAsync();
 
         // The failed attempt is counted by the server.
-        long attempts = await Db.ScalarAsync<long>("""SELECT "LoginAttempt" FROM "Account" WHERE "Email" = @email""", ("email", account.Email));
+        long attempts = await DB.ScalarAsync<long>("""SELECT "LoginAttempt" FROM "Account" WHERE "Email" = @email""", ("email", account.Email));
         Assert.Equal(1, attempts);
     }
 
@@ -60,8 +60,8 @@ public class SignedInFlowTests(E2ESharedFixture fixture) : E2ETestBase(fixture)
     [Fact]
     public async Task Login_AsDeletedAccount_IsRefused()
     {
-        SeededAccount account = await Db.SeedAccountAsync();
-        await Db.ExecuteAsync("""UPDATE "Account" SET "Deleted" = true WHERE "Email" = @email""", ("email", account.Email));
+        SeededAccount account = await DB.SeedAccountAsync();
+        await DB.ExecuteAsync("""UPDATE "Account" SET "Deleted" = true WHERE "Email" = @email""", ("email", account.Email));
         var page = await NewPageAsync();
 
         await GotoAsync(page, "/Account/Login");

@@ -153,7 +153,7 @@ public sealed class IncomeRepositoryTests(DatabaseFixture database) : Repository
         Assert.NotNull(preRead);
 
         // A concurrent writer commits a change to the same row via a separate connection.
-        await using var writer = NewDbContext();
+        await using var writer = NewDBContext();
         await writer.Incomes.Where(i => i.Id == orm.Id)
             .ExecuteUpdateAsync(s => s.SetProperty(i => i.Amount, 999m), TestContext.Current.CancellationToken);
 
@@ -188,7 +188,7 @@ public sealed class IncomeRepositoryTests(DatabaseFixture database) : Repository
         // One contender: locks the row on its own connection, waits so the other contender queues behind the lock, then adds 100 and commits.
         async Task BumpAsync()
         {
-            await using var context = NewDbContext();
+            await using var context = NewDBContext();
             var repo = new IncomeRepository(context);
             await using var tx = await context.Database.BeginTransactionAsync(TestContext.Current.CancellationToken);
 

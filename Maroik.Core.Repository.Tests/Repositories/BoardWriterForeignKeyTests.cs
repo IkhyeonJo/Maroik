@@ -65,7 +65,7 @@ public sealed class BoardWriterForeignKeyTests(DatabaseFixture database) : Repos
     /// <summary>The writer of post <paramref name="boardId"/> and of its comment, read with a fresh context.</summary>
     private async Task<(string Post, string Comment)> WritersOfAsync(long boardId)
     {
-        await using var db = NewDbContext();
+        await using var db = NewDBContext();
         string post = (await db.Boards.AsNoTracking().SingleAsync(b => b.Id == boardId, TestContext.Current.CancellationToken)).Writer;
         string comment = (await db.BoardComments.AsNoTracking().SingleAsync(c => c.BoardId == boardId, TestContext.Current.CancellationToken)).Writer;
         return (post, comment);
@@ -102,7 +102,7 @@ public sealed class BoardWriterForeignKeyTests(DatabaseFixture database) : Repos
         (string post, string comment) = await WritersOfAsync(boardId);
         Assert.NotEqual(oldNickname, post);
         Assert.NotEqual(oldNickname, comment);
-        await using var db = NewDbContext();
+        await using var db = NewDBContext();
         Assert.False(await db.Boards.AnyAsync(b => b.Id == boardId && b.Writer == oldNickname, TestContext.Current.CancellationToken));
     }
 

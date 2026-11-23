@@ -64,7 +64,7 @@ public sealed class ExpenditureRepositoryTests(DatabaseFixture database) : Repos
         Context.ChangeTracker.Clear();
 
         var expenditure = Assert.Single(await Sut.GetByAccountEmailAsync(email, ct));
-        await using var fresh = NewDbContext();
+        await using var fresh = NewDBContext();
         decimal balance = (await fresh.Assets.SingleAsync(a => a.AccountEmail == email && a.ProductName == "Wallet", ct)).Amount;
 
         Assert.Equal(0.005m, expenditure.Amount.Amount);
@@ -205,7 +205,7 @@ public sealed class ExpenditureRepositoryTests(DatabaseFixture database) : Repos
         // One contender: locks the row on its own connection, waits so the other contender queues behind the lock, then adds 100 and commits.
         async Task BumpAsync()
         {
-            await using var context = NewDbContext();
+            await using var context = NewDBContext();
             var repo = new ExpenditureRepository(context);
             await using var tx = await context.Database.BeginTransactionAsync(TestContext.Current.CancellationToken);
 
@@ -244,7 +244,7 @@ public sealed class ExpenditureRepositoryTests(DatabaseFixture database) : Repos
         Assert.NotNull(preRead);
 
         // A concurrent writer commits a change to the same row via a separate connection.
-        await using var writer = NewDbContext();
+        await using var writer = NewDBContext();
         await writer.Expenditures.Where(e => e.Id == orm.Id)
             .ExecuteUpdateAsync(s => s.SetProperty(e => e.Amount, 999m), TestContext.Current.CancellationToken);
 

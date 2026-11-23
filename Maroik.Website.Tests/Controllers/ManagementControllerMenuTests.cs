@@ -151,8 +151,8 @@ public class ManagementControllerMenuTests(MaroikWebApplicationFactory factory)
         Assert.Contains("\"result\":true", json, StringComparison.Ordinal);
 
         using var verifyScope = factory.Services.CreateScope();
-        var verifyDb = verifyScope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        Assert.Equal(updatedName, verifyDb.Categories.Single(c => c.Id == created.Id).Name);
+        var verifyDB = verifyScope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        Assert.Equal(updatedName, verifyDB.Categories.Single(c => c.Id == created.Id).Name);
     }
 
     /// <summary>
@@ -193,8 +193,8 @@ public class ManagementControllerMenuTests(MaroikWebApplicationFactory factory)
         Assert.Contains("\"result\":true", json, StringComparison.Ordinal);
 
         using var verifyScope = factory.Services.CreateScope();
-        var verifyDb = verifyScope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        Assert.False(verifyDb.Categories.Any(c => c.Id == created.Id));
+        var verifyDB = verifyScope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        Assert.False(verifyDB.Categories.Any(c => c.Id == created.Id));
     }
 
     // -- CreateSubCategory / IsSubCategoryExists: success path -------------------
@@ -219,8 +219,8 @@ public class ManagementControllerMenuTests(MaroikWebApplicationFactory factory)
         Assert.Contains("\"result\":true", createJson, StringComparison.Ordinal);
 
         using var verifyScope = factory.Services.CreateScope();
-        var verifyDb = verifyScope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        var createdSub = verifyDb.SubCategories.Single(s => s.Name == subName);
+        var verifyDB = verifyScope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        var createdSub = verifyDB.SubCategories.Single(s => s.Name == subName);
 
         using var existsRequest = admin.BuildJsonPostRequest($"/Management/IsSubCategoryExists?id={createdSub.Id}");
         var existsResponse = await _client.SendAsync(existsRequest, TestContext.Current.CancellationToken);
@@ -277,8 +277,8 @@ public class ManagementControllerMenuTests(MaroikWebApplicationFactory factory)
         await _client.SendAsync(createSubRequest, TestContext.Current.CancellationToken);
 
         using var verifyScope = factory.Services.CreateScope();
-        var verifyDb = verifyScope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        var createdSub = verifyDb.SubCategories.Single(s => s.Name == subName);
+        var verifyDB = verifyScope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        var createdSub = verifyDB.SubCategories.Single(s => s.Name == subName);
 
         using var deleteRequest = admin.BuildJsonPostRequest("/Management/DeleteSubCategory", ValidSubCategoryPayload(subName, category.Id, (int)createdSub.Id));
         var response = await _client.SendAsync(deleteRequest, TestContext.Current.CancellationToken);
@@ -287,8 +287,8 @@ public class ManagementControllerMenuTests(MaroikWebApplicationFactory factory)
         Assert.Contains("\"result\":true", json, StringComparison.Ordinal);
 
         using var finalScope = factory.Services.CreateScope();
-        var finalDb = finalScope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        Assert.False(finalDb.SubCategories.Any(s => s.Id == createdSub.Id));
+        var finalDB = finalScope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        Assert.False(finalDB.SubCategories.Any(s => s.Id == createdSub.Id));
     }
 
     /// <summary>
@@ -318,8 +318,8 @@ public class ManagementControllerMenuTests(MaroikWebApplicationFactory factory)
             "The menu entry that lets administrators open menu management cannot be removed, moved or given to another role.",
             json, StringComparison.Ordinal);
         using var verifyScope = factory.Services.CreateScope();
-        var verifyDb = verifyScope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        Assert.True(verifyDb.SubCategories.Any(s => s.Id == menu.Id && s.Action == "Menu" && s.Role == Role.Admin));
+        var verifyDB = verifyScope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        Assert.True(verifyDB.SubCategories.Any(s => s.Id == menu.Id && s.Action == "Menu" && s.Role == Role.Admin));
     }
 
     // -- Cache invalidation --------------------------------------------------------
@@ -448,8 +448,8 @@ public class ManagementControllerMenuTests(MaroikWebApplicationFactory factory)
         await _client.SendAsync(createSubRequest, TestContext.Current.CancellationToken);
 
         using var verifyScope = factory.Services.CreateScope();
-        var verifyDb = verifyScope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        var createdSub = verifyDb.SubCategories.Single(s => s.Name == subName);
+        var verifyDB = verifyScope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        var createdSub = verifyDB.SubCategories.Single(s => s.Name == subName);
 
         using var request = admin.BuildJsonPostRequest("/Management/UpdateSubCategory", ValidSubCategoryPayload(UniqueName(), category.Id, (int)createdSub.Id));
         await AssertClearsNavigationCacheAsync(admin, request);
@@ -473,8 +473,8 @@ public class ManagementControllerMenuTests(MaroikWebApplicationFactory factory)
         await _client.SendAsync(createSubRequest, TestContext.Current.CancellationToken);
 
         using var verifyScope = factory.Services.CreateScope();
-        var verifyDb = verifyScope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        var createdSub = verifyDb.SubCategories.Single(s => s.Name == subName);
+        var verifyDB = verifyScope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        var createdSub = verifyDB.SubCategories.Single(s => s.Name == subName);
 
         using var request = admin.BuildJsonPostRequest("/Management/DeleteSubCategory", ValidSubCategoryPayload(subName, category.Id, (int)createdSub.Id));
         await AssertClearsNavigationCacheAsync(admin, request);

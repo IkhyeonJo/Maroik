@@ -141,8 +141,8 @@ public class CalendarServiceTests
             allDay: false,
             startDate: DateTime.UtcNow,
             endDate: DateTime.UtcNow.AddHours(1),
-            startTz: null,
-            endTz: null,
+            startTZ: null,
+            endTZ: null,
             location: null,
             status: null,
             recurrenceId: null,
@@ -1294,7 +1294,7 @@ public class CalendarServiceTests
     // -- EnsureCalendarSharedAsync: races and failures ---------------------------
 
     /// <summary>An exception whose message looks like a PostgreSQL unique violation on the <c>CalendarShared</c> primary key.</summary>
-    private static DuplicateKeyException SharedPkViolation() =>
+    private static DuplicateKeyException SharedPKViolation() =>
         new(DuplicateKey.CalendarShared);
 
     /// <summary>The first attempt loses the CalendarShared PK race; the retry (in a fresh transaction) succeeds.</summary>
@@ -1305,7 +1305,7 @@ public class CalendarServiceTests
             .ReturnsAsync([])
             .ReturnsAsync([CalendarShared.Reconstitute(5, false, false)]);
         _sharedRepo.SetupSequence(r => r.CreateAsync(It.IsAny<CalendarShared>(), It.IsAny<CancellationToken>()))
-            .ThrowsAsync(SharedPkViolation());
+            .ThrowsAsync(SharedPKViolation());
 
         ServiceResult result = await CreateSut().EnsureCalendarSharedAsync([5], TestContext.Current.CancellationToken);
 
@@ -1320,7 +1320,7 @@ public class CalendarServiceTests
     public async Task EnsureCalendarSharedAsync_GivesUp_WhenThePrimaryKeyRaceNeverResolves()
     {
         GivenShares([]);
-        _sharedRepo.Setup(r => r.CreateAsync(It.IsAny<CalendarShared>(), It.IsAny<CancellationToken>())).ThrowsAsync(SharedPkViolation());
+        _sharedRepo.Setup(r => r.CreateAsync(It.IsAny<CalendarShared>(), It.IsAny<CancellationToken>())).ThrowsAsync(SharedPKViolation());
 
         ServiceResult result = await CreateSut().EnsureCalendarSharedAsync([5], TestContext.Current.CancellationToken);
 
@@ -1507,7 +1507,7 @@ public class CalendarServiceTests
         _sharedRepo.SetupSequence(r => r.GetByIdsAsync(It.IsAny<IEnumerable<long>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync([])
             .ReturnsAsync([CalendarShared.Reconstitute(1, false, false)]);
-        _sharedRepo.Setup(r => r.CreateAsync(It.IsAny<CalendarShared>(), It.IsAny<CancellationToken>())).ThrowsAsync(SharedPkViolation());
+        _sharedRepo.Setup(r => r.CreateAsync(It.IsAny<CalendarShared>(), It.IsAny<CancellationToken>())).ThrowsAsync(SharedPKViolation());
 
         ServiceResult result = await CreateSut().UpdateCalendarSharedAsync(email,
             [new CalendarSharedRequest { CalendarId = 1, User = true, Anonymous = false }], TestContext.Current.CancellationToken);
@@ -1524,7 +1524,7 @@ public class CalendarServiceTests
         const string email = "admin@example.com";
         _calendarRepo.Setup(r => r.GetByAccountEmailAsync(email, It.IsAny<CancellationToken>())).ReturnsAsync([MakeCalendar(1, "A", email)]);
         GivenShares([]);
-        _sharedRepo.Setup(r => r.CreateAsync(It.IsAny<CalendarShared>(), It.IsAny<CancellationToken>())).ThrowsAsync(SharedPkViolation());
+        _sharedRepo.Setup(r => r.CreateAsync(It.IsAny<CalendarShared>(), It.IsAny<CancellationToken>())).ThrowsAsync(SharedPKViolation());
 
         ServiceResult result = await CreateSut().UpdateCalendarSharedAsync(email,
             [new CalendarSharedRequest { CalendarId = 1, User = true, Anonymous = false }], TestContext.Current.CancellationToken);
@@ -1743,7 +1743,7 @@ public class CalendarServiceTests
     public async Task EnsureCalendarSharedAsync_LogsGivingUp_WithTheIdsAndTheRetryCount()
     {
         GivenShares([]);
-        _sharedRepo.Setup(r => r.CreateAsync(It.IsAny<CalendarShared>(), It.IsAny<CancellationToken>())).ThrowsAsync(SharedPkViolation());
+        _sharedRepo.Setup(r => r.CreateAsync(It.IsAny<CalendarShared>(), It.IsAny<CancellationToken>())).ThrowsAsync(SharedPKViolation());
 
         await CreateSut().EnsureCalendarSharedAsync([5, 6], TestContext.Current.CancellationToken);
 
@@ -2046,7 +2046,7 @@ public class CalendarServiceTests
     {
         GivenOwnedCalendars(MakeCalendar());
         GivenShares([]);
-        _sharedRepo.Setup(r => r.CreateAsync(It.IsAny<CalendarShared>(), It.IsAny<CancellationToken>())).ThrowsAsync(SharedPkViolation());
+        _sharedRepo.Setup(r => r.CreateAsync(It.IsAny<CalendarShared>(), It.IsAny<CancellationToken>())).ThrowsAsync(SharedPKViolation());
 
         await CreateSut().UpdateCalendarSharedAsync(Owner, [new CalendarSharedRequest { CalendarId = 1, User = true }], TestContext.Current.CancellationToken);
 

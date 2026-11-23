@@ -95,12 +95,12 @@ public class ManagementViewModelMapperTests
         var created = new DateTime(2025, 6, 10, 12, 0, 0, DateTimeKind.Utc);
         var account = SampleAccount(created, created);
 
-        var utcVm = new[] { account }.ToDisplayViewModels(new TimeZoneDisplayService(), "UTC")[0];
-        var seoulVm = new[] { account }.ToDisplayViewModels(new TimeZoneDisplayService(), "Asia/Seoul")[0];
+        var utcVM = new[] { account }.ToDisplayViewModels(new TimeZoneDisplayService(), "UTC")[0];
+        var seoulVM = new[] { account }.ToDisplayViewModels(new TimeZoneDisplayService(), "Asia/Seoul")[0];
 
-        Assert.NotEqual(utcVm.Created, seoulVm.Created);
-        Assert.Equal(created, utcVm.Created);
-        Assert.Equal(new DateTime(2025, 6, 10, 21, 0, 0), seoulVm.Created);
+        Assert.NotEqual(utcVM.Created, seoulVM.Created);
+        Assert.Equal(created, utcVM.Created);
+        Assert.Equal(new DateTime(2025, 6, 10, 21, 0, 0), seoulVM.Created);
     }
 
     // -- ToDisplayViewModels: multiple items ------------------------------------

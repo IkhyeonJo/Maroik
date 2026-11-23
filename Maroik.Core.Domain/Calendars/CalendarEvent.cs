@@ -95,8 +95,8 @@ public sealed class CalendarEvent : AggregateRoot<long>
         bool allDay,
         DateTime startDate,
         DateTime endDate,
-        string? startTz,
-        string? endTz,
+        string? startTZ,
+        string? endTZ,
         string? location,
         string? status,
         long? recurrenceId,
@@ -109,8 +109,8 @@ public sealed class CalendarEvent : AggregateRoot<long>
         AllDay = allDay;
         StartDate = AsUtc(startDate);
         EndDate = AsUtc(endDate);
-        StartDateTimeZoneIanaId = startTz;
-        EndDateTimeZoneIanaId = endTz;
+        StartDateTimeZoneIanaId = startTZ;
+        EndDateTimeZoneIanaId = endTZ;
         Location = location;
         Status = status;
         RecurrenceId = recurrenceId;
@@ -144,8 +144,8 @@ public sealed class CalendarEvent : AggregateRoot<long>
         bool allDay,
         DateTime startDate,
         DateTime endDate,
-        string? startTz,
-        string? endTz,
+        string? startTZ,
+        string? endTZ,
         string? location,
         string? status,
         long? recurrenceId,
@@ -154,7 +154,7 @@ public sealed class CalendarEvent : AggregateRoot<long>
     {
         var calendarEvent = new CalendarEvent(
             id, calendarId, title, description, allDay,
-            startDate, endDate, startTz, endTz, location, status, recurrenceId, created, updated);
+            startDate, endDate, startTZ, endTZ, location, status, recurrenceId, created, updated);
 
         return calendarEvent;
     }
@@ -169,8 +169,8 @@ public sealed class CalendarEvent : AggregateRoot<long>
         bool allDay,
         DateTime startDate,
         DateTime endDate,
-        string? startTz,
-        string? endTz,
+        string? startTZ,
+        string? endTZ,
         string? location,
         string? status,
         DateTime utcNow,
@@ -193,11 +193,11 @@ public sealed class CalendarEvent : AggregateRoot<long>
         if (!string.IsNullOrWhiteSpace(status) && !CalendarEventStatuses.IsKnown(status))
             return DomainError.Validation("CalendarEvent.StatusInvalid", "Event status is not a recognized value.");
 
-        var timesResult = ValidateDatesAndZones(allDay, startDate, endDate, startTz, endTz);
+        var timesResult = ValidateDatesAndZones(allDay, startDate, endDate, startTZ, endTZ);
         if (timesResult.IsError) return timesResult.Errors;
 
         var calendarEvent = new CalendarEvent(0, calendarId, title, description, allDay,
-            startDate, endDate, startTz, endTz, location, status, recurrenceId, utcNow, utcNow);
+            startDate, endDate, startTZ, endTZ, location, status, recurrenceId, utcNow, utcNow);
 
         return calendarEvent;
     }
@@ -210,7 +210,7 @@ public sealed class CalendarEvent : AggregateRoot<long>
     /// resolve to a known zone on the host (null means UTC).
     /// </summary>
     private static ErrorOr<Success> ValidateDatesAndZones(
-        bool allDay, DateTime startDate, DateTime endDate, string? startTz, string? endTz)
+        bool allDay, DateTime startDate, DateTime endDate, string? startTZ, string? endTZ)
     {
         if (!IsWithinYears(startDate) || !IsWithinYears(endDate))
             return DomainError.Validation("CalendarEvent.DateOutOfRange", "Event dates must be between the years {0} and {1}.", MinYear, MaxYear);
@@ -218,7 +218,7 @@ public sealed class CalendarEvent : AggregateRoot<long>
         if (rangeInvalid)
             return DomainError.Validation("CalendarEvent.InvalidDateRange", "End date must not be earlier than start date.");
 
-        foreach (string? tz in new[] { startTz, endTz })
+        foreach (string? tz in new[] { startTZ, endTZ })
         {
             if (!string.IsNullOrWhiteSpace(tz) && TimeZoneId.Create(tz).IsError)
                 return DomainError.Validation("CalendarEvent.InvalidTimeZone", "'{0}' is not a recognized time-zone ID.", tz);
@@ -246,8 +246,8 @@ public sealed class CalendarEvent : AggregateRoot<long>
         bool allDay,
         DateTime startDate,
         DateTime endDate,
-        string? startTz,
-        string? endTz,
+        string? startTZ,
+        string? endTZ,
         string? location,
         string? status,
         DateTime utcNow)
@@ -269,7 +269,7 @@ public sealed class CalendarEvent : AggregateRoot<long>
         if (!string.IsNullOrWhiteSpace(status) && !CalendarEventStatuses.IsKnown(status))
             return DomainError.Validation("CalendarEvent.StatusInvalid", "Event status is not a recognized value.");
 
-        var timesResult = ValidateDatesAndZones(allDay, startDate, endDate, startTz, endTz);
+        var timesResult = ValidateDatesAndZones(allDay, startDate, endDate, startTZ, endTZ);
         if (timesResult.IsError) return timesResult.Errors;
 
         Title = title;
@@ -277,8 +277,8 @@ public sealed class CalendarEvent : AggregateRoot<long>
         AllDay = allDay;
         StartDate = AsUtc(startDate);
         EndDate = AsUtc(endDate);
-        StartDateTimeZoneIanaId = startTz;
-        EndDateTimeZoneIanaId = endTz;
+        StartDateTimeZoneIanaId = startTZ;
+        EndDateTimeZoneIanaId = endTZ;
         Location = location;
         Status = status;
         Updated = utcNow;

@@ -164,7 +164,7 @@ public sealed class CalendarSharedRepositoryTests(DatabaseFixture database) : Re
         if (low > high) (low, high) = (high, low);
         await SeedAsync(MakeShared(low), MakeShared(high));
 
-        ApplicationDbContext[] contexts = [NewDbContext(), NewDbContext()];
+        ApplicationDbContext[] contexts = [NewDBContext(), NewDBContext()];
 
         // One caller requests [low, high]; the other requests the same pair reversed, [high, low].
         // Without the ORDER BY, this is exactly the pattern that can lock rows in different physical

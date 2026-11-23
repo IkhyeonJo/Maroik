@@ -33,7 +33,7 @@ public class ManagementFlowTests(E2ESharedFixture fixture) : E2ETestBase(fixture
     public async Task AdminAccount_Grid_ListsAccounts()
     {
         var (page, _) = await NewSignedInPageAsync("Admin");
-        SeededAccount user = await Db.SeedAccountAsync();
+        SeededAccount user = await DB.SeedAccountAsync();
 
         await GotoAsync(page, "/Management/Account");
 
@@ -45,7 +45,7 @@ public class ManagementFlowTests(E2ESharedFixture fixture) : E2ETestBase(fixture
     }
 
     /// <summary>Fills and submits the admin "create account" dialog for a User in Asia/Seoul.</summary>
-    private static async Task CreateAccountThroughTheUiAsync(IPage page, string email, string nickname)
+    private static async Task CreateAccountThroughTheUIAsync(IPage page, string email, string nickname)
     {
         await GotoAsync(page, "/Management/Account");
         await page.Locator("button[data-target='#createAccountDialogModal']").ClickAsync();
@@ -66,10 +66,10 @@ public class ManagementFlowTests(E2ESharedFixture fixture) : E2ETestBase(fixture
         string email = $"created-{key}@test.com";
 
         // Full-width letters and stray spaces around the nickname.
-        await CreateAccountThroughTheUiAsync(page, email, $"  Ｎｅｗ{key}  ");
+        await CreateAccountThroughTheUIAsync(page, email, $"  Ｎｅｗ{key}  ");
 
         await Assertions.Expect(page.Locator(".toast-success")).ToBeVisibleAsync();
-        string? stored = await Db.ScalarAsync<string>("""SELECT "Nickname" FROM "Account" WHERE "Email" = @email""", ("email", email));
+        string? stored = await DB.ScalarAsync<string>("""SELECT "Nickname" FROM "Account" WHERE "Email" = @email""", ("email", email));
         Assert.Equal($"New{key}", stored);
     }
 
@@ -83,10 +83,10 @@ public class ManagementFlowTests(E2ESharedFixture fixture) : E2ETestBase(fixture
         var (page, _) = await NewSignedInPageAsync("Admin");
         string email = $"mod-{Guid.NewGuid():N}"[..14] + "@test.com";
 
-        await CreateAccountThroughTheUiAsync(page, email, "Moderator");
+        await CreateAccountThroughTheUIAsync(page, email, "Moderator");
 
         await Assertions.Expect(page.Locator(".toast-success")).ToBeVisibleAsync();
-        string? stored = await Db.ScalarAsync<string>("""SELECT "Nickname" FROM "Account" WHERE "Email" = @email""", ("email", email));
+        string? stored = await DB.ScalarAsync<string>("""SELECT "Nickname" FROM "Account" WHERE "Email" = @email""", ("email", email));
         Assert.Equal("Moderator", stored);
     }
 
@@ -96,13 +96,13 @@ public class ManagementFlowTests(E2ESharedFixture fixture) : E2ETestBase(fixture
     {
         var (page, _) = await NewSignedInPageAsync("Admin");
         string key = Guid.NewGuid().ToString("N")[..8];
-        await Db.SeedAccountAsync(nickname: $"CaseTwin{key}");
+        await DB.SeedAccountAsync(nickname: $"CaseTwin{key}");
         string email = $"twin-{key}@test.com";
 
-        await CreateAccountThroughTheUiAsync(page, email, $"casetwin{key}");
+        await CreateAccountThroughTheUIAsync(page, email, $"casetwin{key}");
 
         await Assertions.Expect(page.Locator(".toast-error")).ToBeVisibleAsync();
-        long created = await Db.ScalarAsync<long>("""SELECT count(*) FROM "Account" WHERE "Email" = @email""", ("email", email));
+        long created = await DB.ScalarAsync<long>("""SELECT count(*) FROM "Account" WHERE "Email" = @email""", ("email", email));
         Assert.Equal(0, created);
     }
 
@@ -139,7 +139,7 @@ public class ManagementFlowTests(E2ESharedFixture fixture) : E2ETestBase(fixture
     public async Task PrivateNoteEditMode_ShowsTheRichTextEditor_WithTheNoteBody()
     {
         var (page, account) = await NewSignedInPageAsync();
-        long boardId = await Db.SeedPrivateNoteAsync(account.Nickname, "<p>editable note</p>");
+        long boardId = await DB.SeedPrivateNoteAsync(account.Nickname, "<p>editable note</p>");
         await GotoAsync(page, $"/Management/PrivateNote?method=edit&boardId={boardId}");
 
         await Assertions.Expect(page.Locator(".note-editor .note-editable")).ToContainTextAsync("editable note");

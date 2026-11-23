@@ -160,8 +160,8 @@ public class ForumControllerWriteEditTests(MaroikWebApplicationFactory factory)
         Assert.Contains("\"result\":true", json, StringComparison.Ordinal);
 
         using var verifyScope = factory.Services.CreateScope();
-        var verifyDb = verifyScope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        var updated = verifyDb.Boards.Single(b => b.Id == created.Id);
+        var verifyDB = verifyScope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        var updated = verifyDB.Boards.Single(b => b.Id == created.Id);
         Assert.Equal(updatedTitle, updated.Title);
         Assert.Contains("Edited", updated.Content, StringComparison.Ordinal);
         Assert.True(updated.Locked);

@@ -193,8 +193,8 @@ public class NoticeControllerFixedIncomeTests(MaroikWebApplicationFactory factor
         Assert.Contains("\"result\":true", json, StringComparison.Ordinal);
 
         using var verifyScope = factory.Services.CreateScope();
-        var verifyDb = verifyScope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        var updated = verifyDb.FixedIncomes.Single(f => f.Id == created.Id);
+        var verifyDB = verifyScope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        var updated = verifyDB.FixedIncomes.Single(f => f.Id == created.Id);
         Assert.Equal("BusinessIncome", updated.SubClass);
         Assert.Equal("updated", updated.Note);
         // Not asserting Unpunctuality here: FixedIncome.Update()'s signature has no
@@ -241,7 +241,7 @@ public class NoticeControllerFixedIncomeTests(MaroikWebApplicationFactory factor
         Assert.Contains("\"result\":true", json, StringComparison.Ordinal);
 
         using var verifyScope = factory.Services.CreateScope();
-        var verifyDb = verifyScope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        Assert.False(verifyDb.FixedIncomes.Any(f => f.Id == created.Id));
+        var verifyDB = verifyScope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        Assert.False(verifyDB.FixedIncomes.Any(f => f.Id == created.Id));
     }
 }

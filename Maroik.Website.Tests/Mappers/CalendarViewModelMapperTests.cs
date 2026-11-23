@@ -26,7 +26,7 @@ public class CalendarViewModelMapperTests
     };
 
     /// <summary>A timed event from <paramref name="start"/> to <paramref name="end"/> with optional per-end time zones.</summary>
-    private static CalendarEventResponse TimedEvent(DateTime start, DateTime end, string? startTz = null, string? endTz = null) => new()
+    private static CalendarEventResponse TimedEvent(DateTime start, DateTime end, string? startTZ = null, string? endTZ = null) => new()
     {
         Id = 1,
         CalendarId = 1,
@@ -34,8 +34,8 @@ public class CalendarViewModelMapperTests
         AllDay = false,
         StartDate = start,
         EndDate = end,
-        StartDateTimeZoneIanaId = startTz,
-        EndDateTimeZoneIanaId = endTz
+        StartDateTimeZoneIanaId = startTZ,
+        EndDateTimeZoneIanaId = endTZ
     };
 
     // -- ToDisplayViewModel: an attachment ------------------------------------
@@ -182,7 +182,7 @@ public class CalendarViewModelMapperTests
         var evt = TimedEvent(
             new DateTime(2025, 6, 10, 9, 0, 0, DateTimeKind.Utc),
             new DateTime(2025, 6, 10, 17, 0, 0, DateTimeKind.Utc),
-            startTz: null, endTz: null);
+            startTZ: null, endTZ: null);
 
         var vm = evt.ToDisplayViewModel(new TimeZoneDisplayService(), "UTC", "#3788d8");
 

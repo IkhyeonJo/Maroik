@@ -93,7 +93,7 @@ public class ForumFlowTests(E2ESharedFixture fixture) : E2ETestBase(fixture)
     public async Task FreeForumEditMode_ShowsTheRichTextEditor_WithThePostBody()
     {
         var (page, account) = await NewSignedInPageAsync();
-        long boardId = await Db.SeedFreeForumPostAsync(account.Nickname, "<p>editable body</p>");
+        long boardId = await DB.SeedFreeForumPostAsync(account.Nickname, "<p>editable body</p>");
         await GotoAsync(page, $"/Forum/FreeForum?method=edit&boardId={boardId}");
 
         await Assertions.Expect(page.Locator(".note-editor .note-editable")).ToContainTextAsync("editable body");
@@ -142,14 +142,14 @@ public class ForumFlowTests(E2ESharedFixture fixture) : E2ETestBase(fixture)
     [Fact]
     public async Task FreeForumDetail_ShowsTheBodyImage_AndDownloadsTheAttachmentFromItsEndpoint()
     {
-        SeededAccount author = await Db.SeedAccountAsync();
+        SeededAccount author = await DB.SeedAccountAsync();
         string key = Guid.NewGuid().ToString("N");
         string imagePath = $"upload/FreeForum/e2e/{key}.png";
         string attachmentPath = $"upload/FreeForum/e2e/{key}.zip";
         byte[] attachment = [.. "e2e-attachment-bytes"u8];
         Files.Seed(imagePath, _png);
         Files.Seed(attachmentPath, attachment);
-        long boardId = await Db.SeedFreeForumPostAsync(author.Nickname, $"<p>with image</p><img alt=\"{imagePath}\">", attachmentPath, attachment.Length);
+        long boardId = await DB.SeedFreeForumPostAsync(author.Nickname, $"<p>with image</p><img alt=\"{imagePath}\">", attachmentPath, attachment.Length);
 
         var page = await NewPageAsync();
         await GotoAsync(page, $"/Forum/FreeForum?method=detail&boardId={boardId}");

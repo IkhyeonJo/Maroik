@@ -181,7 +181,7 @@ public sealed class CalendarEventReminderRepositoryTests(DatabaseFixture databas
         DateTime now = new(2001, 7, 1, 12, 0, 0, DateTimeKind.Utc);
         await EmptyTheQueueAsync();
         await SeedAsync(MakeReminder(eventId, 11, now.AddMinutes(-2)), MakeReminder(eventId, 12, now.AddMinutes(-1)));
-        var otherContext = NewDbContext();
+        var otherContext = NewDBContext();
         var other = new CalendarEventReminderRepository(otherContext);
 
         await using var otherTx = await otherContext.Database.BeginTransactionAsync(TestContext.Current.CancellationToken);

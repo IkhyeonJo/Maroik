@@ -450,7 +450,7 @@ public sealed class AccountRepositoryTests(DatabaseFixture database) : Repositor
         await SeedAsync(NewAccount(email, nickname));
 
         var recorder = new CommandRecorder();
-        var repository = new AccountRepository(NewDbContext(recorder));
+        var repository = new AccountRepository(NewDBContext(recorder));
         Account account = (await repository.FindByEmailAsync(email, TestContext.Current.CancellationToken))!;
         account.SetMessage("Hello", DateTime.UtcNow);
         recorder.Commands.Clear();
@@ -652,7 +652,7 @@ public sealed class AccountRepositoryTests(DatabaseFixture database) : Repositor
 
         // Contexts created up front: RepositoryTestBase tracks them for disposal and the tracking
         // list is not safe to append from parallel tasks.
-        ApplicationDbContext[] contexts = [.. Enumerable.Range(0, 5).Select(_ => NewDbContext())];
+        ApplicationDbContext[] contexts = [.. Enumerable.Range(0, 5).Select(_ => NewDBContext())];
 
         await Task.WhenAll(contexts.Select(async context =>
         {
@@ -710,7 +710,7 @@ public sealed class AccountRepositoryTests(DatabaseFixture database) : Repositor
         await unitOfWork.BeginAsync(ct: TestContext.Current.CancellationToken);
         _ = await Sut.FindActiveAdminsForUpdateAsync(TestContext.Current.CancellationToken);
 
-        await using var other = NewDbContext();
+        await using var other = NewDBContext();
         await using var otherUnitOfWork = new UnitOfWork(other);
         await otherUnitOfWork.BeginAsync(ct: TestContext.Current.CancellationToken);
         var ex = await Assert.ThrowsAsync<Npgsql.PostgresException>(() => other.Database.ExecuteSqlAsync(

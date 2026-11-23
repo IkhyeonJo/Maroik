@@ -162,8 +162,8 @@ public class CalendarControllerEventTests(MaroikWebApplicationFactory factory)
         Assert.Contains("\"result\":true", json, StringComparison.Ordinal);
 
         using var verifyScope = factory.Services.CreateScope();
-        var verifyDb = verifyScope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        var updated = verifyDb.CalendarEvents.Single(e => e.Id == created.Id);
+        var verifyDB = verifyScope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        var updated = verifyDB.CalendarEvents.Single(e => e.Id == created.Id);
         Assert.Equal(updatedTitle, updated.Title);
         Assert.Equal(new DateTime(2030, 7, 1, 0, 0, 0, DateTimeKind.Utc), updated.StartDate);
     }
@@ -230,8 +230,8 @@ public class CalendarControllerEventTests(MaroikWebApplicationFactory factory)
         Assert.Contains("\"result\":true", json, StringComparison.Ordinal);
 
         using var verifyScope = factory.Services.CreateScope();
-        var verifyDb = verifyScope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        Assert.False(verifyDb.CalendarEvents.Any(e => e.Id == created.Id));
+        var verifyDB = verifyScope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        Assert.False(verifyDB.CalendarEvents.Any(e => e.Id == created.Id));
     }
 
     /// <summary>Delete calendar event unknown id returns failure result.</summary>

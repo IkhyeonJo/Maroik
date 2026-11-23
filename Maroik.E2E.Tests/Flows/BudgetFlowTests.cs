@@ -17,7 +17,7 @@ public class BudgetFlowTests(E2ESharedFixture fixture) : E2ETestBase(fixture)
     private async Task<(IPage Page, SeededAccount Account)> OpenAsync()
     {
         var (page, account) = await NewSignedInPageAsync();
-        await Db.SeedAssetAsync(account.Email, "Wallet", 0m);
+        await DB.SeedAssetAsync(account.Email, "Wallet", 0m);
         await page.WaitForURLAsync(url => url.Contains("/Dashboard/", StringComparison.Ordinal), new PageWaitForURLOptions { Timeout = 30_000 });
         await GotoAsync(page, "/AccountBook/IncomeBudget");
         await Assertions.Expect(Cell(page, "A2")).ToContainTextAsync("근로수입");
@@ -76,7 +76,7 @@ public class BudgetFlowTests(E2ESharedFixture fixture) : E2ETestBase(fixture)
         await Assertions.Expect(Cell(page, "B8")).ToHaveTextAsync("3,000,000");
         await Assertions.Expect(Cell(page, "B13")).ToHaveTextAsync("3,000,000");
         await Assertions.Expect(page.Locator("#budgetNameBox")).ToHaveTextAsync("B3");
-        Assert.Equal("3000000", await Db.ScalarAsync<string>(
+        Assert.Equal("3000000", await DB.ScalarAsync<string>(
             """SELECT c."Input" FROM "BudgetSheetCell" c JOIN "BudgetSheet" s ON s."Id" = c."SheetId" WHERE s."AccountEmail" = @email AND c."Column" = 'B'""", ("email", account.Email)));
     }
 
@@ -141,7 +141,7 @@ public class BudgetFlowTests(E2ESharedFixture fixture) : E2ETestBase(fixture)
         var (page, account) = await OpenAsync();
         DateTime now = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("Asia/Seoul"));
         string column = ((char)('A' + now.Month)).ToString();
-        await Db.ExecuteAsync(
+        await DB.ExecuteAsync(
             """
             INSERT INTO "Income" ("AccountEmail", "MainClass", "SubClass", "Content", "Amount", "DepositMyAssetProductName", "Created", "Updated", "Note")
             VALUES (@email, 'RegularIncome', 'LaborIncome', 'Salary', 1000000, 'Wallet', now() AT TIME ZONE 'UTC', now() AT TIME ZONE 'UTC', '')

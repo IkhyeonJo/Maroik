@@ -211,7 +211,7 @@ public sealed class BoardCommentRepositoryTests(DatabaseFixture database) : Repo
         var orm = MakeComment(boardId, 1);
         await SeedAsync(orm);
 
-        ApplicationDbContext[] contexts = [.. Enumerable.Range(0, attempterCount).Select(_ => NewDbContext())];
+        ApplicationDbContext[] contexts = [.. Enumerable.Range(0, attempterCount).Select(_ => NewDBContext())];
 
         bool[] succeeded = await Task.WhenAll(contexts.Select(async context =>
         {
