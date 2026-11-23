@@ -294,7 +294,13 @@ Maroik has been built by one developer since May 2021. It was developed in a pri
 | 2026-09 | Client scripts migrated to TypeScript; repository and E2E tests on real PostgreSQL (Testcontainers); a series of whole-solution reviews fixing race conditions and security gaps; strict TDD and logging rules; mutation testing (Domain 78 % → 92 %) |
 | 2026-09-28 | Moved from the private repository to this public repository, where all development continues; the private repository's cleaned history was merged here in 2026-11 and the private repository deleted |
 | 2026-10 | Service mutation score 70 % → 96 %; TLS ended at Cloudflare through a Cloudflare Tunnel; RSA replaced with ASP.NET Core Data Protection; memory-safety, logging-template, security and banned-API analyzers as build errors; admin and menu safeguards against locking administrators out; GitHub Actions CI (coverage gate, isolated E2E run), release-only minified client scripts, semver from Conventional Commits, images published to GHCR and pulled by the server; calendar reminders delivered by e-mail (scheduled by the domain, sent once a minute by the worker through the mail queue); one pinned .NET SDK with a weekly bump pull request; personal Kanban board; personal File Manager (chunked uploads, quotas, background virus scan, download progress); Income and Expenditure Budget sheets with an Excel-compatible formula engine; `Deploy.sh` hosting modes (Cloudflare Tunnel, port forwarding behind Caddy, no domain) |
-| 2026-11 | Income and expenditure class suggestion with ML.NET (logistic regression on character n-grams, chosen over naive Bayes on the author's own records; trained by the worker, stored in the file storage); unusual-amount marks in the expenditure list; amounts shown in each currency's own decimals |
+| 2026-11 | Income and expenditure class suggestion with ML.NET (logistic regression on character n-grams, chosen over naive Bayes on the author's own records; trained by the worker, stored in the file storage); unusual-amount marks in the expenditure list; amounts shown in each currency's own decimals; a CSS fix reported upstream to NonFactors Mvc.Grid ships in 8.1.0 (see Open Source Contributions) |
+
+## Open Source Contributions
+
+| Project | Contribution | Released in |
+|---|---|---|
+| [NonFactors Mvc.Grid](https://gitlab.com/NonFactors/AspNetCore.Grid) | Reported a bug, with its fix, in `mvc-grid.css`: the filter popup's inputs set a white background but no text color, so on a dark page theme (AdminLTE dark mode) they inherited a light color and showed white text on white. The suggested fix — set the text color next to the background — is the one-line change Maroik had run since 2021. The maintainer took it in and extended it into dark-mode colors for the whole grid (`light-dark()`). Reported by e-mail (the repository takes no issues or merge requests), 2026-11-19. | 8.1.0 (2026-11) |
 
 ## Architecture
 
