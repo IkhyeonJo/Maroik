@@ -207,4 +207,7 @@
   <data name="Turn off the virus scan for files" xml:space="preserve">
     <value>파일 바이러스 검사 기능 끄기</value>
   </data>
+  <data name="Allow the AI chat" xml:space="preserve">
+    <value>AI 대화 사용 허용</value>
+  </data>
 </root>

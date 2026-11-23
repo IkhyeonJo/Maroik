@@ -125,7 +125,7 @@ public class DomainArchitectureTests
     /// not an Account) rather than a type of the other context.
     /// </summary>
     private static readonly string[] _boundedContexts =
-        ["Accounts", "Boards", "Budgets", "Calendars", "FileManagers", "Finances", "Kanbans", "Menus"];
+        ["Accounts", "Assistants", "Boards", "Budgets", "Calendars", "FileManagers", "Finances", "Kanbans", "Menus"];
 
     /// <summary>The shared kernel: what every context may build on, and which itself depends on no context.</summary>
     private static readonly string[] _sharedKernel = ["Errors", "Extensions", "Formulas", "Primitives", "Uploads", "ValueObjects"];
@@ -154,6 +154,7 @@ public class DomainArchitectureTests
     /// <summary>Bounded context should not depend on another bounded context (the compiled types).</summary>
     [Theory]
     [InlineData("Accounts")]
+    [InlineData("Assistants")]
     [InlineData("Boards")]
     [InlineData("Budgets")]
     [InlineData("Calendars")]

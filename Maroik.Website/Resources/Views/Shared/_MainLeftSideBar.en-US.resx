@@ -177,4 +177,7 @@
   <data name="Expenditure Budget" xml:space="preserve">
     <value>Expenditure Budget</value>
   </data>
+  <data name="AI Chat" xml:space="preserve">
+    <value>AI Chat</value>
+  </data>
 </root>

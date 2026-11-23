@@ -27,6 +27,7 @@ internal static class AccountMapper
         target.MustChangePassword = account.MustChangePassword;
         target.FileManagerQuotaBytes = account.FileManagerQuotaBytes;
         target.FileManagerScanDisabled = account.FileManagerScanDisabled;
+        target.AIAllowed = account.AIAllowed;
     }
 
     /// <summary>Converts an <see cref="Account"/> domain object to its corresponding <see cref="AccountResponse"/> DTO.</summary>

@@ -1,0 +1,27 @@
+/* AI/UserIndex — the AI chat. The chat grows with the window instead of AdminLTE's fixed 250px. */
+.ai-chat .ai-chat-messages {
+    height: calc(100vh - 360px);
+    min-height: 240px;
+}
+
+/* An answer keeps the model's line breaks (it is written as text). */
+.ai-chat .ai-chat-text {
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+.ai-chat .ai-chat-assistant .ai-chat-text {
+    margin-left: 0;
+}
+
+.ai-chat .ai-chat-user .ai-chat-text {
+    margin-right: 0;
+}
+
+.ai-chat .ai-chat-status {
+    margin: 2px 4px 8px;
+}
+
+.ai-chat .ai-chat-error {
+    color: #dc3545;
+}

@@ -44,6 +44,7 @@ volumes:
       dataprotection-keys:   # ASP.NET Core default Data Protection key-ring location (/root/.aspnet/DataProtection-Keys). The website does NOT use it: Program.cs persists the ring to Valkey (ConnectionStrings__Valkey, set in the env file) and, only without Valkey, to <ContentRoot>/dataprotection-keys (not this volume). FileStorage uses no Data Protection at all.
       valkey-data:           # Valkey (Redis-compatible) append-only file persistence
       rabbitmq-data:         # RabbitMQ node data (durable queues, definitions)
+      ollama-data:           # Ollama's downloaded models (/root/.ollama), so a restart does not download them again
 
 # Private bridge network. No service publishes a port to the host; cloudflared reaches
 # maroik.website, and everything else each other, by service name on `backend`.
@@ -116,6 +117,33 @@ services:
       networks:
         - backend
 
+    # ── Ollama ───────────────────────────────────────────────────────────────
+    # The AI chat's model server (Maroik.Website's OllamaClient, AI__BaseUrl). Only on `backend`, with no app-level
+    # authentication: the network is its boundary. CPU only (the server's laptop has no usable GPU). On every start it pulls
+    # the model AI_MODEL names (a no-op once it is in ollama-data), so the first start downloads ~5 GB. One question at a time
+    # (NUM_PARALLEL 1), one model in memory, kept loaded 30 minutes after the last question; mem_limit keeps it from
+    # starving the rest of the stack (Llama 3.1 8B at Q4 with an 8k context needs ~6.5 GB). Nothing depends on it: while it
+    # is down or still pulling, the chat page answers "not available".
+    ollama:
+      image: ollama/ollama:0.40.16       # pinned like the other images
+      container_name: Maroik.Ollama
+      logging: *default-logging
+      restart: unless-stopped
+      entrypoint: ["/bin/sh", "-c", "ollama serve & pid=$$!; until ollama list > /dev/null 2>&1; do sleep 1; done; ollama pull \"$$AI_MODEL\"; wait $$pid"]
+      environment:
+        AI_MODEL: ${AI_MODEL:-llama3.1:8b}   # the website's AI__Model reads the same variable
+        OLLAMA_NUM_PARALLEL: "1"
+        OLLAMA_MAX_LOADED_MODELS: "1"
+        OLLAMA_KEEP_ALIVE: "30m"
+        OLLAMA_CONTEXT_LENGTH: "8192"
+      mem_limit: 8g
+      volumes:
+        - ollama-data:/root/.ollama
+      expose:
+        - "11434"                      # Ollama API, visible to maroik.website on `backend` only
+      networks:
+        - backend
+
     # ── PostgreSQL ───────────────────────────────────────────────────────────
     # Primary database. Schema is DB-first: the mounted SQL scripts run once, on an
     # empty data volume, via the postgres image's /docker-entrypoint-initdb.d hook.
@@ -154,6 +182,10 @@ services:
           - "80"                       # visible to cloudflared on `backend`, NOT published to the host
         env_file:
           - .env.prod
+        environment:
+          # The AI chat's Ollama server and model (ServerSetting.AIBaseUrl / AIModel)
+          - AI__BaseUrl=http://Maroik.Ollama:11434
+          - AI__Model=${AI_MODEL:-llama3.1:8b}
         volumes:
           - ./Maroik.Log/:/app/Maroik.Log:rw                       # app writes logs to the host tree
           - dataprotection-keys:/root/.aspnet/DataProtection-Keys  # default key-ring path; unused while Valkey is configured (see the volume note above)

@@ -73,4 +73,8 @@ public class AccountOutputViewModel
     /// <summary>Whether the account's File Manager uploads skip the virus scan.</summary>
     [Display(Name = "FileManagerScanDisabled")]
     public bool FileManagerScanDisabled { get; set; }
+
+    /// <summary>Whether the account may use the AI chat.</summary>
+    [Display(Name = "AIAllowed")]
+    public bool AIAllowed { get; set; }
 }

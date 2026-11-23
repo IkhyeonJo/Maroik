@@ -113,6 +113,11 @@ public partial class Account
     /// </summary>
     public bool FileManagerScanDisabled { get; set; }
 
+    /// <summary>
+    /// The account may use the AI chat (set by an administrator)
+    /// </summary>
+    public bool AIAllowed { get; set; }
+
     /// <summary>Assets owned by this account (Asset.AccountEmail).</summary>
     public virtual ICollection<Asset> Assets { get; set; } = new List<Asset>();
 

@@ -470,6 +470,46 @@ public class ManagementControllerAccountTests(MaroikWebApplicationFactory factor
         Assert.False(ScanIsOff(email));
     }
 
+    /// <summary>Reads whether the account may use the AI chat straight from the database.</summary>
+    private bool AIIsAllowed(string email)
+    {
+        using var scope = factory.Services.CreateScope();
+        return scope.ServiceProvider.GetRequiredService<ApplicationDbContext>().Accounts.AsNoTracking().Single(a => a.Email == email).AIAllowed;
+    }
+
+    /// <summary>
+    /// An administrator allows an account the AI chat, and takes it back again; an update without the flag keeps the current setting.
+    /// The edit form's lookup answers it.
+    /// </summary>
+    [Fact]
+    public async Task UpdateAccount_SetsTheAIAllowedFlag()
+    {
+        var session = await LoginAsAdminAsync();
+        const string email = "ai-allowed-flag@test.com";
+        SeedAccount(email);
+        object Update(bool? aiAllowed) => aiAllowed is { } a
+            ? new { Email = email, Password = "", Role = Role.User, TimeZoneIanaId = "UTC", Locked = false, EmailConfirmed = true, AgreedServiceTerms = true, Message = "", Deleted = false, AIAllowed = a }
+            : new { Email = email, Password = "", Role = Role.User, TimeZoneIanaId = "UTC", Locked = false, EmailConfirmed = true, AgreedServiceTerms = true, Message = "", Deleted = false };
+
+        using (var on = session.BuildJsonPostRequest("/Management/UpdateAccount", Update(true)))
+            Assert.Contains("\"result\":true", await (await _client.SendAsync(on, TestContext.Current.CancellationToken)).Content.ReadAsStringAsync(TestContext.Current.CancellationToken), StringComparison.Ordinal);
+        Assert.True(AIIsAllowed(email));
+
+        using (var lookup = session.BuildJsonPostRequest($"/Management/IsAccountExists?email={email}"))
+        {
+            using JsonDocument doc = JsonDocument.Parse(await (await _client.SendAsync(lookup, TestContext.Current.CancellationToken)).Content.ReadAsStringAsync(TestContext.Current.CancellationToken));
+            Assert.True(doc.RootElement.GetProperty("account").GetProperty("aiAllowed").GetBoolean());
+        }
+
+        using (var kept = session.BuildJsonPostRequest("/Management/UpdateAccount", Update(null)))
+            await _client.SendAsync(kept, TestContext.Current.CancellationToken);
+        Assert.True(AIIsAllowed(email));
+
+        using (var off = session.BuildJsonPostRequest("/Management/UpdateAccount", Update(false)))
+            await _client.SendAsync(off, TestContext.Current.CancellationToken);
+        Assert.False(AIIsAllowed(email));
+    }
+
     // -- UpdateAccount ------------------------------------------------------------
 
     /// <summary>Update account existing account returns success result.</summary>

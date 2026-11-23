@@ -78,4 +78,7 @@ public class AccountInputViewModel
 
     /// <summary>Whether the account's File Manager uploads skip the virus scan. Null keeps the current setting.</summary>
     public bool? FileManagerScanDisabled { get; set; }
+
+    /// <summary>Whether the account may use the AI chat. Null keeps the current setting.</summary>
+    public bool? AIAllowed { get; set; }
 }

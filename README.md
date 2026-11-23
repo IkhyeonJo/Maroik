@@ -144,6 +144,9 @@ tar xJf ~/Maroik-Backup-YYYY-MM-DD-HH-MM-SS.tar.xz --strip-components=1 -C ~/Mar
 bash Maroik.DeployOps/Deploy.sh
 ```
 
+`Undeploy.sh` also removes the `ollama-data` volume, so after a redeploy `Maroik.Ollama` downloads the AI chat's model again
+(about 5 GB); until it has, the chat answers that the AI is not available.
+
 ## Introduction
 Maroik is a modern web application built with ASP.NET Core MVC, featuring a comprehensive set of tools for personal and business management. It includes features such as expense tracking, spreadsheet-style budgets, calendar management with e-mail reminders, bulletin boards, a personal Kanban board, a personal file drive, and role-based user management.
 
@@ -212,7 +215,7 @@ Maroik is a modern web application built with ASP.NET Core MVC, featuring a comp
 - Per-account time zone and default monetary unit; English and Korean UI
 
 ### 8. Admin Dashboard
-- User management — role change, lock/unlock, e-mail confirmation, terms agreement, soft delete/restore, password reset with a forced change at next login, File Manager quota and per-account virus-scan switch; role, lock and delete changes are audit-logged with the acting admin
+- User management — role change, lock/unlock, e-mail confirmation, terms agreement, soft delete/restore, password reset with a forced change at next login, File Manager quota, per-account virus-scan switch and AI chat switch; role, lock and delete changes are audit-logged with the acting admin
 - Safeguards: an administrator cannot lock, delete or demote their own account or the last active administrator
 - Navigation menu management (the menu doubles as the access-control list); a change that would cut administrators off from menu management is refused
 - Account export to Excel without password hashes or registration/reset tokens
@@ -232,6 +235,15 @@ simpler method on five years of the author's own records (8,649 expenditures, 58
   currency (the box-plot rule on log amounts, groups of at least 8): 1.9 % of the records, against 4.8 % on raw amounts.
 - **Amounts in each currency's own decimals.** KRW and JPY without decimals, USD and EUR with two; a currency label that
   is not a known code keeps every stored decimal.
+
+### 10. AI Chat
+- Ask about your own account book in plain words ("How much did I spend on food last month?"); the answer streams in as it is
+  written. A local model (Llama 3.1 8B on Ollama, CPU only) runs on the server, so no record leaves it.
+- Function calling only: the model reads the records through six read-only tools (assets, incomes, expenditures, expenditure
+  totals by class, fixed incomes, fixed expenditures), each limited to the signed-in account. The server works out the days of
+  "this month" or "last week" and adds up every total; the model only puts the tools' answers into words, and cannot change
+  anything.
+- Off until an administrator turns it on for the account; the chat is kept in the browser, not on the server.
 
 ### Error messages
 - A refused write shows its actual reason, localized in English and Korean (e.g. "Only zip extension allowed.", "Cannot add a comment to a locked post.", "Role must be Admin, User or Anonymous.").
@@ -385,6 +397,7 @@ flowchart LR
     Worker -- "mail status · due reminders<br/>abandoned uploads" --> PostgreSQL
     Worker -- "abort abandoned uploads" --> FileStorage
     Worker -- "send mail" --> SMTP["SMTP relay"]
+    Website -- "AI chat (streamed, tool calls)" --> Ollama["Ollama<br/>Llama 3.1 8B · CPU"]
 ```
 
 Every service runs as a container under Docker Compose. Uploads are scanned by ClamAV before they are stored (File

@@ -71,7 +71,8 @@ public class ServiceErrorKeyResxTests
     private static IEnumerable<MethodDefinition> StateMachineBody(MethodDefinition method) =>
         method.CustomAttributes
             .Where(a => a.AttributeType.FullName is "System.Runtime.CompilerServices.AsyncStateMachineAttribute"
-                or "System.Runtime.CompilerServices.IteratorStateMachineAttribute")
+                or "System.Runtime.CompilerServices.IteratorStateMachineAttribute"
+                or "System.Runtime.CompilerServices.AsyncIteratorStateMachineAttribute")
             .Select(a => ((TypeReference)a.ConstructorArguments[0].Value).Resolve())
             .SelectMany(sm => sm.Methods.Where(m => m.Name == "MoveNext"));
 

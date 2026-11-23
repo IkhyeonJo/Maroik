@@ -63,4 +63,7 @@ public class AccountResponse
 
     /// <summary>Whether the account's File Manager uploads skip the virus scan.</summary>
     public bool FileManagerScanDisabled { get; set; }
+
+    /// <summary>Whether the account may use the AI chat.</summary>
+    public bool AIAllowed { get; set; }
 }

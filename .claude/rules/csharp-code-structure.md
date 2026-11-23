@@ -64,8 +64,8 @@ are plain IDs, not object references), the same criterion applied to
 
 ## Bounded contexts
 
-`Maroik.Core.Domain` is eight bounded contexts, one folder each (`Accounts`, `Boards`, `Budgets`, `Calendars`, `FileManagers`,
-`Finances`, `Kanbans`, `Menus`), on a shared kernel (`Errors`, `Extensions`, `Formulas`, `Primitives`, `Uploads`, `ValueObjects`).
+`Maroik.Core.Domain` is nine bounded contexts, one folder each (`Accounts`, `Assistants`, `Boards`, `Budgets`, `Calendars`,
+`FileManagers`, `Finances`, `Kanbans`, `Menus`), on a shared kernel (`Errors`, `Extensions`, `Formulas`, `Primitives`, `Uploads`, `ValueObjects`).
 A context names no other context, and the shared kernel names none at all; where one needs another's data it keeps a plain
 identifier (a post's `Writer` is a nickname, not an `Account`). The one intended dependency is `Budgets` -> `Finances` (a budget is
 measured against the finance records). What several contexts need lives in the shared kernel: the role names (`Primitives/Role`)

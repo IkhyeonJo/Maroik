@@ -13,7 +13,7 @@ function fixture(): string {
        <tr class="clsGridRow" data-email="b@x.com"></tr>
        <tr class="clsGridRow" data-email="a+b&amp;c@x.com"></tr>
      </tbody></table>
-     <form id="formCreateAccount"></form><form id="formEditAccount"><input type="number" id="editAccountFileManagerQuotaGb" value="0" /><input type="checkbox" id="editAccountFileManagerScanDisabled" /><input type="checkbox" id="editAccountEmailConfirmed" /><input type="checkbox" id="editAccountAgreedServiceTerms" /></form>
+     <form id="formCreateAccount"></form><form id="formEditAccount"><input type="number" id="editAccountFileManagerQuotaGb" value="0" /><input type="checkbox" id="editAccountFileManagerScanDisabled" /><input type="checkbox" id="editAccountAIAllowed" /><input type="checkbox" id="editAccountEmailConfirmed" /><input type="checkbox" id="editAccountAgreedServiceTerms" /></form>
      <button id="btnExportExcelAccount"></button>
      <button id="btnEditAccountGridRow" data-errorMessageSelectGridRow="select a row"></button>
      <button id="btnConfirmDeleteAccount" data-errorMessageSelectGridRow="select a row"></button>
@@ -145,6 +145,28 @@ describe("Management/Account (admin)", () => {
         expect(JSON.parse(String(h.lastAjax().data))).toMatchObject({ FileManagerScanDisabled: false });
     });
 
+    it("ticks \"allow the AI chat\" from the account the lookup answered", () => {
+        const h = loadSite("admin", "Management", "Account", fixture());
+        fireNative(h.win.document, "rowclick", { data: { Email: "a@x.com" } });
+        h.$("#btnEditAccountGridRow").trigger("click");
+
+        h.respond(0, { result: true, account: { ...ACCOUNT, aiAllowed: true }, fileManagerQuotaGb: 0 });
+
+        expect(h.$("#editAccountAIAllowed").is(":checked")).toBe(true);
+    });
+
+    it("sends whether the AI chat is allowed with the update", () => {
+        const h = loadSite("admin", "Management", "Account", fixture());
+
+        h.$("#editAccountAIAllowed").prop("checked", true);
+        h.$("#formEditAccount").trigger("submit");
+        expect(JSON.parse(String(h.lastAjax().data))).toMatchObject({ AIAllowed: true });
+
+        h.$("#editAccountAIAllowed").prop("checked", false);
+        h.$("#formEditAccount").trigger("submit");
+        expect(JSON.parse(String(h.lastAjax().data))).toMatchObject({ AIAllowed: false });
+    });
+
     it("a lookup reply without the quota is not trusted (the generic error, nothing filled)", () => {
         const h = loadSite("admin", "Management", "Account", fixture());
         fireNative(h.win.document, "rowclick", { data: { Email: "a@x.com" } });
@@ -169,6 +191,7 @@ const ACCOUNT = {
     message: "m",
     deleted: false,
     fileManagerScanDisabled: false,
+    aiAllowed: false,
 };
 
 describeGridCrudScript({

@@ -45,7 +45,7 @@ try
     #region ServerSettings
 
     // Strongly-typed binding of the whole "ServerSetting" section, plus the handful of values that
-    // live in a sibling section (FileStorage) or a nested subSection (SmtpOptions) the flat
+    // live in a sibling section (FileStorage, AI) or a nested subSection (SmtpOptions) the flat
     // model can't reach directly. A value is range-checked below: a missing numeric binds as 0, and
     // SessionExpireMinutes = 0 would expire every session at once.
     static void BindServerSetting(IConfiguration configuration, ServerSetting target)
@@ -53,6 +53,8 @@ try
         configuration.GetSection("ServerSetting").Bind(target);
         configuration.GetSection("ServerSetting:SmtpOptions").Bind(target);
         target.FileStorageBaseUrl = configuration["FileStorage:BaseUrl"];
+        target.AIBaseUrl = configuration["AI:BaseUrl"];
+        target.AIModel = configuration["AI:Model"];
     }
 
     // A local copy for the values needed before the DI container is built (middleware).

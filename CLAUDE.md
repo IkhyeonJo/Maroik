@@ -66,6 +66,7 @@ items above:
 - Kanban — `.claude/rules/kanban.md`
 - File Manager — `.claude/rules/file-manager.md`
 - Budgets (Income Budget / Expenditure Budget) — `.claude/rules/budgets.md`
+- AI chat — `.claude/rules/ai-chat.md`
 - Client scripts — `.claude/rules/client-scripts.md`
 - Error handling — `.claude/rules/error-handling.md`
 

@@ -186,4 +186,7 @@
   <data name="FileManagerScanDisabled" xml:space="preserve">
     <value>바이러스 검사 끔</value>
   </data>
+  <data name="AIAllowed" xml:space="preserve">
+    <value>AI 사용 허용</value>
+  </data>
 </root>

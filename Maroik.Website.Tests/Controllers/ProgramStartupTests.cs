@@ -1,4 +1,5 @@
 using System.Reflection;
+using Maroik.Core.Contract.Settings;
 using Maroik.Website.Constants;
 using Maroik.Website.Tests.Fixtures;
 using Microsoft.AspNetCore.Builder;
@@ -60,6 +61,18 @@ public class ProgramStartupTests(MaroikWebApplicationFactory factory)
 
         string contentRoot = factory1.Services.GetRequiredService<IHostEnvironment>().ContentRootPath;
         Assert.True(Directory.Exists(Path.Combine(contentRoot, "dataprotection-keys")));
+    }
+
+    /// <summary>The AI chat's Ollama server and model are read from the <c>AI</c> section (<c>AI__BaseUrl</c> / <c>AI__Model</c> in the env files).</summary>
+    [Fact]
+    public void Startup_BindsTheAISettings()
+    {
+        using HttpClient client = factory.CreateClient();
+
+        ServerSetting setting = factory.Services.GetRequiredService<IOptions<ServerSetting>>().Value;
+
+        Assert.Equal("http://ollama.test:11434", setting.AIBaseUrl);
+        Assert.Equal("test-model", setting.AIModel);
     }
 
     /// <summary>The site's request cultures come from <c>CulturePolicy</c> (the Website's single list of supported cultures).</summary>

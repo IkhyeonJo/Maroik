@@ -159,6 +159,20 @@ public class ManagementAccountServiceAuditLoggingTests
         Assert.Contains("file manager virus scan disabled False -> True", Only(LogLevel.Information, "Admin updated account").Message, StringComparison.Ordinal);
     }
 
+    /// <summary>Allowing an account the AI chat is an audit event: the update log names the setting before and after.</summary>
+    [Fact]
+    public async Task Update_LogsTheAIAllowedFlagBeforeAndAfter()
+    {
+        _accountRepo.Setup(r => r.FindByEmailForUpdateAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(Existing());
+        _accountRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+
+        await CreateSut().UpdateAccountAsync(
+            new AdminUpdateAccountRequest { Email = Email, Role = Role.User, EmailConfirmed = true, AgreedServiceTerms = true, AIAllowed = true },
+            null, Actor, TestContext.Current.CancellationToken);
+
+        Assert.Contains("AI allowed False -> True", Only(LogLevel.Information, "Admin updated account").Message, StringComparison.Ordinal);
+    }
+
     /// <summary>Verifies that an admin update without a new password logs <c>password reset False</c>.</summary>
     [Fact]
     public async Task Update_LogsThatThePasswordWasNotReset_WhenNoNewPasswordIsGiven()

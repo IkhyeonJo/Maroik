@@ -549,4 +549,7 @@
   <data name="You can insert at most {0} images." xml:space="preserve">
     <value>You can insert at most {0} images.</value>
   </data>
+  <data name="AIAllowed" xml:space="preserve">
+    <value>AI allowed</value>
+  </data>
 </root>

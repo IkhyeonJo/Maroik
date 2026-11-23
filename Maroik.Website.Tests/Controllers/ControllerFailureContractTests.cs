@@ -711,6 +711,7 @@ public class ControllerFailureContractTests(MaroikWebApplicationFactory factory)
     /// <summary>POST actions whose failure contract a dedicated test of this class or another one exercises, with that test.</summary>
     private static readonly Dictionary<string, string> _coveredByDedicatedTests = new()
     {
+        ["/AI/Ask"] = nameof(AIControllerTests.Ask_AServiceFailure_EndsWithTheGenericMessage_AndIsLogged),
         ["/Management/CreateAccount"] = nameof(AServiceFailure_InCreateAccountAndDefaultMonetary_ReportsFailure_WithoutLeakingTheException),
         ["/Dashboard/UserUpdateDefaultMonetary"] = nameof(AServiceFailure_InCreateAccountAndDefaultMonetary_ReportsFailure_WithoutLeakingTheException),
         ["/Management/UpdateProfileTimeZone"] = nameof(ATimeZoneUpdate_WhoseServiceFails_ReturnsToTheProfilePage),

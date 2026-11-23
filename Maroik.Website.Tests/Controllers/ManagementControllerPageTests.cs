@@ -303,6 +303,18 @@ public class ManagementControllerPageTests(MaroikWebApplicationFactory factory)
         Assert.Contains("Virus scan turned off", body, StringComparison.Ordinal);
     }
 
+    /// <summary>The account grid shows whether each account may use the AI chat (column title localized).</summary>
+    [Fact]
+    public async Task AccountGrid_ShowsTheAIAllowedColumn()
+    {
+        var admin = await LoginAsync("mgmt-page-aiadmin@test.com", Role.Admin);
+        await LoginAsync("mgmt-page-ai11@test.com");
+
+        string body = await BodyAsync(await GetAsync("/Management/Account?wholeSearch=mgmt-page-ai11", admin, ajax: true));
+
+        Assert.Contains("AI allowed", body, StringComparison.Ordinal);
+    }
+
     /// <summary>Several matching accounts are listed ordered by e-mail address.</summary>
     [Fact]
     public async Task AccountGrid_ListsSeveralMatches_OrderedByEmail()

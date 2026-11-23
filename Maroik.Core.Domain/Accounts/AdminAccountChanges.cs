@@ -10,4 +10,5 @@ public sealed record AdminAccountChanges(
     bool EmailConfirmed,
     bool AgreedServiceTerms,
     bool Deleted,
-    string? Message);
+    string? Message,
+    bool? AIAllowed = null);

@@ -133,6 +133,14 @@ public static class ServiceErrorKeys
     /// <summary>A budget line the sheet already has.</summary>
     public const string BudgetLineExists = "This sheet already has that line.";
 
+    // --- AI chat
+    /// <summary>The account may not use the AI chat (an administrator has not allowed it).</summary>
+    public const string AINotAllowed = "The AI chat is not turned on for your account. Please ask the administrator.";
+    /// <summary>The model kept asking for tools and gave no answer within the allowed rounds.</summary>
+    public const string AINoAnswer = "The AI could not answer this question. Please ask it in another way.";
+    /// <summary>The model server could not be reached, refused the request or took too long.</summary>
+    public const string AIUnavailable = "The AI is not available right now. Please try again later.";
+
     /// <summary>
     /// Keys that are not resx keys: the controller that receives one compares <c>ErrorKey</c> against it and chooses its own
     /// response (another view, or a message of its own). Shared here so the service and the controller cannot drift apart.
