@@ -19,8 +19,11 @@ that specific change. Check every candidate review finding in this area against 
 
 - The AI chat (`/AI/UserIndex`, User role only; since 2026-11-24, owner's request) answers questions about the signed-in user's
   own account book with a local model on the server: Ollama (`Maroik.Ollama`) on the internal Docker network, CPU only, one
-  question at a time (`OLLAMA_NUM_PARALLEL=1`, the container capped at 8 GB). The default model is Llama 3.1 8B (`AI_MODEL` /
-  `AI__Model`, a setting). No Chinese models (Qwen, DeepSeek, ...; owner's decision, 2026-11-24). Like the other internal
+  question at a time (`OLLAMA_NUM_PARALLEL=1`, the container capped at 11 GB). The default model is Google's Gemma 4 12B (`AI_MODEL`
+  / `AI__Model`, a setting; owner's choice, 2026-11-24): on the same 10 ledger questions with known answers it answered all 10
+  right (20–40 s each on a 12-core PC, peak 10.6 GB), where Llama 3.1 8B got about 6 (it added unasked filters, dropped a
+  currency and garbled a Korean keyword). It is the largest model that fits the 16 GB server next to the rest of the stack, so
+  that memory is tight. No Chinese models (Qwen, DeepSeek, ...; owner's decision, 2026-11-24). Like the other internal
   services, Ollama has no authentication: the network is its boundary.
 - The chat is off for every account until an administrator ticks "Allow the AI chat" in `Management/Account`
   (`Account.AIAllowed`, default false; in the grid, its search, the Excel export and the admin update audit line), because each

@@ -145,7 +145,7 @@ bash Maroik.DeployOps/Deploy.sh
 ```
 
 `Undeploy.sh` also removes the `ollama-data` volume, so after a redeploy `Maroik.Ollama` downloads the AI chat's model again
-(about 5 GB); until it has, the chat answers that the AI is not available.
+(about 8 GB); until it has, the chat answers that the AI is not available.
 
 ## Introduction
 Maroik is a modern web application built with ASP.NET Core MVC, featuring a comprehensive set of tools for personal and business management. It includes features such as expense tracking, spreadsheet-style budgets, calendar management with e-mail reminders, bulletin boards, a personal Kanban board, a personal file drive, and role-based user management.
@@ -238,7 +238,7 @@ simpler method on five years of the author's own records (8,649 expenditures, 58
 
 ### 10. AI Chat
 - Ask about your own account book in plain words ("How much did I spend on food last month?"); the answer streams in as it is
-  written. A local model (Llama 3.1 8B on Ollama, CPU only) runs on the server, so no record leaves it.
+  written. A local model (Google Gemma 4 12B on Ollama, CPU only) runs on the server, so no record leaves it.
 - Function calling only: the model reads the records through six read-only tools (assets, incomes, expenditures, expenditure
   totals by class, fixed incomes, fixed expenditures), each limited to the signed-in account. The server works out the days of
   "this month" or "last week" and adds up every total; the model only puts the tools' answers into words, and cannot change
@@ -397,7 +397,7 @@ flowchart LR
     Worker -- "mail status · due reminders<br/>abandoned uploads" --> PostgreSQL
     Worker -- "abort abandoned uploads" --> FileStorage
     Worker -- "send mail" --> SMTP["SMTP relay"]
-    Website -- "AI chat (streamed, tool calls)" --> Ollama["Ollama<br/>Llama 3.1 8B · CPU"]
+    Website -- "AI chat (streamed, tool calls)" --> Ollama["Ollama<br/>Gemma 4 12B · CPU"]
 ```
 
 Every service runs as a container under Docker Compose. Uploads are scanned by ClamAV before they are stored (File
