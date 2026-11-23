@@ -1,5 +1,5 @@
 /*!
- * Mvc.Grid 8.0.0
+ * Mvc.Grid 8.0.1
  *
  * Copyright © NonFactors
  *
@@ -30,15 +30,16 @@
 }
 
 .mvc-grid-table > table > thead > tr > th {
+    background-color: light-dark(#f7f7f7, #2b3035);
+    color: light-dark(#212529, #dee2e6);
     background-clip: padding-box;
-    background-color: #f7f7f7;
     position: relative;
 }
 
 .mvc-grid-table > table > thead > tr > th,
 .mvc-grid-table > table > tbody > tr > td,
 .mvc-grid-table > table > tfoot > tr > td {
-    border: 1px solid #dee2e6;
+    border: 1px solid light-dark(#dee2e6, #495057);
     padding: 0.5em;
 }
 
@@ -63,13 +64,14 @@
 
 .mvc-grid-sort,
 .mvc-grid-filter {
+    background: light-dark(rgb(0 0 0 / 0.03), rgb(255 255 255 / 0.03));
     font-family: GridGlyphs, sans-serif;
     transition: background-color 0.5s;
-    background: rgb(0 0 0 / 0.03);
     font-size: inherit;
     position: absolute;
     font-weight: bold;
     cursor: pointer;
+    color: inherit;
     border: none;
     height: 100%;
     width: 2.5em;
@@ -79,7 +81,7 @@
 
 .mvc-grid-filter:focus,
 .mvc-grid-filter:hover {
-    background: rgb(0 0 0 / 0.06);
+    background: light-dark(rgb(0 0 0 / 0.06), rgb(255 255 255 / 0.06));
     color: inherit;
 }
 
@@ -130,10 +132,11 @@
 }
 
 .mvc-grid-row-filters .mvc-grid-value {
-    border: 1px solid #cccccc;
+    border: 1px solid light-dark(#cccccc, #495057);
+    background: light-dark(#ffffff, #212529);
+    color: light-dark(#212529, #dee2e6);
     text-overflow: ellipsis;
     margin-right: 0.25em;
-    background: #ffffff;
     font-size: inherit;
     font-weight: 500;
     padding: 0 0.5em;
@@ -150,11 +153,11 @@
 }
 
 .mvc-grid-row-filters .mvc-grid-value::placeholder {
-    color: #bbbbbb;
+    color: light-dark(#bbbbbb, #6c757d);
 }
 
 .mvc-grid-row-filters .mvc-grid-filter {
-    border: 1px solid #cccccc;
+    border: 1px solid light-dark(#cccccc, #495057);
     position: static;
     height: 2em;
     width: 2em;
@@ -178,7 +181,8 @@
 }
 
 .mvc-grid-header-mode .mvc-grid-value {
-    background: #f7f7f7;
+    background: light-dark(#f7f7f7, #2b3035);
+    color: light-dark(#212529, #dee2e6);
     line-height: 1.5;
     font-weight: 500;
     padding: 0.5em;
@@ -198,11 +202,12 @@
 }
 
 .mvc-grid-popup {
+    background-color: light-dark(#ffffff, #212529);
+    border: 1px solid light-dark(#cccccc, #495057);
     box-shadow: 0 6px 12px rgb(0 0 0 / 0.176);
+    color: light-dark(#212529, #dee2e6);
     background-clip: padding-box;
     max-width: calc(100% - 2em);
-    background-color: #ffffff;
-    border: 1px solid #cccccc;
     border-radius: 4px;
     position: absolute;
     min-width: 12em;
@@ -216,9 +221,9 @@
 }
 
 .mvc-grid-popup .popup-arrow {
+    border-bottom: 8px solid light-dark(#ffffff, #212529);
     border-right: 7px solid transparent;
     border-left: 7px solid transparent;
-    border-bottom: 8px solid #ffffff;
     box-sizing: border-box;
     position: absolute;
     height: 9px;
@@ -226,9 +231,9 @@
 }
 
 .mvc-grid-popup .popup-arrow::after {
+    border-bottom: 9px solid light-dark(#cccccc, #495057);
     border-right: 8px solid transparent;
     border-left: 8px solid transparent;
-    border-bottom: 9px solid #cccccc;
     position: absolute;
     content: " ";
     z-index: -1;
@@ -257,14 +262,14 @@
 .mvc-grid-popup .mvc-grid-value,
 .mvc-grid-popup .mvc-grid-method,
 .mvc-grid-popup .mvc-grid-operator {
-    border: 1px solid #cccccc;
+    border: 1px solid light-dark(#cccccc, #495057);
+    background: light-dark(#ffffff, #212529);
+    color: light-dark(#212529, #dee2e6);
     box-sizing: border-box;
-    background: #ffffff;
     font-size: 0.9em;
     padding: 0 0.2em;
     height: 2.5em;
     width: 100%;
-    color:black;
 }
 
 .mvc-grid-popup .mvc-grid-value[multiple] {
@@ -359,21 +364,21 @@
 }
 
 .mvc-grid-pager button {
-    border: 1px solid #dddddd;
+    border: 1px solid light-dark(#dddddd, #495057);
+    background: light-dark(#ffffff, #212529);
+    color: light-dark(#337ab7, #6ea8fe);
     box-sizing: content-box;
-    background: #ffffff;
     padding: 0 0.25em;
     line-height: 2.5;
     cursor: pointer;
     margin: 0.5em 0;
     min-width: 2em;
-    color: #337ab7;
 }
 
 .mvc-grid-pager button:focus,
 .mvc-grid-pager button:hover {
-    background: #f7f7f7;
-    color: #014c8c;
+    background: light-dark(#f7f7f7, #2b3035);
+    color: light-dark(#014c8c, #9ec5fe);
 }
 
 .mvc-grid-pager .active,
@@ -386,9 +391,9 @@
 
 .mvc-grid-pager [disabled],
 .mvc-grid-pager [disabled]:hover {
-    background: #efefef;
+    background: light-dark(#efefef, #343a40);
+    color: light-dark(#777777, #868e96);
     cursor: not-allowed;
-    color: #777777;
     outline: 0;
 }
 
@@ -398,13 +403,17 @@
 }
 
 .mvc-grid-page-sizes select {
-    border: 1px solid #dddddd;
+    border: 1px solid light-dark(#dddddd, #495057);
+    background: light-dark(#ffffff, #212529);
+    color: light-dark(#212529, #dee2e6);
     padding: 0.5em;
     font: inherit;
 }
 
 .mvc-grid-page-sizes input {
-    border: 1px solid #dddddd;
+    border: 1px solid light-dark(#dddddd, #495057);
+    background: light-dark(#ffffff, #212529);
+    color: light-dark(#212529, #dee2e6);
     box-sizing: content-box;
     text-align: center;
     padding: 0 0.25em;
@@ -419,10 +428,10 @@
 }
 
 .mvc-grid-spinner {
+    border: 0.2em solid light-dark(rgb(0 0 0 / 0.2), rgb(255 255 255 / 0.2));
+    border-top-color: light-dark(#444444, #dee2e6);
     animation: mvc-grid-spin 1s infinite linear;
-    border: 0.2em solid rgb(0 0 0 / 0.2);
     transition: opacity 0.3s linear;
-    border-top-color: #444444;
     border-radius: 50%;
     height: 100%;
     width: 100%;
