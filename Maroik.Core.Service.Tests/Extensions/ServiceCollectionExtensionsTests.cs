@@ -1,6 +1,5 @@
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Service.Extensions;
-using Maroik.Core.Service.Assistants;
 using Maroik.Core.Service.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Time.Testing;
@@ -36,9 +35,6 @@ public class ServiceCollectionExtensionsTests
         { typeof(IBoardService), typeof(BoardService), ServiceLifetime.Scoped },
         { typeof(ICalendarService), typeof(CalendarService), ServiceLifetime.Scoped },
         { typeof(IKanbanService), typeof(KanbanService), ServiceLifetime.Scoped },
-        { typeof(AIToolbox), typeof(AIToolbox), ServiceLifetime.Scoped },
-        { typeof(IAIChatService), typeof(AIChatService), ServiceLifetime.Scoped },
-        { typeof(IAIPolicyService), typeof(AIPolicyService), ServiceLifetime.Singleton },
         { typeof(IBudgetService), typeof(BudgetService), ServiceLifetime.Scoped },
         { typeof(IFileManagerService), typeof(FileManagerService), ServiceLifetime.Scoped },
         { typeof(IAttachmentContentService), typeof(AttachmentContentService), ServiceLifetime.Scoped },

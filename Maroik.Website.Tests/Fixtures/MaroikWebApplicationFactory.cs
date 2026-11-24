@@ -59,10 +59,6 @@ public class MaroikWebApplicationFactory : WebApplicationFactory<Program>, IAsyn
         // FileStorage
         ["FileStorage:BaseUrl"] = "http://localhost:5001",
 
-        // AI chat (the tests replace the Ollama client; ProgramStartupTests checks the binding)
-        ["AI:BaseUrl"] = "http://ollama.test:11434",
-        ["AI:Model"] = "test-model",
-
         // DB — replaced below by the Testcontainers PostgreSQL connection, but a value is required to avoid null errors
         ["ConnectionStrings:DefaultConnection"] = "Host=localhost;Database=test;Username=test;Password=test",
 

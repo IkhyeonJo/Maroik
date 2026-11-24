@@ -26,7 +26,7 @@
         account: check.object({
             email: check.string, nickname: check.string, role: check.string, timeZoneIanaId: check.string, locked: check.boolean,
             emailConfirmed: check.boolean, agreedServiceTerms: check.boolean, message: check.nullable(check.string), deleted: check.boolean,
-            fileManagerScanDisabled: check.boolean, aiAllowed: check.boolean,
+            fileManagerScanDisabled: check.boolean,
         }),
         // The account's File Manager quota in GB, converted by the server (FileManagerUploadPolicy.QuotaGbFromBytes).
         fileManagerQuotaGb: check.number,
@@ -55,7 +55,6 @@
     const $editAccountDeleted = $("#editAccountDeleted");
     const $editAccountFileManagerQuotaGb = $("#editAccountFileManagerQuotaGb");
     const $editAccountFileManagerScanDisabled = $("#editAccountFileManagerScanDisabled");
-    const $editAccountAIAllowed = $("#editAccountAIAllowed");
     const $formEditAccount = $("#formEditAccount");
     const $editAccountPassword = $("#editAccountPassword");
     const $btnEditAccountGridRow = $("#btnEditAccountGridRow");
@@ -214,7 +213,6 @@
                     $editAccountDeleted.prop("checked", data.account.deleted);
                     $editAccountFileManagerQuotaGb.val(data.fileManagerQuotaGb);
                     $editAccountFileManagerScanDisabled.prop("checked", data.account.fileManagerScanDisabled);
-                    $editAccountAIAllowed.prop("checked", data.account.aiAllowed);
 
                     // Static backdrop + no keyboard dismiss; `toggle` then `show`
                     // forces it open even mid-transition.
@@ -253,7 +251,6 @@
         let quotaText = fieldValue($editAccountFileManagerQuotaGb);
         let fileManagerQuotaGb = quotaText === "" ? null : Number(quotaText);
         let fileManagerScanDisabled = $editAccountFileManagerScanDisabled.is(":checked");
-        let aiAllowed = $editAccountAIAllowed.is(":checked");
 
         let paramValue = JSON.stringify({
             Email: email,
@@ -266,8 +263,7 @@
             Message: message,
             Deleted: deleted,
             FileManagerQuotaGb: fileManagerQuotaGb,
-            FileManagerScanDisabled: fileManagerScanDisabled,
-            AIAllowed: aiAllowed
+            FileManagerScanDisabled: fileManagerScanDisabled
         });
 
         void $.ajax({

@@ -1,5 +1,4 @@
 using Maroik.Core.Contract.Interfaces;
-using Maroik.Core.Service.Assistants;
 using Maroik.Core.Service.Classifiers;
 using Maroik.Core.Service.Services;
 using Microsoft.Extensions.DependencyInjection;
@@ -45,8 +44,6 @@ public static class ServiceCollectionExtensions
             services.AddScoped<IBoardService, BoardService>();
             services.AddScoped<ICalendarService, CalendarService>();
             services.AddScoped<IKanbanService, KanbanService>();
-            services.AddScoped<AIToolbox>();
-            services.AddScoped<IAIChatService, AIChatService>();
             services.AddScoped<IBudgetService, BudgetService>();
             services.AddScoped<IFileManagerService, FileManagerService>();
             services.AddScoped<IAttachmentContentService, AttachmentContentService>();
@@ -63,7 +60,6 @@ public static class ServiceCollectionExtensions
             services.AddSingleton<IUploadPolicyService, UploadPolicyService>();
             services.AddSingleton<ICalendarPolicyService, CalendarPolicyService>();
             services.AddSingleton<IBudgetPolicyService, BudgetPolicyService>();
-            services.AddSingleton<IAIPolicyService, AIPolicyService>();
         }
     }
 }

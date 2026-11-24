@@ -42,12 +42,6 @@ public class ServerSetting
     /// </summary>
     public int NoticeMaturityDateDay { get; set; }
 
-    /// <summary>Base URL of the Ollama server the AI chat asks (e.g. "http://Maroik.Ollama:11434"; the "AI:BaseUrl" setting).</summary>
-    public string? AIBaseUrl { get; set; }
-
-    /// <summary>The Ollama model the AI chat uses (e.g. "gemma4:12b"; the "AI:Model" setting).</summary>
-    public string? AIModel { get; set; }
-
     /// <summary>Base URL of the Maroik.FileStorage microservice used for file upload/download.</summary>
     public string? FileStorageBaseUrl { get; set; }
 

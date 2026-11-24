@@ -180,7 +180,4 @@
   <data name="Expenditure Budget" xml:space="preserve">
     <value>지출 예산</value>
   </data>
-  <data name="AI Chat" xml:space="preserve">
-    <value>AI 대화</value>
-  </data>
 </root>

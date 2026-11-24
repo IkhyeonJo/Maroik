@@ -58,14 +58,13 @@ public class AccountAdminChangesTests
     public void ANullValue_LeavesItsFieldAsItIs()
     {
         Account account = NewAccount();
-        account.ApplyAdminChanges(NoChanges() with { TimeZoneIanaId = "Asia/Seoul", FileManagerQuotaBytes = 10, FileManagerScanDisabled = true, Role = "Admin", Message = "note", AIAllowed = true }, _now);
+        account.ApplyAdminChanges(NoChanges() with { TimeZoneIanaId = "Asia/Seoul", FileManagerQuotaBytes = 10, FileManagerScanDisabled = true, Role = "Admin", Message = "note" }, _now);
 
         account.ApplyAdminChanges(NoChanges() with { Message = "note" }, _now);
 
         Assert.Equal("Asia/Seoul", account.TimeZone.Value);
         Assert.Equal(10, account.FileManagerQuotaBytes);
         Assert.True(account.FileManagerScanDisabled);
-        Assert.True(account.AIAllowed);
         Assert.Equal(AccountRole.Admin, account.Role);
         Assert.Equal("note", account.Message);
     }
@@ -81,18 +80,5 @@ public class AccountAdminChangesTests
 
         account.ApplyAdminChanges(NoChanges(), _now);
         Assert.False(account.Deleted);
-    }
-
-    /// <summary>The save turns the AI chat on and off.</summary>
-    [Fact]
-    public void AIAllowed_TurnsTheAIChatOnAndOff()
-    {
-        Account account = NewAccount();
-
-        account.ApplyAdminChanges(NoChanges() with { AIAllowed = true }, _now);
-        Assert.True(account.AIAllowed);
-
-        account.ApplyAdminChanges(NoChanges() with { AIAllowed = false }, _now);
-        Assert.False(account.AIAllowed);
     }
 }

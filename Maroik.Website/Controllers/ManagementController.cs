@@ -386,8 +386,7 @@ public class ManagementController(
                     Message = accountInputViewModel.Message,
                     Deleted = accountInputViewModel.Deleted,
                     FileManagerQuotaBytes = quotaBytes,
-                    FileManagerScanDisabled = accountInputViewModel.FileManagerScanDisabled,
-                    AIAllowed = accountInputViewModel.AIAllowed
+                    FileManagerScanDisabled = accountInputViewModel.FileManagerScanDisabled
                 },
                 accountInputViewModel.Password, // new password (plain); service hashes it
                 AdminEmail, HttpContext.RequestAborted);

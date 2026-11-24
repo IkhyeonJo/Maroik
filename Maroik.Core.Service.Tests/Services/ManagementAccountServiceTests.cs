@@ -411,31 +411,6 @@ public class ManagementAccountServiceTests
         Assert.False(account.FileManagerScanDisabled);
     }
 
-    /// <summary>An administrator allows (or disallows) the account the AI chat; a request without the flag keeps the current setting.</summary>
-    [Fact]
-    public async Task UpdateAccountAsync_SetsTheAIAllowedFlag_OnlyWhenGiven()
-    {
-        var account = ActiveAccount();
-        _accountRepo.Setup(r => r.FindByEmailForUpdateAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(account);
-        _accountRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
-        var sut = CreateSut();
-
-        ServiceResult set = await sut.UpdateAccountAsync(
-            new AdminUpdateAccountRequest { Email = account.Email.Value, Role = "User", AIAllowed = true }, null, Actor, TestContext.Current.CancellationToken);
-        Assert.True(set.Success);
-        Assert.True(account.AIAllowed);
-
-        ServiceResult kept = await sut.UpdateAccountAsync(
-            new AdminUpdateAccountRequest { Email = account.Email.Value, Role = "User", AIAllowed = null }, null, Actor, TestContext.Current.CancellationToken);
-        Assert.True(kept.Success);
-        Assert.True(account.AIAllowed);
-
-        ServiceResult cleared = await sut.UpdateAccountAsync(
-            new AdminUpdateAccountRequest { Email = account.Email.Value, Role = "User", AIAllowed = false }, null, Actor, TestContext.Current.CancellationToken);
-        Assert.True(cleared.Success);
-        Assert.False(account.AIAllowed);
-    }
-
     /// <summary>A negative quota is refused with the domain's reason, rolled back and not saved.</summary>
     [Fact]
     public async Task UpdateAccountAsync_RefusesANegativeFileManagerQuota()

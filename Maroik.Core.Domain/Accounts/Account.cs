@@ -108,12 +108,6 @@ public sealed class Account : AggregateRoot<string>
     /// </summary>
     public bool FileManagerScanDisabled { get; private set; }
 
-    /// <summary>
-    /// Whether the account may use the AI chat. A new account may not: an administrator allows it (<see cref="ChangeAIAllowed"/>),
-    /// since every question keeps the server's CPU busy for a while.
-    /// </summary>
-    public bool AIAllowed { get; private set; }
-
     /// <summary>Generates a fresh, unpredictable security stamp value.</summary>
     private static string GenerateSecurityStamp() => Guid.NewGuid().ToString("N");
 
@@ -166,7 +160,7 @@ public sealed class Account : AggregateRoot<string>
         TimeZoneId timeZone, CurrencyCode? defaultMonetaryUnit, bool locked, long loginAttempt, bool emailConfirmed,
         bool agreedServiceTerms, string? registrationToken, string? resetPasswordToken, DateTime created,
         DateTime updated, string? message, bool deleted, string securityStamp, bool mustChangePassword, long fileManagerQuotaBytes,
-        bool fileManagerScanDisabled, bool aiAllowed) : base(email.Value)
+        bool fileManagerScanDisabled) : base(email.Value)
     {
         Email = email;
         HashedPassword = hashedPassword;
@@ -189,7 +183,6 @@ public sealed class Account : AggregateRoot<string>
         MustChangePassword = mustChangePassword;
         FileManagerQuotaBytes = fileManagerQuotaBytes;
         FileManagerScanDisabled = fileManagerScanDisabled;
-        AIAllowed = aiAllowed;
     }
 
     // ------------------------------------------------------------------------
@@ -221,8 +214,7 @@ public sealed class Account : AggregateRoot<string>
         string securityStamp,
         bool mustChangePassword,
         long fileManagerQuotaBytes = 0,
-        bool fileManagerScanDisabled = false,
-        bool aiAllowed = false)
+        bool fileManagerScanDisabled = false)
     {
         return new Account(
             Email.FromTrustedSource(email),
@@ -245,8 +237,7 @@ public sealed class Account : AggregateRoot<string>
             securityStamp,
             mustChangePassword,
             fileManagerQuotaBytes,
-            fileManagerScanDisabled,
-            aiAllowed);
+            fileManagerScanDisabled);
     }
 
     /// <summary>
@@ -451,9 +442,6 @@ public sealed class Account : AggregateRoot<string>
 
         if (changes.FileManagerScanDisabled is { } scanDisabled)
             ChangeFileManagerScanDisabled(scanDisabled, utcNow);
-
-        if (changes.AIAllowed is { } aiAllowed)
-            ChangeAIAllowed(aiAllowed, utcNow);
 
         if (changes.Role != null)
         {
@@ -689,13 +677,6 @@ public sealed class Account : AggregateRoot<string>
     public void ChangeFileManagerScanDisabled(bool disabled, DateTime utcNow)
     {
         FileManagerScanDisabled = disabled;
-        Updated = utcNow;
-    }
-
-    /// <summary>Administrator operation: allows the account to use the AI chat, or takes that back.</summary>
-    public void ChangeAIAllowed(bool allowed, DateTime utcNow)
-    {
-        AIAllowed = allowed;
         Updated = utcNow;
     }
 }

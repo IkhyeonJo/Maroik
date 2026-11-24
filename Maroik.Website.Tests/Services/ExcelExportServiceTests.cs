@@ -622,19 +622,6 @@ public class ExcelExportServiceTests
         Assert.Equal("True", row[13]);
     }
 
-    /// <summary>The account export has a localized "AI allowed" column after the virus scan column.</summary>
-    [Fact]
-    public void CreateAccountExcel_HasTheAIAllowedColumn()
-    {
-        AccountResponse[] items = [new() { Email = "a@example.com", AIAllowed = true }];
-
-        var header = ReadRows(_sut.CreateAccountExcel(items, _localize, "UTC"))[0];
-        var row = ReadRows(_sut.CreateAccountExcel(items, _identity, "UTC"))[1];
-
-        Assert.Equal("L:AIAllowed", header[14]);
-        Assert.Equal("True", row[14]);
-    }
-
     // ── CreateMenuExcel ───────────────────────────────────────────────────────
 
     /// <summary>Create menu excel localizes headers.</summary>

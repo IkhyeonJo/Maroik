@@ -157,7 +157,6 @@ public class ManagementAccountService(
             bool oldDeleted = account.Deleted;
             long oldQuota = account.FileManagerQuotaBytes;
             bool oldScanDisabled = account.FileManagerScanDisabled;
-            bool oldAIAllowed = account.AIAllowed;
             AdminStanding before = AdminStanding.Of(account);
 
             if (newHashedPassword != null)
@@ -175,7 +174,7 @@ public class ManagementAccountService(
 
             var updateResult = account.ApplyAdminChanges(new AdminAccountChanges(
                 request.TimeZoneIanaId, request.FileManagerQuotaBytes, request.FileManagerScanDisabled, request.Role,
-                request.Locked, request.EmailConfirmed, request.AgreedServiceTerms, request.Deleted, request.Message, request.AIAllowed), utcNow);
+                request.Locked, request.EmailConfirmed, request.AgreedServiceTerms, request.Deleted, request.Message), utcNow);
             if (updateResult.IsError)
             {
                 await unitOfWork.RollbackAsync(ct);
@@ -193,9 +192,9 @@ public class ManagementAccountService(
             await accountRepository.UpdateEntityAsync(account, ct);
             await unitOfWork.CommitAsync(ct);
             logger.LogInformation(
-                "Admin updated account {Email}: role {OldRole} -> {NewRole}, locked {OldLocked} -> {NewLocked}, deleted {OldDeleted} -> {NewDeleted}, file manager quota {OldQuota} -> {NewQuota}, file manager virus scan disabled {OldScanDisabled} -> {NewScanDisabled}, AI allowed {OldAIAllowed} -> {NewAIAllowed}, password reset {PasswordReset} by admin {Admin}",
+                "Admin updated account {Email}: role {OldRole} -> {NewRole}, locked {OldLocked} -> {NewLocked}, deleted {OldDeleted} -> {NewDeleted}, file manager quota {OldQuota} -> {NewQuota}, file manager virus scan disabled {OldScanDisabled} -> {NewScanDisabled}, password reset {PasswordReset} by admin {Admin}",
                 account.Email.Value, oldRole, account.Role, oldLocked, account.Locked, oldDeleted, account.Deleted, oldQuota, account.FileManagerQuotaBytes,
-                oldScanDisabled, account.FileManagerScanDisabled, oldAIAllowed, account.AIAllowed, newHashedPassword != null, actorEmail);
+                oldScanDisabled, account.FileManagerScanDisabled, newHashedPassword != null, actorEmail);
             return ServiceResult.Ok();
         }
         catch (Exception e)

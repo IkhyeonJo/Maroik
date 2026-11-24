@@ -186,7 +186,4 @@
   <data name="FileManagerScanDisabled" xml:space="preserve">
     <value>Virus scan turned off</value>
   </data>
-  <data name="AIAllowed" xml:space="preserve">
-    <value>AI allowed</value>
-  </data>
 </root>

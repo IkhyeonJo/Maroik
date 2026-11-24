@@ -27,8 +27,7 @@ public class AccountRepository(ApplicationDbContext context)
         e.DefaultMonetaryUnit, e.Locked, e.LoginAttempt, e.EmailConfirmed,
         e.AgreedServiceTerms, e.RegistrationToken, e.ResetPasswordToken,
         e.Created, e.Updated, e.Message, e.Deleted,
-        e.SecurityStamp, e.MustChangePassword, e.FileManagerQuotaBytes, e.FileManagerScanDisabled,
-        e.AIAllowed);
+        e.SecurityStamp, e.MustChangePassword, e.FileManagerQuotaBytes, e.FileManagerScanDisabled);
 
     /// <summary>Maps an <see cref="Account"/> domain aggregate to its <see cref="OrmAccount"/> persistence representation.</summary>
     protected override OrmAccount ToEntity(Account a) => new()
@@ -53,8 +52,7 @@ public class AccountRepository(ApplicationDbContext context)
         SecurityStamp = a.SecurityStamp,
         MustChangePassword = a.MustChangePassword,
         FileManagerQuotaBytes = a.FileManagerQuotaBytes,
-        FileManagerScanDisabled = a.FileManagerScanDisabled,
-        AIAllowed = a.AIAllowed
+        FileManagerScanDisabled = a.FileManagerScanDisabled
     };
 
     /// <summary>
@@ -121,8 +119,7 @@ public class AccountRepository(ApplicationDbContext context)
                   CAST("Updated" AS TEXT) ILIKE {pattern} OR
                   "Message" ILIKE {pattern} OR
                   CAST("Deleted" AS TEXT) ILIKE {pattern} OR
-                  CAST("FileManagerScanDisabled" AS TEXT) ILIKE {pattern} OR
-                  CAST("AIAllowed" AS TEXT) ILIKE {pattern}
+                  CAST("FileManagerScanDisabled" AS TEXT) ILIKE {pattern}
             """).ToListAsync(ct);
 
         if (matchingEmails.Count == 0) return [];

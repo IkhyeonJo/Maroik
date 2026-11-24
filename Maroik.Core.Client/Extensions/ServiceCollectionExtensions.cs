@@ -15,7 +15,7 @@ public static class ServiceCollectionExtensions
     extension(IServiceCollection services)
     {
         /// <summary>
-        /// Registers the mail, file-storage, Ollama (AI chat), ClamAV, server-resource report and RabbitMQ email / class-model training publisher client implementations.
+        /// Registers the mail, file-storage, ClamAV, server-resource report and RabbitMQ email / class-model training publisher client implementations.
         /// </summary>
         /// <param name="rabbitMqConnectionString">
         /// AMQP connection string (e.g. "amqp://user:pass@host:5672/") used by <see cref="IEmailPublisher"/>.
@@ -27,9 +27,6 @@ public static class ServiceCollectionExtensions
 
             // Register the HTTP file-storage proxy client
             services.AddScoped<IFileClient, FileClient>();
-
-            // Register the Ollama client of the AI chat
-            services.AddScoped<ILlmClient, OllamaClient>();
 
             // Register the ClamAV antivirus scanning client
             services.AddScoped<IClamavClient, ClamavClient>();

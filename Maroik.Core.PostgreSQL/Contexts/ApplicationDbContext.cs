@@ -133,7 +133,6 @@ public partial class ApplicationDbContext : DbContext
                 .HasDefaultValueSql("0")
                 .HasComment("File Manager storage quota in bytes (0 = no uploads)");
             entity.Property(e => e.FileManagerScanDisabled).HasComment("File Manager uploads of this account skip the virus scan");
-            entity.Property(e => e.AIAllowed).HasComment("The account may use the AI chat (set by an administrator)");
             entity.Property(e => e.Nickname)
                 .HasMaxLength(255)
                 .HasComment("Nickname");

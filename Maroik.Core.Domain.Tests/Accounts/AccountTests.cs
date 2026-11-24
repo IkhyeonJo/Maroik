@@ -1117,43 +1117,4 @@ public class AccountTests
 
         Assert.False(account.FileManagerScanDisabled);
     }
-
-    /// <summary>
-    /// An administrator turns the AI chat on or off for one account (<see cref="Account.ChangeAIAllowed"/>); the change stamps
-    /// <see cref="Account.Updated"/>.
-    /// </summary>
-    [Fact]
-    public void ChangeAIAllowed_SetsTheFlag()
-    {
-        DateTime t = new(2026, 1, 1);
-        var account = Account.Reconstitute("q@example.com", "h", "Q", null, "User", "UTC", null, false, 0, true, true, null, null, t, t, null, false, "s", false);
-        Assert.False(account.AIAllowed);
-
-        account.ChangeAIAllowed(true, t.AddDays(1));
-        Assert.True(account.AIAllowed);
-        Assert.Equal(t.AddDays(1), account.Updated);
-
-        account.ChangeAIAllowed(false, t.AddDays(2));
-        Assert.False(account.AIAllowed);
-        Assert.Equal(t.AddDays(2), account.Updated);
-    }
-
-    /// <summary>Reconstitute assigns the stored "AI allowed" flag.</summary>
-    [Fact]
-    public void Reconstitute_AssignsAIAllowed()
-    {
-        DateTime t = new(2026, 1, 1);
-        var account = Account.Reconstitute("q@example.com", "h", "Q", null, "User", "UTC", null, false, 0, true, true, null, null, t, t, null, false, "s", false, aiAllowed: true);
-
-        Assert.True(account.AIAllowed);
-    }
-
-    /// <summary>A newly registered account may not use the AI chat: only an administrator allows it.</summary>
-    [Fact]
-    public void Create_DoesNotAllowTheAI()
-    {
-        var account = Account.Create("new@example.com", "hash", "NewUser", AccountRole.User, "UTC", null, null, true, _now).Value;
-
-        Assert.False(account.AIAllowed);
-    }
 }

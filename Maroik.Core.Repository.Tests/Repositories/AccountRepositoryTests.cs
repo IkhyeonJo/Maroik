@@ -421,25 +421,6 @@ public sealed class AccountRepositoryTests(DatabaseFixture database) : Repositor
         Assert.True((await Sut.FindByEmailAsync(row.Email, TestContext.Current.CancellationToken))!.FileManagerScanDisabled);
     }
 
-    /// <summary>
-    /// Whether the account may use the AI chat reads back from its column (a new account's is false) and an admin's update writes it.
-    /// </summary>
-    [Fact]
-    public async Task TheAIAllowedFlag_IsReadAndWritten()
-    {
-        OrmAccount row = NewAccount();
-        await SeedAsync(row);
-
-        Account account = (await Sut.FindByEmailAsync(row.Email, TestContext.Current.CancellationToken))!;
-        Assert.False(account.AIAllowed);
-
-        account.ChangeAIAllowed(true, DateTime.UtcNow);
-        await Sut.UpdateEntityAsync(account, TestContext.Current.CancellationToken);
-        Context.ChangeTracker.Clear();
-
-        Assert.True((await Sut.FindByEmailAsync(row.Email, TestContext.Current.CancellationToken))!.AIAllowed);
-    }
-
     /// <summary>Verifies that <c>UpdateEntityAsync</c> persists changes to an existing account.</summary>
     [Fact]
     public async Task UpdateEntityAsync_UpdatesExistingAccount()
@@ -777,25 +758,6 @@ public sealed class AccountRepositoryTests(DatabaseFixture database) : Repositor
 
         Assert.Contains(scanOff.Email, found);
         Assert.DoesNotContain(scanOn.Email, found);
-    }
-
-    /// <summary>The "AI allowed" flag is shown in the admin grid, so the whole-row search matches it too.</summary>
-    [Fact]
-    public async Task SearchAsync_MatchesTheAIAllowedFlag()
-    {
-        OrmAccount aiOn = NewAccount();
-        aiOn.EmailConfirmed = false;
-        aiOn.AgreedServiceTerms = false;
-        aiOn.AIAllowed = true;
-        OrmAccount aiOff = NewAccount();
-        aiOff.EmailConfirmed = false;
-        aiOff.AgreedServiceTerms = false;
-        await SeedAsync(aiOn, aiOff);
-
-        List<string> found = [.. (await Sut.SearchAsync("true", TestContext.Current.CancellationToken)).Select(a => a.Email.Value)];
-
-        Assert.Contains(aiOn.Email, found);
-        Assert.DoesNotContain(aiOff.Email, found);
     }
 
     /// <summary>The admin message is shown in the admin grid, so the whole-row search matches it too.</summary>

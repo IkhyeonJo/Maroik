@@ -35,8 +35,7 @@ public class AccountMapperTests
             securityStamp: "stamp",
             mustChangePassword: false,
             fileManagerQuotaBytes: 42,
-            fileManagerScanDisabled: true,
-            aiAllowed: true);
+            fileManagerScanDisabled: true);
 
         AccountResponse response = AccountMapper.ToResponse(account);
 
@@ -56,6 +55,5 @@ public class AccountMapperTests
         Assert.False(response.Deleted);
         Assert.Equal(42, response.FileManagerQuotaBytes);
         Assert.True(response.FileManagerScanDisabled);
-        Assert.True(response.AIAllowed);
     }
 }

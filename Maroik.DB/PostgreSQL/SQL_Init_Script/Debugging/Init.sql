@@ -65,7 +65,6 @@ CREATE TABLE public."Account" (
     "MustChangePassword" boolean DEFAULT false NOT NULL,
     "FileManagerQuotaBytes" bigint DEFAULT 0 NOT NULL,
     "FileManagerScanDisabled" boolean DEFAULT false NOT NULL,
-    "AIAllowed" boolean DEFAULT false NOT NULL,
     CONSTRAINT "Account_Email_check" CHECK ((("Email")::text = lower(("Email")::text))),
     CONSTRAINT "Account_FileManagerQuotaBytes_check" CHECK (("FileManagerQuotaBytes" >= 0)),
     CONSTRAINT "Account_LoginAttempt_check" CHECK (("LoginAttempt" >= 0)),
@@ -227,13 +226,6 @@ COMMENT ON COLUMN public."Account"."FileManagerQuotaBytes" IS 'File Manager stor
 --
 
 COMMENT ON COLUMN public."Account"."FileManagerScanDisabled" IS 'File Manager uploads of this account skip the virus scan';
-
-
---
--- Name: COLUMN "Account"."AIAllowed"; Type: COMMENT; Schema: public; Owner: postgres
---
-
-COMMENT ON COLUMN public."Account"."AIAllowed" IS 'The account may use the AI chat (set by an administrator)';
 
 
 --
@@ -2985,7 +2977,6 @@ COPY public."Category" ("Id", "Name", "DisplayName", "IconPath", "Controller", "
 8	AccountBook	AccountBook	nav-icon fa fa-wallet	AccountBook		User	6
 25	Kanban	Kanban Board	nav-icon fas fa-columns	Kanban	UserIndex	User	2
 26	FileManager	File Manager	nav-icon fas fa-folder-open	FileManager	UserIndex	User	1
-27	AI	AI Chat	nav-icon fas fa-robot	AI	UserIndex	User	8
 \.
 
 
@@ -3174,7 +3165,7 @@ SELECT pg_catalog.setval('public."Calendar_Id_seq"', 6, true);
 -- Name: Category_Id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public."Category_Id_seq"', 27, true);
+SELECT pg_catalog.setval('public."Category_Id_seq"', 26, true);
 
 
 --
