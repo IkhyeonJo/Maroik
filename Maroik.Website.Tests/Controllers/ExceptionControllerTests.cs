@@ -145,4 +145,120 @@ public class ExceptionControllerTests(MaroikWebApplicationFactory factory)
         Assert.Equal(System.Net.HttpStatusCode.InternalServerError, response.StatusCode);
         Assert.Contains("Request ID:", html, StringComparison.Ordinal);
     }
+
+    // -- 404 Not Found --------------------------------------------------------
+
+    /// <summary>
+    /// An address nothing answers (no route, no static file) shows the "page not found" page in the visitor's language,
+    /// with a link back to the start page, and keeps its 404 status. UseStatusCodePagesWithReExecute sends the empty 404
+    /// to Exception/Error, which picks the not-found view from IStatusCodeReExecuteFeature.
+    /// </summary>
+    [Theory]
+    [InlineData("en-US", "Page not found", "The page you requested does not exist or has been moved.")]
+    [InlineData("ko-KR", "페이지를 찾을 수 없습니다", "찾으시는 페이지가 없거나 옮겨졌습니다.")]
+    public async Task UnknownAddress_RendersTheNotFoundPage_InTheVisitorsCulture(string culture, string heading, string message)
+    {
+        using var request = new HttpRequestMessage(HttpMethod.Get, "/NoSuchController/NoSuchAction");
+        request.Headers.Add("Cookie", $".AspNetCore.Culture=c={culture}|uic={culture}");
+
+        var response = await _client.SendAsync(request, TestContext.Current.CancellationToken);
+        string html = System.Net.WebUtility.HtmlDecode(await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken));
+
+        Assert.Equal(System.Net.HttpStatusCode.NotFound, response.StatusCode);
+        Assert.Contains(heading, html, StringComparison.Ordinal);
+        Assert.Contains(message, html, StringComparison.Ordinal);
+        Assert.Contains("href=\"/\"", html, StringComparison.Ordinal);
+        Assert.DoesNotContain("Request ID:", html, StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// The not-found page is AdminLTE's own error page: the public AdminLTE and Font Awesome style sheets (from the
+    /// anonymous folder, so every visitor may load them) and its <c>error-page</c> markup with the warning headline.
+    /// </summary>
+    [Fact]
+    public async Task UnknownAddress_RendersTheAdminLteErrorPage()
+    {
+        var response = await _client.GetAsync("/NoSuchController/NoSuchAction", TestContext.Current.CancellationToken);
+        string html = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        Assert.Matches("<link rel=\"stylesheet\" href=\"/anonymous/dist/css/adminlte\\.min\\.css[?\"]", html);
+        Assert.Matches("<link rel=\"stylesheet\" href=\"/anonymous/plugins/fontawesome-free/css/all\\.min\\.css[?\"]", html);
+        Assert.Contains("<div class=\"error-page\">", html, StringComparison.Ordinal);
+        Assert.Matches("<h2 class=\"headline text-warning\">\\s*404\\s*</h2>", html);
+        Assert.Contains("<div class=\"error-content\">", html, StringComparison.Ordinal);
+        Assert.Contains("fas fa-exclamation-triangle text-warning", html, StringComparison.Ordinal);
+    }
+
+    /// <summary>The generic error page keeps the plain layout: the AdminLTE sheets come only with the not-found page.</summary>
+    [Fact]
+    public async Task Error_DoesNotLoadTheAdminLteStyleSheets()
+    {
+        var response = await _client.GetAsync("/Exception/Error", TestContext.Current.CancellationToken);
+        string html = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        Assert.DoesNotContain("adminlte", html, StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>A missing static file under a public folder also gets the not-found page.</summary>
+    [Fact]
+    public async Task UnknownStaticFile_RendersTheNotFoundPage()
+    {
+        var response = await _client.GetAsync("/anonymous/does-not-exist.xyz", TestContext.Current.CancellationToken);
+        string html = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        Assert.Equal(System.Net.HttpStatusCode.NotFound, response.StatusCode);
+        Assert.Contains("Page not found", html, StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// The re-executed request keeps the original method, so a POST to an unknown address reaches Exception/Error as a
+    /// POST (allowed there for every method) and still gets the not-found page, not a redirect.
+    /// </summary>
+    [Fact]
+    public async Task UnknownAddress_Post_RendersTheNotFoundPage()
+    {
+        using var request = new HttpRequestMessage(HttpMethod.Post, "/NoSuchController/NoSuchAction");
+
+        var response = await _client.SendAsync(request, TestContext.Current.CancellationToken);
+        string html = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        Assert.Equal(System.Net.HttpStatusCode.NotFound, response.StatusCode);
+        Assert.Contains("Page not found", html, StringComparison.Ordinal);
+    }
+
+    /// <summary>A signed-in user who opens an unknown address gets the same not-found page.</summary>
+    [Fact]
+    public async Task UnknownAddress_LoggedInUser_RendersTheNotFoundPage()
+    {
+        var session = await AuthenticatedSessionHelper.LoginAsync(
+            factory, _client, "exception-notfound-user@test.com", "UserPassword1!", Core.Domain.Primitives.Role.User,
+            TestContext.Current.CancellationToken);
+        using var request = new HttpRequestMessage(HttpMethod.Get, "/NoSuchController/NoSuchAction");
+        request.Headers.Add("Cookie", session.CookieHeader);
+
+        var response = await _client.SendAsync(request, TestContext.Current.CancellationToken);
+        string html = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        Assert.Equal(System.Net.HttpStatusCode.NotFound, response.StatusCode);
+        Assert.Contains("Page not found", html, StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// Only a 404 gets a page: another empty error status (here the 400 of an Excel export with a bad kind) is re-executed
+    /// too, but leaves Exception/Error with the same status and still no body, as before.
+    /// </summary>
+    [Fact]
+    public async Task AnotherEmptyErrorStatus_KeepsItsStatus_AndStaysEmpty()
+    {
+        var session = await AuthenticatedSessionHelper.LoginAsync(
+            factory, _client, "exception-badrequest-user@test.com", "UserPassword1!", Core.Domain.Primitives.Role.User,
+            TestContext.Current.CancellationToken);
+        using var request = session.BuildJsonPostRequest("/AccountBook/ExportExcelBudget?kind=Savings&year=2026");
+
+        var response = await _client.SendAsync(request, TestContext.Current.CancellationToken);
+        string body = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        Assert.Equal(System.Net.HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.Equal("", body);
+    }
 }

@@ -285,6 +285,9 @@ try
     });
 
     app.UseExceptionHandler("/Exception/Error");
+    // An error status sent with an empty body (no route, no static file, an action's NotFound()) is re-executed as
+    // Exception/Error, which renders the "page not found" page for a 404 and leaves every other status empty.
+    app.UseStatusCodePagesWithReExecute("/Exception/Error");
 
     // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     if (hosting.UsesHttps)

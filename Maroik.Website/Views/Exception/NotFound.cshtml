@@ -1,0 +1,44 @@
+﻿@*
+    Exception/NotFound.cshtml
+    "Page not found" page, rendered by ExceptionController.Error when UseStatusCodePagesWithReExecute
+    re-executes an empty 404 (no route, no static file, or an action's NotFound()). The response keeps
+    its 404 status.
+    AdminLTE's own error page (the error-page / headline / error-content markup of its 404 example), so it
+    sets Layout = null and renders a self-contained page, like Account/_Layout: it needs no session and no
+    navigation menu, and loads only the public style sheets of the anonymous folder (every visitor may load
+    those). layout-top-nav keeps the content-wrapper's grey background without the sidebar's left margin.
+    No script: the page has nothing to wire.
+*@
+@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="@System.Globalization.CultureInfo.CurrentUICulture.Name">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>404 | Maroik</title>
+
+    <link rel="Shortcut Icon" href="~/anonymous/favicon.ico" type="image/x-icon" />
+    @*<!-- Font Awesome -->*@
+    <link rel="stylesheet" href="~/anonymous/plugins/fontawesome-free/css/all.min.css" asp-append-version="true">
+    @*<!-- Theme style -->*@
+    <link rel="stylesheet" href="~/anonymous/dist/css/adminlte.min.css" asp-append-version="true">
+</head>
+<body class="hold-transition layout-top-nav">
+    <div class="wrapper">
+        <div class="content-wrapper min-vh-100 pt-5">
+            <section class="content">
+                <div class="error-page">
+                    <h2 class="headline text-warning">404</h2>
+                    <div class="error-content">
+                        <h3><i class="fas fa-exclamation-triangle text-warning"></i> @Localizer["Page not found"]</h3>
+                        <p>@Localizer["The page you requested does not exist or has been moved."]</p>
+                        <p><a href="/">@Localizer["Go to the home page"]</a></p>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
+</body>
+</html>
